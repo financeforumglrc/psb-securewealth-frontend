@@ -29,13 +29,11 @@ jobs:
         env:
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
-      - name: Copy index.html to 200.html for SPA routing
+      - name: Prepare SPA fallback
         run: cp dist/index.html dist/200.html
 
       - name: Deploy to Surge
-        uses: dswistowski/surge-sh-action@v1
-        with:
-          domain: 'psb-securewealth-2026-new.surge.sh'
-          project: './client/dist'
-          login: ${{ secrets.SURGE_LOGIN }}
-          token: ${{ secrets.SURGE_TOKEN }}
+        run: npx surge --project ./dist --domain psb-securewealth-2026-new.surge.sh
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
