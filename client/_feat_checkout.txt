@@ -1,0 +1,48 @@
+const SecureCheckout = {
+    show(onComplete) {
+      const overlay = document.createElement('div');
+      overlay.id = 'secure-checkout-overlay';
+      overlay.className = 'fixed inset-0 bg-slate-900 z-[80] flex flex-col items-center justify-center text-white';
+      overlay.innerHTML = `
+        <div class="text-center space-y-6 max-w-sm px-6">
+          <div class="w-20 h-20 mx-auto bg-white/10 rounded-full flex items-center justify-center animate-pulse">
+            <i class="fas fa-fingerprint text-4xl text-emerald-400"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold">Secure Transaction in Progress</h3>
+            <p class="text-sm text-slate-400 mt-2">Please do not close or refresh this window</p>
+          </div>
+          <div class="space-y-3 text-left">
+            <div class="flex items-center gap-3 text-sm" id="sc-step-1"><i class="fas fa-circle-check text-emerald-400"></i><span>Verifying device fingerprint...</span></div>
+            <div class="flex items-center gap-3 text-sm opacity-40" id="sc-step-2"><i class="fas fa-circle text-slate-600"></i><span>Running fraud detection...</span></div>
+            <div class="flex items-center gap-3 text-sm opacity-40" id="sc-step-3"><i class="fas fa-circle text-slate-600"></i><span>Encrypting transaction data...</span></div>
+            <div class="flex items-center gap-3 text-sm opacity-40" id="sc-step-4"><i class="fas fa-circle text-slate-600"></i><span>Confirming with RBI network...</span></div>
+          </div>
+          <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden">
+            <div id="sc-progress" class="bg-emerald-400 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      const steps = [
+        { id: 'sc-step-1', width: '25%', delay: 400 },
+        { id: 'sc-step-2', width: '50%', delay: 900 },
+        { id: 'sc-step-3', width: '75%', delay: 1400 },
+        { id: 'sc-step-4', width: '100%', delay: 1900 }
+      ];
+      steps.forEach((step, i) => {
+        setTimeout(() => {
+          const el = document.getElementById(step.id);
+          if (el) { el.classList.remove('opacity-40'); el.querySelector('i').className = 'fas fa-circle-check text-emerald-400'; }
+          const bar = document.getElementById('sc-progress');
+          if (bar) bar.style.width = step.width;
+        }, step.delay);
+      });
+      setTimeout(() => {
+        overlay.remove();
+        if (onComplete) onComplete();
+      }, 2500);
+    }
+  };
+
+  

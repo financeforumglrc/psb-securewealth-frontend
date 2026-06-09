@@ -1,0 +1,74 @@
+const WhatIfSimulator = {
+    showModal() {
+      const existing = document.getElementById('whatif-modal');
+      if (existing) existing.remove();
+      const modal = document.createElement('div');
+      modal.id = 'whatif-modal';
+      modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4';
+      modal.innerHTML = `
+        <div class="bg-white dark:bg-dark-light rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" style="animation: modalIn 0.3s ease-out">
+          <div class="bg-gradient-to-r from-primary to-secondary p-5 text-white">
+            <h3 class="text-lg font-bold"><i class="fas fa-wand-magic-sparkles mr-2"></i>What-If Simulator</h3>
+            <p class="text-xs text-white/80 mt-1">See how small changes impact your future net worth.</p>
+          </div>
+          <div class="p-5 space-y-4">
+            <div>
+              <label class="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <span>Monthly Savings</span>
+                <span id="whatif-savings-val" class="text-primary font-bold">₹28,000</span>
+              </label>
+              <input type="range" id="whatif-savings" min="5000" max="100000" step="1000" value="28000" class="w-full accent-primary h-1.5" oninput="WhatIfSimulator.update()">
+            </div>
+            <div>
+              <label class="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <span>Expected Return</span>
+                <span id="whatif-return-val" class="text-primary font-bold">12%</span>
+              </label>
+              <input type="range" id="whatif-return" min="6" max="18" step="0.5" value="12" class="w-full accent-primary h-1.5" oninput="WhatIfSimulator.update()">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="p-3 bg-primary/5 rounded-xl border border-primary/10 text-center">
+                <p class="text-[10px] text-slate-500">1 Year Projection</p>
+                <p id="whatif-1y" class="text-lg font-bold text-primary mt-1">₹48.2L</p>
+              </div>
+              <div class="p-3 bg-secondary/5 rounded-xl border border-secondary/10 text-center">
+                <p class="text-[10px] text-slate-500">5 Year Projection</p>
+                <p id="whatif-5y" class="text-lg font-bold text-secondary mt-1">₹82.1L</p>
+              </div>
+            </div>
+            <div id="whatif-insight" class="p-2.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800 text-[11px] text-amber-700 dark:text-amber-300"></div>
+          </div>
+          <div class="p-4 border-t border-slate-100 dark:border-slate-700">
+            <button onclick="document.getElementById('whatif-modal').remove()" class="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Done</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      this.update();
+    },
+    update() {
+      const savings = parseInt(document.getElementById('whatif-savings')?.value || 28000);
+      const ret = parseFloat(document.getElementById('whatif-return')?.value || 12);
+      const currentNW = 4520000;
+      const monthlyRate = ret / 100 / 12;
+      let y1 = currentNW, y5 = currentNW;
+      for (let m = 0; m < 12; m++) { y1 = y1 * (1 + monthlyRate) + savings; }
+      for (let m = 0; m < 60; m++) { y5 = y5 * (1 + monthlyRate) + savings; }
+      const sVal = document.getElementById('whatif-savings-val');
+      const rVal = document.getElementById('whatif-return-val');
+      const y1El = document.getElementById('whatif-1y');
+      const y5El = document.getElementById('whatif-5y');
+      const insightEl = document.getElementById('whatif-insight');
+      if (sVal) sVal.textContent = C(savings) + '/mo';
+      if (rVal) rVal.textContent = ret + '%';
+      if (y1El) y1El.textContent = C(Math.round(y1));
+      if (y5El) y5El.textContent = C(Math.round(y5));
+      if (insightEl) {
+        const extra = savings - 28000;
+        if (extra > 0) insightEl.innerHTML = `<i class="fas fa-lightbulb mr-1"></i>Saving an extra <strong>${C(extra)}/month</strong> grows your net worth by <strong>${C(Math.round(y5 - 4520000))}</strong> in 5 years.`;
+        else if (extra < 0) insightEl.innerHTML = `<i class="fas fa-triangle-exclamation mr-1"></i>Reducing savings by <strong>${C(Math.abs(extra))}/month</strong> costs you <strong>${C(Math.round(4520000 * Math.pow(1+monthlyRate,60) + 28000*((Math.pow(1+monthlyRate,60)-1)/monthlyRate) - y5))}</strong> over 5 years.`;
+        else insightEl.innerHTML = `<i class="fas fa-check mr-1"></i>At your current savings rate, you'll reach <strong>${C(Math.round(y5))}</strong> in 5 years.`;
+      }
+    }
+  };
+
+  

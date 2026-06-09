@@ -1,0 +1,24 @@
+{
+  "name": "Punjab & Sind Bank - Internet Banking",
+  "short_name": "PSB Banking",
+  "description": "AI-powered digital wealth intelligence with built-in fraud protection",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F7F4",
+  "theme_color": "#1B5E20",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "banking", "productivity"],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

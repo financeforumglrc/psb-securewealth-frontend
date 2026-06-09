@@ -1,0 +1,144 @@
+const OTPSimulation = {
+    show(actionType, amount, onConfirm, onCancel) {
+      if (DemoControls.state.skipOTP) {
+        RiskEngine.protect(actionType, amount, onConfirm, onCancel);
+        return;
+      }
+      const existing = document.getElementById('otp-modal');
+      if (existing) existing.remove();
+      const modal = document.createElement('div');
+      modal.id = 'otp-modal';
+      modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-[75] flex items-center justify-center p-4';
+      modal.innerHTML = `
+        <div class="bg-white dark:bg-dark-light rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center" style="animation: modalIn 0.3s ease-out">
+          <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mx-auto mb-3">
+            <i class="fas fa-mobile-screen-button text-xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Verify Transaction</h3>
+          <p class="text-xs text-slate-500 mb-1">Enter the 6-digit OTP sent to <strong>+91 98XXX 45210</strong></p>
+          <p class="text-[10px] text-slate-400 mb-4">Action: ${actionType} ${amount > 0 ? '· ' + C(amount) : ''}</p>
+          <div class="flex justify-center gap-2 mb-4">
+            ${[0,1,2,3,4,5].map(i => `<input type="password" maxlength="1" class="w-10 h-12 text-center text-lg font-bold border border-slate-200 dark:border-slate-600 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-primary otp-digit" data-index="${i}">`).join('')}
+          </div>
+          <div class="flex items-center justify-center gap-2 mb-4 text-xs text-slate-500">
+            <span id="otp-timer">Resend in 30s</span>
+            <button id="otp-resend" class="text-primary hover:underline hidden" onclick="OTPSimulation.resend()">Resend OTP</button>
+          </div>
+          <button id="otp-verify-btn" class="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors" disabled>Verify</button>
+          <button onclick="OTPSimulation.cancel()" class="mt-2 text-xs text-slate-400 hover:text-slate-600">Cancel Transaction</button>
+        </div>`;
+      document.body.appendChild(modal);
+      this.digits = modal.querySelectorAll('.otp-digit');
+      this.digits.forEach((d, i) => {
+        d.oninput = (e) => {
+          if (d.value && i < 5) this.digits[i+1].focus();
+          this.checkComplete();
+        };
+        d.onkeydown = (e) => { if (e.key === 'Backspace' && !d.value && i > 0) this.digits[i-1].focus(); };
+      });
+      document.getElementById('otp-verify-btn').onclick = () => this.verify(actionType, amount, onConfirm, onCancel);
+      this.startTimer();
+      this.digits[0].focus();
+      // Auto-fill for demo speed
+      this.autoFill(actionType, amount, onConfirm, onCancel);
+    },
+    startTimer() {
+      let secs = 30;
+      const timerEl = document.getElementById('otp-timer');
+      const resendEl = document.getElementById('otp-resend');
+      this.timerInterval = setInterval(() => {
+        secs--;
+        if (timerEl) timerEl.textContent = 'Resend in ' + secs + 's';
+        if (secs <= 0) {
+          clearInterval(this.timerInterval);
+          if (timerEl) timerEl.classList.add('hidden');
+          if (resendEl) resendEl.classList.remove('hidden');
+        }
+      }, 1000);
+    },
+    resend() {
+      App.showToast('New OTP sent to +91 98XXX 45210', 'info');
+      const timerEl = document.getElementById('otp-timer');
+      const resendEl = document.getElementById('otp-resend');
+      if (timerEl) { timerEl.classList.remove('hidden'); timerEl.textContent = 'Resend in 30s'; }
+      if (resendEl) resendEl.classList.add('hidden');
+      this.digits.forEach(d => d.value = '');
+      this.digits[0].focus();
+      this.startTimer();
+    },
+    checkComplete() {
+      const pin = Array.from(this.digits).map(d => d.value).join('');
+      const btn = document.getElementById('otp-verify-btn');
+      if (btn) btn.disabled = pin.length !== 6;
+    },
+    autoFill(actionType, amount, onConfirm, onCancel) {
+      const speed = DemoControls.state.otpSpeed || 4.0;
+      const delayPerDigit = Math.max(150, speed * 80); // ms per digit
+      const otpCode = '452109';
+      this.digits.forEach((d, i) => {
+        setTimeout(() => {
+          d.value = otpCode[i];
+          d.dispatchEvent(new Event('input'));
+          if (i === 5) {
+            setTimeout(() => this.verify(actionType, amount, onConfirm, onCancel), 300);
+          }
+        }, delayPerDigit * (i + 1));
+      });
+    },
+    verify(actionType, amount, onConfirm, onCancel) {
+      const startTime = performance.now();
+      const pin = Array.from(this.digits).map(d => d.value).join('');
+      if (pin !== '452109') {
+        this.digits.forEach(d => { d.value = ''; d.classList.add('border-rose-500'); setTimeout(() => d.classList.remove('border-rose-500'), 500); });
+        this.digits[0].focus();
+        App.showToast('Invalid OTP. Please try again.', 'danger');
+        return;
+      }
+      const entryTime = (performance.now() - startTime) / 1000;
+      // Override the OTP speed in DemoControls for risk assessment
+      const actualSpeed = DemoControls.state.otpSpeed || entryTime;
+      DemoControls.state._otpEntryTime = actualSpeed;
+      clearInterval(this.timerInterval);
+      const modal = document.getElementById('otp-modal');
+      if (modal) modal.remove();
+      // Now proceed to risk assessment
+      RiskEngine.protect(actionType, amount, onConfirm, onCancel);
+    },
+    cancel() {
+      clearInterval(this.timerInterval);
+      const modal = document.getElementById('otp-modal');
+      if (modal) modal.remove();
+    }
+  };
+
+  // Monkey-patch RiskEngine to use OTP simulation
+  const _origProtect = RiskEngine.protect;
+  RiskEngine.protect = function(actionType, amount, onConfirm, onCancel) {
+    // Override the assess function temporarily to use our OTP time
+    const _origAssess = this.assess;
+    this.assess = function(aType, amt) {
+      const result = _origAssess.call(this, aType, amt);
+      // Override OTP signal if we have entry time
+      if (DemoControls.state._otpEntryTime !== undefined) {
+        const otpTime = DemoControls.state._otpEntryTime;
+        const otp = result.signals.find(s => s.name === 'OTP Entry Speed');
+        if (otp) {
+          otp.desc = `Entered in ${otpTime.toFixed(1)}s`;
+          otp.score = otpTime < 3 ? 15 : 0;
+          otp.status = otpTime < 3 ? 'flagged' : 'passed';
+          if (otpTime < 3 && otp.score === 0) result.score += 15;
+          else if (otpTime >= 3) result.score -= 15;
+        }
+        // Recalculate level
+        result.score = Math.max(0, Math.min(100, result.score));
+        result.level = result.score <= 33 ? 'low' : result.score <= 66 ? 'medium' : 'high';
+        delete DemoControls.state._otpEntryTime;
+      }
+      return result;
+    };
+    _origProtect.call(this, actionType, amount, onConfirm, onCancel);
+    // Restore original assess
+    this.assess = _origAssess;
+  };
+
+  

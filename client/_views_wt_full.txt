@@ -1,0 +1,104 @@
+renderWealthTwin(container) {
+    if (!container) container = document.getElementById('main-content');
+    destroyCharts();
+    container.innerHTML = `
+      <div class="space-y-6 pb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white">Wealth Twin</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">AI-powered projection of your financial future</p>
+          </div>
+          <div class="px-3 py-1.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+            <i class="fas fa-robot mr-1"></i>AI Active
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-white dark:bg-dark-light rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5">
+            <h3 class="font-semibold text-slate-800 dark:text-white mb-4">Net Worth Projection</h3>
+            <div class="relative h-72"><canvas id="wt-networth-chart"></canvas></div>
+          </div>
+          <div class="space-y-4">
+            <div class="bg-white dark:bg-dark-light rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5">
+              <h3 class="font-semibold text-slate-800 dark:text-white mb-3">Current Snapshot</h3>
+              <div class="space-y-3">
+                <div class="flex justify-between text-sm"><span class="text-slate-500">Total Net Worth</span><span class="font-bold text-slate-800 dark:text-white">${C(4520000)}</span></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-500">Liquid Assets</span><span class="font-bold text-slate-800 dark:text-white">${C(850000)}</span></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-500">Investments</span><span class="font-bold text-slate-800 dark:text-white">${C(2130000)}</span></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-500">Physical Assets</span><span class="font-bold text-slate-800 dark:text-white">${C(1540000)}</span></div>
+              </div>
+            </div>
+            <div class="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/10 p-5">
+              <h4 class="font-semibold text-slate-800 dark:text-white mb-2">AI Projection</h4>
+              <p class="text-sm text-slate-600 dark:text-slate-300">At your current savings rate of <strong>22.4%</strong>, you'll reach <strong>₹1 Cr</strong> by <strong>2031</strong>.</p>
+              <button onclick="App.renderView('goals')" class="mt-3 px-3 py-1.5 bg-primary text-white text-xs rounded-lg">Adjust Goals</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white dark:bg-dark-light rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 text-center">
+            <div class="text-3xl font-bold text-primary">${C(125000)}</div>
+            <p class="text-xs text-slate-500 mt-1">Monthly Income</p>
+          </div>
+          <div class="bg-white dark:bg-dark-light rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 text-center">
+            <div class="text-3xl font-bold text-emerald-500">${C(28000)}</div>
+            <p class="text-xs text-slate-500 mt-1">Monthly Savings</p>
+          </div>
+          <div class="bg-white dark:bg-dark-light rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 text-center">
+            <div class="text-3xl font-bold text-amber-500">${C(72000)}</div>
+            <p class="text-xs text-slate-500 mt-1">Monthly Expenses</p>
+          </div>
+        </div>
+
+        <!-- AI Chat Model -->
+        <div class="bg-white dark:bg-dark-light rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div class="bg-gradient-to-r from-primary to-secondary p-4 text-white flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-robot text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-white">Wealth Twin AI Chat</h3>
+                <p class="text-xs text-white/70">Ask me anything about your finances</p>
+              </div>
+            </div>
+            <span id="wt-ai-status" class="px-2 py-1 bg-white/20 rounded-full text-xs font-medium"><i class="fas fa-circle text-[8px] mr-1"></i>Gemini AI</span>
+          </div>
+          <div class="p-4">
+            ${window.SECUREWEALTH_KEYS?.gemini ? '' : `
+            <div class="mb-3 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
+              <div class="flex items-center gap-2 flex-wrap">
+                <i class="fas fa-key text-slate-400 text-xs"></i>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Gemini API Key:</span>
+                <input type="password" id="wt-gemini-key" placeholder="Paste your Gemini API key here" class="flex-1 min-w-[200px] px-2 py-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary dark:text-white">
+                <button onclick="saveWTGeminiKey()" class="px-3 py-1 bg-primary text-white text-xs rounded hover:bg-primary/90 transition-colors">Save</button>
+                <span id="wt-key-status"></span>
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary hover:underline">Google AI Studio</a>. Without a key, offline responses are used.</p>
+            </div>`}
+            <div id="wt-chat-messages" class="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1">
+              <div class="flex items-start gap-2">
+                <div class="w-7 h-7 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 text-primary text-xs"><i class="fas fa-robot"></i></div>
+                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-sm text-slate-700 dark:text-slate-200 max-w-[85%]">
+                  <p class="font-medium mb-1">Hello Rahul! I'm your Wealth Twin AI.</p>
+                  <p>I know your financial profile: Net Worth <strong>${C(4520000)}</strong>, saving <strong>22.4%</strong> of income. Ask me about projections, savings tips, or goal planning!</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2 mb-3">
+              <button onclick="quickWealthTwinChat('When will I reach ₹1 Crore?')" class="px-3 py-1.5 bg-primary/10 text-primary text-xs rounded-full hover:bg-primary/20 transition-colors">When will I reach ₹1 Crore?</button>
+              <button onclick="quickWealthTwinChat('How can I save more?')" class="px-3 py-1.5 bg-primary/10 text-primary text-xs rounded-full hover:bg-primary/20 transition-colors">How can I save more?</button>
+              <button onclick="quickWealthTwinChat('Should I invest more in SIP?')" class="px-3 py-1.5 bg-primary/10 text-primary text-xs rounded-full hover:bg-primary/20 transition-colors">Should I invest more in SIP?</button>
+              <button onclick="quickWealthTwinChat('Analyze my spending')" class="px-3 py-1.5 bg-primary/10 text-primary text-xs rounded-full hover:bg-primary/20 transition-colors">Analyze my spending</button>
+            </div>
+            <div class="flex gap-2">
+              <input type="text" id="wt-chat-input" placeholder="Ask about your wealth, savings, investments..." class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white" onkeypress="if(event.key==='Enter')sendWealthTwinChat()">
+              <button onclick="sendWealthTwinChat()" class="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors"><i class="fas fa-paper-plane"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    setTimeout(() => {
+      

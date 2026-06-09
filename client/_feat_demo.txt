@@ -1,0 +1,108 @@
+const DemoControls = {
+    state: {
+      deviceTrust: true,
+      highUrgency: false,
+      otpSpeed: 4.0,
+      newSession: false,
+      highVolatility: false,
+      skipOTP: false
+    },
+    toggle(key) {
+      this.state[key] = !this.state[key];
+      this.render();
+    },
+    setOTP(val) {
+      this.state.otpSpeed = parseFloat(val);
+    },
+    reset() {
+      this.state = { deviceTrust: true, highUrgency: false, otpSpeed: 4.0, newSession: false, highVolatility: false };
+      if (window.DuressMode && DuressMode.isActive()) DuressMode.deactivate();
+      this.render();
+      App.showToast('Demo controls reset to normal', 'success');
+    },
+    render() {
+      const panel = document.getElementById('demo-controls-panel');
+      if (!panel) return;
+      panel.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold text-slate-700 dark:text-white"><i class="fas fa-sliders mr-1"></i>Demo Controls</span>
+          <button onclick="DemoControls.reset()" class="text-[10px] text-primary hover:underline">Reset All</button>
+        </div>
+        <div class="space-y-2">
+          <label class="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-300 cursor-pointer">
+            <span>Simulate New Device</span>
+            <input type="checkbox" ${!this.state.deviceTrust ? 'checked' : ''} onchange="DemoControls.toggle('deviceTrust')" class="accent-primary w-3.5 h-3.5">
+          </label>
+          <label class="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-300 cursor-pointer">
+            <span>Simulate High Urgency</span>
+            <input type="checkbox" ${this.state.highUrgency ? 'checked' : ''} onchange="DemoControls.toggle('highUrgency')" class="accent-primary w-3.5 h-3.5">
+          </label>
+          <label class="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-300 cursor-pointer">
+            <span>New Session (<5 min)</span>
+            <input type="checkbox" ${this.state.newSession ? 'checked' : ''} onchange="DemoControls.toggle('newSession')" class="accent-primary w-3.5 h-3.5">
+          </label>
+          <div>
+            <span class="text-[10px] text-slate-600 dark:text-slate-300">OTP Speed: <strong>${this.state.otpSpeed.toFixed(1)}s</strong></span>
+            <input type="range" min="1.5" max="8" step="0.1" value="${this.state.otpSpeed}" oninput="DemoControls.setOTP(this.value); DemoControls.render()" class="w-full accent-primary h-1 mt-1">
+          </div>
+        </div>
+        <div class="mt-2 pt-2 border-t border-slate-200 dark:border-slate-600 text-[10px] text-slate-400">
+          Use these toggles to demonstrate different risk scenarios during your presentation.
+        </div>`;
+    },
+    init() {
+      const btn = document.createElement('button');
+      btn.id = 'demo-controls-toggle';
+      btn.className = 'fixed bottom-4 right-4 z-40 w-10 h-10 bg-slate-800 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-700 transition-colors';
+      btn.innerHTML = '<i class="fas fa-sliders"></i>';
+      btn.title = 'Demo Controls';
+      btn.onclick = () => {
+        let panel = document.getElementById('demo-controls-panel');
+        if (panel) {
+          panel.classList.toggle('hidden');
+        } else {
+          panel = document.createElement('div');
+          panel.id = 'demo-controls-panel';
+          panel.className = 'fixed bottom-16 right-4 z-40 w-64 bg-white dark:bg-dark-light rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 p-4';
+          document.body.appendChild(panel);
+          this.render();
+        }
+      };
+      document.body.appendChild(btn);
+    }
+  };
+
+  // Override RiskEngine to use DemoControls
+  const originalAssess = RiskEngine.assess;
+  RiskEngine.assess = function(actionType, amount = 0) {
+    const result = originalAssess.call(this, actionType, amount);
+    // Apply demo overrides
+    if (!DemoControls.state.deviceTrust) {
+      const dev = result.signals.find(s => s.name === 'Device Trust');
+      if (dev) { dev.status = 'failed'; dev.score = 20; dev.desc = 'Unrecognized device (Demo)'; }
+      result.score += 20;
+    }
+    if (DemoControls.state.highUrgency) {
+      const retry = result.signals.find(s => s.name === 'Retry/Urgency');
+      if (retry) { retry.status = 'flagged'; retry.score = 20; retry.desc = '4 clicks in 10 seconds (Demo)'; }
+      result.score += 20;
+    }
+    if (DemoControls.state.newSession) {
+      const sess = result.signals.find(s => s.name === 'Session Age');
+      if (sess) { sess.status = 'flagged'; sess.score = 5; sess.desc = 'Session active for 2 min (Demo)'; }
+      result.score += 5;
+    }
+    // Override OTP speed
+    const otp = result.signals.find(s => s.name === 'OTP Entry Speed');
+    if (otp) {
+      otp.desc = `Entered in ${DemoControls.state.otpSpeed.toFixed(1)}s (Demo)`;
+      otp.score = DemoControls.state.otpSpeed < 3 ? 15 : 0;
+      otp.status = DemoControls.state.otpSpeed < 3 ? 'flagged' : 'passed';
+      if (DemoControls.state.otpSpeed < 3 && otp.score === 0) result.score += 15;
+    }
+    // Recalculate level
+    result.level = result.score <= 33 ? 'low' : result.score <= 66 ? 'medium' : 'high';
+    return result;
+  };
+
+  

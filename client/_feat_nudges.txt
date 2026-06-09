@@ -1,0 +1,39 @@
+const BehavioralNudges = {
+    showLossAversion() {
+      const surplus = 50000;
+      const dailyLoss = Math.round(surplus * 0.088 / 365); // ~8.8% inflation cost
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-20 right-4 z-50 bg-white dark:bg-dark-light rounded-xl shadow-xl border border-rose-100 dark:border-rose-900/30 p-4 max-w-xs transform transition-all duration-500 translate-x-full';
+      toast.innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-fire text-xs"></i></div>
+          <div>
+            <p class="text-xs font-semibold text-rose-700 dark:text-rose-300">Loss Aversion Alert</p>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">Your uninvested ₹${surplus.toLocaleString('en-IN')} surplus is losing ~<strong>₹${dailyLoss}/day</strong> to inflation.</p>
+            <button onclick="App.renderView('portfolio')" class="mt-2 text-[10px] px-2 py-1 bg-rose-500 text-white rounded hover:bg-rose-600 transition-colors">Invest Now</button>
+          </div>
+        </div>
+        <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-slate-400 hover:text-slate-600 text-xs"><i class="fas fa-times"></i></button>
+      `;
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
+      setTimeout(() => { if (toast.parentElement) toast.classList.add('translate-x-full'); setTimeout(() => toast.remove(), 500); }, 8000);
+    },
+    trackStreak(type) {
+      const key = 'sw_streak_' + type;
+      const today = new Date().toDateString();
+      let data = JSON.parse(localStorage.getItem(key) || '{"count":0,"last":""}');
+      if (data.last !== today) { data.count++; data.last = today; localStorage.setItem(key, JSON.stringify(data)); }
+      return data.count;
+    },
+    getStreaks() {
+      const types = ['savings','login','goals'];
+      const defaults = { savings: 8, login: 15, goals: 3 };
+      return types.map(t => {
+        const data = JSON.parse(localStorage.getItem('sw_streak_' + t) || '{"count":' + defaults[t] + '}');
+        return { type: t, count: data.count || defaults[t] };
+      });
+    }
+  };
+
+  

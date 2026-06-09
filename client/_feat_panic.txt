@@ -1,0 +1,39 @@
+const PanicMode = {
+    escCount: 0,
+    timer: null,
+    init() {
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          this.escCount++;
+          if (this.timer) clearTimeout(this.timer);
+          this.timer = setTimeout(() => { this.escCount = 0; }, 800);
+          if (this.escCount >= 3) {
+            this.escCount = 0;
+            this.activate();
+          }
+        }
+      });
+    },
+    activate() {
+      // Clear all modals and overlays
+      document.querySelectorAll('.fixed.inset-0').forEach(el => el.remove());
+      document.querySelectorAll('#notification-panel, #demo-controls-panel, #demo-controls-toggle').forEach(el => el.remove());
+      // Show fake weather screen
+      const panic = document.createElement('div');
+      panic.id = 'panic-screen';
+      panic.className = 'fixed inset-0 bg-gradient-to-br from-blue-400 to-blue-600 z-[100] flex flex-col items-center justify-center text-white';
+      panic.innerHTML = `
+        <div class="text-center space-y-4">
+          <i class="fas fa-cloud-sun text-6xl"></i>
+          <h2 class="text-3xl font-bold">28°C</h2>
+          <p class="text-lg">Partly Cloudy · Mumbai</p>
+          <p class="text-sm opacity-70">Press F5 to return to SecureWealth Twin</p>
+        </div>
+      `;
+      document.body.appendChild(panic);
+      App.showToast('Panic mode activated — sensitive data hidden', 'info');
+    }
+  };
+  PanicMode.init();
+
+  

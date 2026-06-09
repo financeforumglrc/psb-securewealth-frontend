@@ -1,0 +1,61 @@
+const DuressMode = {
+    isActive() { return localStorage.getItem('sw_duress') === 'active'; },
+    activate() {
+      localStorage.setItem('sw_duress', 'active');
+      this.apply();
+      App.showToast('Duress Mode activated — sanitized view shown', 'danger');
+    },
+    deactivate() {
+      localStorage.removeItem('sw_duress');
+      this.restore();
+      App.showToast('Duress Mode deactivated', 'success');
+    },
+    toggle() { this.isActive() ? this.deactivate() : this.activate(); },
+    apply() {
+      let banner = document.getElementById('duress-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'duress-banner';
+        banner.className = 'fixed top-0 left-0 right-0 bg-rose-600 text-white text-center py-1.5 text-xs z-[80] font-medium';
+        banner.innerHTML = '<i class="fas fa-shield-halved mr-1"></i>Duress Mode Active — Showing sanitized view';
+        document.body.appendChild(banner);
+      }
+      // Subtle gray dot indicator in header
+      let dot = document.getElementById('duress-indicator');
+      if (!dot) {
+        dot = document.createElement('div');
+        dot.id = 'duress-indicator';
+        dot.className = 'fixed top-3 right-3 w-2 h-2 bg-gray-400 rounded-full z-[81] animate-pulse';
+        dot.title = 'Sandbox Mode';
+        document.body.appendChild(dot);
+      }
+      document.querySelectorAll('.duress-sensitive').forEach(el => {
+        if (!el.dataset.original) el.dataset.original = el.textContent;
+        el.textContent = '₹45,000';
+        el.classList.add('text-rose-500');
+      });
+      document.querySelectorAll('.duress-hide').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.duress-fake').forEach(el => {
+        if (!el.dataset.original) el.dataset.original = el.textContent;
+        el.textContent = el.dataset.duressFake || 'Restricted';
+        el.classList.add('text-slate-400');
+      });
+    },
+    restore() {
+      const banner = document.getElementById('duress-banner');
+      if (banner) banner.remove();
+      const dot = document.getElementById('duress-indicator');
+      if (dot) dot.remove();
+      document.querySelectorAll('.duress-sensitive').forEach(el => {
+        if (el.dataset.original) el.textContent = el.dataset.original;
+        el.classList.remove('text-rose-500');
+      });
+      document.querySelectorAll('.duress-hide').forEach(el => el.classList.remove('hidden'));
+      document.querySelectorAll('.duress-fake').forEach(el => {
+        if (el.dataset.original) el.textContent = el.dataset.original;
+        el.classList.remove('text-slate-400');
+      });
+    }
+  };
+
+  

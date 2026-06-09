@@ -1,0 +1,49 @@
+const NotificationCenter = {
+    notifications: [
+      { icon: 'fa-shield-halved', text: 'Unusual login attempt blocked from Mumbai', time: '2 min ago', unread: true, color: 'rose' },
+      { icon: 'fa-piggy-bank', text: 'Your SIP of ₹15,000 is due tomorrow', time: '1 hour ago', unread: true, color: 'primary' },
+      { icon: 'fa-chart-line', text: 'NIFTY crossed 25,000 — portfolio up 2.4%', time: '3 hours ago', unread: false, color: 'emerald' },
+      { icon: 'fa-triangle-exclamation', text: 'Credit card bill due in 2 days', time: '5 hours ago', unread: false, color: 'amber' },
+      { icon: 'fa-user-shield', text: 'KYC renewal reminder — expires in 30 days', time: '1 day ago', unread: false, color: 'primary' }
+    ],
+    toggle() {
+      let panel = document.getElementById('notification-panel');
+      if (panel) { panel.remove(); return; }
+      panel = document.createElement('div');
+      panel.id = 'notification-panel';
+      panel.className = 'fixed top-16 right-4 z-50 w-80 bg-white dark:bg-dark-light rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden';
+      panel.innerHTML = `
+        <div class="p-3 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+          <h3 class="font-semibold text-sm text-slate-800 dark:text-white">Notifications</h3>
+          <span class="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full">${this.notifications.filter(n => n.unread).length} new</span>
+        </div>
+        <div class="max-h-80 overflow-y-auto">
+          ${this.notifications.map(n => `
+            <div class="flex items-start gap-3 p-3 ${n.unread ? 'bg-primary/5' : ''} hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-50 dark:border-slate-800 cursor-pointer">
+              <div class="w-8 h-8 rounded-full bg-${n.color}-100 text-${n.color}-600 flex items-center justify-center flex-shrink-0 text-xs"><i class="fas ${n.icon}"></i></div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs text-slate-700 dark:text-slate-200 ${n.unread ? 'font-medium' : ''}">${n.text}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">${n.time}</p>
+              </div>
+              ${n.unread ? '<div class="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1"></div>' : ''}
+            </div>
+          `).join('')}
+        </div>
+        <div class="p-2 border-t border-slate-100 dark:border-slate-700 text-center">
+          <button onclick="document.getElementById('notification-panel').remove()" class="text-xs text-primary hover:underline">Mark all as read</button>
+        </div>
+      `;
+      document.body.appendChild(panel);
+      // Close on outside click
+      setTimeout(() => {
+        document.addEventListener('click', function close(e) {
+          if (!panel.contains(e.target) && !e.target.closest('#notification-bell-btn')) {
+            panel.remove();
+            document.removeEventListener('click', close);
+          }
+        });
+      }, 100);
+    }
+  };
+
+  
