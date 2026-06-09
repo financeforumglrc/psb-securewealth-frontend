@@ -17,6 +17,7 @@ export interface FaceAuthResult {
   descriptor?: Float32Array;
   landmarks?: any;
   livenessScore: number;
+  livenessState: LivenessState;
   feedback: string;
   faceRect?: { x: number; y: number; width: number; height: number };
   headPose?: { pitch: number; yaw: number; roll: number };
@@ -210,14 +211,14 @@ export async function processFrame(
 ): Promise<FaceAuthResult> {
   await initFaceAuthEngine();
   const ready = await waitForVideo(video);
-  if (!ready) return { success: false, feedback: 'Camera not ready', livenessScore: 0 };
+  if (!ready) return { success: false, feedback: 'Camera not ready', livenessScore: 0, livenessState: liveness };
 
   return new Promise((resolve) => {
     let resolved = false;
     const timeout = setTimeout(() => {
       if (!resolved) {
         resolved = true;
-        resolve({ success: false, feedback: 'Face detection timeout', livenessScore: 0 });
+        resolve({ success: false, feedback: 'Face detection timeout', livenessScore: 0, livenessState: liveness });
       }
     }, 3000);
 
@@ -227,7 +228,7 @@ export async function processFrame(
       resolved = true;
 
       if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
-        resolve({ success: false, feedback: 'No face detected', livenessScore: 0 });
+        resolve({ success: false, feedback: 'No face detected', livenessScore: 0, livenessState: liveness });
         return;
       }
 
@@ -267,6 +268,7 @@ export async function processFrame(
         success: feedbackData.ready,
         landmarks,
         livenessScore: newLiveness.blinkCount > 0 ? 0.9 : 0.5,
+        livenessState: newLiveness,
         feedback: feedbackData.feedback,
         headPose: pose,
         eyeAspectRatio: (leftEAR + rightEAR) / 2,
@@ -277,7 +279,7 @@ export async function processFrame(
       if (!resolved) {
         clearTimeout(timeout);
         resolved = true;
-        resolve({ success: false, feedback: 'Detection error: ' + err.message, livenessScore: 0 });
+        resolve({ success: false, feedback: 'Detection error: ' + err.message, livenessScore: 0, livenessState: liveness });
       }
     });
   });
