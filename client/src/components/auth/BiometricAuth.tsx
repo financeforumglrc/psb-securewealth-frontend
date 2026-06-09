@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
 import { useAuth } from '../../context/AuthContext';
-import { detectFaceDescriptor, loadFaceApi } from '../../lib/faceApi';
+import { extractFaceDescriptor, initFaceAuthEngine } from '../../lib/faceAuth';
 import { backendApi } from '../../lib/backendApi';
 
 type AuthMode = 'fingerprint' | 'faceid' | 'pin';
@@ -107,7 +107,7 @@ export default function BiometricAuth() {
     vibrate(50);
 
     try {
-      await loadFaceApi();
+      await initFaceAuthEngine();
       const ok = await startCamera();
       if (!ok) return;
 
@@ -116,7 +116,7 @@ export default function BiometricAuth() {
       await new Promise((r) => setTimeout(r, 800));
 
       if (!videoRef.current) return;
-      const descriptor = await detectFaceDescriptor(videoRef.current);
+      const descriptor = await extractFaceDescriptor(videoRef.current);
       stopCamera();
 
       if (!descriptor) {
@@ -152,7 +152,7 @@ export default function BiometricAuth() {
     vibrate(50);
 
     try {
-      await loadFaceApi();
+      await initFaceAuthEngine();
       const ok = await startCamera();
       if (!ok) {
         setScanning(false);
@@ -166,7 +166,7 @@ export default function BiometricAuth() {
         setScanning(false);
         return;
       }
-      const descriptor = await detectFaceDescriptor(videoRef.current);
+      const descriptor = await extractFaceDescriptor(videoRef.current);
       stopCamera();
 
       if (!descriptor) {

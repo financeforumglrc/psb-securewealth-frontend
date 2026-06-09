@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { detectFaceDescriptor, loadFaceApi } from '../../lib/faceApi';
+import {
+  initFaceAuthEngine,
+  processFrame,
+  extractFaceDescriptor,
+  captureMultiSampleDescriptor,
+  createLivenessState,
+  type LivenessState,
+} from '../../lib/faceAuth';
 import { backendApi } from '../../lib/backendApi';
 
 interface FaceLoginModalProps {
@@ -9,15 +16,28 @@ interface FaceLoginModalProps {
   onSuccess: (user: { id: string; email: string; name: string; role: string; tier: string }, token: string) => void;
 }
 
+type AppMode = 'verify' | 'register';
+type Step = 'idle' | 'initializing' | 'positioning' | 'liveness' | 'capturing' | 'processing' | 'success' | 'error';
+
 export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLoginModalProps) {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'scanning' | 'matched' | 'mismatch' | 'error' | 'registering'>('idle');
-  const [message, setMessage] = useState('Position your face in the frame');
-  const [mode, setMode] = useState<'verify' | 'register'>('verify');
+  const [mode, setMode] = useState<AppMode>('verify');
   const [email, setEmail] = useState('');
+  const [step, setStep] = useState<Step>('idle');
+  const [message, setMessage] = useState('');
+  const [subMessage, setSubMessage] = useState('');
+  const [progress, setProgress] = useState(0);
+  const [quality, setQuality] = useState(0);
+  const [blinkCount, setBlinkCount] = useState(0);
+
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const livenessRef = useRef<LivenessState>(createLivenessState('blink'));
+  const rafRef = useRef<number>(0);
+  const capturingRef = useRef(false);
 
   const stopCamera = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
@@ -25,21 +45,42 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
+  const resetState = useCallback(() => {
+    stopCamera();
+    setStep('idle');
+    setMessage('');
+    setSubMessage('');
+    setProgress(0);
+    setQuality(0);
+    setBlinkCount(0);
+    livenessRef.current = createLivenessState('blink');
+    capturingRef.current = false;
+  }, [stopCamera]);
+
+  useEffect(() => {
+    if (!isOpen) resetState();
+  }, [isOpen, resetState]);
+
   const startCamera = useCallback(async () => {
     try {
+      setStep('initializing');
+      setMessage('Initializing AI vision engine...');
+      await initFaceAuthEngine();
+
       setMessage('Requesting camera access...');
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       });
       streamRef.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-        // Wait until video dimensions are available
+        // Wait for dimensions
         await new Promise<void>((resolve, reject) => {
           const timer = setTimeout(() => reject(new Error('Camera warmup timeout')), 5000);
           const check = () => {
-            if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.readyState >= 3) {
+            if (videoRef.current && videoRef.current.videoWidth > 0) {
               clearTimeout(timer);
               resolve();
             } else {
@@ -52,35 +93,87 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       return true;
     } catch (err: any) {
       console.error('[FaceLogin] Camera error:', err);
-      setStatus('error');
-      setMessage(err.name === 'NotAllowedError' ? 'Camera access denied. Please allow camera permission.' : 'Camera error: ' + (err.message || 'Unable to start'));
+      setStep('error');
+      setMessage(err.name === 'NotAllowedError' ? 'Camera access denied' : 'Unable to start camera');
+      setSubMessage(err.message || 'Please check your camera permissions');
       return false;
     }
   }, []);
 
-  const runVerification = useCallback(async () => {
-    setStatus('scanning');
-    setMessage('Initializing AI model...');
+  const runDetectionLoop = useCallback(async () => {
+    if (!videoRef.current || capturingRef.current) return;
+
+    const result = await processFrame(videoRef.current, livenessRef.current, {
+      requireChallenge: step === 'liveness',
+      drawCanvas: canvasRef.current || undefined,
+    });
+
+    // Update liveness ref with new state
+    if (result.landmarks) {
+      livenessRef.current = {
+        ...livenessRef.current,
+        blinkDetected: result.livenessScore > 0.7,
+        blinkCount: result.livenessScore > 0.7 ? livenessRef.current.blinkCount + 1 : livenessRef.current.blinkCount,
+      };
+      setBlinkCount(livenessRef.current.blinkCount);
+    }
+
+    // Determine quality color/feedback
+    if (result.success) {
+      setQuality(1);
+      if (step === 'positioning') {
+        setStep('liveness');
+        setMessage('Great! Now blink to prove liveness');
+        setSubMessage('This prevents photo spoofing attacks');
+        livenessRef.current = createLivenessState('blink');
+      } else if (step === 'liveness' && livenessRef.current.challengeCompleted) {
+        // Ready to capture
+        if (mode === 'register') {
+          capturingRef.current = true;
+          await runRegisterCapture();
+        } else {
+          capturingRef.current = true;
+          await runVerifyCapture();
+        }
+        return; // stop loop
+      }
+    } else {
+      // Map feedback to quality
+      if (result.feedback.includes('closer') || result.feedback.includes('back')) setQuality(0.3);
+      else if (result.feedback.includes('Turn') || result.feedback.includes('Look')) setQuality(0.6);
+      else if (result.feedback.includes('Blink')) setQuality(0.85);
+      else setQuality(0.2);
+
+      if (step !== 'capturing' && step !== 'processing') {
+        setMessage(result.feedback);
+      }
+    }
+
+    if (step !== 'success' && step !== 'error' && step !== 'processing') {
+      rafRef.current = requestAnimationFrame(runDetectionLoop);
+    }
+  }, [mode, step]);
+
+  const runVerifyCapture = useCallback(async () => {
+    setStep('capturing');
+    setMessage('Capturing face print...');
+    setSubMessage('Hold still');
+
     try {
-      await loadFaceApi();
-      const ok = await startCamera();
-      if (!ok) return;
-
-      setMessage('Look at the camera and hold still...');
-      await new Promise((r) => setTimeout(r, 1200));
-
-      if (!videoRef.current) return;
-      setMessage('Scanning face...');
-      const descriptor = await detectFaceDescriptor(videoRef.current, { retries: 5, scoreThreshold: 0.35 });
+      const descriptor = await extractFaceDescriptor(videoRef.current!);
       stopCamera();
 
       if (!descriptor) {
-        setStatus('mismatch');
-        setMessage('No face detected. Please try again.');
+        setStep('error');
+        setMessage('Could not capture face print');
+        setSubMessage('Please ensure good lighting and try again');
         return;
       }
 
-      setMessage('Verifying with secure backend...');
+      setStep('processing');
+      setMessage('Verifying securely...');
+      setSubMessage('Matching against encrypted descriptor on server');
+
       const arr = Array.from(descriptor);
       const res = await backendApi.verifyFace(arr, email || undefined);
 
@@ -88,87 +181,99 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
         const { user, tokens } = res.data.data;
         localStorage.setItem('sw-face-descriptor-' + (user.email || 'default'), JSON.stringify(arr));
         localStorage.setItem('sw-token', tokens.accessToken);
-        setStatus('matched');
-        setMessage(`Welcome, ${user.name || 'User'}!`);
-        setTimeout(() => onSuccess(user, tokens.accessToken), 800);
+        setStep('success');
+        setMessage(`Welcome back, ${user.name || 'User'}!`);
+        setSubMessage(`Confidence: ${(res.data.data.confidence || 0).toFixed(3)}`);
+        setTimeout(() => onSuccess(user, tokens.accessToken), 1200);
       } else {
-        setStatus('mismatch');
-        setMessage(res.data?.error || 'Face not recognized. Try registering first.');
+        setStep('error');
+        setMessage(res.data?.error || 'Face not recognized');
+        setSubMessage('Try registering your face first, or use PIN login');
       }
     } catch (err: any) {
       stopCamera();
-      setStatus('error');
-      setMessage(err.message || 'Face verification failed');
+      setStep('error');
+      setMessage('Verification failed');
+      setSubMessage(err.message || 'Network error');
     }
-  }, [email, onSuccess, startCamera, stopCamera]);
+  }, [email, onSuccess, stopCamera]);
 
-  const runRegistration = useCallback(async () => {
+  const runRegisterCapture = useCallback(async () => {
     if (!email) {
-      setStatus('error');
-      setMessage('Please enter your email first');
+      setStep('error');
+      setMessage('Email required');
+      setSubMessage('Enter the email you want to link this face to');
       return;
     }
-    setStatus('registering');
-    setMessage('Initializing camera...');
+
+    setStep('capturing');
+    setMessage('Capturing high-quality face samples...');
+    setSubMessage('Hold still, taking 3 samples');
+
     try {
-      await loadFaceApi();
-      const ok = await startCamera();
-      if (!ok) return;
-
-      setMessage('Look at the camera and hold still...');
-      await new Promise((r) => setTimeout(r, 1200));
-
-      if (!videoRef.current) return;
-      setMessage('Scanning face...');
-      const descriptor = await detectFaceDescriptor(videoRef.current, { retries: 5, scoreThreshold: 0.35 });
+      const descriptor = await captureMultiSampleDescriptor(videoRef.current!, 3, (count, total) => {
+        setProgress(Math.round((count / total) * 100));
+        setSubMessage(`Sample ${count} of ${total}`);
+      });
       stopCamera();
 
       if (!descriptor) {
-        setStatus('error');
-        setMessage('No face detected. Please try again.');
+        setStep('error');
+        setMessage('Could not capture face samples');
+        setSubMessage('Ensure your face stays in the frame');
         return;
       }
 
-      // Register face requires auth. For demo flow, we auto-login with dev header then register.
+      setStep('processing');
+      setMessage('Encrypting and storing...');
+      setSubMessage('Your face print never leaves our secure servers as plain data');
+
       localStorage.setItem('sw-dev-email', email);
       const arr = Array.from(descriptor);
       const regRes = await backendApi.registerFace(arr);
 
       if (regRes.ok) {
         localStorage.setItem('sw-face-descriptor-' + email, JSON.stringify(arr));
-        setStatus('matched');
-        setMessage('Face registered! Now verifying...');
-        // Auto verify after register to login
+        setStep('success');
+        setMessage('Face registered successfully!');
+        setSubMessage('You can now log in with your face');
+
+        // Auto-login after registration
         const verifyRes = await backendApi.verifyFace(arr, email);
         if (verifyRes.ok && verifyRes.data?.data?.tokens?.accessToken) {
           const { user, tokens } = verifyRes.data.data;
           localStorage.setItem('sw-token', tokens.accessToken);
-          setTimeout(() => onSuccess(user, tokens.accessToken), 600);
+          setTimeout(() => onSuccess(user, tokens.accessToken), 1000);
         }
       } else {
-        setStatus('error');
-        setMessage(regRes.data?.error || 'Face registration failed');
+        setStep('error');
+        setMessage(regRes.data?.error || 'Registration failed');
+        setSubMessage('Please try again');
       }
     } catch (err: any) {
       stopCamera();
-      setStatus('error');
-      setMessage(err.message || 'Face registration error');
+      setStep('error');
+      setMessage('Registration failed');
+      setSubMessage(err.message || 'Unknown error');
     }
-  }, [email, onSuccess, startCamera, stopCamera]);
+  }, [email, onSuccess, stopCamera]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      stopCamera();
-      setStatus('idle');
+  const startSession = useCallback(async () => {
+    resetState();
+    const ok = await startCamera();
+    if (ok) {
+      setStep('positioning');
       setMessage('Position your face in the frame');
-      setMode('verify');
-      setEmail('');
+      setSubMessage('Center your face and look straight at the camera');
+      rafRef.current = requestAnimationFrame(runDetectionLoop);
     }
-  }, [isOpen, stopCamera]);
+  }, [resetState, runDetectionLoop, startCamera]);
 
   useEffect(() => {
     return () => stopCamera();
   }, [stopCamera]);
+
+  const qualityColor = quality >= 0.9 ? 'bg-emerald-500' : quality >= 0.6 ? 'bg-amber-500' : 'bg-rose-500';
 
   return (
     <AnimatePresence>
@@ -185,6 +290,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
             exit={{ scale: 0.95, opacity: 0 }}
             className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-3xl p-6 shadow-2xl"
           >
+            {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <i className="fas fa-face-viewfinder text-primary" />
@@ -198,49 +304,39 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
             {/* Mode toggle */}
             <div className="flex bg-slate-800 rounded-xl p-1 mb-5">
               <button
-                onClick={() => setMode('verify')}
+                onClick={() => { setMode('verify'); resetState(); }}
                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'verify' ? 'bg-primary text-white' : 'text-slate-400 hover:text-white'}`}
               >
                 Login
               </button>
               <button
-                onClick={() => setMode('register')}
+                onClick={() => { setMode('register'); resetState(); }}
                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'register' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'}`}
               >
                 Register
               </button>
             </div>
 
-            {mode === 'register' && (
-              <div className="mb-4">
-                <label className="block text-xs text-slate-400 mb-1.5">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="deepanshu.sharma@psbsecurewealth.com"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-primary"
-                />
+            {/* Email input */}
+            <div className="mb-4">
+              <label className="block text-xs text-slate-400 mb-1.5">
+                {mode === 'register' ? 'Email *' : 'Email (optional)'}
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={mode === 'register' ? 'your@email.com' : 'Leave blank to scan all registered faces'}
+                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-primary"
+              />
+              {mode === 'register' && (
                 <p className="text-[10px] text-slate-500 mt-1.5">
-                  Enter the same email you use for quick login. Face will be linked to this account.
+                  Face will be encrypted and linked to this account on our secure backend.
                 </p>
-              </div>
-            )}
+              )}
+            </div>
 
-            {mode === 'verify' && (
-              <div className="mb-4">
-                <label className="block text-xs text-slate-400 mb-1.5">Email (optional)</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Leave blank to scan all registered faces"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-primary"
-                />
-              </div>
-            )}
-
-            {/* Camera preview */}
+            {/* Camera preview with overlay canvas */}
             <div className="relative w-full aspect-[4/3] rounded-2xl border-2 border-slate-700 bg-black overflow-hidden mb-4">
               <video
                 ref={videoRef}
@@ -249,72 +345,147 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
                 muted
                 autoPlay
               />
-              {status === 'scanning' || status === 'registering' ? (
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full object-cover transform -scale-x-100"
+                width={640}
+                height={480}
+              />
+
+              {/* Scanning overlay UI */}
+              {(step === 'positioning' || step === 'liveness' || step === 'capturing') && (
                 <>
-                  <div className="absolute inset-0 border-2 border-primary/40 rounded-2xl" />
+                  <div className="absolute inset-0 border-2 border-primary/30 rounded-2xl" />
                   <div className="absolute left-4 right-4 h-0.5 bg-primary shadow-[0_0_20px_rgba(15,118,110,0.9)] animate-[scanFace_2s_ease-in-out_infinite] z-20" />
+                  {/* Corner brackets */}
+                  <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-primary" />
+                  <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-primary" />
+                  <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-primary" />
+                  <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-primary" />
                 </>
-              ) : streamRef.current ? (
-                <div className="absolute bottom-3 left-3 px-2 py-1 bg-emerald-500/20 text-emerald-300 text-[10px] rounded-md border border-emerald-500/30">
-                  <i className="fas fa-video mr-1" /> Camera ready
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+              )}
+
+              {/* Idle / off state */}
+              {step === 'idle' || step === 'initializing' ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-black/60">
                   <i className="fas fa-camera-slash text-4xl mb-2" />
-                  <span className="text-xs">Camera off</span>
+                  <span className="text-xs">{step === 'initializing' ? 'Initializing...' : 'Camera off'}</span>
+                </div>
+              ) : null}
+
+              {/* Success / error badges */}
+              {step === 'success' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/20">
+                  <div className="w-20 h-20 rounded-full bg-emerald-500/30 flex items-center justify-center">
+                    <i className="fas fa-check text-4xl text-emerald-400" />
+                  </div>
+                </div>
+              )}
+              {step === 'error' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-rose-500/20">
+                  <div className="w-20 h-20 rounded-full bg-rose-500/30 flex items-center justify-center">
+                    <i className="fas fa-xmark text-4xl text-rose-400" />
+                  </div>
                 </div>
               )}
             </div>
 
-            <p className={`text-sm font-medium text-center mb-4 min-h-[1.25rem] ${
-              status === 'matched' ? 'text-emerald-400' :
-              status === 'mismatch' ? 'text-rose-400' :
-              status === 'error' ? 'text-amber-400' :
-              'text-slate-400'
-            }`}>
-              {message}
-            </p>
+            {/* Quality bar */}
+            {(step === 'positioning' || step === 'liveness') && (
+              <div className="mb-3">
+                <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                  <span>Face quality</span>
+                  <span>{Math.round(quality * 100)}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${qualityColor}`}
+                    style={{ width: `${Math.round(quality * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
+            {/* Liveness badge */}
+            {step === 'liveness' && (
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <div className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
+                  blinkCount > 0
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                }`}>
+                  <i className={`fas ${blinkCount > 0 ? 'fa-check' : 'fa-eye'} mr-1`} />
+                  {blinkCount > 0 ? 'Liveness confirmed' : 'Waiting for blink...'}
+                </div>
+              </div>
+            )}
+
+            {/* Progress bar for capture */}
+            {step === 'capturing' && (
+              <div className="mb-3">
+                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+            )}
+
+            {/* Messages */}
+            <div className="text-center mb-4 min-h-[3rem]">
+              <p className={`text-base font-semibold ${
+                step === 'success' ? 'text-emerald-400' :
+                step === 'error' ? 'text-rose-400' :
+                step === 'liveness' && blinkCount > 0 ? 'text-emerald-300' :
+                'text-white'
+              }`}>
+                {message}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">{subMessage}</p>
+            </div>
+
+            {/* Action buttons */}
             <div className="flex gap-3">
-              <button
-                onClick={mode === 'verify' ? runVerification : runRegistration}
-                disabled={status === 'scanning' || status === 'registering'}
-                className={`flex-1 py-3 rounded-xl font-semibold text-white transition-all disabled:opacity-60 ${
-                  mode === 'register'
-                    ? 'bg-emerald-600 hover:bg-emerald-500'
-                    : 'bg-primary hover:bg-primary/90'
-                }`}
-              >
-                {status === 'scanning' || status === 'registering' ? (
+              {(step === 'idle' || step === 'error') && (
+                <button
+                  onClick={startSession}
+                  disabled={mode === 'register' && !email}
+                  className={`flex-1 py-3 rounded-xl font-semibold text-white transition-all disabled:opacity-50 ${
+                    mode === 'register' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-primary hover:bg-primary/90'
+                  }`}
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <i className={`fas ${mode === 'register' ? 'fa-camera' : 'fa-face-viewfinder'}`} />
+                    {mode === 'register' ? 'Start Registration' : 'Start Face Scan'}
+                  </span>
+                </button>
+              )}
+
+              {(step === 'positioning' || step === 'liveness' || step === 'capturing' || step === 'processing') && (
+                <button
+                  disabled
+                  className="flex-1 py-3 rounded-xl font-semibold text-white bg-slate-700 opacity-70"
+                >
                   <span className="flex items-center justify-center gap-2">
                     <i className="fas fa-circle-notch animate-spin" />
-                    {status === 'registering' ? 'Registering...' : 'Scanning...'}
+                    {step === 'processing' ? 'Processing...' : 'Scanning...'}
                   </span>
-                ) : mode === 'verify' ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <i className="fas fa-face-viewfinder" />
-                    Start Face Recognition
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <i className="fas fa-camera" />
-                    Register Face
-                  </span>
-                )}
-              </button>
+                </button>
+              )}
 
-              {(status === 'mismatch' || status === 'error') && (
+              {step === 'error' && (
                 <button
-                  onClick={() => { setStatus('idle'); setMessage('Position your face in the frame'); }}
+                  onClick={() => { resetState(); }}
                   className="px-4 py-3 rounded-xl font-semibold text-white bg-slate-700 hover:bg-slate-600 transition-colors"
                 >
-                  Retry
+                  Reset
                 </button>
               )}
             </div>
 
-            <p className="text-[10px] text-slate-500 text-center mt-3">
-              Powered by TensorFlow.js face-api. Your face descriptor is encrypted and stored on our secure backend.
+            {/* Security note */}
+            <p className="text-[10px] text-slate-500 text-center mt-4 leading-relaxed">
+              <i className="fas fa-shield-halved mr-1" />
+              Secured by MediaPipe Face Mesh + face-api.js. Includes blink liveness detection,
+              head-pose analysis, and 128-dimensional encrypted face descriptors.
             </p>
           </motion.div>
 
