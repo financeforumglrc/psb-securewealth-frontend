@@ -35,11 +35,19 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   const livenessRef = useRef<LivenessState>(createLivenessState('blink'));
   const stepRef = useRef<Step>('idle');
   const emailRef = useRef('');
-  const rafRef = useRef<number>(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const processingRef = useRef(false);
   const capturingRef = useRef(false);
 
+  // Keep refs in sync with latest state so interval callbacks never see stale values
+  useEffect(() => { stepRef.current = step; }, [step]);
+  useEffect(() => { emailRef.current = email; }, [email]);
+
   const stopCamera = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
@@ -57,14 +65,12 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     setBlinkCount(0);
     livenessRef.current = createLivenessState('blink');
     capturingRef.current = false;
+    processingRef.current = false;
   }, [stopCamera]);
 
   useEffect(() => {
     if (!isOpen) resetState();
   }, [isOpen, resetState]);
-
-  useEffect(() => { stepRef.current = step; }, [step]);
-  useEffect(() => { emailRef.current = email; }, [email]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -81,7 +87,6 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-        // Wait until video dimensions are available
         await new Promise<void>((resolve, reject) => {
           const timer = setTimeout(() => reject(new Error('Camera warmup timeout')), 5000);
           const check = () => {
@@ -104,60 +109,6 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       return false;
     }
   }, []);
-
-  const runDetectionLoop = useCallback(async () => {
-    if (!videoRef.current || capturingRef.current) return;
-
-    const result = await processFrame(videoRef.current, livenessRef.current, {
-      requireChallenge: stepRef.current === 'liveness',
-      drawCanvas: canvasRef.current || undefined,
-    });
-
-    // Update liveness ref with actual new state returned from processFrame
-    if (result.livenessState) {
-      livenessRef.current = result.livenessState;
-      setBlinkCount(result.livenessState.blinkCount);
-    }
-
-    const currentStep = stepRef.current;
-
-    // Determine quality color/feedback
-    if (result.success) {
-      setQuality(1);
-      if (currentStep === 'positioning') {
-        setStep('liveness');
-        setMessage('Great! Now blink to prove liveness');
-        setSubMessage('This prevents photo spoofing attacks');
-        livenessRef.current = createLivenessState('blink');
-      } else if (currentStep === 'liveness' && livenessRef.current.challengeCompleted) {
-        // Ready to capture
-        if (mode === 'register') {
-          capturingRef.current = true;
-          await runRegisterCapture();
-        } else {
-          capturingRef.current = true;
-          await runVerifyCapture();
-        }
-        return; // stop loop
-      }
-    } else {
-      // Map feedback to quality
-      if (result.feedback.includes('closer') || result.feedback.includes('back')) setQuality(0.3);
-      else if (result.feedback.includes('Turn') || result.feedback.includes('Look')) setQuality(0.6);
-      else if (result.feedback.includes('Blink')) setQuality(0.85);
-      else if (result.feedback.includes('perfectly')) setQuality(1);
-      else setQuality(0.2);
-
-      if (currentStep !== 'capturing' && currentStep !== 'processing') {
-        setMessage(result.feedback);
-      }
-    }
-
-    const nextStep = stepRef.current;
-    if (nextStep !== 'success' && nextStep !== 'error' && nextStep !== 'processing') {
-      rafRef.current = requestAnimationFrame(runDetectionLoop);
-    }
-  }, [mode]);
 
   const runVerifyCapture = useCallback(async () => {
     setStep('capturing');
@@ -245,7 +196,6 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
         setMessage('Face registered successfully!');
         setSubMessage('You can now log in with your face');
 
-        // Auto-login after registration
         const verifyRes = await backendApi.verifyFace(arr, latestEmail);
         if (verifyRes.ok && verifyRes.data?.data?.tokens?.accessToken) {
           const { user, tokens } = verifyRes.data.data;
@@ -265,6 +215,72 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     }
   }, [onSuccess, stopCamera]);
 
+  // Use refs for capture functions so runDetectionLoop never captures stale closures
+  const runVerifyCaptureRef = useRef(runVerifyCapture);
+  const runRegisterCaptureRef = useRef(runRegisterCapture);
+  useEffect(() => { runVerifyCaptureRef.current = runVerifyCapture; }, [runVerifyCapture]);
+  useEffect(() => { runRegisterCaptureRef.current = runRegisterCapture; }, [runRegisterCapture]);
+
+  const runDetectionLoop = useCallback(async () => {
+    if (!videoRef.current || capturingRef.current || processingRef.current) return;
+    processingRef.current = true;
+
+    try {
+      const result = await processFrame(videoRef.current, livenessRef.current, {
+        requireChallenge: stepRef.current === 'liveness',
+        drawCanvas: canvasRef.current || undefined,
+      });
+
+      // Ignore superseded frames from overlapping calls
+      if (result.feedback === 'Superseded by newer frame') return;
+
+      if (result.livenessState) {
+        livenessRef.current = result.livenessState;
+        setBlinkCount(result.livenessState.blinkCount);
+      }
+
+      const currentStep = stepRef.current;
+
+      if (result.success) {
+        setQuality(1);
+        if (currentStep === 'positioning') {
+          setStep('liveness');
+          setMessage('Great! Now blink to prove liveness');
+          setSubMessage('This prevents photo spoofing attacks');
+          livenessRef.current = createLivenessState('blink');
+        }
+      }
+
+      // CRITICAL FIX: Once liveness challenge is completed, proceed to capture
+      // immediately regardless of whether the current frame also passes positioning.
+      // This prevents the user from getting stuck because they moved slightly after blinking.
+      if (currentStep === 'liveness' && livenessRef.current.challengeCompleted) {
+        capturingRef.current = true;
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        if (mode === 'register') {
+          await runRegisterCaptureRef.current();
+        } else {
+          await runVerifyCaptureRef.current();
+        }
+        return;
+      }
+
+      if (!result.success && currentStep !== 'capturing' && currentStep !== 'processing') {
+        setMessage(result.feedback);
+        if (result.feedback.includes('closer') || result.feedback.includes('back')) setQuality(0.3);
+        else if (result.feedback.includes('Turn') || result.feedback.includes('Look')) setQuality(0.6);
+        else if (result.feedback.includes('Blink')) setQuality(0.85);
+        else if (result.feedback.includes('perfectly')) setQuality(1);
+        else setQuality(0.2);
+      }
+    } finally {
+      processingRef.current = false;
+    }
+  }, [mode]);
+
   const startSession = useCallback(async () => {
     resetState();
     const ok = await startCamera();
@@ -272,12 +288,16 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       setStep('positioning');
       setMessage('Position your face in the frame');
       setSubMessage('Center your face and look straight at the camera');
-      rafRef.current = requestAnimationFrame(runDetectionLoop);
+      // Throttle to ~8 fps — gives MediaPipe time to process without queue buildup
+      intervalRef.current = setInterval(runDetectionLoop, 120);
     }
   }, [resetState, runDetectionLoop, startCamera]);
 
   useEffect(() => {
-    return () => stopCamera();
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      stopCamera();
+    };
   }, [stopCamera]);
 
   const qualityColor = quality >= 0.9 ? 'bg-emerald-500' : quality >= 0.6 ? 'bg-amber-500' : 'bg-rose-500';
@@ -364,7 +384,6 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
                 <>
                   <div className="absolute inset-0 border-2 border-primary/30 rounded-2xl" />
                   <div className="absolute left-4 right-4 h-0.5 bg-primary shadow-[0_0_20px_rgba(15,118,110,0.9)] animate-[scanFace_2s_ease-in-out_infinite] z-20" />
-                  {/* Corner brackets */}
                   <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-primary" />
                   <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-primary" />
                   <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-primary" />
