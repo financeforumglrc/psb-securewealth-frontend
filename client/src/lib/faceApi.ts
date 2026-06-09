@@ -4,7 +4,7 @@
  */
 
 const FACE_API_CDN = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js';
-const MODELS_CDN = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+const MODELS_CDN = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
 export type FaceApiInstance = any;
 
