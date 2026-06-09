@@ -29,6 +29,9 @@ jobs:
         env:
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
+      - name: Copy index.html to 200.html for SPA routing
+        run: cp dist/index.html dist/200.html
+
       - name: Deploy to Surge
         uses: dswistowski/surge-sh-action@v1
         with:
