@@ -27,18 +27,33 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
 
   const startCamera = useCallback(async () => {
     try {
+      setMessage('Requesting camera access...');
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 640, height: 480 }
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
       });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
+        // Wait until video dimensions are available
+        await new Promise<void>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error('Camera warmup timeout')), 5000);
+          const check = () => {
+            if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.readyState >= 3) {
+              clearTimeout(timer);
+              resolve();
+            } else {
+              setTimeout(check, 100);
+            }
+          };
+          check();
+        });
       }
       return true;
-    } catch {
+    } catch (err: any) {
+      console.error('[FaceLogin] Camera error:', err);
       setStatus('error');
-      setMessage('Camera access denied. Please allow camera permission.');
+      setMessage(err.name === 'NotAllowedError' ? 'Camera access denied. Please allow camera permission.' : 'Camera error: ' + (err.message || 'Unable to start'));
       return false;
     }
   }, []);
@@ -51,11 +66,12 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       const ok = await startCamera();
       if (!ok) return;
 
-      setMessage('Look at the camera...');
-      await new Promise((r) => setTimeout(r, 900));
+      setMessage('Look at the camera and hold still...');
+      await new Promise((r) => setTimeout(r, 1200));
 
       if (!videoRef.current) return;
-      const descriptor = await detectFaceDescriptor(videoRef.current);
+      setMessage('Scanning face...');
+      const descriptor = await detectFaceDescriptor(videoRef.current, { retries: 5, scoreThreshold: 0.35 });
       stopCamera();
 
       if (!descriptor) {
@@ -99,11 +115,12 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       const ok = await startCamera();
       if (!ok) return;
 
-      setMessage('Look at the camera to capture your face...');
-      await new Promise((r) => setTimeout(r, 900));
+      setMessage('Look at the camera and hold still...');
+      await new Promise((r) => setTimeout(r, 1200));
 
       if (!videoRef.current) return;
-      const descriptor = await detectFaceDescriptor(videoRef.current);
+      setMessage('Scanning face...');
+      const descriptor = await detectFaceDescriptor(videoRef.current, { retries: 5, scoreThreshold: 0.35 });
       stopCamera();
 
       if (!descriptor) {
@@ -237,6 +254,10 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
                   <div className="absolute inset-0 border-2 border-primary/40 rounded-2xl" />
                   <div className="absolute left-4 right-4 h-0.5 bg-primary shadow-[0_0_20px_rgba(15,118,110,0.9)] animate-[scanFace_2s_ease-in-out_infinite] z-20" />
                 </>
+              ) : streamRef.current ? (
+                <div className="absolute bottom-3 left-3 px-2 py-1 bg-emerald-500/20 text-emerald-300 text-[10px] rounded-md border border-emerald-500/30">
+                  <i className="fas fa-video mr-1" /> Camera ready
+                </div>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
                   <i className="fas fa-camera-slash text-4xl mb-2" />
@@ -254,32 +275,43 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
               {message}
             </p>
 
-            <button
-              onClick={mode === 'verify' ? runVerification : runRegistration}
-              disabled={status === 'scanning' || status === 'registering'}
-              className={`w-full py-3 rounded-xl font-semibold text-white transition-all disabled:opacity-60 ${
-                mode === 'register'
-                  ? 'bg-emerald-600 hover:bg-emerald-500'
-                  : 'bg-primary hover:bg-primary/90'
-              }`}
-            >
-              {status === 'scanning' || status === 'registering' ? (
-                <span className="flex items-center justify-center gap-2">
-                  <i className="fas fa-circle-notch animate-spin" />
-                  {status === 'registering' ? 'Registering...' : 'Scanning...'}
-                </span>
-              ) : mode === 'verify' ? (
-                <span className="flex items-center justify-center gap-2">
-                  <i className="fas fa-face-viewfinder" />
-                  Start Face Recognition
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <i className="fas fa-camera" />
-                  Register Face
-                </span>
+            <div className="flex gap-3">
+              <button
+                onClick={mode === 'verify' ? runVerification : runRegistration}
+                disabled={status === 'scanning' || status === 'registering'}
+                className={`flex-1 py-3 rounded-xl font-semibold text-white transition-all disabled:opacity-60 ${
+                  mode === 'register'
+                    ? 'bg-emerald-600 hover:bg-emerald-500'
+                    : 'bg-primary hover:bg-primary/90'
+                }`}
+              >
+                {status === 'scanning' || status === 'registering' ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <i className="fas fa-circle-notch animate-spin" />
+                    {status === 'registering' ? 'Registering...' : 'Scanning...'}
+                  </span>
+                ) : mode === 'verify' ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <i className="fas fa-face-viewfinder" />
+                    Start Face Recognition
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <i className="fas fa-camera" />
+                    Register Face
+                  </span>
+                )}
+              </button>
+
+              {(status === 'mismatch' || status === 'error') && (
+                <button
+                  onClick={() => { setStatus('idle'); setMessage('Position your face in the frame'); }}
+                  className="px-4 py-3 rounded-xl font-semibold text-white bg-slate-700 hover:bg-slate-600 transition-colors"
+                >
+                  Retry
+                </button>
               )}
-            </button>
+            </div>
 
             <p className="text-[10px] text-slate-500 text-center mt-3">
               Powered by TensorFlow.js face-api. Your face descriptor is encrypted and stored on our secure backend.

@@ -21,10 +21,11 @@ async function sleep(ms: number) {
   return new Promise(r => setTimeout(r, ms));
 }
 
-async function fetchJson(path: string, options?: RequestInit, attempt = 1): Promise<{ ok: boolean; status: number; data: any }> {
+async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: number }, attempt = 1): Promise<{ ok: boolean; status: number; data: any }> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+    const timeoutMs = options?.timeoutMs || 3000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const res = await fetch(`${API_BASE}${path}`, {
       ...options,
       signal: controller.signal,
@@ -216,11 +217,12 @@ export const backendApi = {
     return fetchJson('/banking/seed', { method: 'POST' });
   },
 
-  // Face biometric auth
+  // Face biometric auth (longer timeout for slow Render cold start)
   async registerFace(descriptor: number[]) {
     return fetchJson('/auth/face-register', {
       method: 'POST',
       body: JSON.stringify({ descriptor }),
+      timeoutMs: 15000,
     });
   },
 
@@ -228,6 +230,7 @@ export const backendApi = {
     return fetchJson('/auth/face-verify', {
       method: 'POST',
       body: JSON.stringify({ descriptor, email }),
+      timeoutMs: 15000,
     });
   },
 };
