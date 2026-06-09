@@ -34,6 +34,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   const streamRef = useRef<MediaStream | null>(null);
   const livenessRef = useRef<LivenessState>(createLivenessState('blink'));
   const stepRef = useRef<Step>('idle');
+  const emailRef = useRef('');
   const rafRef = useRef<number>(0);
   const capturingRef = useRef(false);
 
@@ -62,9 +63,8 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     if (!isOpen) resetState();
   }, [isOpen, resetState]);
 
-  useEffect(() => {
-    stepRef.current = step;
-  }, [step]);
+  useEffect(() => { stepRef.current = step; }, [step]);
+  useEffect(() => { emailRef.current = email; }, [email]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -180,7 +180,8 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       setSubMessage('Matching against encrypted descriptor on server');
 
       const arr = Array.from(descriptor);
-      const res = await backendApi.verifyFace(arr, email || undefined);
+      const latestEmail = emailRef.current;
+      const res = await backendApi.verifyFace(arr, latestEmail || undefined);
 
       if (res.ok && res.data?.data?.tokens?.accessToken) {
         const { user, tokens } = res.data.data;
@@ -201,10 +202,11 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       setMessage('Verification failed');
       setSubMessage(err.message || 'Network error');
     }
-  }, [email, onSuccess, stopCamera]);
+  }, [onSuccess, stopCamera]);
 
   const runRegisterCapture = useCallback(async () => {
-    if (!email) {
+    const latestEmail = emailRef.current;
+    if (!latestEmail) {
       setStep('error');
       setMessage('Email required');
       setSubMessage('Enter the email you want to link this face to');
@@ -233,18 +235,18 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       setMessage('Encrypting and storing...');
       setSubMessage('Your face print never leaves our secure servers as plain data');
 
-      localStorage.setItem('sw-dev-email', email);
+      localStorage.setItem('sw-dev-email', latestEmail);
       const arr = Array.from(descriptor);
       const regRes = await backendApi.registerFace(arr);
 
       if (regRes.ok) {
-        localStorage.setItem('sw-face-descriptor-' + email, JSON.stringify(arr));
+        localStorage.setItem('sw-face-descriptor-' + latestEmail, JSON.stringify(arr));
         setStep('success');
         setMessage('Face registered successfully!');
         setSubMessage('You can now log in with your face');
 
         // Auto-login after registration
-        const verifyRes = await backendApi.verifyFace(arr, email);
+        const verifyRes = await backendApi.verifyFace(arr, latestEmail);
         if (verifyRes.ok && verifyRes.data?.data?.tokens?.accessToken) {
           const { user, tokens } = verifyRes.data.data;
           localStorage.setItem('sw-token', tokens.accessToken);
@@ -261,7 +263,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       setMessage('Registration failed');
       setSubMessage(err.message || 'Unknown error');
     }
-  }, [email, onSuccess, stopCamera]);
+  }, [onSuccess, stopCamera]);
 
   const startSession = useCallback(async () => {
     resetState();
