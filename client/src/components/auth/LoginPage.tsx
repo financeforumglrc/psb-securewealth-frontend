@@ -14,6 +14,7 @@ import { checkPasswordStrength, getStrengthColor, getStrengthTextColor } from '.
 import { useWealthStore } from '../../store/wealthStore';
 import { backendApi } from '../../lib/backendApi';
 import { DEMO_ACCOUNTS } from '../../data/userProfiles';
+import FaceLoginModal from './FaceLoginModal';
 
 export default function LoginPage() {
   const { state, dispatch } = useAuth();
@@ -28,6 +29,7 @@ export default function LoginPage() {
   const [timer, setTimer] = useState(30);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [faceLoginOpen, setFaceLoginOpen] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(false);
   const [locationStatus, setLocationStatus] = useState<'checking' | 'trusted' | 'untrusted' | 'denied' | null>(null);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
@@ -489,8 +491,19 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* Face Login */}
+        <div className="mt-5">
+          <button
+            onClick={() => setFaceLoginOpen(true)}
+            className="w-full py-2.5 bg-gradient-to-r from-primary/90 to-secondary/90 text-white rounded-xl text-sm font-semibold hover:opacity-95 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+          >
+            <i className="fas fa-face-viewfinder" />
+            Login with Face
+          </button>
+        </div>
+
         {/* Demo Account Switcher */}
-        <div className="mt-6">
+        <div className="mt-5">
           <p className="text-xs text-slate-400 text-center mb-3 font-medium">
             <i className="fas fa-users mr-1" /> Quick Login — Select Account
           </p>
@@ -542,6 +555,17 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      <FaceLoginModal
+        isOpen={faceLoginOpen}
+        onClose={() => setFaceLoginOpen(false)}
+        onSuccess={(user, token) => {
+          backendApi.setDevEmail(user.email);
+          localStorage.setItem('sw-token', token);
+          dispatch({ type: 'LOGIN', userId: user.id, userEmail: user.email });
+          setFaceLoginOpen(false);
+        }}
+      />
     </div>
   );
 }

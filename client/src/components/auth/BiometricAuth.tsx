@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
 import { useAuth } from '../../context/AuthContext';
+import { detectFaceDescriptor, loadFaceApi } from '../../lib/faceApi';
+import { backendApi } from '../../lib/backendApi';
 
 type AuthMode = 'fingerprint' | 'faceid' | 'pin';
 
@@ -14,13 +16,17 @@ export default function BiometricAuth() {
   const resetAuthLockout = useWealthStore((s) => s.resetAuthLockout);
   const userName = useWealthStore((s) => s.user?.name || 'Account Holder');
 
-  const [mode, setMode] = useState<AuthMode>('fingerprint');
+  const [mode, setMode] = useState<AuthMode>('faceid');
   const [scanning, setScanning] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [time, setTime] = useState(new Date());
   const [lockoutCountdown, setLockoutCountdown] = useState(0);
+  const [faceStatus, setFaceStatus] = useState<'idle' | 'loading' | 'register' | 'registering' | 'matched' | 'mismatch' | 'error'>('idle');
+  const [faceMessage, setFaceMessage] = useState('Start Face Recognition');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Clock
   useEffect(() => {
@@ -49,6 +55,32 @@ export default function BiometricAuth() {
     }
   }, []);
 
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }, []);
+
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 320, height: 240 } });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      return true;
+    } catch {
+      setFaceStatus('error');
+      setFaceMessage('Camera access denied. Use PIN instead.');
+      return false;
+    }
+  }, []);
+
   const handleFingerprint = useCallback(() => {
     if (scanning || unlocked) return;
     vibrate(50);
@@ -61,17 +93,118 @@ export default function BiometricAuth() {
     }, 1500);
   }, [scanning, unlocked, vibrate, authenticate]);
 
-  const handleFaceID = useCallback(() => {
+  const unlockSuccess = useCallback(() => {
+    setUnlocked(true);
+    vibrate([50, 100, 50]);
+    stopCamera();
+    setTimeout(() => authenticate(), 600);
+  }, [authenticate, stopCamera, vibrate]);
+
+  const handleFaceRegister = useCallback(async () => {
     if (scanning || unlocked) return;
+    setFaceStatus('registering');
+    setFaceMessage('Initializing camera...');
     vibrate(50);
+
+    try {
+      await loadFaceApi();
+      const ok = await startCamera();
+      if (!ok) return;
+
+      setFaceMessage('Look at the camera...');
+      // Wait for video to be ready and stable
+      await new Promise((r) => setTimeout(r, 800));
+
+      if (!videoRef.current) return;
+      const descriptor = await detectFaceDescriptor(videoRef.current);
+      stopCamera();
+
+      if (!descriptor) {
+        setFaceStatus('error');
+        setFaceMessage('No face detected. Try again.');
+        return;
+      }
+
+      const arr = Array.from(descriptor);
+      const res = await backendApi.registerFace(arr);
+      if (res.ok) {
+        // Cache locally for faster unlock next time
+        localStorage.setItem('sw-face-descriptor-' + (authState.userEmail || 'default'), JSON.stringify(arr));
+        setFaceStatus('matched');
+        setFaceMessage('Face registered successfully');
+        unlockSuccess();
+      } else {
+        setFaceStatus('error');
+        setFaceMessage(res.data?.error || 'Registration failed');
+      }
+    } catch (err: any) {
+      stopCamera();
+      setFaceStatus('error');
+      setFaceMessage(err.message || 'Face registration error');
+    }
+  }, [authState.userEmail, scanning, unlocked, startCamera, stopCamera, unlockSuccess, vibrate]);
+
+  const handleFaceVerify = useCallback(async () => {
+    if (scanning || unlocked) return;
     setScanning(true);
-    setTimeout(() => {
+    setFaceStatus('loading');
+    setFaceMessage('Initializing camera...');
+    vibrate(50);
+
+    try {
+      await loadFaceApi();
+      const ok = await startCamera();
+      if (!ok) {
+        setScanning(false);
+        return;
+      }
+
+      setFaceMessage('Look at the camera...');
+      await new Promise((r) => setTimeout(r, 800));
+
+      if (!videoRef.current) {
+        setScanning(false);
+        return;
+      }
+      const descriptor = await detectFaceDescriptor(videoRef.current);
+      stopCamera();
+
+      if (!descriptor) {
+        setScanning(false);
+        setFaceStatus('mismatch');
+        setFaceMessage('No face detected. Try again.');
+        incrementAuthAttempt();
+        return;
+      }
+
+      const arr = Array.from(descriptor);
+      const res = await backendApi.verifyFace(arr, authState.userEmail || undefined);
+      if (res.ok && res.data?.data?.tokens?.accessToken) {
+        setFaceStatus('matched');
+        setFaceMessage(`Welcome, ${res.data.data.user?.name || userName}`);
+        // Cache descriptor
+        localStorage.setItem('sw-face-descriptor-' + (authState.userEmail || 'default'), JSON.stringify(arr));
+        unlockSuccess();
+      } else {
+        setScanning(false);
+        setFaceStatus('mismatch');
+        setFaceMessage(res.data?.error || 'Face not recognized');
+        incrementAuthAttempt();
+      }
+    } catch (err: any) {
+      stopCamera();
       setScanning(false);
-      setUnlocked(true);
-      vibrate([50, 100, 50]);
-      setTimeout(() => authenticate(), 800);
-    }, 2000);
-  }, [scanning, unlocked, vibrate, authenticate]);
+      setFaceStatus('error');
+      setFaceMessage(err.message || 'Face verification error');
+    }
+  }, [authState.userEmail, incrementAuthAttempt, scanning, unlocked, startCamera, stopCamera, unlockSuccess, userName, vibrate]);
+
+  // Determine if face is already registered (local cache or backend)
+  const faceRegisteredLocally = !!localStorage.getItem('sw-face-descriptor-' + (authState.userEmail || 'default'));
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, [stopCamera]);
 
   const handlePinSubmit = useCallback(() => {
     if (pin.length !== 4) return;
@@ -86,7 +219,6 @@ export default function BiometricAuth() {
       incrementAuthAttempt();
       setTimeout(() => setPinError(false), 500);
       if (authAttempts >= 2) {
-        // 3rd wrong attempt (0-indexed attempts stored, this is the 3rd)
         useWealthStore.setState({ authLockoutUntil: Date.now() + 30000 });
       }
     }
@@ -169,7 +301,7 @@ export default function BiometricAuth() {
             ]).map((m) => (
               <button
                 key={m.key}
-                onClick={() => setMode(m.key)}
+                onClick={() => { setMode(m.key); stopCamera(); setFaceStatus('idle'); setFaceMessage('Start Face Recognition'); }}
                 className={`flex flex-col items-center gap-1 transition-all ${mode === m.key ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${mode === m.key ? 'bg-white/10' : ''}`}>
@@ -203,8 +335,15 @@ export default function BiometricAuth() {
 
           {/* Face ID */}
           {mode === 'faceid' && (
-            <div className="space-y-6">
-              <div className="relative w-40 h-48 mx-auto rounded-3xl border-2 border-white/10 bg-black/40 overflow-hidden flex items-center justify-center">
+            <div className="space-y-5">
+              <div className="relative w-44 h-52 mx-auto rounded-3xl border-2 border-white/10 bg-black/40 overflow-hidden flex items-center justify-center">
+                <video
+                  ref={videoRef}
+                  className="absolute inset-0 w-full h-full object-cover transform -scale-x-100"
+                  playsInline
+                  muted
+                  autoPlay
+                />
                 {scanning && (
                   <>
                     {/* Scan line */}
@@ -225,28 +364,54 @@ export default function BiometricAuth() {
                     </div>
                   </>
                 )}
-                {/* Face outline */}
-                <div className="relative z-0">
-                  <div className="w-20 h-24 rounded-[40%] border-2 border-white/20 flex items-center justify-center">
-                    <i className="fas fa-user text-3xl text-white/30" />
+                {!scanning && (
+                  <div className="relative z-0">
+                    <div className="w-20 h-24 rounded-[40%] border-2 border-white/20 flex items-center justify-center">
+                      <i className="fas fa-user text-3xl text-white/30" />
+                    </div>
+                    <div className="absolute top-7 left-5 w-3 h-3 rounded-full bg-white/20" />
+                    <div className="absolute top-7 right-5 w-3 h-3 rounded-full bg-white/20" />
                   </div>
-                  {/* Eyes */}
-                  <div className="absolute top-7 left-5 w-3 h-3 rounded-full bg-white/20" />
-                  <div className="absolute top-7 right-5 w-3 h-3 rounded-full bg-white/20" />
-                </div>
+                )}
                 {/* Corner brackets */}
                 <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-primary/60" />
                 <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-primary/60" />
                 <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-primary/60" />
                 <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-primary/60" />
               </div>
-              <button
-                onClick={handleFaceID}
-                disabled={scanning}
-                className="px-6 py-2.5 bg-white/10 rounded-xl text-sm font-medium hover:bg-white/20 transition-colors"
-              >
-                {scanning ? 'Recognizing...' : 'Start Face Recognition'}
-              </button>
+
+              <p className={`text-sm font-medium min-h-[1.25rem] ${
+                faceStatus === 'matched' ? 'text-emerald-400' :
+                faceStatus === 'mismatch' ? 'text-rose-400' :
+                faceStatus === 'error' ? 'text-amber-400' :
+                'text-slate-400'
+              }`}>
+                {faceMessage}
+              </p>
+
+              {!faceRegisteredLocally ? (
+                <button
+                  onClick={handleFaceRegister}
+                  disabled={scanning}
+                  className="px-6 py-2.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-sm font-medium hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                >
+                  {scanning ? 'Registering...' : 'Register Your Face'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleFaceVerify}
+                  disabled={scanning}
+                  className="px-6 py-2.5 bg-white/10 rounded-xl text-sm font-medium hover:bg-white/20 transition-colors disabled:opacity-50"
+                >
+                  {scanning ? 'Recognizing...' : 'Start Face Recognition'}
+                </button>
+              )}
+
+              <p className="text-[10px] text-slate-500">
+                {faceRegisteredLocally
+                  ? 'Face registered. Look at the camera to unlock.'
+                  : 'No face registered yet. Register once, then unlock with your face.'}
+              </p>
             </div>
           )}
 

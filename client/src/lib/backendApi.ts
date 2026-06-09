@@ -215,4 +215,19 @@ export const backendApi = {
   async seedData() {
     return fetchJson('/banking/seed', { method: 'POST' });
   },
+
+  // Face biometric auth
+  async registerFace(descriptor: number[]) {
+    return fetchJson('/auth/face-register', {
+      method: 'POST',
+      body: JSON.stringify({ descriptor }),
+    });
+  },
+
+  async verifyFace(descriptor: number[], email?: string) {
+    return fetchJson('/auth/face-verify', {
+      method: 'POST',
+      body: JSON.stringify({ descriptor, email }),
+    });
+  },
 };
