@@ -35,6 +35,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   const livenessRef = useRef<LivenessState>(createLivenessState('blink'));
   const stepRef = useRef<Step>('idle');
   const emailRef = useRef('');
+  const emailInputRef = useRef<HTMLInputElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const processingRef = useRef(false);
   const capturingRef = useRef(false);
@@ -58,6 +59,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   const resetState = useCallback(() => {
     stopCamera();
     setStep('idle');
+    stepRef.current = 'idle';
     setMessage('');
     setSubMessage('');
     setProgress(0);
@@ -75,6 +77,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   const startCamera = useCallback(async () => {
     try {
       setStep('initializing');
+      stepRef.current = 'initializing';
       setMessage('Initializing AI vision engine...');
       await initFaceAuthEngine();
 
@@ -104,6 +107,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     } catch (err: any) {
       console.error('[FaceLogin] Camera error:', err);
       setStep('error');
+      stepRef.current = 'error';
       setMessage(err.name === 'NotAllowedError' ? 'Camera access denied' : 'Unable to start camera');
       setSubMessage(err.message || 'Please check your camera permissions');
       return false;
@@ -112,6 +116,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
 
   const runVerifyCapture = useCallback(async () => {
     setStep('capturing');
+    stepRef.current = 'capturing';
     setMessage('Capturing face print...');
     setSubMessage('Hold still');
 
@@ -121,17 +126,19 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
 
       if (!descriptor) {
         setStep('error');
+        stepRef.current = 'error';
         setMessage('Could not capture face print');
         setSubMessage('Please ensure good lighting and try again');
         return;
       }
 
       setStep('processing');
+      stepRef.current = 'processing';
       setMessage('Verifying securely...');
       setSubMessage('Matching against encrypted descriptor on server');
 
       const arr = Array.from(descriptor);
-      const latestEmail = emailRef.current;
+      const latestEmail = emailInputRef.current?.value.trim() || emailRef.current;
       const res = await backendApi.verifyFace(arr, latestEmail || undefined);
 
       if (res.ok && res.data?.data?.tokens?.accessToken) {
@@ -139,32 +146,38 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
         localStorage.setItem('sw-face-descriptor-' + (user.email || 'default'), JSON.stringify(arr));
         localStorage.setItem('sw-token', tokens.accessToken);
         setStep('success');
+        stepRef.current = 'success';
         setMessage(`Welcome back, ${user.name || 'User'}!`);
         setSubMessage(`Confidence: ${(res.data.data.confidence || 0).toFixed(3)}`);
         setTimeout(() => onSuccess(user, tokens.accessToken), 1200);
       } else {
         setStep('error');
+        stepRef.current = 'error';
         setMessage(res.data?.error || 'Face not recognized');
         setSubMessage('Try registering your face first, or use PIN login');
       }
     } catch (err: any) {
       stopCamera();
       setStep('error');
+      stepRef.current = 'error';
       setMessage('Verification failed');
       setSubMessage(err.message || 'Network error');
     }
   }, [onSuccess, stopCamera]);
 
   const runRegisterCapture = useCallback(async () => {
-    const latestEmail = emailRef.current;
+    // CRITICAL: read directly from DOM input as primary source, fallback to ref
+    const latestEmail = emailInputRef.current?.value.trim() || emailRef.current;
     if (!latestEmail) {
       setStep('error');
+      stepRef.current = 'error';
       setMessage('Email required');
       setSubMessage('Enter the email you want to link this face to');
       return;
     }
 
     setStep('capturing');
+    stepRef.current = 'capturing';
     setMessage('Capturing high-quality face samples...');
     setSubMessage('Hold still, taking 3 samples');
 
@@ -177,12 +190,14 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
 
       if (!descriptor) {
         setStep('error');
+        stepRef.current = 'error';
         setMessage('Could not capture face samples');
         setSubMessage('Ensure your face stays in the frame');
         return;
       }
 
       setStep('processing');
+      stepRef.current = 'processing';
       setMessage('Encrypting and storing...');
       setSubMessage('Your face print never leaves our secure servers as plain data');
 
@@ -193,6 +208,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       if (regRes.ok) {
         localStorage.setItem('sw-face-descriptor-' + latestEmail, JSON.stringify(arr));
         setStep('success');
+        stepRef.current = 'success';
         setMessage('Face registered successfully!');
         setSubMessage('You can now log in with your face');
 
@@ -204,12 +220,14 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
         }
       } else {
         setStep('error');
+        stepRef.current = 'error';
         setMessage(regRes.data?.error || 'Registration failed');
         setSubMessage('Please try again');
       }
     } catch (err: any) {
       stopCamera();
       setStep('error');
+      stepRef.current = 'error';
       setMessage('Registration failed');
       setSubMessage(err.message || 'Unknown error');
     }
@@ -245,6 +263,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
         setQuality(1);
         if (currentStep === 'positioning') {
           setStep('liveness');
+          stepRef.current = 'liveness';
           setMessage('Great! Now blink to prove liveness');
           setSubMessage('This prevents photo spoofing attacks');
           livenessRef.current = createLivenessState('blink');
@@ -253,7 +272,6 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
 
       // CRITICAL FIX: Once liveness challenge is completed, proceed to capture
       // immediately regardless of whether the current frame also passes positioning.
-      // This prevents the user from getting stuck because they moved slightly after blinking.
       if (currentStep === 'liveness' && livenessRef.current.challengeCompleted) {
         capturingRef.current = true;
         if (intervalRef.current) {
@@ -282,10 +300,18 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   }, [mode]);
 
   const startSession = useCallback(async () => {
+    // Sync email from DOM to ref in case browser autofill bypassed React onChange
+    const domEmail = emailInputRef.current?.value.trim() || '';
+    if (domEmail) {
+      setEmail(domEmail);
+      emailRef.current = domEmail;
+    }
+
     resetState();
     const ok = await startCamera();
     if (ok) {
       setStep('positioning');
+      stepRef.current = 'positioning';
       setMessage('Position your face in the frame');
       setSubMessage('Center your face and look straight at the camera');
       // Throttle to ~8 fps — gives MediaPipe time to process without queue buildup
@@ -350,9 +376,15 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
                 {mode === 'register' ? 'Email *' : 'Email (optional)'}
               </label>
               <input
+                ref={emailInputRef}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onInput={(e) => {
+                  const val = e.currentTarget.value;
+                  setEmail(val);
+                  emailRef.current = val;
+                }}
                 placeholder={mode === 'register' ? 'your@email.com' : 'Leave blank to scan all registered faces'}
                 className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-primary"
               />
