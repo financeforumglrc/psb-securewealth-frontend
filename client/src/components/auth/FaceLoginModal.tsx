@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { initFaceAuthEngine, detectFace, euclideanDistance } from '../../lib/faceAuth';
+import { initFaceAuthEngine, detectFace } from '../../lib/faceAuth';
 import { backendApi } from '../../lib/backendApi';
 
 interface FaceLoginModalProps {
