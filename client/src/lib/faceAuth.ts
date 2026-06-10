@@ -57,12 +57,11 @@ let pendingFrame: PendingFrame | null = null;
 export async function initFaceAuthEngine(): Promise<void> {
   if (mpLoaded && faceApiLoaded) return;
 
-  await Promise.all([
-    loadScript(`${MEDIAPIPE_CDN}face_mesh.js`),
-    loadScript(`${MEDIAPIPE_CDN}camera_utils.js`),
-    loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.js'),
-  ]);
+  // Load MediaPipe face_mesh only — we use native getUserMedia, not camera_utils
+  await loadScript(`${MEDIAPIPE_CDN}face_mesh.js`);
+  await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.js');
 
+  // Load face-api.js for descriptor extraction
   if (!(window as any).faceapi) {
     await loadScript(FACE_API_CDN);
   }

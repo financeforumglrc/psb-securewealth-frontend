@@ -166,8 +166,22 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   }, [onSuccess, stopCamera]);
 
   const runRegisterCapture = useCallback(async () => {
-    // CRITICAL: read directly from DOM input as primary source, fallback to ref
-    const latestEmail = emailInputRef.current?.value.trim() || emailRef.current;
+    // Robust email resolution: DOM ref → React ref → document.querySelector → localStorage
+    const latestEmail =
+      emailInputRef.current?.value.trim() ||
+      emailRef.current ||
+      (document.querySelector('input[type="email"]') as HTMLInputElement | null)?.value.trim() ||
+      localStorage.getItem('sw-dev-email') ||
+      '';
+
+    console.log('[FaceLogin] runRegisterCapture email sources:', {
+      inputRef: emailInputRef.current?.value,
+      emailRef: emailRef.current,
+      domQuery: (document.querySelector('input[type="email"]') as HTMLInputElement | null)?.value,
+      localStorage: localStorage.getItem('sw-dev-email'),
+      resolved: latestEmail,
+    });
+
     if (!latestEmail) {
       setStep('error');
       stepRef.current = 'error';
@@ -249,7 +263,6 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
         drawCanvas: canvasRef.current || undefined,
       });
 
-      // Ignore superseded frames from overlapping calls
       if (result.feedback === 'Superseded by newer frame') return;
 
       if (result.livenessState) {
@@ -270,8 +283,6 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
         }
       }
 
-      // CRITICAL FIX: Once liveness challenge is completed, proceed to capture
-      // immediately regardless of whether the current frame also passes positioning.
       if (currentStep === 'liveness' && livenessRef.current.challengeCompleted) {
         capturingRef.current = true;
         if (intervalRef.current) {
@@ -300,12 +311,13 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   }, [mode]);
 
   const startSession = useCallback(async () => {
-    // Sync email from DOM to ref in case browser autofill bypassed React onChange
+    // Sync email from DOM to ref before anything else
     const domEmail = emailInputRef.current?.value.trim() || '';
     if (domEmail) {
       setEmail(domEmail);
       emailRef.current = domEmail;
     }
+    console.log('[FaceLogin] startSession email:', domEmail, 'emailRef:', emailRef.current);
 
     resetState();
     const ok = await startCamera();
@@ -314,7 +326,6 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       stepRef.current = 'positioning';
       setMessage('Position your face in the frame');
       setSubMessage('Center your face and look straight at the camera');
-      // Throttle to ~8 fps — gives MediaPipe time to process without queue buildup
       intervalRef.current = setInterval(runDetectionLoop, 120);
     }
   }, [resetState, runDetectionLoop, startCamera]);
@@ -378,10 +389,15 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
               <input
                 ref={emailInputRef}
                 type="email"
-                value={email}
+                defaultValue={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onInput={(e) => {
                   const val = e.currentTarget.value;
+                  setEmail(val);
+                  emailRef.current = val;
+                }}
+                onBlur={(e) => {
+                  const val = e.currentTarget.value.trim();
                   setEmail(val);
                   emailRef.current = val;
                 }}
