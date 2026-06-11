@@ -9,7 +9,7 @@ import { useVoiceNarration, numberToWords } from '../../hooks/useVoiceNarration'
 import { speak, cancelSpeech, isSpeechSupported } from '../../services/voiceService';
 import { useLivePrices } from '../../hooks/useLivePrices';
 import CosmosCard from '../ui/CosmosCard';
-import WelcomeBanner from '../psb/WelcomeBanner';
+
 import FinancialPulse from './FinancialPulse';
 import NetWorthCard from './NetWorthCard';
 import KYCStatusCard from './KYCStatusCard';
@@ -34,6 +34,7 @@ import WealthDNA from './WealthDNA';
 import WealthBenchmark from './WealthBenchmark';
 import AIDecisionLog from '../ai/AIDecisionLog';
 import ComplianceBadges from '../compliance/ComplianceBadges';
+import ComplianceBar from '../compliance/ComplianceBar';
 import FinancialLiteracyCards from '../ai/FinancialLiteracyCards';
 import GoalTracker from '../goals/GoalTracker';
 import AddSalaryModal from '../salary/AddSalaryModal';
@@ -45,9 +46,15 @@ import WhatIfSimulator from '../forecast/WhatIfSimulator';
 import StressTestSimulator from '../protection/StressTestSimulator';
 import QuickPayCard from '../psb/QuickPayCard';
 
+/* ═══ HACKATHON HERO COMPONENTS ═══ */
+import WealthTwinHero from './WealthTwinHero';
+import MarketIntelligenceHero from './MarketIntelligenceHero';
+import PredictiveShieldBadge from './PredictiveShieldBadge';
+
 /* ═══════════════════════════════════════════════════════════════
-   DASHBOARD v2 — Real-Time Widget Grid
-   Hero stats · Organized sections · CosmosCard containers
+   DASHBOARD v3 — Hackathon Edition
+   Core solutions front & center · Wealth Twin · Market Intelligence
+   Predictive Shield · Protection-first layout
    ═══════════════════════════════════════════════════════════════ */
 
 export default function DashboardView() {
@@ -87,11 +94,9 @@ export default function DashboardView() {
     speak(text);
     setSpeakingSummary(true);
 
-    // Auto-reset after a reasonable duration (speech synthesis doesn't give a reliable end event cross-browser)
     const durationMs = Math.max(3000, text.length * 80);
     const timeout = setTimeout(() => setSpeakingSummary(false), durationMs);
 
-    // Also listen for manual cancel
     const onCancel = () => {
       clearTimeout(timeout);
       window.removeEventListener('sw-cancel-speech', onCancel);
@@ -123,23 +128,46 @@ export default function DashboardView() {
           </motion.div>
         )}
 
-        {/* Welcome Banner */}
-        <WelcomeBanner />
+        {/* ═══════════════════════════════════════════════════════
+            COMPLIANCE BAR — Trust & Privacy (visible to judges)
+            ═══════════════════════════════════════════════════════ */}
+        <ComplianceBar />
+
+        {/* ═══════════════════════════════════════════════════════
+            HACKATHON HERO SECTION — Top Priority
+            ═══════════════════════════════════════════════════════ */}
+        <WealthTwinHero />
 
         {/* Live Financial Pulse */}
         <FinancialPulse />
 
-        {/* Account Aggregator — Top Position */}
+        {/* Market Ticker Bar */}
+        <LiveMarketBar />
+
+        {/* ═══════════════════════════════════════════════════════
+            ROW 2: MARKET INTELLIGENCE + PREDICTIVE SHIELD
+            ═══════════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div className="lg:col-span-3">
+            <MarketIntelligenceHero />
+          </div>
+          <div className="lg:col-span-2">
+            <PredictiveShieldBadge />
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            ROW 3: ACCOUNT AGGREGATOR + AI RECOMMENDATIONS
+            ═══════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <AccountAggregatorWidget />
           <RecommendationCard />
         </div>
         <AccountAggregatorFull />
 
-        {/* Market Ticker Bar */}
-        <LiveMarketBar />
-
-        {/* Hero Stats */}
+        {/* ═══════════════════════════════════════════════════════
+            ROW 4: HERO STATS
+            ═══════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             { label: 'Net Worth', value: coercedMode ? '₹5,000' : `₹${(netWorth / 1e7).toFixed(2)}Cr`, icon: 'fa-wallet', color: 'from-primary/20 to-primary/5', text: 'text-primary', speakText: `Net worth ${numberToWords(netWorth)} rupees`, inrValue: netWorth, trend: '+2.4%', trendUp: true },
@@ -159,7 +187,9 @@ export default function DashboardView() {
           ))}
         </div>
 
-        {/* Charts Section */}
+        {/* ═══════════════════════════════════════════════════════
+            ROW 5: CHARTS & FINANCIAL OVERVIEW
+            ═══════════════════════════════════════════════════════ */}
         <SectionHeader icon="fa-chart-line" title="Financial Overview" subtitle="Track your wealth journey" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2">
@@ -172,7 +202,9 @@ export default function DashboardView() {
           </CosmosCard>
         </div>
 
-        {/* Quick Actions */}
+        {/* ═══════════════════════════════════════════════════════
+            ROW 6: QUICK ACTIONS
+            ═══════════════════════════════════════════════════════ */}
         <SectionHeader icon="fa-bolt" title="Quick Actions" subtitle="Frequent tasks, one tap away" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2">
@@ -181,7 +213,9 @@ export default function DashboardView() {
           <VirtualCard />
         </div>
 
-        {/* Main Grid */}
+        {/* ═══════════════════════════════════════════════════════
+            ROW 7: MAIN INSIGHTS GRID
+            ═══════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Left + Center Column */}
           <div className="lg:col-span-2 space-y-5">
@@ -243,7 +277,9 @@ export default function DashboardView() {
           </div>
         </div>
 
-        {/* World-First Innovations */}
+        {/* ═══════════════════════════════════════════════════════
+            ROW 8: WORLD-FIRST INNOVATIONS
+            ═══════════════════════════════════════════════════════ */}
         <SectionHeader icon="fa-flask" title="World-First Innovations" subtitle="Features no bank has ever built" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
@@ -281,7 +317,9 @@ export default function DashboardView() {
           ))}
         </div>
 
-        {/* Bottom Section */}
+        {/* ═══════════════════════════════════════════════════════
+            ROW 9: MORE FOR YOU
+            ═══════════════════════════════════════════════════════ */}
         <SectionHeader icon="fa-star" title="More for You" subtitle="Tools & gamification" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <CosmosCard variant="elevated" hover onClick={() => setShowSalaryModal(true)}>
@@ -364,7 +402,6 @@ function StatCardV2({
       onMouseLeave={stopSpeaking}
       tabIndex={0}
     >
-      {/* Subtle gradient background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
       <div className="relative z-10">

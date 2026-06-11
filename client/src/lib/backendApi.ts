@@ -11,10 +11,13 @@ const RETRY_DELAY = 500;
 function getHeaders(): Record<string, string> {
   const user = JSON.parse(localStorage.getItem('sw-user') || '{}');
   const email = user?.email || localStorage.getItem('sw-dev-email') || 'guest@psbwealth.in';
-  return {
+  const token = localStorage.getItem('sw-token');
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Dev-User-Email': email,
   };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
 }
 
 async function sleep(ms: number) {
@@ -217,12 +220,21 @@ export const backendApi = {
     return fetchJson('/banking/seed', { method: 'POST' });
   },
 
+  // User registration with KYC
+  async register(payload: { email: string; password: string; name: string; phone?: string; pan_number?: string; aadhar?: string }) {
+    return fetchJson('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 35000,
+    });
+  },
+
   // Face biometric auth (longer timeout for slow Render cold start)
   async registerFace(descriptor: number[]) {
     return fetchJson('/auth/face-register', {
       method: 'POST',
       body: JSON.stringify({ descriptor }),
-      timeoutMs: 15000,
+      timeoutMs: 35000,
     });
   },
 
@@ -230,6 +242,31 @@ export const backendApi = {
     return fetchJson('/auth/face-verify', {
       method: 'POST',
       body: JSON.stringify({ descriptor, email }),
+      timeoutMs: 35000,
+    });
+  },
+
+  // Admin
+  async adminLogin(adminId: string, password: string) {
+    return fetchJson('/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ adminId, password }),
+      timeoutMs: 15000,
+    });
+  },
+
+  async adminGetUsers(token: string) {
+    return fetchJson('/admin/users', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+      timeoutMs: 15000,
+    });
+  },
+
+  async adminGetStats(token: string) {
+    return fetchJson('/admin/stats', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
       timeoutMs: 15000,
     });
   },

@@ -637,3 +637,12 @@ input[type="checkbox"], input[type="radio"] {
     backdrop-filter: blur(4px);
   }
 }
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

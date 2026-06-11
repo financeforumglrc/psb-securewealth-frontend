@@ -128,6 +128,9 @@ export default function BankHeader() {
                         <button onClick={() => { setProfileOpen(false); setCreateOpen(true); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-3">
                           <i className="fas fa-user-plus text-emerald-600 w-4" /> Create New Account
                         </button>
+                        <button onClick={() => { useWealthStore.getState().setView('admin'); setProfileOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-3">
+                          <i className="fas fa-user-shield text-violet-600 w-4" /> Admin Panel
+                        </button>
                       </div>
                       <div className="border-t border-gray-100 mt-1 pt-1">
                         <button onClick={() => { clearAuth(); authDispatch({ type: 'LOGOUT' }); setProfileOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-red-50 flex items-center gap-3">

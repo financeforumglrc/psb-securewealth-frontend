@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Fingerprint, KeyRound, ShieldCheck, ShieldX, Smartphone } from 'lucide-react';
+import { Fingerprint, KeyRound, Shield, ShieldCheck, ShieldX, Smartphone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import {
@@ -556,13 +556,28 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* Admin Portal Link */}
+      <div className="mt-4 text-center">
+        <button
+          onClick={() => {
+            dispatch({ type: 'LOGIN', userId: 'admin', userEmail: 'admin@psbsecurewealth.com' });
+            useWealthStore.getState().setView('admin');
+          }}
+          className="text-xs text-slate-400 hover:text-emerald-500 font-medium transition-colors flex items-center justify-center gap-1.5 mx-auto"
+        >
+          <Shield className="w-3.5 h-3.5" /> Admin Portal
+        </button>
+      </div>
+
       <FaceLoginModal
         isOpen={faceLoginOpen}
         onClose={() => setFaceLoginOpen(false)}
         onSuccess={(user, token) => {
           backendApi.setDevEmail(user.email);
           localStorage.setItem('sw-token', token);
+          localStorage.setItem('sw-user', JSON.stringify(user));
           dispatch({ type: 'LOGIN', userId: user.id, userEmail: user.email });
+          useWealthStore.getState().updateUser({ name: user.name || user.email?.split('@')[0] || 'User' });
           setFaceLoginOpen(false);
         }}
       />

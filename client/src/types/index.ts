@@ -297,4 +297,4 @@ export type ViewType =
   | 'ai-recommendations'
   | 'family'
   | 'profile'
-  | 'loan-center' | 'recurring-payments' | 'account-statement' | 'audit-log';
+  | 'loan-center' | 'recurring-payments' | 'account-statement' | 'audit-log' | 'admin';

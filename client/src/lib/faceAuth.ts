@@ -39,7 +39,6 @@ export async function initFaceAuthEngine(): Promise<void> {
 export interface FaceResult {
   detected: boolean;
   descriptor?: Float32Array;
-  landmarks?: any;
   box?: { x: number; y: number; width: number; height: number };
 }
 
@@ -47,7 +46,7 @@ export async function detectFace(video: HTMLVideoElement): Promise<FaceResult> {
   await initFaceAuthEngine();
   const faceapi = (window as any).faceapi;
   const detection = await faceapi
-    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 }))
+    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
     .withFaceLandmarks()
     .withFaceDescriptor();
 
@@ -56,7 +55,6 @@ export async function detectFace(video: HTMLVideoElement): Promise<FaceResult> {
   return {
     detected: true,
     descriptor: detection.descriptor,
-    landmarks: detection.landmarks,
     box: detection.detection.box,
   };
 }

@@ -30,6 +30,7 @@ import LinkAccountModal from './components/assets/LinkAccountModal';
 import LoginPage from './components/auth/LoginPage';
 import PaymentsPage from './components/payments/PaymentsPage';
 import ProfileSettings from './components/profile/ProfileSettings';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 import PitchMode from './components/pitch/PitchMode';
 import DemoMode from './components/demo/DemoMode';
@@ -345,6 +346,11 @@ export default function App() {
     return <LoginPage />;
   }
 
+  // Admin panel renders standalone — no PSB headers/sidebars
+  if (currentView === 'admin') {
+    return <AdminDashboard />;
+  }
+
   return (
     <ToastProvider>
     <SecurityProvider>
@@ -553,6 +559,7 @@ export default function App() {
                 { view: 'recurring-payments', label: 'Recurring', icon: 'fa-rotate' },
                 { view: 'account-statement', label: 'Statement', icon: 'fa-file-invoice' },
                 { view: 'audit-log', label: 'Audit Log', icon: 'fa-shield-halved' },
+                { view: 'admin', label: 'Admin Panel', icon: 'fa-user-shield' },
               ].map((item: any) => (
                 <button
                   key={item.view}
@@ -595,6 +602,7 @@ export default function App() {
                 { view: 'business-mode', label: 'Business', icon: 'fa-building' },
                 { view: 'kids-mode', label: 'Kids Mode', icon: 'fa-child' },
                 { view: 'notification-demo', label: 'Notifications', icon: 'fa-bell' },
+              { view: 'admin', label: 'Admin Panel', icon: 'fa-user-shield' },
               ].map((item: any) => (
                 <button
                   key={item.view}
@@ -769,6 +777,7 @@ export default function App() {
               { view: 'business-mode', label: 'Business', icon: 'fa-building' },
               { view: 'kids-mode', label: 'Kids Mode', icon: 'fa-child' },
               { view: 'notification-demo', label: 'Notifications', icon: 'fa-bell' },
+              { view: 'admin', label: 'Admin Panel', icon: 'fa-user-shield' },
             ].map((item: any) => (
               <button
                 key={item.view}
@@ -807,58 +816,58 @@ export default function App() {
         <main className="flex-1 overflow-y-auto bg-psb-bg">
           {/* View Content with Page Transitions */}
           <div className={`p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto ${pitchModeActive ? 'ring-4 ring-primary/40 ring-inset rounded-xl' : ''}`}>
-            <div className="animate-fade-in-fast">
-              <Suspense fallback={<ViewLoader />}>
-                {duressLocked ? (
-                  <DecoyAccountView />
-                ) : seniorMode ? (
-                  <SeniorMode />
-                ) : (
-                  <>
-                    {currentView === 'dashboard' && <DashboardView />}
-                    {currentView === 'wealth-twin' && <WealthTwinView />}
-                    {currentView === 'ai-recommendations' && <AIRecommendationsView />}
-                    {currentView === 'goals' && <GoalTracker />}
-                    {currentView === 'portfolio' && <PortfolioView />}
-                    {currentView === 'family' && <FamilyDashboard />}
-                    {currentView === 'assets' && <AssetsView />}
-                    {currentView === 'market' && <MarketView />}
-                    {currentView === 'forecast' && <ForecastView />}
-                    {currentView === 'protection' && <ProtectionView />}
-                    {currentView === 'privacy' && <PrivacyView />}
-                    {currentView === 'tax' && <TaxView />}
-                    {currentView === 'calculators' && <CalculatorsView />}
-                    {currentView === 'transactions' && <TransactionsView />}
-                    {currentView === 'features' && <FeaturesUniverse />}
-                    {currentView === 'architecture' && <SystemArchitecture />}
-                    {currentView === 'bills' && <BillCalendar />}
-                    {currentView === 'credit-health' && <CreditHealth />}
-                    {currentView === 'notification-demo' && <NotificationDemo />}
-                    {currentView === 'digital-gold' && <DigitalGold />}
-                    {currentView === 'challenges' && <ChallengesView />}
-                    {currentView === 'kids-mode' && <KidsMode />}
-                    {currentView === 'subscriptions' && <SubscriptionTracker />}
-                    {currentView === 'accessibility' && <AccessibilitySettings />}
-                    {currentView === 'nri-mode' && <NRIMode />}
-                    {currentView === 'business-mode' && <BusinessMode />}
-                    {currentView === 'values-alignment' && <ValuesAlignment />}
-                    {currentView === 'fantasy-league' && <FantasyLeague />}
-                    {currentView === 'boosts' && <BoostsManager />}
-                    {currentView === 'security-beast' && <SecurityBeastView />}
-                    {currentView === 'bhavishya' && <BhavishyaEngine />}
-                    {currentView === 'innovation-lab' && <InnovationLabView />}
-                    {currentView === 'payments' && <PaymentsPage />}
-                    {currentView === 'loan-center' && <LoanCenter />}
-                    {currentView === 'recurring-payments' && <RecurringPayments />}
-                    {currentView === 'account-statement' && <AccountStatement />}
-                    {currentView === 'audit-log' && <AuditLog />}
-                    {currentView === 'profile' && <ProfileSettings />}
-                  </>
-                )}
-              </Suspense>
-            </div>
-          </div>
-          <AccessibleFooter />
+                <div className="animate-fade-in-fast">
+                  <Suspense fallback={<ViewLoader />}>
+                    {duressLocked ? (
+                      <DecoyAccountView />
+                    ) : seniorMode ? (
+                      <SeniorMode />
+                    ) : (
+                      <>
+                        {currentView === 'dashboard' && <DashboardView />}
+                        {currentView === 'wealth-twin' && <WealthTwinView />}
+                        {currentView === 'ai-recommendations' && <AIRecommendationsView />}
+                        {currentView === 'goals' && <GoalTracker />}
+                        {currentView === 'portfolio' && <PortfolioView />}
+                        {currentView === 'family' && <FamilyDashboard />}
+                        {currentView === 'assets' && <AssetsView />}
+                        {currentView === 'market' && <MarketView />}
+                        {currentView === 'forecast' && <ForecastView />}
+                        {currentView === 'protection' && <ProtectionView />}
+                        {currentView === 'privacy' && <PrivacyView />}
+                        {currentView === 'tax' && <TaxView />}
+                        {currentView === 'calculators' && <CalculatorsView />}
+                        {currentView === 'transactions' && <TransactionsView />}
+                        {currentView === 'features' && <FeaturesUniverse />}
+                        {currentView === 'architecture' && <SystemArchitecture />}
+                        {currentView === 'bills' && <BillCalendar />}
+                        {currentView === 'credit-health' && <CreditHealth />}
+                        {currentView === 'notification-demo' && <NotificationDemo />}
+                        {currentView === 'digital-gold' && <DigitalGold />}
+                        {currentView === 'challenges' && <ChallengesView />}
+                        {currentView === 'kids-mode' && <KidsMode />}
+                        {currentView === 'subscriptions' && <SubscriptionTracker />}
+                        {currentView === 'accessibility' && <AccessibilitySettings />}
+                        {currentView === 'nri-mode' && <NRIMode />}
+                        {currentView === 'business-mode' && <BusinessMode />}
+                        {currentView === 'values-alignment' && <ValuesAlignment />}
+                        {currentView === 'fantasy-league' && <FantasyLeague />}
+                        {currentView === 'boosts' && <BoostsManager />}
+                        {currentView === 'security-beast' && <SecurityBeastView />}
+                        {currentView === 'bhavishya' && <BhavishyaEngine />}
+                        {currentView === 'innovation-lab' && <InnovationLabView />}
+                        {currentView === 'payments' && <PaymentsPage />}
+                        {currentView === 'loan-center' && <LoanCenter />}
+                        {currentView === 'recurring-payments' && <RecurringPayments />}
+                        {currentView === 'account-statement' && <AccountStatement />}
+                        {currentView === 'audit-log' && <AuditLog />}
+                        {currentView === 'profile' && <ProfileSettings />}
+                      </>
+                    )}
+                  </Suspense>
+                </div>
+              </div>
+              <AccessibleFooter />
         </main>
       </div>
 

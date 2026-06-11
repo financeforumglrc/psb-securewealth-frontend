@@ -15,7 +15,7 @@ export default function TrustBanner() {
         className="bg-primary-light border-b border-primary/15 overflow-hidden"
       >
         <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-2.5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 text-[11px] text-primary-dark/85 flex-wrap">
+          <div className="flex items-center gap-4 text-[11px] text-primary-dark/85 overflow-x-auto whitespace-nowrap">
             <span className="flex items-center gap-1.5">
               <i className="fas fa-shield-check text-secondary-dark text-xs" />
               <span className="font-bold">DICGC Insured</span>
