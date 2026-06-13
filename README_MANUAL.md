@@ -117,8 +117,8 @@ Backend health/status page:
 
 ### Admin portal login
 - **Admin ID:** `TEAM EXCELLENT MINDS`
-- **Admin Password:** `123456@#Dd`
-- **API token format:** Base64 of `TEAM EXCELLENT MINDS:123456@#Dd`
+- **Admin ID:** `TEAM EXCELLENT MINDS`
+- **Admin Password:** `Kcwkl6OQT57VweVSeSjgA7W4!@A1`
 - **Login route:** `POST /api/v1/admin/login`
 
 ### Backend `.env` (`/e/DS_Financial/backend/.env`)
