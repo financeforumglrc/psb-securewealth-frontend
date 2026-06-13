@@ -117,6 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
       }
+    }).catch((err) => {
+      console.error('Auth session init failed:', err);
+      dispatch({ type: 'SET_LOADING', payload: false });
     });
 
     return () => subscription.unsubscribe();

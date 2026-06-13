@@ -185,13 +185,13 @@ const SecurityContext = createContext<{
 } | null>(null);
 
 export function SecurityProvider({ children }: { children: ReactNode }) {
-  const stored = getStoredState();
-  const [state, dispatch] = useReducer(securityReducer, { ...defaultState, ...stored });
+  const [state, dispatch] = useReducer(securityReducer, defaultState, (initial) => {
+    const stored = getStoredState();
+    return { ...initial, ...stored };
+  });
 
   useEffect(() => {
-    if (!stored) {
-      dispatch({ type: 'INIT', state: defaultState });
-    }
+    dispatch({ type: 'INIT', state: { ...defaultState, ...getStoredState() } });
   }, []);
 
   return (

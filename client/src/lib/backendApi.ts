@@ -9,12 +9,9 @@ const MAX_RETRIES = 2;
 const RETRY_DELAY = 500;
 
 function getHeaders(): Record<string, string> {
-  const user = JSON.parse(localStorage.getItem('sw-user') || '{}');
-  const email = user?.email || localStorage.getItem('sw-dev-email') || 'guest@psbwealth.in';
-  const token = localStorage.getItem('sw-token');
+  const token = localStorage.getItem('sw-token') || localStorage.getItem('sw-admin-token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'X-Dev-User-Email': email,
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
@@ -75,6 +72,10 @@ export const backendApi = {
   },
 
   // Transactions
+  async verifyMpin(mpin: string) {
+    return fetchJson('/banking/verify-mpin', { method: 'POST', body: JSON.stringify({ mpin }) });
+  },
+
   async getTransactions(params?: { limit?: number; type?: string; startDate?: string; endDate?: string; accountId?: number }) {
     const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString() : '';
     return fetchJson(`/banking/transactions${qs}`);

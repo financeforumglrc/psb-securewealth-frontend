@@ -3,6 +3,7 @@ import { useRewards } from '../../context/RewardsContext';
 import { computeCashback } from '../../services/cashbackEngine';
 import { getStreak } from '../../services/streakService';
 import { addTransactionToChain } from '../../services/blockchainService';
+import { backendApi } from '../../lib/backendApi';
 import MPINInput from './MPINInput';
 import QrScannerSimulator from './QrScannerSimulator';
 
@@ -116,18 +117,23 @@ export default function UPIPaymentSimulator() {
     setShowMPIN(true);
   };
 
-  const handleMPINSubmit = (pin: string) => {
+  const handleMPINSubmit = async (pin: string) => {
     setShowMPIN(false);
     if (!pendingTx) return;
 
+    if (!/^\d{6}$/.test(pin)) {
+      showToast('error', 'MPIN must be exactly 6 digits.');
+      return;
+    }
+
+    const verify = await backendApi.verifyMpin(pin);
+    if (!verify.ok || !verify.data?.valid) {
+      showToast('error', 'Payment failed. Incorrect MPIN.');
+      return;
+    }
+
     // Simulate processing
     setTimeout(() => {
-      const isSuccess = pin === '123456' || pin.length === 6; // Demo: accept any 6-digit
-      if (!isSuccess) {
-        showToast('error', 'Payment failed. Incorrect MPIN.');
-        return;
-      }
-
       const cashback = computeCashback({
         amount: pendingTx.amount || 0,
         merchant: pendingTx.upiId || pendingTx.payee || '',

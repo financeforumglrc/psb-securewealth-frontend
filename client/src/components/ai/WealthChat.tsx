@@ -1553,6 +1553,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
   const [showAiConfig, setShowAiConfig] = useState(false);
   const [geminiKey, setGeminiKey] = useState(getGeminiConfig()?.apiKey || '');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sendRef = useRef<(text: string) => Promise<void>>(async () => {});
 
   const PRESETS = [
     { label: '💰 Save Tax', query: 'How do I save tax?' },
@@ -1579,7 +1580,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail) {
-        send(detail);
+        sendRef.current(detail);
       }
     };
     window.addEventListener('sw-ai-query', handler);
@@ -1657,6 +1658,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
       setTyping(false);
     }, 600 + Math.random() * 400);
   };
+  sendRef.current = send;
 
   const lastBot = messages.filter((m): m is BotMessage => m.role === 'bot').at(-1);
 

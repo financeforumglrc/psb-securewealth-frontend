@@ -101,7 +101,10 @@ export default function LoginPage() {
       // Show toast
       const toast = document.createElement('div');
       toast.className = 'fixed top-4 right-4 z-[100] bg-primary text-white px-4 py-3 rounded-xl shadow-2xl text-sm font-bold animate-fade-in';
-      toast.innerHTML = `<i class="fas fa-envelope mr-2"/>OTP sent to ${email}`;
+      const icon = document.createElement('i');
+      icon.className = 'fas fa-envelope mr-2';
+      toast.appendChild(icon);
+      toast.appendChild(document.createTextNode(`OTP sent to ${email}`));
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 5000);
     } catch (err: any) {
@@ -559,10 +562,7 @@ export default function LoginPage() {
       {/* Admin Portal Link */}
       <div className="mt-4 text-center">
         <button
-          onClick={() => {
-            dispatch({ type: 'LOGIN', userId: 'admin', userEmail: 'admin@psbsecurewealth.com' });
-            useWealthStore.getState().setView('admin');
-          }}
+          onClick={() => useWealthStore.getState().setView('admin')}
           className="text-xs text-slate-400 hover:text-emerald-500 font-medium transition-colors flex items-center justify-center gap-1.5 mx-auto"
         >
           <Shield className="w-3.5 h-3.5" /> Admin Portal
