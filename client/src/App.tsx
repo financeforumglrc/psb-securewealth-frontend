@@ -350,7 +350,11 @@ export default function App() {
 
   // Admin panel renders standalone — no PSB headers/sidebars
   if (currentView === 'admin') {
-    return <AdminDashboard />;
+    return (
+      <SecurityProvider>
+        <AdminDashboard />
+      </SecurityProvider>
+    );
   }
 
   return (
