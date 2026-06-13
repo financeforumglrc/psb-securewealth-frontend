@@ -1,6 +1,6 @@
 export { default as ProtectionView } from './ProtectionView';
 export { default as RiskMeter } from './RiskMeter';
-export { default as FraudSimulator } from './FraudSimulator';
+export { default as FraudDetectionEngine } from './FraudDetectionEngine';
 export { default as PanicButton } from './PanicButton';
 export { default as DuressModeToggle } from './DuressMode';
 export { default as ThreatIntel } from './ThreatIntel';

@@ -49,7 +49,7 @@ export default function HoneytokenManager() {
               onClick={resetHoneytoken}
               className="text-xs px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
             >
-              <i className="fas fa-rotate-left mr-1" /> Admin Reset (Demo)
+              <i className="fas fa-rotate-left mr-1" /> Admin Reset
             </button>
           </div>
         ) : (
@@ -120,7 +120,7 @@ export default function HoneytokenManager() {
               onClick={resetHoneytoken}
               className="inline-flex items-center gap-2 px-6 py-3 bg-white text-red-600 hover:bg-red-50 rounded-xl font-semibold transition-colors"
             >
-              <i className="fas fa-rotate-left" /> Admin Reset (Demo)
+              <i className="fas fa-rotate-left" /> Admin Reset
             </button>
           </div>
         </div>

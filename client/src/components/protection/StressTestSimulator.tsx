@@ -54,7 +54,7 @@ export default function StressTestSimulator() {
           </div>
           <div>
             <h3 className="font-semibold text-slate-800 dark:text-white text-sm">Stress Test</h3>
-            <p className="text-[10px] text-slate-400">Simulate life events and measure resilience</p>
+            <p className="text-[10px] text-slate-400">Model life events and measure resilience</p>
           </div>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">Test your portfolio against job loss, medical emergencies, and market crashes.</p>
@@ -65,7 +65,7 @@ export default function StressTestSimulator() {
           <div className="bg-white dark:bg-dark-light rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-fade-in" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-rose-500 to-amber-500 p-5 text-white">
               <h3 className="text-lg font-bold"><i className="fas fa-bolt mr-2" />Financial Stress Test</h3>
-              <p className="text-xs text-white/80 mt-1">Simulate life events and measure your financial resilience.</p>
+              <p className="text-xs text-white/80 mt-1">Model life events and measure your financial resilience.</p>
             </div>
             <div className="p-5 space-y-3">
               <div className="grid grid-cols-3 gap-2">

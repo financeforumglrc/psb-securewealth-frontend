@@ -1,14 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSecurityActions } from '../../context/SecurityContext';
-
-function randomHex(length: number): string {
-  const chars = '0123456789abcdef';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * 16)];
-  }
-  return result;
-}
+import { performAttestation, isSecureContext } from '../../services/attestationService';
 
 export default function SecureEnclaveCheck() {
   const { verifyEnclave, failEnclave } = useSecurityActions();
@@ -17,25 +9,39 @@ export default function SecureEnclaveCheck() {
   const [failed, setFailed] = useState(false);
   const [challenge, setChallenge] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
+  const [secureContext, setSecureContext] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const timer = setTimeout(() => {
-      if (cancelled) return;
-      const mockChallenge = randomHex(32);
-      const mockSignature = randomHex(64);
-      setChallenge(mockChallenge);
-      setSignature(mockSignature);
-      setVerified(true);
-      setChecking(false);
-      verifyEnclave();
+    const timer = setTimeout(async () => {
+      try {
+        const secure = isSecureContext();
+        setSecureContext(secure);
+        const result = await performAttestation('enclave');
+        if (cancelled) return;
+        setChallenge(result.challenge);
+        setSignature(result.signature);
+        setVerified(result.verified && secure);
+        setChecking(false);
+        if (result.verified && secure) {
+          verifyEnclave();
+        } else {
+          failEnclave();
+        }
+      } catch {
+        if (cancelled) return;
+        setVerified(false);
+        setFailed(true);
+        setChecking(false);
+        failEnclave();
+      }
     }, 1000);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [verifyEnclave]);
+  }, [verifyEnclave, failEnclave]);
 
   const handleCompromised = useCallback(() => {
     setVerified(false);
@@ -71,7 +77,7 @@ export default function SecureEnclaveCheck() {
         <div className="mb-4 flex items-start gap-2 rounded-lg bg-success/10 p-3 text-success dark:bg-success/20">
           <i className="fas fa-check-circle mt-0.5" />
           <div className="text-sm font-medium">
-            Secure Enclave (ARM TrustZone) Verified — keys are hardware-protected
+            Secure Enclave Verified — keys are hardware-protected
           </div>
         </div>
       )}
@@ -80,12 +86,21 @@ export default function SecureEnclaveCheck() {
         <div className="mb-4 flex items-start gap-2 rounded-lg bg-danger/10 p-3 text-danger dark:bg-danger/20">
           <i className="fas fa-exclamation-triangle mt-0.5" />
           <div className="text-sm font-medium">
-            Enclave attestation FAILED — possible jailbreak/root detected
+            Enclave attestation FAILED — possible jailbreak/root or insecure context
           </div>
         </div>
       )}
 
       <div className="space-y-3">
+        <div className="rounded-lg bg-gray-50 p-3 dark:bg-dark">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            Secure Context (HTTPS)
+          </p>
+          <p className="break-all font-mono text-sm text-gray-800 dark:text-gray-200">
+            {secureContext ? 'Verified' : 'Not verified'}
+          </p>
+        </div>
+
         <div className="rounded-lg bg-gray-50 p-3 dark:bg-dark">
           <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
             Attestation Challenge
@@ -112,7 +127,7 @@ export default function SecureEnclaveCheck() {
           className="inline-flex items-center gap-2 rounded-lg border border-danger px-4 py-2.5 text-sm font-medium text-danger transition hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-danger dark:hover:bg-danger/20"
         >
           <i className="fas fa-bug" />
-          Simulate Compromised Device
+          Mark Compromised
         </button>
 
         {verified && (

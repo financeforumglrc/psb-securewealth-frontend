@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSecurityActions } from '../../context/SecurityContext';
+import { getOrCreateTotpSecret, generateTotp, verifyTotp, getTotpTimeRemaining } from '../../services/totpService';
 
 export default function TransactionTrap() {
   const { state, triggerTrap, resetTrap } = useSecurityActions();
@@ -8,11 +9,27 @@ export default function TransactionTrap() {
   const [code, setCode] = useState('');
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(false);
+  const [currentOtp, setCurrentOtp] = useState<string>('------');
+  const [timeLeft, setTimeLeft] = useState(30);
 
   const amountNum = parseFloat(amount) || 0;
-  const realOtp = useMemo(() => Math.floor(100000 + Math.random() * 900000).toString(), []);
+  const secret = getOrCreateTotpSecret();
 
-  const handleSubmit = () => {
+  const refreshOtp = useCallback(async () => {
+    const otp = await generateTotp(secret);
+    setCurrentOtp(otp);
+    setTimeLeft(getTotpTimeRemaining());
+  }, [secret]);
+
+  useEffect(() => {
+    refreshOtp();
+    const interval = setInterval(() => {
+      refreshOtp();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [refreshOtp]);
+
+  const handleSubmit = async () => {
     setError(false);
     setSuccess(false);
 
@@ -21,14 +38,14 @@ export default function TransactionTrap() {
       return;
     }
 
-    if (code === realOtp) {
+    const valid = await verifyTotp(code, secret);
+    if (valid) {
       setSuccess(true);
       setCode('');
-      return;
+    } else {
+      setError(true);
+      setCode('');
     }
-
-    setError(true);
-    setCode('');
   };
 
   return (
@@ -78,16 +95,18 @@ export default function TransactionTrap() {
 
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 text-center">
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Real OTP</p>
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Current TOTP</p>
                 <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 tracking-widest font-mono">
-                  {realOtp}
+                  {currentOtp}
                 </p>
+                <p className="text-[10px] text-slate-400 mt-1">Refreshes in {timeLeft}s</p>
               </div>
               <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 text-center">
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Trap Code</p>
                 <p className="text-lg font-bold text-rose-600 dark:text-rose-400 tracking-widest font-mono">
                   1234
                 </p>
+                <p className="text-[10px] text-slate-400 mt-1">Attacker bait</p>
               </div>
             </div>
 
@@ -96,6 +115,7 @@ export default function TransactionTrap() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Enter verification code"
+              maxLength={6}
               className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm text-center tracking-widest font-mono focus:ring-2 focus:ring-primary outline-none"
             />
 
@@ -116,7 +136,7 @@ export default function TransactionTrap() {
               Transfer Authorized
             </p>
             <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
-              Real OTP accepted. Transaction proceeding securely.
+              TOTP accepted. Transaction proceeding securely.
             </p>
           </div>
         )}
@@ -128,7 +148,7 @@ export default function TransactionTrap() {
               Invalid Code
             </p>
             <p className="text-xs text-rose-600 dark:text-rose-400 mt-0.5">
-              Please enter the correct OTP shown above.
+              Please enter the current TOTP shown above.
             </p>
           </div>
         )}
@@ -137,7 +157,7 @@ export default function TransactionTrap() {
           <i className="fas fa-circle-info mr-1" />
           Anti-phishing traps work by presenting decoy credentials to attackers. Entering the trap
           code immediately freezes the account and alerts security ops — while the real user knows
-          to use the dynamic OTP only.
+          to use the dynamic TOTP only.
         </div>
       </div>
 
@@ -163,7 +183,7 @@ export default function TransactionTrap() {
             className="px-6 py-2.5 bg-white text-rose-700 rounded-xl font-semibold hover:bg-rose-50 transition-colors"
           >
             <i className="fas fa-rotate-left mr-2" />
-            Admin Reset (Demo)
+            Admin Reset
           </button>
         </div>
       )}

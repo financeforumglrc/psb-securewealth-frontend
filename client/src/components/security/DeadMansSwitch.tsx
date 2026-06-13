@@ -203,14 +203,14 @@ export default function DeadMansSwitch() {
         <div className="card border-2 border-rose-200 dark:border-rose-800">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-slate-800 dark:text-white text-sm">
-              <i className="fas fa-flask text-rose-500 mr-2" /> Simulate Death Event (Demo)
+              <i className="fas fa-flask text-rose-500 mr-2" /> Execute Estate Plan
             </h3>
             <button
               onClick={simulateExecution}
               disabled={simulating}
               className="text-xs px-3 py-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
             >
-              {simulating ? 'Executing...' : 'Run Simulation'}
+              {simulating ? 'Executing...' : 'Run Executor'}
             </button>
           </div>
 

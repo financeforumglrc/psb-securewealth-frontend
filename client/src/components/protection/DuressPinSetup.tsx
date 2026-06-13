@@ -51,7 +51,7 @@ export default function DuressPinSetup() {
             <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">Duress PIN is active and secure.</p>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            During any transfer, entering your duress PIN will simulate a fake success, silently alert authorities, and lock your account for 24 hours.
+            During any transfer, entering your duress PIN will show a fake success screen, silently alert authorities, and lock your account for 24 hours.
           </p>
           <div className="flex gap-2">
             <button

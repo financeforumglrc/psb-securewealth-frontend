@@ -1,57 +1,44 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSecurityActions } from '../../context/SecurityContext';
-
-interface EbpfEvent {
-  id: string;
-  timestamp: string;
-  message: string;
-  severity: 'info' | 'warning' | 'critical';
-}
-
-const INITIAL_EVENTS: EbpfEvent[] = [
-  {
-    id: '1',
-    timestamp: new Date(Date.now() - 1000 * 60 * 2).toLocaleTimeString(),
-    message: "Blocked process 'suspicious.exe' from reading /proc/mem",
-    severity: 'warning',
-  },
-  {
-    id: '2',
-    timestamp: new Date(Date.now() - 1000 * 60 * 5).toLocaleTimeString(),
-    message: 'Prevented ptrace attach on banking process',
-    severity: 'info',
-  },
-  {
-    id: '3',
-    timestamp: new Date(Date.now() - 1000 * 60 * 12).toLocaleTimeString(),
-    message: 'Dropped packet to known C2 server 185.220.101.x',
-    severity: 'critical',
-  },
-];
+import {
+  browserThreatMonitor,
+  type BrowserThreatEvent,
+} from '../../services/browserThreatService';
 
 export default function EbpfMonitor() {
   const { ebpfAlert } = useSecurityActions();
-  const [events, setEvents] = useState<EbpfEvent[]>(INITIAL_EVENTS);
+  const [events, setEvents] = useState<BrowserThreatEvent[]>([]);
   const [showOverlay, setShowOverlay] = useState(false);
   const [countdown, setCountdown] = useState(3);
 
-  const addEvent = useCallback((message: string, severity: EbpfEvent['severity']) => {
-    const event: EbpfEvent = {
+  useEffect(() => {
+    browserThreatMonitor.start();
+    setEvents(browserThreatMonitor.getEvents());
+    const remove = browserThreatMonitor.addListener((event) => {
+      setEvents((prev) => [event, ...prev]);
+      if (event.severity === 'critical') {
+        ebpfAlert(event.message);
+      }
+    });
+    return () => {
+      remove();
+      browserThreatMonitor.stop();
+    };
+  }, [ebpfAlert]);
+
+  const handleSimulateCritical = useCallback(() => {
+    const alertMessage = 'CRITICAL: Suspicious script injection detected in DOM';
+    const event: BrowserThreatEvent = {
       id: crypto.randomUUID(),
       timestamp: new Date().toLocaleTimeString(),
-      message,
-      severity,
+      message: alertMessage,
+      severity: 'critical',
     };
     setEvents((prev) => [event, ...prev]);
-  }, []);
-
-  const handleSimulateAttack = useCallback(() => {
-    const alertMessage = 'eBPF: REVERSE SHELL DETECTED — process /tmp/.x11-helper';
-    addEvent(alertMessage, 'critical');
     ebpfAlert(alertMessage);
     setShowOverlay(true);
     setCountdown(3);
-  }, [addEvent, ebpfAlert]);
+  }, [ebpfAlert]);
 
   useEffect(() => {
     if (!showOverlay) return;
@@ -63,7 +50,7 @@ export default function EbpfMonitor() {
     return () => clearTimeout(timer);
   }, [showOverlay, countdown]);
 
-  const severityIcon = (severity: EbpfEvent['severity']) => {
+  const severityIcon = (severity: BrowserThreatEvent['severity']) => {
     switch (severity) {
       case 'critical':
         return <i className="fas fa-skull-crossbones text-rose-500" />;
@@ -75,7 +62,7 @@ export default function EbpfMonitor() {
     }
   };
 
-  const severityBorder = (severity: EbpfEvent['severity']) => {
+  const severityBorder = (severity: BrowserThreatEvent['severity']) => {
     switch (severity) {
       case 'critical':
         return 'border-l-rose-500';
@@ -96,26 +83,26 @@ export default function EbpfMonitor() {
           </div>
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              eBPF Runtime Monitor
+              Browser Threat Monitor
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Kernel-level security event stream
+              Live CSP, devtools, and extension surface events
             </p>
           </div>
         </div>
         <button
-          onClick={handleSimulateAttack}
+          onClick={handleSimulateCritical}
           className="inline-flex items-center gap-2 rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
         >
           <i className="fas fa-bug" />
-          Simulate Kernel Attack
+          Simulate Injection
         </button>
       </div>
 
       <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
         {events.length === 0 && (
           <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
-            No eBPF events recorded yet.
+            No browser security events recorded yet.
           </p>
         )}
         {events.map((event) => (
@@ -141,7 +128,7 @@ export default function EbpfMonitor() {
           </div>
           <h2 className="text-xl font-bold text-rose-400 mb-2">Critical Threat Detected</h2>
           <p className="text-sm text-slate-300 mb-1 text-center px-6">
-            A reverse shell was detected by the eBPF monitor.
+            A suspicious script injection was detected by the browser monitor.
           </p>
           <p className="text-sm text-slate-400 mb-6 text-center px-6">
             Your session is being terminated for security reasons.

@@ -1,6 +1,6 @@
 /**
  * URL Safety Service — Real-time phishing and fraud URL detection
- * Uses multiple heuristics + pattern matching to detect unsafe URLs.
+ * Uses heuristics + DNS-over-HTTPS resolution + live HTTPS/TLS probe.
  */
 
 export interface URLSafetyResult {
@@ -9,6 +9,8 @@ export interface URLSafetyResult {
   riskScore: number; // 0-100
   reasons: string[];
   checkedAt: string;
+  resolved?: boolean;
+  httpsReachable?: boolean;
 }
 
 // Known suspicious patterns
@@ -34,7 +36,39 @@ const TRUSTED_DOMAINS = [
   'incometax.gov.in', 'gst.gov.in', 'surge.sh',
 ];
 
-export function checkURLSafety(rawUrl: string): URLSafetyResult {
+async function resolveViaDoH(hostname: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(
+      `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`,
+      {
+        headers: { Accept: 'application/dns-json' },
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timeout);
+    if (!res.ok) return false;
+    const data = await res.json();
+    return Array.isArray(data.Answer) && data.Answer.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+async function probeHttps(url: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    await fetch(url, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
+    clearTimeout(timeout);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function checkURLSafety(rawUrl: string): Promise<URLSafetyResult> {
   const checkedAt = new Date().toISOString();
   const reasons: string[] = [];
   let riskScore = 0;
@@ -81,6 +115,20 @@ export function checkURLSafety(rawUrl: string): URLSafetyResult {
     riskScore += 10;
   }
 
+  // Live DNS resolution via DoH
+  const resolved = await resolveViaDoH(hostname);
+  if (!resolved) {
+    reasons.push('Domain does not resolve (DNS)');
+    riskScore += 25;
+  }
+
+  // Live HTTPS probe
+  const httpsReachable = await probeHttps(url.toString());
+  if (!httpsReachable && url.protocol === 'https:') {
+    reasons.push('HTTPS endpoint unreachable');
+    riskScore += 15;
+  }
+
   riskScore = Math.min(100, riskScore);
 
   return {
@@ -89,9 +137,11 @@ export function checkURLSafety(rawUrl: string): URLSafetyResult {
     riskScore,
     reasons: reasons.length > 0 ? reasons : ['No obvious risk signals detected'],
     checkedAt,
+    resolved,
+    httpsReachable,
   };
 }
 
-export function checkMultipleURLs(urls: string[]): URLSafetyResult[] {
-  return urls.map((u) => checkURLSafety(u));
+export async function checkMultipleURLs(urls: string[]): Promise<URLSafetyResult[]> {
+  return Promise.all(urls.map((u) => checkURLSafety(u)));
 }

@@ -30,28 +30,22 @@ export interface FingerprintResult {
 
 /* ── Helpers ─────────────────────────────────────────────────── */
 
-function simpleHash(input: string): string {
-  let h1 = 0xdeadbeef;
-  let h2 = 0x41c6ce57;
-  for (let i = 0; i < input.length; i++) {
-    const ch = input.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  const hash = (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
-  return hash.padStart(16, '0');
+async function sha256Hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
-function hashCanvas(canvas: HTMLCanvasElement): string {
+async function hashCanvas(canvas: HTMLCanvasElement): Promise<string> {
   const ctx = canvas.getContext('2d');
   if (!ctx) return 'unsupported';
   const data = canvas.toDataURL('image/png');
-  return simpleHash(data);
+  return sha256Hex(data);
 }
 
-function getCanvasFingerprint(): string {
+async function getCanvasFingerprint(): Promise<string> {
   if (typeof document === 'undefined') return 'unsupported';
   try {
     const canvas = document.createElement('canvas');
@@ -84,7 +78,7 @@ function getCanvasFingerprint(): string {
     ctx.arc(250, 40, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    return hashCanvas(canvas);
+    return await hashCanvas(canvas);
   } catch {
     return 'unsupported';
   }
@@ -213,7 +207,7 @@ export async function collectFingerprint(): Promise<FingerprintResult> {
   const screen = getScreenFingerprint();
 
   const fingerprint: DeviceFingerprint = {
-    canvas: getCanvasFingerprint(),
+    canvas: await getCanvasFingerprint(),
     webgl: getWebGLFingerprint(),
     fonts: getFontFingerprint(),
     screen,
@@ -239,7 +233,7 @@ export async function collectFingerprint(): Promise<FingerprintResult> {
     String(fingerprint.cores),
   ].join('|');
 
-  const hash = simpleHash(hashInput);
+  const hash = await sha256Hex(hashInput);
 
   // Trust score: higher = more unique/stable fingerprint
   let trustScore = 50;

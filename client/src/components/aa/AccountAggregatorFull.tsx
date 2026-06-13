@@ -24,9 +24,103 @@ const BANKS = [
 
 const CONSENT_SCOPES = ['Account Balance', 'Transaction History', 'Fixed Deposits'];
 
+function CrossBankFraudPanel({ transactions, linkedAssets }: { transactions: any[]; linkedAssets: any[] }) {
+  const aaTxs = transactions.filter((t) =>
+    linkedAssets.some((a) => t.description && t.description.toLowerCase().includes(a.name.split(' ')[0].toLowerCase()))
+  );
+
+  const alerts: { type: string; severity: 'low' | 'medium' | 'high'; message: string; detail: string }[] = [];
+
+  // Duplicate amount across banks same day
+  const byDateAmount: Record<string, any[]> = {};
+  aaTxs.filter((t) => t.type === 'debit').forEach((t) => {
+    const key = `${t.date}-${t.amount}`;
+    if (!byDateAmount[key]) byDateAmount[key] = [];
+    byDateAmount[key].push(t);
+  });
+  Object.values(byDateAmount).forEach((group) => {
+    if (group.length > 1) {
+      alerts.push({
+        type: 'Duplicate Debit Pattern',
+        severity: 'high',
+        message: `₹${group[0].amount.toLocaleString()} debited ${group.length} times on ${group[0].date}`,
+        detail: group.map((t) => t.description).join(' • '),
+      });
+    }
+  });
+
+  // Round-number high debits
+  aaTxs.filter((t) => t.type === 'debit' && t.amount >= 50000 && t.amount % 10000 === 0).forEach((t) => {
+    alerts.push({
+      type: 'Round-Number High Debit',
+      severity: 'medium',
+      message: `₹${t.amount.toLocaleString()} from ${t.description}`,
+      detail: 'Round-figure high-value outflow detected across linked accounts.',
+    });
+  });
+
+  // High velocity day
+  const txDates: Record<string, number> = {};
+  aaTxs.filter((t) => t.type === 'debit').forEach((t) => {
+    txDates[t.date] = (txDates[t.date] || 0) + t.amount;
+  });
+  Object.entries(txDates).forEach(([date, total]) => {
+    if (total >= 100000) {
+      alerts.push({
+        type: 'High Velocity Day',
+        severity: 'medium',
+        message: `₹${total.toLocaleString()} outflow on ${date}`,
+        detail: 'Aggregate debits across linked banks crossed ₹1 lakh in a single day.',
+      });
+    }
+  });
+
+  if (alerts.length === 0) {
+    return (
+      <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+        <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+          <i className="fas fa-check-circle mr-1" /> No cross-bank anomalies detected
+        </p>
+        <p className="text-[10px] text-emerald-600/80 mt-0.5">
+          Comparing {aaTxs.length} AA-synced transactions across {linkedAssets.length} linked banks.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {alerts.slice(0, 4).map((alert, i) => (
+        <div
+          key={i}
+          className={`p-3 rounded-xl border text-xs ${
+            alert.severity === 'high'
+              ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800'
+              : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`font-bold ${alert.severity === 'high' ? 'text-rose-700' : 'text-amber-700'}`}>{alert.type}</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                alert.severity === 'high' ? 'bg-rose-200 text-rose-700' : 'bg-amber-200 text-amber-700'
+              }`}
+            >
+              {alert.severity.toUpperCase()}
+            </span>
+          </div>
+          <p className="text-slate-700 dark:text-slate-200 mt-1 font-medium">{alert.message}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">{alert.detail}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AccountAggregatorFull() {
   const assets = useWealthStore((s) => s.assets);
   const consents = useWealthStore((s) => s.consents);
+  const transactions = useWealthStore((s) => s.transactions);
   const addAsset = useWealthStore((s) => s.addAsset);
   const addConsent = useWealthStore((s) => s.addConsent);
   const removeAsset = useWealthStore((s) => s.removeAsset);
@@ -177,6 +271,19 @@ export default function AccountAggregatorFull() {
             <p className="text-[10px] text-slate-500 mt-0.5">
               {activeConsents.length} active consent{activeConsents.length > 1 ? 's' : ''}. Data is fetched securely via RBI regulated Account Aggregator framework. You can revoke access anytime.
             </p>
+          </div>
+        )}
+
+        {/* Cross-Bank Fraud Intelligence */}
+        {linkedAssets.length > 1 && (
+          <div className="mt-5">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                <i className="fas fa-network-wired text-rose-500 mr-1" /> Cross-Bank Fraud Radar
+              </h4>
+              <span className="text-[10px] bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full font-bold">AA-POWERED</span>
+            </div>
+            <CrossBankFraudPanel transactions={transactions} linkedAssets={linkedAssets} />
           </div>
         )}
       </div>

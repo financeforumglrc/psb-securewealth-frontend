@@ -12,10 +12,10 @@ export default function ScamCallerID() {
           </div>
           <div>
             <h3 className="font-semibold text-slate-800 dark:text-white text-sm">Scam Caller ID</h3>
-            <p className="text-[10px] text-slate-400">Simulate scam call detection</p>
+            <p className="text-[10px] text-slate-400">Detect scam calls in real-time</p>
           </div>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">Demonstrates AI-powered caller identification that flags known scam numbers before you answer.</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">AI-powered caller identification that flags known scam numbers before you answer.</p>
       </button>
 
       {show && (

@@ -35,6 +35,7 @@ import WealthBenchmark from './WealthBenchmark';
 import AIDecisionLog from '../ai/AIDecisionLog';
 import ComplianceBadges from '../compliance/ComplianceBadges';
 import ComplianceBar from '../compliance/ComplianceBar';
+import SmartActionOrchestrator from '../ai/SmartActionOrchestrator';
 import FinancialLiteracyCards from '../ai/FinancialLiteracyCards';
 import GoalTracker from '../goals/GoalTracker';
 import AddSalaryModal from '../salary/AddSalaryModal';
@@ -164,6 +165,12 @@ export default function DashboardView() {
           <RecommendationCard />
         </div>
         <AccountAggregatorFull />
+
+        {/* ═══════════════════════════════════════════════════════
+            ROW 3.5: SMART ACTION ORCHESTRATOR
+            ═══════════════════════════════════════════════════════ */}
+        <SectionHeader icon="fa-wand-magic-sparkles" title="Smart Actions" subtitle="AI-converted insights into money moves" />
+        <SmartActionOrchestrator />
 
         {/* ═══════════════════════════════════════════════════════
             ROW 4: HERO STATS

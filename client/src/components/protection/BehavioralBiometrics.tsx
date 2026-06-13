@@ -1,101 +1,74 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { logAudit } from '../../utils/auditLogger';
-
-interface BioMetric {
-  id: string;
-  label: string;
-  icon: string;
-  status: 'normal' | 'anomaly';
-  detail: string;
-}
+import { BehavioralMonitor, type BehavioralState } from '../../services/behavioralBiometricsService';
 
 export default function BehavioralBiometrics() {
-  const [metrics, setMetrics] = useState<BioMetric[]>([
-    { id: 'typing', label: 'Typing Rhythm', icon: 'fa-keyboard', status: 'normal', detail: 'Normal' },
-    { id: 'session', label: 'Session Pattern', icon: 'fa-fingerprint', status: 'normal', detail: 'Consistent' },
-    { id: 'device', label: 'Device Fingerprint', icon: 'fa-mobile-screen-button', status: 'normal', detail: 'Recognized' },
-  ]);
-  const [simulating, setSimulating] = useState(false);
+  const monitorRef = useRef<BehavioralMonitor | null>(null);
+  const [state, setState] = useState<BehavioralState | null>(null);
   const [locked, setLocked] = useState(false);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [anomalyLog, setAnomalyLog] = useState<string | null>(null);
 
-  const resetMetrics = useCallback(() => {
-    setMetrics([
-      { id: 'typing', label: 'Typing Rhythm', icon: 'fa-keyboard', status: 'normal', detail: 'Normal' },
-      { id: 'session', label: 'Session Pattern', icon: 'fa-fingerprint', status: 'normal', detail: 'Consistent' },
-      { id: 'device', label: 'Device Fingerprint', icon: 'fa-mobile-screen-button', status: 'normal', detail: 'Recognized' },
-    ]);
-    setAnomalyLog(null);
+  useEffect(() => {
+    const monitor = new BehavioralMonitor((s) => {
+      setState(s);
+      if (s.anomaly === 'high' && !locked) {
+        setAnomalyLog('Live behavioral anomaly detected');
+        setLocked(true);
+        logAudit(
+          'Account takeover attempt blocked',
+          {
+            newDevice: false,
+            rushedAction: false,
+            unusualAmount: false,
+            otpRetries: false,
+            firstTimeInvest: false,
+            abnormalBehavior: true,
+          },
+          95,
+          {
+            level: 'HIGH',
+            action: 'BLOCK',
+            delay: 300,
+            message: 'Behavioral biometrics anomaly detected. Account locked for security.',
+            referenceId: 'ATO-' + Date.now().toString(36).toUpperCase(),
+          }
+        );
+      }
+    });
+    monitor.start();
+    setState(monitor.getState());
+    monitorRef.current = monitor;
+    return () => monitor.stop();
+  }, [locked]);
+
+  const handleCalibrate = useCallback(() => {
+    monitorRef.current?.calibrate();
   }, []);
 
-  function simulateTakeover() {
-    setSimulating(true);
-
-    // Step 1: typing anomaly
-    setTimeout(() => {
-      setMetrics((prev) =>
-        prev.map((m) => (m.id === 'typing' ? { ...m, status: 'anomaly' as const, detail: 'Changed suddenly' } : m))
-      );
-      setAnomalyLog('Typing rhythm deviation detected');
-    }, 600);
-
-    // Step 2: session anomaly
-    setTimeout(() => {
-      setMetrics((prev) =>
-        prev.map((m) => (m.id === 'session' ? { ...m, status: 'anomaly' as const, detail: 'Mumbai → Delhi (5 min)' } : m))
-      );
-      setAnomalyLog('Mouse movement patterns unusual');
-    }, 1400);
-
-    // Step 3: device anomaly + lock
-    setTimeout(() => {
-      setMetrics((prev) =>
-        prev.map((m) => (m.id === 'device' ? { ...m, status: 'anomaly' as const, detail: 'Unknown device' } : m))
-      );
-      setAnomalyLog('Session location jumped: Mumbai → Delhi in 5 minutes');
-    }, 2200);
-
-    // Step 4: auto-lock
-    setTimeout(() => {
-      setLocked(true);
-      setSimulating(false);
-      logAudit(
-        'Account takeover attempt blocked',
-        {
-          newDevice: true,
-          rushedAction: false,
-          unusualAmount: false,
-          otpRetries: false,
-          firstTimeInvest: false,
-          abnormalBehavior: true,
-        },
-        95,
-        {
-          level: 'HIGH',
-          action: 'BLOCK',
-          delay: 300,
-          message: 'Behavioral biometrics anomaly detected. Account locked for security.',
-          referenceId: 'ATO-' + Date.now().toString(36).toUpperCase(),
-        }
-      );
-    }, 3200);
-  }
+  const handleReset = useCallback(() => {
+    monitorRef.current?.resetBaseline();
+    setAnomalyLog(null);
+    setLocked(false);
+    setPin('');
+    setPinError(false);
+  }, []);
 
   function unlock() {
     if (pin === '1234') {
       setLocked(false);
       setPin('');
       setPinError(false);
-      resetMetrics();
+      setAnomalyLog(null);
+      monitorRef.current?.resetBaseline();
+      monitorRef.current?.start();
     } else {
       setPinError(true);
       setPin('');
     }
   }
 
-  // Keyboard listener for Enter on lock screen
   useEffect(() => {
     if (!locked) return;
     function onKey(e: KeyboardEvent) {
@@ -105,6 +78,9 @@ export default function BehavioralBiometrics() {
     return () => window.removeEventListener('keydown', onKey);
   }, [locked, pin]);
 
+  const deviationPct = state ? Math.round(state.deviation * 100) : 0;
+  const baselineSet = !!state?.profile;
+
   return (
     <>
       <div className="card">
@@ -113,70 +89,117 @@ export default function BehavioralBiometrics() {
             <i className="fas fa-brain text-primary mr-2" /> Behavioral Biometrics
           </h3>
           <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium">
-            <i className="fas fa-shield-halved mr-1" /> Active
+            <i className="fas fa-shield-halved mr-1" /> Live
           </span>
         </div>
 
         <div className="space-y-3">
-          {metrics.map((m) => (
+          <div
+            className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+              state?.anomaly === 'high'
+                ? 'bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800 animate-pulse'
+                : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700'
+            }`}
+          >
             <div
-              key={m.id}
-              className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                m.status === 'anomaly'
-                  ? 'bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800 animate-pulse'
-                  : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700'
+              className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm ${
+                state?.anomaly === 'high' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'
               }`}
             >
-              <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm ${
-                  m.status === 'anomaly' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'
-                }`}
-              >
-                <i className={`fas ${m.icon}`} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-800 dark:text-white">{m.label}</p>
-                <p className={`text-xs ${m.status === 'anomaly' ? 'text-rose-600 font-medium' : 'text-slate-500'}`}>
-                  {m.status === 'anomaly' && <i className="fas fa-triangle-exclamation mr-1" />}
-                  {m.detail}
-                </p>
-              </div>
-              {m.status === 'normal' ? (
-                <i className="fas fa-check-circle text-emerald-500" />
-              ) : (
-                <i className="fas fa-circle-exclamation text-rose-500 animate-bounce" />
-              )}
+              <i className="fas fa-keyboard" />
             </div>
-          ))}
+            <div className="flex-1">
+              <p className="text-sm font-medium text-slate-800 dark:text-white">Typing Rhythm</p>
+              <p className={`text-xs ${state?.anomaly === 'high' ? 'text-rose-600 font-medium' : 'text-slate-500'}`}>
+                {state?.current.interKeyIntervals.length
+                  ? `${state.current.interKeyIntervals.length} intervals captured`
+                  : 'Start typing to capture'}
+              </p>
+            </div>
+            {state?.anomaly === 'high' ? (
+              <i className="fas fa-circle-exclamation text-rose-500 animate-bounce" />
+            ) : (
+              <i className="fas fa-check-circle text-emerald-500" />
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 p-3 rounded-xl border bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-sm bg-emerald-100 text-emerald-600">
+              <i className="fas fa-computer-mouse" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-slate-800 dark:text-white">Mouse Dynamics</p>
+              <p className="text-xs text-slate-500">
+                {state?.current.mouseSpeeds.length
+                  ? `${state.current.mouseSpeeds.length} speed samples`
+                  : 'Move mouse to sample'}
+              </p>
+            </div>
+            <i className="fas fa-check-circle text-emerald-500" />
+          </div>
+
+          <div className="flex items-center gap-3 p-3 rounded-xl border bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-sm bg-emerald-100 text-emerald-600">
+              <i className="fas fa-fingerprint" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-slate-800 dark:text-white">Profile</p>
+              <p className="text-xs text-slate-500">
+                {baselineSet
+                  ? `Baseline set · ${state?.profile?.sampleCount} samples`
+                  : 'No baseline — click Calibrate'}
+              </p>
+            </div>
+            {baselineSet ? (
+              <i className="fas fa-check-circle text-emerald-500" />
+            ) : (
+              <i className="fas fa-circle text-slate-300" />
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Deviation</span>
+            <span className={`text-xs font-bold ${deviationPct > 60 ? 'text-rose-500' : deviationPct > 30 ? 'text-amber-500' : 'text-emerald-500'}`}>
+              {deviationPct}%
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${
+                deviationPct > 60 ? 'bg-rose-500' : deviationPct > 30 ? 'bg-amber-500' : 'bg-emerald-500'
+              }`}
+              style={{ width: `${Math.min(100, deviationPct)}%` }}
+            />
+          </div>
         </div>
 
         {anomalyLog && (
-          <div className="mt-3 p-2.5 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-800">
-            <p className="text-xs text-amber-700 dark:text-amber-300">
+          <div className="mt-3 p-2.5 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-100 dark:border-rose-800">
+            <p className="text-xs text-rose-700 dark:text-rose-300">
               <i className="fas fa-triangle-exclamation mr-1" />
               {anomalyLog}
             </p>
           </div>
         )}
 
-        <button
-          onClick={simulateTakeover}
-          disabled={simulating || locked}
-          className="w-full mt-4 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-danger/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {simulating ? (
-            <span className="flex items-center justify-center gap-2">
-              <i className="fas fa-circle-notch fa-spin" /> Analyzing behavior...
-            </span>
-          ) : (
-            <span>
-              <i className="fas fa-user-secret mr-2" /> Simulate Account Takeover
-            </span>
-          )}
-        </button>
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={handleCalibrate}
+            className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <i className="fas fa-bullseye mr-2" /> Calibrate Baseline
+          </button>
+          <button
+            onClick={handleReset}
+            className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+          >
+            <i className="fas fa-rotate-left mr-2" /> Reset
+          </button>
+        </div>
       </div>
 
-      {/* Lock Screen Overlay */}
       {locked && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
@@ -189,20 +212,17 @@ export default function BehavioralBiometrics() {
               Behavioral anomaly detected!
             </p>
             <p className="text-xs text-rose-600 dark:text-rose-400 mb-4">
-              Typing rhythm, mouse patterns, and location all changed abnormally.
+              Live keystroke / mouse dynamics deviated significantly from your baseline.
             </p>
 
             <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-100 dark:border-rose-800 mb-4 text-left">
               <p className="text-[10px] text-rose-500 uppercase tracking-wide font-semibold mb-1">Anomalies Detected</p>
               <ul className="space-y-1">
                 <li className="text-xs text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
-                  <i className="fas fa-xmark text-[10px]" /> Typing rhythm changed suddenly
+                  <i className="fas fa-xmark text-[10px]" /> Typing rhythm deviation
                 </li>
                 <li className="text-xs text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
-                  <i className="fas fa-xmark text-[10px]" /> Mouse movement patterns unusual
-                </li>
-                <li className="text-xs text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
-                  <i className="fas fa-xmark text-[10px]" /> Session jumped Mumbai → Delhi in 5 min
+                  <i className="fas fa-xmark text-[10px]" /> Behavioral profile mismatch
                 </li>
               </ul>
             </div>
@@ -220,7 +240,7 @@ export default function BehavioralBiometrics() {
                 }`}
               />
               {pinError && (
-                <p className="text-xs text-rose-500">Incorrect PIN. Try 1234 for demo.</p>
+                <p className="text-xs text-rose-500">Incorrect PIN. Try 1234.</p>
               )}
               <button
                 onClick={unlock}
@@ -229,10 +249,6 @@ export default function BehavioralBiometrics() {
                 <i className="fas fa-unlock mr-2" /> Unlock Account
               </button>
             </div>
-
-            <p className="text-[10px] text-slate-400 mt-3">
-              Reference: ATO-{Date.now().toString(36).toUpperCase()}
-            </p>
           </div>
         </div>
       )}

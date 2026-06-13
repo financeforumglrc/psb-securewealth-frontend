@@ -1,57 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useSecurityActions } from '../../context/SecurityContext';
-
-function randomHex(length: number): string {
-  const chars = '0123456789abcdef';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * 16)];
-  }
-  return result;
-}
-
-function bufToHex(buffer: ArrayBuffer | Uint8Array): string {
-  return Array.from(new Uint8Array(buffer))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-async function kyberKeyExchange(): Promise<{
-  publicKey: string;
-  ciphertext: string;
-  sharedSecret: string;
-  encryptedPayload: string;
-}> {
-  const publicKey = randomHex(64);
-  const ciphertext = randomHex(128);
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(publicKey + ciphertext);
-  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-  const sharedSecret = bufToHex(hashBuffer);
-
-  const keyBytes = new Uint8Array(hashBuffer).slice(0, 16);
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-
-  const aesKey = await window.crypto.subtle.importKey(
-    'raw',
-    keyBytes,
-    { name: 'AES-GCM' },
-    false,
-    ['encrypt']
-  );
-
-  const plaintext = encoder.encode('SecureWealth Quantum Tunnel v1.0');
-  const encrypted = await window.crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    aesKey,
-    plaintext
-  );
-
-  const encryptedPayload = bufToHex(iv) + bufToHex(new Uint8Array(encrypted));
-
-  return { publicKey, ciphertext, sharedSecret, encryptedPayload };
-}
+import { runRealPqTunnel } from '../../services/postQuantumService';
 
 export default function PostQuantumCrypto() {
   const { setPqTunnel } = useSecurityActions();
@@ -60,21 +9,23 @@ export default function PostQuantumCrypto() {
   const [ciphertext, setCiphertext] = useState<string | null>(null);
   const [sharedSecret, setSharedSecret] = useState<string | null>(null);
   const [encryptedPayload, setEncryptedPayload] = useState<string | null>(null);
+  const [decryptedPayload, setDecryptedPayload] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const handleRun = useCallback(async () => {
     setLoading(true);
     setSuccess(false);
     try {
-      const result = await kyberKeyExchange();
-      setPublicKey(result.publicKey);
-      setCiphertext(result.ciphertext);
-      setSharedSecret(result.sharedSecret);
-      setEncryptedPayload(result.encryptedPayload);
+      const result = await runRealPqTunnel();
+      setPublicKey(result.publicKeyHex);
+      setCiphertext(result.ciphertextHex);
+      setSharedSecret(result.sharedSecretHex);
+      setEncryptedPayload(result.encryptedPayloadHex);
+      setDecryptedPayload(result.decryptedPayload);
       setSuccess(true);
       setPqTunnel(true);
     } catch (e) {
-      console.error('Kyber exchange failed', e);
+      console.error('ML-KEM tunnel failed', e);
     } finally {
       setLoading(false);
     }
@@ -97,7 +48,7 @@ export default function PostQuantumCrypto() {
             Post-Quantum Key Exchange
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            CRYSTALS-Kyber KEM simulation
+            Real ML-KEM-768 (NIST FIPS 203) KEM + AES-GCM
           </p>
         </div>
       </div>
@@ -105,9 +56,14 @@ export default function PostQuantumCrypto() {
       {success && (
         <div className="mb-4 flex items-start gap-2 rounded-lg bg-success/10 p-3 text-success dark:bg-success/20">
           <i className="fas fa-check-circle mt-0.5" />
-          <span className="text-sm font-medium">
-            Quantum-Safe Tunnel Established — CRYSTALS-Kyber KEM successful
-          </span>
+          <div>
+            <p className="text-sm font-medium">
+              Quantum-Safe Tunnel Established — ML-KEM-768 successful
+            </p>
+            <p className="text-xs opacity-80 mt-0.5">
+              Payload encrypted, transmitted, and decrypted end-to-end.
+            </p>
+          </div>
         </div>
       )}
 
@@ -132,7 +88,7 @@ export default function PostQuantumCrypto() {
 
         <div className="rounded-lg bg-gray-50 p-3 dark:bg-dark">
           <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Shared Secret (SHA-256)
+            Shared Secret
           </p>
           <p className="break-all font-mono text-sm text-gray-800 dark:text-gray-200">
             {mask(sharedSecret, 12)}
@@ -147,6 +103,17 @@ export default function PostQuantumCrypto() {
             {mask(encryptedPayload, 16)}
           </p>
         </div>
+
+        {decryptedPayload && (
+          <div className="rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-300">
+              Decrypted Payload
+            </p>
+            <p className="break-all font-mono text-sm text-emerald-700 dark:text-emerald-200">
+              {decryptedPayload}
+            </p>
+          </div>
+        )}
       </div>
 
       <button
@@ -157,7 +124,7 @@ export default function PostQuantumCrypto() {
         {loading ? (
           <>
             <i className="fas fa-circle-notch fa-spin" />
-            Running Key Exchange…
+            Running ML-KEM Exchange…
           </>
         ) : (
           <>

@@ -26,6 +26,7 @@ import ConsentModal from './components/compliance/ConsentModal';
 import ScenarioSimulator from './components/forecast/ScenarioSimulator';
 import ManualAssetForm from './components/assets/ManualAssetForm';
 import LinkAccountModal from './components/assets/LinkAccountModal';
+import PhysicalAssetIntelligence from './components/assets/PhysicalAssetIntelligence';
 
 import LoginPage from './components/auth/LoginPage';
 import PaymentsPage from './components/payments/PaymentsPage';
@@ -242,6 +243,7 @@ function AssetsView() {
         ))}
       </div>
       <LinkAccountModal show={showLinkModal} onClose={() => setShowLinkModal(false)} />
+      <PhysicalAssetIntelligence />
     </div>
   );
 }

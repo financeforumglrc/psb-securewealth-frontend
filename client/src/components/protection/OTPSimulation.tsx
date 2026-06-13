@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { isDuressPin, triggerDuressLockdown } from '../../services/duressService';
+import { getOrCreateTotpSecret, verifyTotp, getTotpTimeRemaining } from '../../services/totpService';
 import { useWealthStore } from '../../store/wealthStore';
 
 interface OTPSimulationProps {
@@ -12,12 +13,13 @@ interface OTPSimulationProps {
 
 export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCancel, skip = false }: OTPSimulationProps) {
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(getTotpTimeRemaining());
   const [error, setError] = useState(false);
   const [verified, setVerified] = useState(false);
   const [duressTriggered, setDuressTriggered] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const setLockdownActive = useWealthStore((s) => s.setLockdownActive);
+  const secret = getOrCreateTotpSecret();
 
   useEffect(() => {
     if (skip) {
@@ -25,29 +27,13 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
       return;
     }
     inputRefs.current[0]?.focus();
-    // Auto-fill for demo
-    const otpCode = '452109';
-    const delayPerDigit = 320;
-    otpCode.split('').forEach((char, i) => {
-      setTimeout(() => {
-        setDigits((prev) => {
-          const next = [...prev];
-          next[i] = char;
-          return next;
-        });
-        if (i === 5) {
-          setTimeout(() => setVerified(true), 300);
-        }
-      }, delayPerDigit * (i + 1));
-    });
   }, [skip, onConfirm]);
 
   useEffect(() => {
-    if (timer > 0 && !verified) {
-      const interval = setInterval(() => setTimer((t) => t - 1), 1000);
-      return () => clearInterval(interval);
-    }
-  }, [timer, verified]);
+    if (skip || verified) return;
+    const interval = setInterval(() => setTimer(getTotpTimeRemaining()), 1000);
+    return () => clearInterval(interval);
+  }, [skip, verified]);
 
   useEffect(() => {
     if (verified) {
@@ -69,7 +55,7 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
     if (e.key === 'Backspace' && !digits[i] && i > 0) inputRefs.current[i - 1]?.focus();
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const code = digits.join('');
     if (isDuressPin(code)) {
       setDuressTriggered(true);
@@ -80,7 +66,8 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
       }, 1200);
       return;
     }
-    if (code === '452109') {
+    const valid = await verifyTotp(code, secret);
+    if (valid) {
       setVerified(true);
     } else {
       setError(true);
@@ -115,7 +102,7 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
           <i className="fas fa-mobile-screen-button text-xl" />
         </div>
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1">Verify Transaction</h3>
-        <p className="text-xs text-slate-500 mb-1">Enter the 6-digit OTP sent to <strong>+91 98XXX 45210</strong></p>
+        <p className="text-xs text-slate-500 mb-1">Enter the 6-digit TOTP from your authenticator</p>
         <p className="text-[10px] text-slate-400 mb-1">Action: {actionType} {amount > 0 ? `· ₹${amount.toLocaleString()}` : ''}</p>
         <p className="text-[10px] text-rose-500 mb-4 font-medium">
           <i className="fas fa-shield-halved mr-1" />
@@ -136,7 +123,7 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
           ))}
         </div>
         <div className="flex items-center justify-center gap-2 mb-4 text-xs text-slate-500">
-          {timer > 0 ? <span>Resend in {timer}s</span> : <button className="text-primary hover:underline">Resend OTP</button>}
+          <span>Code refreshes in {timer}s</span>
         </div>
         <button onClick={handleVerify} disabled={digits.some((d) => !d)} className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
           Verify

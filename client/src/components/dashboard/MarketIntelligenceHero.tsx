@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '../../store/wealthStore';
 import CosmosCard from '../ui/CosmosCard';
+import GlobalMacroRadar from '../market/GlobalMacroRadar';
 
 /* ═══════════════════════════════════════════════════════════════
    MARKET INTELLIGENCE HERO — Strategic Recommendations
@@ -290,6 +291,9 @@ export default function MarketIntelligenceHero() {
           </motion.div>
         ))}
       </div>
+
+      {/* Global Macro Radar */}
+      <GlobalMacroRadar />
     </div>
   );
 }

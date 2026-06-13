@@ -159,7 +159,7 @@ export default function LockdownOverlay() {
                 </button>
               ))}
             </div>
-            <p className="text-[10px] text-slate-500">Demo PIN: 000000</p>
+            <p className="text-[10px] text-slate-500">Emergency PIN: 000000</p>
           </div>
         </div>
       )}

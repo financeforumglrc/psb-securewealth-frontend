@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from '../../hooks/useTranslation';
 import RiskMeter from './RiskMeter';
-import FraudSimulator from './FraudSimulator';
+import FraudDetectionEngine from './FraudDetectionEngine';
 import PanicButton from './PanicButton';
 import DuressModeToggle from './DuressMode';
 import ThreatIntel from './ThreatIntel';
@@ -47,7 +47,7 @@ export default function ProtectionView() {
           <RiskMeter signals={signals} />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <FraudSimulator signals={signals} onSignalsChange={setSignals} onAudit={() => setAuditTrigger((n) => n + 1)} />
+          <FraudDetectionEngine onSignalsChange={setSignals} onAudit={() => setAuditTrigger((n) => n + 1)} />
         </motion.div>
       </div>
 

@@ -127,7 +127,7 @@ function securityReducer(state: SecurityState, action: SecurityAction): Security
       break;
     case 'PQ_TUNNEL':
       next = { ...state, pqTunnelActive: action.active };
-      logSecurityEvent('PQ-Crypto', action.active ? 'Quantum-Safe Tunnel Active' : 'PQ Tunnel Closed', 'info', 'CRYSTALS-Kyber KEM simulated');
+      logSecurityEvent('PQ-Crypto', action.active ? 'Quantum-Safe Tunnel Active' : 'PQ Tunnel Closed', 'info', 'ML-KEM-768 key encapsulation active');
       break;
     case 'BLOCKCHAIN_UPDATE':
       next = { ...state, blockchainHeadHash: action.hash };

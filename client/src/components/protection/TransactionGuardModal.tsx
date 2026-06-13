@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '../../store/wealthStore';
+import FamilyApprovalGate from './FamilyApprovalGate';
 import type { RiskSignals, ProtectionDecision } from '../../types';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -41,6 +42,7 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
   const [phase, setPhase] = useState<'scanning' | 'scored' | 'decision'>('scanning');
   const [scanProgress, setScanProgress] = useState(0);
   const [currentSignal, setCurrentSignal] = useState(0);
+  const [showFamilyGate, setShowFamilyGate] = useState(false);
 
   // Calculate risk signals
   const signals = useMemo<RiskSignals>(() => {
@@ -104,6 +106,24 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
     }, interval);
     return () => clearInterval(timer);
   }, [show]);
+
+  const handleAllow = () => {
+    if (amount >= 200000) {
+      setShowFamilyGate(true);
+      return;
+    }
+    handleDecision('allow');
+  };
+
+  const handleFamilyApprove = () => {
+    setShowFamilyGate(false);
+    handleDecision('allow');
+  };
+
+  const handleFamilyReject = () => {
+    setShowFamilyGate(false);
+    handleDecision('block');
+  };
 
   // Record transaction on decision
   const handleDecision = (action: 'allow' | 'delay' | 'block') => {
@@ -292,10 +312,10 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
               <div className="flex gap-3 pt-2">
                 {riskLevel === 'LOW' && (
                   <button
-                    onClick={() => handleDecision('allow')}
+                    onClick={handleAllow}
                     className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
                   >
-                    <i className="fas fa-check" /> Allow Transaction
+                    <i className="fas fa-check" /> {amount >= 200000 ? 'Request Family Approval' : 'Allow Transaction'}
                   </button>
                 )}
                 {riskLevel === 'MEDIUM' && (
@@ -327,6 +347,15 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
           )}
         </motion.div>
       </motion.div>
+
+      <FamilyApprovalGate
+        show={showFamilyGate}
+        amount={amount}
+        payee={payee}
+        onApproved={handleFamilyApprove}
+        onRejected={handleFamilyReject}
+        onClose={() => setShowFamilyGate(false)}
+      />
     </AnimatePresence>
   );
 }

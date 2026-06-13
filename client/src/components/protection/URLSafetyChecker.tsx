@@ -1,20 +1,18 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { checkURLSafety } from '../../services/urlSafetyService';
+import { checkURLSafety, type URLSafetyResult } from '../../services/urlSafetyService';
 
 export default function URLSafetyChecker() {
   const [url, setUrl] = useState('');
-  const [result, setResult] = useState<ReturnType<typeof checkURLSafety> | null>(null);
+  const [result, setResult] = useState<URLSafetyResult | null>(null);
   const [checking, setChecking] = useState(false);
 
-  const handleCheck = useCallback(() => {
+  const handleCheck = useCallback(async () => {
     if (!url.trim()) return;
     setChecking(true);
-    // Simulate async processing for UX
-    setTimeout(() => {
-      setResult(checkURLSafety(url.trim()));
-      setChecking(false);
-    }, 600);
+    const res = await checkURLSafety(url.trim());
+    setResult(res);
+    setChecking(false);
   }, [url]);
 
   return (
@@ -25,7 +23,7 @@ export default function URLSafetyChecker() {
         </div>
         <div>
           <h3 className="text-sm font-bold text-slate-800 dark:text-white">URL Safety Scanner</h3>
-          <p className="text-[10px] text-slate-400">Check links for phishing, fraud, and scams</p>
+          <p className="text-[10px] text-slate-400">Heuristics + DNS-over-HTTPS + HTTPS probe</p>
         </div>
       </div>
 
@@ -67,7 +65,6 @@ export default function URLSafetyChecker() {
                 </span>
               </div>
 
-              {/* Risk bar */}
               <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden mb-3">
                 <motion.div
                   initial={{ width: 0 }}
@@ -88,6 +85,17 @@ export default function URLSafetyChecker() {
                 ))}
               </div>
 
+              <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-400">
+                <span>
+                  <i className={`fas fa-circle text-[6px] mr-1 ${result.resolved ? 'text-emerald-500' : 'text-rose-500'}`} />
+                  DNS {result.resolved ? 'resolved' : 'unresolved'}
+                </span>
+                <span>
+                  <i className={`fas fa-circle text-[6px] mr-1 ${result.httpsReachable ? 'text-emerald-500' : 'text-amber-500'}`} />
+                  HTTPS {result.httpsReachable ? 'reachable' : 'unreachable / blocked'}
+                </span>
+              </div>
+
               <p className="text-[10px] text-slate-400 mt-2">
                 Checked at {new Date(result.checkedAt).toLocaleTimeString()}
               </p>
@@ -96,7 +104,6 @@ export default function URLSafetyChecker() {
         )}
       </AnimatePresence>
 
-      {/* Sample URLs */}
       <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
         <p className="text-[10px] text-slate-400 mb-2">Test with these samples:</p>
         <div className="flex flex-wrap gap-2">

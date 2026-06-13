@@ -230,7 +230,7 @@ const FEATURES: FeatureItem[] = [
 
   /* Security Beast (18) */
   { id: 'f046', name: 'Risk Meter', category: 'Security Beast', categoryId: 'security', description: 'Dynamic security health score with visual gauge', isWorldFirst: false, files: ['RiskMeter.tsx'], libraries: ['Canvas API'] },
-  { id: 'f047', name: 'Fraud Simulator', category: 'Security Beast', categoryId: 'security', description: 'Interactive phishing and fraud attack simulation', isWorldFirst: false, files: ['FraudSimulator.tsx'], libraries: ['Framer Motion'] },
+  { id: 'f047', name: 'Fraud Detection Engine', category: 'Security Beast', categoryId: 'security', description: 'Real-time rule-based fraud analysis on transaction history', isWorldFirst: false, files: ['FraudDetectionEngine.tsx'], libraries: ['Framer Motion'] },
   { id: 'f048', name: 'Panic Button', category: 'Security Beast', categoryId: 'security', description: 'One-tap account freeze and emergency contact alert', isWorldFirst: false, files: ['PanicButton.tsx'], libraries: ['Zustand'] },
   { id: 'f049', name: 'Duress Mode', category: 'Security Beast', categoryId: 'security', description: 'Silent alarm that alerts authorities under coercion', isWorldFirst: false, files: ['DuressMode.tsx'], libraries: ['Zustand'] },
   { id: 'f050', name: 'Scam Caller ID', category: 'Security Beast', categoryId: 'security', description: 'AI-powered caller verification against fraud database', isWorldFirst: false, files: ['ScamCallerID.tsx'], libraries: ['TensorFlow.js'] },
