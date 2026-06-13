@@ -1,4 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from './store/wealthStore';
 import { isJudgeMode } from './utils/demoMode';
 import { usePanicMode } from './hooks/usePanicMode';
@@ -11,7 +12,7 @@ import { getQueuedActions, syncQueuedActions } from './services/offlineQueue';
 
 import GoalTracker from './components/goals/GoalTracker';
 import LockdownOverlay from './components/protection/LockdownOverlay';
-import BiometricAuth from './components/auth/BiometricAuth';
+
 import NotificationDemo from './components/demo/NotificationDemo';
 import DigitalGold from './components/gold/DigitalGold';
 import ChallengesView from './components/challenges/ChallengesView';
@@ -28,19 +29,21 @@ import ManualAssetForm from './components/assets/ManualAssetForm';
 import LinkAccountModal from './components/assets/LinkAccountModal';
 import PhysicalAssetIntelligence from './components/assets/PhysicalAssetIntelligence';
 
-import LoginPage from './components/auth/LoginPage';
-import PaymentsPage from './components/payments/PaymentsPage';
-import ProfileSettings from './components/profile/ProfileSettings';
-import AdminDashboard from './components/admin/AdminDashboard';
+const LoginPage = lazy(() => import('./components/auth/LoginPage'));
+const PaymentsPage = lazy(() => import('./components/payments/PaymentsPage'));
+const ProfileSettings = lazy(() => import('./components/profile/ProfileSettings'));
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 
-import PitchMode from './components/pitch/PitchMode';
-import DemoMode from './components/demo/DemoMode';
+const PitchMode = lazy(() => import('./components/pitch/PitchMode'));
+const DemoMode = lazy(() => import('./components/demo/DemoMode'));
 
-import SecurityBeastView from './components/security/SecurityBeastView';
-import DecoyAccountView from './components/security/DecoyAccountView';
+const SecurityBeastView = lazy(() => import('./components/security/SecurityBeastView'));
+const DecoyAccountView = lazy(() => import('./components/security/DecoyAccountView'));
 
-import ProtectionView from './components/protection/ProtectionView';
-import PrivacyView from './components/privacy/PrivacyView';
+const ProtectionView = lazy(() => import('./components/protection/ProtectionView'));
+const PrivacyView = lazy(() => import('./components/privacy/PrivacyView'));
+
+const BiometricAuth = lazy(() => import('./components/auth/BiometricAuth'));
 
 import { isDuressLocked } from './services/duressService';
 
@@ -96,10 +99,19 @@ import { RewardsProvider } from './context/RewardsContext';
 // Loading fallback component
 function ViewLoader() {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-        <p className="text-sm text-slate-500">Loading...</p>
+    <div className="min-h-[60vh] flex items-center justify-center bg-psb-bg dark:bg-slate-950">
+      <div className="flex flex-col items-center gap-4">
+        <div className="relative w-14 h-14">
+          <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+          <div className="absolute inset-0 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-lg font-black text-primary">PSB</span>
+          </div>
+        </div>
+        <div className="space-y-1 text-center">
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Loading your secure workspace</p>
+          <p className="text-xs text-slate-400">Please wait…</p>
+        </div>
       </div>
     </div>
   );
@@ -345,15 +357,21 @@ export default function App() {
   }
 
   if (!authState.isAuthenticated) {
-    return <LoginPage />;
+    return (
+      <Suspense fallback={<ViewLoader />}>
+        <LoginPage />
+      </Suspense>
+    );
   }
 
   // Admin panel renders standalone — no PSB headers/sidebars
   if (currentView === 'admin') {
     return (
-      <SecurityProvider>
-        <AdminDashboard />
-      </SecurityProvider>
+      <Suspense fallback={<ViewLoader />}>
+        <SecurityProvider>
+          <AdminDashboard />
+        </SecurityProvider>
+      </Suspense>
     );
   }
 
@@ -822,15 +840,22 @@ export default function App() {
         <main className="flex-1 overflow-y-auto bg-psb-bg">
           {/* View Content with Page Transitions */}
           <div className={`p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto ${pitchModeActive ? 'ring-4 ring-primary/40 ring-inset rounded-xl' : ''}`}>
-                <div className="animate-fade-in-fast">
-                  <Suspense fallback={<ViewLoader />}>
-                    {duressLocked ? (
-                      <DecoyAccountView />
-                    ) : seniorMode ? (
-                      <SeniorMode />
-                    ) : (
-                      <>
-                        {currentView === 'dashboard' && <DashboardView />}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${currentView}-${seniorMode ? 'senior' : 'normal'}-${duressLocked ? 'duress' : 'safe'}`}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+              >
+                <Suspense fallback={<ViewLoader />}>
+                  {duressLocked ? (
+                    <DecoyAccountView />
+                  ) : seniorMode ? (
+                    <SeniorMode />
+                  ) : (
+                    <>
+                      {currentView === 'dashboard' && <DashboardView />}
                         {currentView === 'wealth-twin' && <WealthTwinView />}
                         {currentView === 'ai-recommendations' && <AIRecommendationsView />}
                         {currentView === 'goals' && <GoalTracker />}
@@ -871,15 +896,18 @@ export default function App() {
                       </>
                     )}
                   </Suspense>
-                </div>
-              </div>
-              <AccessibleFooter />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <AccessibleFooter />
         </main>
       </div>
 
       <ConsentModal />
 
-      <PitchMode />
+      <Suspense fallback={null}>
+        <PitchMode />
+      </Suspense>
       <ReportGeneratorModal
         show={showReportModal}
         onClose={() => setShowReportModal(false)}
@@ -887,8 +915,12 @@ export default function App() {
       />
       {showReportView && <FinancialReport format={reportFormat} onClose={() => setShowReportView(false)} />}
       <LockdownOverlay />
-      <BiometricAuth />
-      <DemoMode />
+      <Suspense fallback={null}>
+        <BiometricAuth />
+      </Suspense>
+      <Suspense fallback={null}>
+        <DemoMode />
+      </Suspense>
       <JudgeTour />
       <CommandPalette />
       <LiveActivityPill />

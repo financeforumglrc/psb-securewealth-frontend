@@ -41,7 +41,7 @@ export default defineConfig({
         },
       },
     },
-    sourcemap: false,
+    sourcemap: 'hidden',
     reportCompressedSize: true,
     chunkSizeWarningLimit: 500,
   },
