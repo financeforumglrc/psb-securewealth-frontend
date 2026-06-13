@@ -273,7 +273,7 @@ function TaxCalculator() {
       return tax;
     } else {
       // Old regime (simplified)
-      let taxableOld = income;
+      const taxableOld = income;
       if (taxableOld <= 250000) return 0;
       let tax = 0;
       if (taxableOld > 250000) tax += Math.min(taxableOld - 250000, 250000) * 0.05;

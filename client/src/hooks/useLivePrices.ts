@@ -66,7 +66,7 @@ export function useLivePrices(): LivePrices {
 
     async function fetchPrices() {
       let nifty = prices.nifty;
-      let sensex = prices.sensex;
+      const sensex = prices.sensex;
       let gold = prices.gold;
       let usdInr = prices.usdInr;
       let hasLiveData = false;

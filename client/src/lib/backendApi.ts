@@ -9,12 +9,9 @@ const MAX_RETRIES = 2;
 const RETRY_DELAY = 500;
 
 function getHeaders(): Record<string, string> {
-  const token = localStorage.getItem('sw-token') || localStorage.getItem('sw-admin-token');
-  const headers: Record<string, string> = {
+  return {
     'Content-Type': 'application/json',
   };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  return headers;
 }
 
 async function sleep(ms: number) {
@@ -28,6 +25,7 @@ async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: num
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const res = await fetch(`${API_BASE}${path}`, {
       ...options,
+      credentials: 'include',
       signal: controller.signal,
       headers: { ...getHeaders(), ...(options?.headers || {}) },
     });
@@ -48,8 +46,11 @@ async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: num
 
 export const backendApi = {
   // Auth helpers
-  setDevEmail(email: string) {
-    localStorage.setItem('sw-dev-email', email);
+  async me() {
+    return fetchJson('/auth/me');
+  },
+  async logout() {
+    return fetchJson('/auth/logout', { method: 'POST' });
   },
 
   // Dashboard
@@ -230,6 +231,14 @@ export const backendApi = {
     });
   },
 
+  async demoLogin(payload: { email: string; name: string }) {
+    return fetchJson('/auth/demo-login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 15000,
+    });
+  },
+
   // Face biometric auth (longer timeout for slow Render cold start)
   async registerFace(descriptor: number[]) {
     return fetchJson('/auth/face-register', {
@@ -256,18 +265,16 @@ export const backendApi = {
     });
   },
 
-  async adminGetUsers(token: string) {
+  async adminGetUsers() {
     return fetchJson('/admin/users', {
       method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
       timeoutMs: 15000,
     });
   },
 
-  async adminGetStats(token: string) {
+  async adminGetStats() {
     return fetchJson('/admin/stats', {
       method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
       timeoutMs: 15000,
     });
   },

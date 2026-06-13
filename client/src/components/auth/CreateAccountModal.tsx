@@ -61,7 +61,6 @@ export default function CreateAccountModal({ open, onClose }: CreateAccountModal
       transactions: [],
     };
 
-    // @ts-ignore — pushing to demo array
     DEMO_ACCOUNTS.push(newAccount);
 
     // Load the new account into the store

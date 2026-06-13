@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
 import { useAuth } from '../../context/AuthContext';
 import { detectFace, initFaceAuthEngine } from '../../lib/faceAuth';
@@ -6,9 +6,33 @@ import { backendApi } from '../../lib/backendApi';
 
 type AuthMode = 'fingerprint' | 'faceid' | 'pin';
 
+function FaceMeshDots() {
+  const dots = useMemo(
+    () =>
+      Array.from({ length: 30 }).map((_, i) => ({
+        top: `${20 + ((i * 37) % 60)}%`,
+        left: `${20 + ((i * 17) % 60)}%`,
+        animationDelay: `${(i * 0.1) % 1.5}s`,
+      })),
+    []
+  );
+  return (
+    <div className="absolute inset-0 z-10">
+      {dots.map((style, i) => (
+        <div
+          key={i}
+          className="absolute w-1 h-1 rounded-full bg-primary/60"
+          style={style}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function BiometricAuth() {
   const { state: authState } = useAuth();
-  const isAuthenticated = authState.isAuthenticated || useWealthStore((s) => s.isAuthenticated);
+  const storeIsAuthenticated = useWealthStore((s) => s.isAuthenticated);
+  const isAuthenticated = authState.isAuthenticated || storeIsAuthenticated;
   const authenticate = useWealthStore((s) => s.authenticate);
   const authAttempts = useWealthStore((s) => s.authAttempts);
   const authLockoutUntil = useWealthStore((s) => s.authLockoutUntil);
@@ -25,6 +49,7 @@ export default function BiometricAuth() {
   const [lockoutCountdown, setLockoutCountdown] = useState(0);
   const [faceStatus, setFaceStatus] = useState<'idle' | 'loading' | 'register' | 'registering' | 'matched' | 'mismatch' | 'error'>('idle');
   const [faceMessage, setFaceMessage] = useState('Start Face Recognition');
+  const [faceRegistered, setFaceRegistered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -129,8 +154,7 @@ export default function BiometricAuth() {
       const arr = Array.from(descriptor);
       const res = await backendApi.registerFace(arr);
       if (res.ok) {
-        // Cache locally for faster unlock next time
-        localStorage.setItem('sw-face-descriptor-' + (authState.userEmail || 'default'), JSON.stringify(arr));
+        setFaceRegistered(true);
         setFaceStatus('matched');
         setFaceMessage('Face registered successfully');
         unlockSuccess();
@@ -138,10 +162,10 @@ export default function BiometricAuth() {
         setFaceStatus('error');
         setFaceMessage(res.data?.error || 'Registration failed');
       }
-    } catch (err: any) {
+    } catch (err) {
       stopCamera();
       setFaceStatus('error');
-      setFaceMessage(err.message || 'Face registration error');
+      setFaceMessage((err as Error).message || 'Face registration error');
     }
   }, [authState.userEmail, scanning, unlocked, startCamera, stopCamera, unlockSuccess, vibrate]);
 
@@ -181,11 +205,10 @@ export default function BiometricAuth() {
 
       const arr = Array.from(descriptor);
       const res = await backendApi.verifyFace(arr, authState.userEmail || undefined);
-      if (res.ok && res.data?.data?.tokens?.accessToken) {
+      if (res.ok && res.data?.data?.user) {
+        setFaceRegistered(true);
         setFaceStatus('matched');
         setFaceMessage(`Welcome, ${res.data.data.user?.name || userName}`);
-        // Cache descriptor
-        localStorage.setItem('sw-face-descriptor-' + (authState.userEmail || 'default'), JSON.stringify(arr));
         unlockSuccess();
       } else {
         setScanning(false);
@@ -193,24 +216,25 @@ export default function BiometricAuth() {
         setFaceMessage(res.data?.error || 'Face not recognized');
         incrementAuthAttempt();
       }
-    } catch (err: any) {
+    } catch (err) {
       stopCamera();
       setScanning(false);
       setFaceStatus('error');
-      setFaceMessage(err.message || 'Face verification error');
+      setFaceMessage((err as Error).message || 'Face verification error');
     }
   }, [authState.userEmail, incrementAuthAttempt, scanning, unlocked, startCamera, stopCamera, unlockSuccess, userName, vibrate]);
 
-  // Determine if face is already registered (local cache or backend)
-  const faceRegisteredLocally = !!localStorage.getItem('sw-face-descriptor-' + (authState.userEmail || 'default'));
+  // Face registration state is tracked during this session only; the actual descriptor lives on the server.
 
   useEffect(() => {
     return () => stopCamera();
   }, [stopCamera]);
 
-  const handlePinSubmit = useCallback(() => {
+  const handlePinSubmit = useCallback(async () => {
     if (pin.length !== 4) return;
-    if (pin === '0000') {
+    // Verify the backend session cookie is still valid instead of using a hardcoded PIN
+    const res = await backendApi.me();
+    if (res.ok) {
       vibrate([30, 50, 30]);
       setUnlocked(true);
       setTimeout(() => authenticate(), 600);
@@ -226,17 +250,11 @@ export default function BiometricAuth() {
     }
   }, [pin, vibrate, authenticate, incrementAuthAttempt, authAttempts]);
 
-  // Demo/screenshot bypass — runs after all hooks
-  useEffect(() => {
-    if (localStorage.getItem('sw_skip_biometric') === 'true') {
-      authenticate();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
 
   if (isAuthenticated) return null;
 
-  const isLockedOut = authLockoutUntil && authLockoutUntil > Date.now();
+  const isLockedOut = authLockoutUntil && authLockoutUntil > time.getTime();
   const remainingAttempts = Math.max(0, 3 - authAttempts);
 
   const timeStr = time.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -351,19 +369,7 @@ export default function BiometricAuth() {
                     {/* Scan line */}
                     <div className="absolute left-0 right-0 h-0.5 bg-primary shadow-[0_0_15px_rgba(15,118,110,0.8)] animate-[scanFace_2s_ease-in-out_infinite] z-20" />
                     {/* Face mesh dots */}
-                    <div className="absolute inset-0 z-10">
-                      {Array.from({ length: 30 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="absolute w-1 h-1 rounded-full bg-primary/60"
-                          style={{
-                            top: `${20 + Math.random() * 60}%`,
-                            left: `${20 + Math.random() * 60}%`,
-                            animationDelay: `${Math.random() * 1.5}s`,
-                          }}
-                        />
-                      ))}
-                    </div>
+                    <FaceMeshDots />
                   </>
                 )}
                 {!scanning && (
@@ -391,7 +397,7 @@ export default function BiometricAuth() {
                 {faceMessage}
               </p>
 
-              {!faceRegisteredLocally ? (
+              {!faceRegistered ? (
                 <button
                   onClick={handleFaceRegister}
                   disabled={scanning}
@@ -410,7 +416,7 @@ export default function BiometricAuth() {
               )}
 
               <p className="text-[10px] text-slate-500">
-                {faceRegisteredLocally
+                {faceRegistered
                   ? 'Face registered. Look at the camera to unlock.'
                   : 'No face registered yet. Register once, then unlock with your face.'}
               </p>
@@ -469,7 +475,7 @@ export default function BiometricAuth() {
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-slate-500">Demo PIN: 0000</p>
+              <p className="text-[10px] text-slate-500">Enter any 4 digits to verify session</p>
             </div>
           )}
         </div>

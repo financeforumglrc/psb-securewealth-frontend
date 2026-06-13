@@ -135,7 +135,6 @@ export default function LoginPage() {
 
       if (data.session) {
         dispatch({ type: 'LOGIN', userId: data.user!.id, userEmail: data.user!.email ?? null });
-        backendApi.setDevEmail(data.user!.email || 'user@psbwealth.in');
         const store = useWealthStore.getState();
         if (store.assets.length === 0) store.seedRealData();
         if (rememberDevice) {
@@ -516,8 +515,12 @@ export default function LoginPage() {
                 key={account.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  backendApi.setDevEmail(account.email);
+                onClick={async () => {
+                  const res = await backendApi.demoLogin({ email: account.email, name: account.profile.name });
+                  if (!res.ok) {
+                    setError(res.data?.error || 'Demo login failed');
+                    return;
+                  }
                   const store = useWealthStore.getState();
                   store.updateUser({ name: account.profile.name, monthlyIncome: account.profile.monthlyIncome, monthlyExpenses: account.profile.monthlyExpenses, monthlySavings: account.profile.monthlySavings, riskProfile: account.profile.riskProfile, taxBracket: account.profile.taxBracket });
                   if (store.assets.length === 0) store.seedRealData();
@@ -572,9 +575,7 @@ export default function LoginPage() {
       <FaceLoginModal
         isOpen={faceLoginOpen}
         onClose={() => setFaceLoginOpen(false)}
-        onSuccess={(user, token) => {
-          backendApi.setDevEmail(user.email);
-          localStorage.setItem('sw-token', token);
+        onSuccess={(user) => {
           localStorage.setItem('sw-user', JSON.stringify(user));
           dispatch({ type: 'LOGIN', userId: user.id, userEmail: user.email });
           useWealthStore.getState().updateUser({ name: user.name || user.email?.split('@')[0] || 'User' });

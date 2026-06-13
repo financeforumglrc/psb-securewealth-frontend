@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { detectFace, euclideanDistance } from '../../lib/faceAuth';
+import { detectFace } from '../../lib/faceAuth';
 import { backendApi } from '../../lib/backendApi';
 
 interface FaceLoginModalProps {
@@ -114,11 +114,9 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
         aadhar: regAadhar.trim() || undefined,
       });
 
-      if (res.ok && res.data?.data?.tokens?.accessToken) {
-        // Store token so face-register can use it
-        localStorage.setItem('sw-token', res.data.data.tokens.accessToken);
+      if (res.ok && res.data?.data?.user) {
+        // The backend sets the httpOnly session cookie; we only keep non-sensitive user info
         localStorage.setItem('sw-user', JSON.stringify(res.data.data.user));
-        backendApi.setDevEmail(regEmail.trim());
 
         // Auto-start face scan
         const ok = await startCamera();
@@ -159,15 +157,13 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     setSubMessage('Encrypting biometric data');
     try {
       const arr = Array.from(descriptor);
-      localStorage.setItem('sw-face-descriptor-' + regEmail, JSON.stringify(arr));
       const res = await backendApi.registerFace(arr);
       if (res.ok) {
         setStep('success');
         setMessage('Account created & face secured!');
         setSubMessage('You can now log in with your face');
         const user = JSON.parse(localStorage.getItem('sw-user') || '{}');
-        const token = localStorage.getItem('sw-token') || '';
-        setTimeout(() => onSuccess(user, token), 1500);
+        setTimeout(() => onSuccess(user, ''), 1500);
       } else {
         setStep('error');
         setMessage('Face linking failed');
@@ -188,43 +184,18 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     try {
       const arr = Array.from(descriptor);
       const userEmail = loginEmail.trim();
-      backendApi.setDevEmail(userEmail || 'guest@psbwealth.in');
 
       const res = await backendApi.verifyFace(arr, userEmail || undefined);
-      const tokens = res.data?.data?.tokens;
       const user = res.data?.data?.user;
       const confidence = res.data?.data?.confidence ?? 0;
 
-      if (res.ok && tokens?.accessToken && user) {
-        localStorage.setItem('sw-token', tokens.accessToken);
+      if (res.ok && user) {
         localStorage.setItem('sw-user', JSON.stringify(user));
-        localStorage.setItem('sw-face-descriptor-' + (user.email || 'default'), JSON.stringify(arr));
         setStep('success');
         setMessage(`Welcome back, ${user.name || 'User'}!`);
         setSubMessage(`Confidence: ${confidence.toFixed(3)}`);
-        setTimeout(() => onSuccess(user, tokens.accessToken), 1200);
+        setTimeout(() => onSuccess(user, ''), 1200);
         return;
-      }
-
-      // Backend failed — try client-side fallback
-      setSubMessage('Backend unavailable — checking local match');
-      const storedRaw = localStorage.getItem('sw-face-descriptor-' + (userEmail || 'default'));
-      if (storedRaw) {
-        const stored = JSON.parse(storedRaw);
-        const dist = euclideanDistance(arr, stored);
-        if (dist < 0.6) {
-          const localUser = {
-            id: 'local', email: userEmail || 'local@user.com',
-            name: userEmail ? userEmail.split('@')[0] : 'Local User',
-            role: 'user', tier: 'free',
-          };
-          localStorage.setItem('sw-user', JSON.stringify(localUser));
-          setStep('success');
-          setMessage('Welcome back! (offline mode)');
-          setSubMessage(`Local match confidence: ${dist.toFixed(3)}`);
-          setTimeout(() => onSuccess(localUser, 'local-offline-token'), 1200);
-          return;
-        }
       }
 
       setStep('error');

@@ -746,7 +746,6 @@ function LoginScreen({ onLogin, loading, error }: { onLogin: (id: string, pw: st
    ═══════════════════════════════════════════════════════════════ */
 export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [token, setToken] = useState('');
   const [tab, setTab] = useState<AdminTab>('dashboard');
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [stats, setStats] = useState<SystemStats | null>(null);
@@ -765,9 +764,9 @@ export default function AdminDashboard() {
     setLoading(true);
     const res = await backendApi.adminLogin(adminId, password);
     setLoading(false);
-    if (res.ok && res.data?.token) {
-      setToken(res.data.token); setIsLoggedIn(true);
-      localStorage.setItem('sw-admin-token', res.data.token);
+    if (res.ok && res.data?.success) {
+      setIsLoggedIn(true);
+      sessionStorage.setItem('sw-admin-session', 'true');
     } else {
       setLoginError(res.data?.error || 'Invalid credentials. Please try again.');
     }
@@ -804,7 +803,6 @@ export default function AdminDashboard() {
   }, []);
 
   const loadData = async () => {
-    if (!token) return;
     setLoading(true);
 
     // Render demo data instantly so the dashboard never shows empty zeros
@@ -824,8 +822,8 @@ export default function AdminDashboard() {
     });
 
     const [usersRes, statsRes] = await Promise.all([
-      backendApi.adminGetUsers(token),
-      backendApi.adminGetStats(token),
+      backendApi.adminGetUsers(),
+      backendApi.adminGetStats(),
     ]);
     const backendUsers = usersRes.ok ? (usersRes.data?.users || []) : [];
     const backendStats = statsRes.ok ? (statsRes.data?.stats || null) : null;
@@ -868,11 +866,11 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('sw-admin-token');
-    if (saved) { setToken(saved); setIsLoggedIn(true); }
+    const saved = sessionStorage.getItem('sw-admin-session');
+    if (saved === 'true') setIsLoggedIn(true);
   }, []);
 
-  useEffect(() => { if (isLoggedIn && token) loadData(); }, [isLoggedIn, token]);
+  useEffect(() => { if (isLoggedIn) loadData(); }, [isLoggedIn]);
 
   const filteredUsers = useMemo(() => {
     let result = users;
@@ -981,7 +979,7 @@ export default function AdminDashboard() {
 
         {/* Logout */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-          <button onClick={() => { localStorage.removeItem('sw-admin-token'); setIsLoggedIn(false); setToken(''); }}
+          <button onClick={() => { backendApi.logout(); sessionStorage.removeItem('sw-admin-session'); setIsLoggedIn(false); }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
             <LogOut className="w-[18px] h-[18px]" /> Logout
           </button>
