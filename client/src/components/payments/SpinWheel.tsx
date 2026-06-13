@@ -41,7 +41,7 @@ export default function SpinWheel() {
   };
 
   return (
-    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-6 text-center">
+    <div className="card rounded-3xl shadow-xl p-6 text-center">
       <h3 className="font-bold text-slate-800 dark:text-white flex items-center justify-center gap-2 mb-2">
         <i className="fas fa-dharmachakra text-rose-500" />
         Spin & Win Cashback

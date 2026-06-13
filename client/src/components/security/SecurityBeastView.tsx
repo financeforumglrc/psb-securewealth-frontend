@@ -13,9 +13,9 @@ import BlockchainAudit from './BlockchainAudit';
 import DeviceFingerprintPanel from './DeviceFingerprintPanel';
 
 const LAYER_GROUPS = [
-  { title: 'Hardware Root of Trust', subtitle: 'TPM 2.0 + eBPF Kernel Monitor', components: [<TpmAttestation key="tpm" />, <EbpfMonitor key="ebpf" />] },
+  { title: 'Hardware Root of Trust', subtitle: 'TPM attestation + browser threat monitor', components: [<TpmAttestation key="tpm" />, <EbpfMonitor key="ebpf" />] },
   { title: 'Identity & Access', subtitle: 'Decoy assets + FIDO2 passkeys', components: [<HoneytokenManager key="honey" />, <PasskeyAuth key="passkey" />] },
-  { title: 'Quantum & Behavior', subtitle: 'CRYSTALS-Kyber + biometric anomaly', components: [<PostQuantumCrypto key="pq" />, <BehavioralBiometrics key="bio" />] },
+  { title: 'Quantum & Behavior', subtitle: 'ML-KEM-768 + biometric anomaly', components: [<PostQuantumCrypto key="pq" />, <BehavioralBiometrics key="bio" />] },
   { title: 'Deception & DID', subtitle: 'Phishing trap + verifiable credentials', components: [<DecentralizedId key="did" />, <TransactionTrap key="trap" />] },
   { title: 'Immutable Audit', subtitle: 'Secure enclave + blockchain ledger', components: [<SecureEnclaveCheck key="enclave" />, <BlockchainAudit key="chain" />] },
 ];
@@ -49,7 +49,7 @@ export default function SecurityBeastView() {
         <motion.div key={group.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: gi * 0.1 }}>
           <div className="mb-3">
             <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">{group.title}</h3>
-            <p className="text-[10px] text-slate-400">{group.subtitle}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">{group.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {group.components}

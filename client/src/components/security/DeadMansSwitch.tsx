@@ -42,6 +42,12 @@ export default function DeadMansSwitch() {
   const daysSinceCheckIn = Math.floor((Date.now() - new Date(config.lastCheckIn).getTime()) / (1000 * 60 * 60 * 24));
   const daysRemaining = Math.max(0, config.checkInDays - daysSinceCheckIn);
   const statusColor = daysRemaining > 14 ? 'emerald' : daysRemaining > 7 ? 'amber' : 'rose';
+  const statusStyles: Record<string, { gradient: string; border: string; ring: string; icon: string; bar: string }> = {
+    emerald: { gradient: 'from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10', border: 'border-emerald-200 dark:border-emerald-800', ring: 'border-emerald-500', icon: 'text-emerald-500', bar: 'bg-emerald-500' },
+    amber:   { gradient: 'from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10', border: 'border-amber-200 dark:border-amber-800', ring: 'border-amber-500', icon: 'text-amber-500', bar: 'bg-amber-500' },
+    rose:    { gradient: 'from-rose-50 to-red-50 dark:from-rose-900/10 dark:to-red-900/10', border: 'border-rose-200 dark:border-rose-800', ring: 'border-rose-500', icon: 'text-rose-500', bar: 'bg-rose-500' },
+  };
+  const sts = statusStyles[statusColor];
   const totalPct = config.beneficiaries.reduce((s, b) => s + b.percentage, 0);
 
   const handleCheckIn = useCallback(() => {
@@ -98,20 +104,20 @@ export default function DeadMansSwitch() {
       </div>
 
       {/* Status Card */}
-      <div className={`card bg-gradient-to-br from-${statusColor}-50 to-${statusColor === 'emerald' ? 'teal' : statusColor === 'amber' ? 'orange' : 'red'}-50 dark:from-${statusColor}-900/10 dark:to-${statusColor === 'emerald' ? 'teal' : statusColor === 'amber' ? 'orange' : 'red'}-900/10 border-2 border-${statusColor}-200 dark:border-${statusColor}-800`}>
+      <div className={`card bg-gradient-to-br ${sts.gradient} border-2 ${sts.border}`}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Next Check-in Required</p>
             <p className="text-3xl font-bold text-slate-800 dark:text-white">{daysRemaining} <span className="text-lg font-medium">days</span></p>
             <p className="text-xs text-slate-400 mt-1">Interval: {config.checkInDays} days</p>
           </div>
-          <div className={`w-16 h-16 rounded-full border-4 border-${statusColor}-500 flex items-center justify-center`}>
-            <i className={`fas fa-heart-pulse text-${statusColor}-500 text-xl`} />
+          <div className={`w-16 h-16 rounded-full border-4 ${sts.ring} flex items-center justify-center`}>
+            <i className={`fas fa-heart-pulse ${sts.icon} text-xl`} />
           </div>
         </div>
         <div className="mt-4">
           <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div className={`h-full bg-${statusColor}-500 rounded-full transition-all`} style={{ width: `${(daysRemaining / config.checkInDays) * 100}%` }} />
+            <div className={`h-full ${sts.bar} rounded-full transition-all`} style={{ width: `${(daysRemaining / config.checkInDays) * 100}%` }} />
           </div>
         </div>
         <div className="mt-3 flex items-center gap-2">

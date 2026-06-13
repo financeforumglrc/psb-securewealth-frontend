@@ -7,7 +7,7 @@ export default function StreakFire() {
   const progress = next ? Math.min((streak.days / next.days) * 100, 100) : 100;
 
   return (
-    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-6">
+    <div className="card rounded-3xl shadow-xl p-6">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
           <motion.i

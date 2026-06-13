@@ -197,7 +197,7 @@ export default function PaymentHub() {
   return (
     <>
       {/* Sticky Payment Bar */}
-      <div className="sticky top-0 z-40 px-4 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-b border-slate-200 dark:border-slate-700">
+      <div className="sticky top-0 z-40 px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3 max-w-4xl mx-auto">
           <div className="flex-1 relative">
             <i className="fas fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />

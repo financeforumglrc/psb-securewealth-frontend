@@ -103,9 +103,9 @@ const GALAXIES: FeatureNode[] = [
     id: 'security',
     name: 'Security Beast',
     icon: 'fa-dragon',
-    desc: '10-layer zero-trust defense with AI-powered threat detection',
-    count: 18,
-    modules: ['Risk Meter', 'Fraud Simulator', 'Panic Button', 'Duress Mode', 'Scam Caller ID', 'Behavioral Biometrics', 'Secure Checkout', 'OTP Simulation', 'Cooling Vault', 'Threat Intel', 'Stress Test', 'Security Log', 'TPM 2.0', 'eBPF Monitor', 'Post-Quantum KEM', 'Blockchain Audit', 'Device Trust', 'Anomaly Detection'],
+    desc: 'Browser-native zero-trust defense with real crypto, biometrics, and threat monitoring',
+    count: 20,
+    modules: ['Risk Meter', 'Fraud Detection Engine', 'Panic Button', 'Duress Mode', 'Scam Caller ID', 'Behavioral Biometrics', 'Family Approval', 'OTP Simulation', 'Cooling Vault', 'Threat Intel', 'Stress Test', 'Security Log', 'TPM Attestation', 'Browser Threat Monitor', 'Post-Quantum Crypto', 'Blockchain Audit', 'Device Fingerprint', 'Decentralized ID', 'URL Safety Checker', 'Transaction Trap'],
     color: '#B71C1C',
     glow: '#EF5350',
   },
@@ -174,7 +174,7 @@ const GALAXIES: FeatureNode[] = [
 const TOTAL_FEATURES = GALAXIES.reduce((s, g) => s + g.count, 0);
 const TOTAL_GALAXIES = GALAXIES.length;
 
-/* ─── COMPLETE 156 FEATURE CATALOG ─── */
+/* ─── COMPLETE 159 FEATURE CATALOG ─── */
 
 const FEATURES: FeatureItem[] = [
   /* Dashboard & Intelligence (15) */
@@ -228,24 +228,27 @@ const FEATURES: FeatureItem[] = [
   { id: 'f044', name: 'Macro Dashboard', category: 'Market & Forecast', categoryId: 'market', description: 'GDP, unemployment, and macro indicator summary', isWorldFirst: false, files: ['MacroDashboard.tsx'], libraries: ['Recharts'] },
   { id: 'f045', name: 'Commodity Tracker', category: 'Market & Forecast', categoryId: 'market', description: 'Real-time prices for oil, metals, and agri commodities', isWorldFirst: false, files: ['CommodityTracker.tsx'], libraries: ['React Query'] },
 
-  /* Security Beast (18) */
+  /* Security Beast (20) */
   { id: 'f046', name: 'Risk Meter', category: 'Security Beast', categoryId: 'security', description: 'Dynamic security health score with visual gauge', isWorldFirst: false, files: ['RiskMeter.tsx'], libraries: ['Canvas API'] },
-  { id: 'f047', name: 'Fraud Detection Engine', category: 'Security Beast', categoryId: 'security', description: 'Real-time rule-based fraud analysis on transaction history', isWorldFirst: false, files: ['FraudDetectionEngine.tsx'], libraries: ['Framer Motion'] },
+  { id: 'f047', name: 'Fraud Detection Engine', category: 'Security Beast', categoryId: 'security', description: 'Real rule-based fraud analysis on live transaction history', isWorldFirst: false, files: ['FraudDetectionEngine.tsx'], libraries: ['Zustand'] },
   { id: 'f048', name: 'Panic Button', category: 'Security Beast', categoryId: 'security', description: 'One-tap account freeze and emergency contact alert', isWorldFirst: false, files: ['PanicButton.tsx'], libraries: ['Zustand'] },
   { id: 'f049', name: 'Duress Mode', category: 'Security Beast', categoryId: 'security', description: 'Silent alarm that alerts authorities under coercion', isWorldFirst: false, files: ['DuressMode.tsx'], libraries: ['Zustand'] },
-  { id: 'f050', name: 'Scam Caller ID', category: 'Security Beast', categoryId: 'security', description: 'AI-powered caller verification against fraud database', isWorldFirst: false, files: ['ScamCallerID.tsx'], libraries: ['TensorFlow.js'] },
-  { id: 'f051', name: 'Behavioral Biometrics', category: 'Security Beast', categoryId: 'security', description: 'Typing rhythm and swipe pattern authentication', isWorldFirst: false, files: ['BehavioralBio.tsx'], libraries: ['TensorFlow.js'] },
-  { id: 'f052', name: 'Secure Checkout', category: 'Security Beast', categoryId: 'security', description: 'Tokenized payment flow with device binding', isWorldFirst: false, files: ['SecureCheckout.tsx'], libraries: ['Web Crypto'] },
-  { id: 'f053', name: 'OTP Simulation', category: 'Security Beast', categoryId: 'security', description: 'Test and understand OTP interception risks safely', isWorldFirst: false, files: ['OTPSim.tsx'], libraries: ['Framer Motion'] },
+  { id: 'f050', name: 'Scam Caller ID', category: 'Security Beast', categoryId: 'security', description: 'Known-scam number database lookup with real-time warnings', isWorldFirst: false, files: ['ScamCallerID.tsx'], libraries: ['Local DB'] },
+  { id: 'f051', name: 'Behavioral Biometrics', category: 'Security Beast', categoryId: 'security', description: 'Live keystroke, mouse, and scroll biometrics with anomaly lock', isWorldFirst: false, files: ['BehavioralBiometrics.tsx'], libraries: ['Web Crypto'] },
+  { id: 'f052', name: 'Family Approval', category: 'Security Beast', categoryId: 'security', description: 'Require trusted-family consensus for high-value transfers', isWorldFirst: false, files: ['FamilyApproval.tsx'], libraries: ['Zustand'] },
+  { id: 'f053', name: 'OTP Simulation', category: 'Security Beast', categoryId: 'security', description: 'RFC 6238 TOTP generation and trap-code lockdown demo', isWorldFirst: false, files: ['OTPSimulation.tsx'], libraries: ['Web Crypto'] },
   { id: 'f054', name: 'Cooling Vault', category: 'Security Beast', categoryId: 'security', description: 'Time-locked withdrawals for large transactions', isWorldFirst: false, files: ['CoolingVault.tsx'], libraries: ['Zustand'] },
   { id: 'f055', name: 'Threat Intel', category: 'Security Beast', categoryId: 'security', description: 'Real-time global threat feed affecting your region', isWorldFirst: false, files: ['ThreatIntel.tsx'], libraries: ['React Query'] },
   { id: 'f056', name: 'Security Log', category: 'Security Beast', categoryId: 'security', description: 'Immutable audit trail of all security events', isWorldFirst: false, files: ['SecurityLog.tsx'], libraries: ['TanStack Table'] },
-  { id: 'f057', name: 'TPM 2.0', category: 'Security Beast', categoryId: 'security', description: 'Hardware-backed key storage on supported devices', isWorldFirst: false, files: ['TPMModule.tsx'], libraries: ['Web Crypto'] },
-  { id: 'f058', name: 'eBPF Monitor', category: 'Security Beast', categoryId: 'security', description: 'Kernel-level transaction monitoring on enterprise endpoints', isWorldFirst: false, files: ['eBPFMonitor.tsx'], libraries: ['WebAssembly'] },
-  { id: 'f059', name: 'Post-Quantum KEM', category: 'Security Beast', categoryId: 'security', description: 'Quantum-resistant key encapsulation for long-term data', isWorldFirst: false, files: ['PQKEM.tsx'], libraries: ['noble-ciphers'] },
-  { id: 'f060', name: 'Blockchain Audit', category: 'Security Beast', categoryId: 'security', description: 'Merkle-tree-based tamper-proof transaction logs', isWorldFirst: false, files: ['BlockchainAudit.tsx'], libraries: ['ethers.js'] },
-  { id: 'f061', name: 'Device Trust', category: 'Security Beast', categoryId: 'security', description: 'Device fingerprinting and trust scoring', isWorldFirst: false, files: ['DeviceTrust.tsx'], libraries: ['FingerprintJS'] },
-  { id: 'f062', name: 'Anomaly Detection', category: 'Security Beast', categoryId: 'security', description: 'ML-based detection of unusual transaction patterns', isWorldFirst: false, files: ['AnomalyDetect.tsx'], libraries: ['TensorFlow.js'] },
+  { id: 'f057', name: 'TPM Attestation', category: 'Security Beast', categoryId: 'security', description: 'Non-exportable ECDSA P-256 key attestation via Web Crypto', isWorldFirst: false, files: ['TpmAttestation.tsx'], libraries: ['Web Crypto'] },
+  { id: 'f058', name: 'Browser Threat Monitor', category: 'Security Beast', categoryId: 'security', description: 'Browser-native CSP, devtools, and injection threat detection', isWorldFirst: false, files: ['BrowserThreatMonitor.tsx'], libraries: ['DOM APIs'] },
+  { id: 'f059', name: 'Post-Quantum Crypto', category: 'Security Beast', categoryId: 'security', description: 'ML-KEM-768 key exchange with AES-GCM payload encryption', isWorldFirst: false, files: ['PostQuantumCrypto.tsx'], libraries: ['mlkem', 'Web Crypto'] },
+  { id: 'f060', name: 'Blockchain Audit', category: 'Security Beast', categoryId: 'security', description: 'Merkle-tree-based tamper-proof transaction logs', isWorldFirst: false, files: ['BlockchainAudit.tsx'], libraries: ['Web Crypto'] },
+  { id: 'f061', name: 'Device Fingerprint', category: 'Security Beast', categoryId: 'security', description: 'SHA-256 device fingerprint and per-session trust score', isWorldFirst: false, files: ['DeviceFingerprintPanel.tsx'], libraries: ['Canvas API'] },
+  { id: 'f062', name: 'Decentralized ID', category: 'Security Beast', categoryId: 'security', description: 'ECDSA-signed verifiable credential with QR code and JWS verification', isWorldFirst: false, files: ['DecentralizedId.tsx'], libraries: ['Web Crypto', 'qrcode'] },
+  { id: 'f062a', name: 'URL Safety Checker', category: 'Security Beast', categoryId: 'security', description: 'Heuristic + Cloudflare DoH + live HTTPS probe for unsafe links', isWorldFirst: false, files: ['URLSafetyChecker.tsx'], libraries: ['fetch', 'DoH'] },
+  { id: 'f062b', name: 'Transaction Trap', category: 'Security Beast', categoryId: 'security', description: 'Honey confirmation code that triggers lockdown on phishing UIs', isWorldFirst: false, files: ['TransactionTrap.tsx'], libraries: ['Zustand'] },
+  { id: 'f062c', name: 'Secure Enclave Check', category: 'Security Beast', categoryId: 'security', description: 'Hardware-backed key store verification and root/jailbreak stub', isWorldFirst: false, files: ['SecureEnclaveCheck.tsx'], libraries: ['Web Crypto'] },
 
   /* Transactions & Bills (14) */
   { id: 'f063', name: 'Transaction History', category: 'Transactions & Bills', categoryId: 'transactions', description: 'Infinite-scroll categorized transaction list', isWorldFirst: false, files: ['TxnHistory.tsx'], libraries: ['TanStack Table', 'React Query'] },
@@ -490,12 +493,12 @@ const JOURNEY_STAGES: JourneyStage[] = [
 const EVOLUTION_TIMELINE: EvolutionPhase[] = [
   { phase: 'Foundation', features: ['Dashboard', 'Transactions', 'Goals', 'Portfolio'], count: 4, color: '#1B5E20' },
   { phase: 'Intelligence', features: ['AI Recommendations', 'Wealth Twin', 'Market Data', 'Risk Meter'], count: 8, color: '#1565C0' },
-  { phase: 'Security', features: ['Fraud Simulator', 'Panic Button', 'Duress Mode', 'Biometrics', 'Threat Intel'], count: 14, color: '#B71C1C' },
+  { phase: 'Security', features: ['Fraud Detection Engine', 'Panic Button', 'Duress Mode', 'Biometrics', 'Threat Intel'], count: 14, color: '#B71C1C' },
   { phase: 'Specialized', features: ['NRI Mode', 'Kids Mode', 'Business', 'Senior Mode', 'Digital Gold'], count: 22, color: '#6A1B9A' },
   { phase: 'BHAVISHYA v1', features: ['DNA Helix', 'Event Predictor', 'Future Self', 'Preparedness'], count: 31, color: '#E65100' },
   { phase: 'BHAVISHYA v3', features: ['Crisis Predictor', 'Market Intel', 'Emotional AI', 'Generational Wealth'], count: 47, color: '#4527A0' },
   { phase: 'BHAVISHYA v4', features: ['Neural Viz', 'Temporal Wealth', 'Quantum Lock', 'Time Machine', 'Heatmap', 'Prosperity'], count: 64, color: '#FFD700' },
-  { phase: 'Present', features: ['156 Features', '10 Galaxies', '5 World-Firsts', '5 Personas', 'Payments Hub', 'Innovation Lab'], count: 156, color: '#00838F' },
+  { phase: 'Present', features: ['159 Features', '10 Galaxies', '5 World-Firsts', '5 Personas', 'Payments Hub', 'Innovation Lab'], count: 159, color: '#00838F' },
 ];
 
 /* ─── CATEGORY CHIP CONFIG ─── */
@@ -608,7 +611,7 @@ function FeatureExplorerGrid() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search 156 features by name, description, files, libraries..."
+            placeholder="Search 159 features by name, description, files, libraries..."
             className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900/50 border border-slate-700 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 transition-all"
           />
           {search && (
@@ -2274,7 +2277,7 @@ export default function FeaturesUniverse() {
 
   const sections = [
     { id: 'galaxy', label: 'Galaxy', icon: 'fa-atom', desc: '3D orbital constellation' },
-    { id: 'explorer', label: 'Explorer', icon: 'fa-search', desc: 'All 156 features' },
+    { id: 'explorer', label: 'Explorer', icon: 'fa-search', desc: 'All 159 features' },
     { id: 'innovation', label: 'Innovation', icon: 'fa-globe', desc: '5 World-Firsts' },
     { id: 'tower', label: 'Tower', icon: 'fa-cubes', desc: 'Volumetric 3D bars' },
     { id: 'matrix', label: 'Matrix', icon: 'fa-th', desc: 'Persona coverage map' },

@@ -66,6 +66,12 @@ export default function WealthTwinHero() {
   const riskBg = riskScore < 40 ? 'bg-emerald-500' : riskScore < 70 ? 'bg-amber-500' : 'bg-rose-500';
   const riskRing = riskScore < 40 ? 'ring-emerald-400' : riskScore < 70 ? 'ring-amber-400' : 'ring-rose-400';
   const riskGlow = riskScore < 40 ? 'shadow-emerald-500/30' : riskScore < 70 ? 'shadow-amber-500/30' : 'shadow-rose-500/30';
+  const riskStyles: Record<string, { gradient: string; icon: string }> = {
+    emerald: { gradient: 'from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-900/10', icon: 'text-emerald-500' },
+    amber:   { gradient: 'from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-900/10', icon: 'text-amber-500' },
+    rose:    { gradient: 'from-rose-100 to-rose-50 dark:from-rose-900/30 dark:to-rose-900/10', icon: 'text-rose-500' },
+  };
+  const rs = riskStyles[riskColor];
 
   // Animated score
   const [displayScore, setDisplayScore] = useState(0);
@@ -152,8 +158,8 @@ export default function WealthTwinHero() {
                 transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
               />
               {/* Inner gradient */}
-              <div className={`w-32 h-32 rounded-full bg-gradient-to-br from-${riskColor}-100 to-${riskColor}-50 dark:from-${riskColor}-900/30 dark:to-${riskColor}-900/10 flex flex-col items-center justify-center`}>
-                <i className={`fas fa-user-shield text-3xl text-${riskColor}-500 mb-1`} />
+              <div className={`w-32 h-32 rounded-full bg-gradient-to-br ${rs.gradient} flex flex-col items-center justify-center`}>
+                <i className={`fas fa-user-shield text-3xl ${rs.icon} mb-1`} />
                 <span className={`text-2xl font-black ${riskText}`}>{displayScore}</span>
                 <span className="text-[10px] text-slate-400 font-medium">/ 100 Risk</span>
               </div>

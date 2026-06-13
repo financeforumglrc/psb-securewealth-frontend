@@ -278,7 +278,7 @@ export default function UPIPaymentSimulator() {
   return (
     <div className="space-y-6">
       {/* Glassmorphic Payment Card */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-6">
+      <div className="card rounded-3xl shadow-xl p-6">
         {/* Tabs */}
         <div className="grid grid-cols-4 gap-2 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
           {TAB_CONFIG.map((tab) => (
@@ -455,7 +455,7 @@ export default function UPIPaymentSimulator() {
 
       {/* Recent Transactions */}
       {transactions.length > 0 && (
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-6">
+        <div className="card rounded-3xl shadow-xl p-6">
           <h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
             <i className="fas fa-clock-rotate-left text-primary" />
             Recent Transactions

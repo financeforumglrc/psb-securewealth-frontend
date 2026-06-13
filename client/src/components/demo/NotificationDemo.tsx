@@ -172,7 +172,7 @@ export default function NotificationDemo() {
               </div>
 
               {/* Status bar */}
-              <div className="h-12 px-6 flex items-center justify-between text-[10px] text-slate-800 dark:text-white z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm">
+              <div className="h-12 px-6 flex items-center justify-between text-[10px] text-slate-800 dark:text-white z-20 bg-white dark:bg-slate-950">
                 <span className="font-semibold">9:41</span>
                 <div className="flex items-center gap-1">
                   <i className="fas fa-signal" />
@@ -211,7 +211,7 @@ export default function NotificationDemo() {
                   {notifications.map((notif) => (
                     <div
                       key={notif.id}
-                      className={`pointer-events-auto rounded-2xl border ${notif.borderColor} bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-lg overflow-hidden transition-all duration-300 ${
+                      className={`pointer-events-auto rounded-2xl border ${notif.borderColor} bg-white dark:bg-slate-900 shadow-lg overflow-hidden transition-all duration-300 ${
                         expandedId === notif.id ? 'scale-100' : 'scale-95 hover:scale-100'
                       }`}
                       style={{

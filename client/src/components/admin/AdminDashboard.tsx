@@ -6,7 +6,8 @@ import {
   Activity, RefreshCw, CheckCircle2, XCircle, Lock, Fingerprint,
   Crown, Sparkles, AlertTriangle, Download, Filter, Server, Database,
   BarChart3, ChevronRight, Menu, ArrowUpRight, Info,
-  X, History, UserCheck, UserX, Settings
+  X, History, UserCheck, UserX, Settings,
+  ShieldAlert, Key, ScanLine, Globe, AlertOctagon, Siren, Unlock
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -16,8 +17,9 @@ import { backendApi } from '../../lib/backendApi';
 import { DEMO_ACCOUNTS } from '../../data/userProfiles';
 import SystemArchitecture from '../architecture/SystemArchitecture';
 import FeaturesUniverse from '../architecture/FeaturesUniverse';
+import { useSecurity } from '../../context/SecurityContext';
 
-type AdminTab = 'dashboard' | 'users' | 'architecture' | 'features' | 'logs';
+type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs';
 type SortKey = 'name' | 'email' | 'created_at' | 'tier' | 'role';
 type SortDir = 'asc' | 'desc';
 
@@ -54,12 +56,12 @@ const TIER_DATA = [
 
 function Badge({ children, variant = 'neutral' }: { children: React.ReactNode; variant?: 'success' | 'danger' | 'warning' | 'premium' | 'enterprise' | 'neutral' }) {
   const map: Record<string, string> = {
-    success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    danger: 'bg-red-50 text-red-700 border-red-200',
-    warning: 'bg-amber-50 text-amber-700 border-amber-200',
-    premium: 'bg-amber-50 text-amber-700 border-amber-200',
-    enterprise: 'bg-violet-50 text-violet-700 border-violet-200',
-    neutral: 'bg-slate-100 text-slate-600 border-slate-200',
+    success: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    danger: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
+    warning: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    premium: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    enterprise: 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800',
+    neutral: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700',
   };
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border ${map[variant]}`}>
@@ -75,7 +77,7 @@ interface SafetyResult {
   reasons: { icon: any; text: string; type: 'good' | 'warn' | 'danger' }[];
 }
 
-function computeSafetyScore(user: UserRecord): SafetyResult {
+function computeSafetyScore(user: UserRecord, securityState?: ReturnType<typeof useSecurity>['state']): SafetyResult {
   const reasons: SafetyResult['reasons'] = [];
   let riskPoints = 0;
 
@@ -133,6 +135,32 @@ function computeSafetyScore(user: UserRecord): SafetyResult {
     }
   }
 
+  // Real security signals (system-wide for this demo)
+  if (securityState) {
+    if (securityState.passkeyRegistered) {
+      reasons.push({ icon: Key, text: 'FIDO2 passkey registered', type: 'good' });
+    } else {
+      reasons.push({ icon: Key, text: 'No FIDO2 passkey registered', type: 'warn' });
+      riskPoints += 10;
+    }
+    if (securityState.pqTunnelActive) {
+      reasons.push({ icon: ScanLine, text: 'Post-quantum tunnel active', type: 'good' });
+    } else {
+      reasons.push({ icon: ScanLine, text: 'Post-quantum tunnel inactive', type: 'warn' });
+      riskPoints += 5;
+    }
+    if (securityState.behavioralDeviation > 0.3) {
+      reasons.push({ icon: Activity, text: `Behavioral anomaly: ${(securityState.behavioralDeviation * 100).toFixed(0)}% deviation`, type: 'danger' });
+      riskPoints += 15;
+    } else {
+      reasons.push({ icon: Activity, text: 'Behavioral biometrics within baseline', type: 'good' });
+    }
+    if (securityState.accountFrozen || securityState.trapTriggered || securityState.honeytokenTriggered) {
+      reasons.push({ icon: Siren, text: 'Active security lockdown / honeytoken alert', type: 'danger' });
+      riskPoints += 30;
+    }
+  }
+
   const score = Math.max(0, Math.min(100, 100 - riskPoints));
   const level = score >= 80 ? 'safe' : score >= 50 ? 'caution' : 'at-risk';
   return { score, level, reasons };
@@ -140,9 +168,9 @@ function computeSafetyScore(user: UserRecord): SafetyResult {
 
 function SafetyBadge({ score, onClick }: { score: SafetyResult; onClick?: () => void }) {
   const config = {
-    safe: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', label: 'SAFE', dotColor: '#10b981' },
-    caution: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', label: 'CAUTION', dotColor: '#f59e0b' },
-    'at-risk': { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', label: 'AT RISK', dotColor: '#ef4444' },
+    safe: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-700 dark:text-emerald-300', label: 'SAFE', dotColor: '#10b981' },
+    caution: { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-700 dark:text-amber-300', label: 'CAUTION', dotColor: '#f59e0b' },
+    'at-risk': { bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800', text: 'text-red-700 dark:text-red-300', label: 'AT RISK', dotColor: '#ef4444' },
   }[score.level];
   return (
     <button onClick={onClick} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold border ${config.bg} ${config.border} ${config.text} hover:brightness-95 transition-all cursor-pointer`}>
@@ -169,7 +197,7 @@ interface AuditLog {
   status: 'success' | 'warning' | 'danger';
 }
 
-function generateAuditLogs(allUsers: UserRecord[]): AuditLog[] {
+function generateAuditLogs(allUsers: UserRecord[], securityState?: ReturnType<typeof useSecurity>['state']): AuditLog[] {
   const logs: AuditLog[] = [];
   const now = new Date();
   const ips = ['103.21.45.12', '103.21.45.89', '43.204.12.5', '182.74.9.33', '45.127.8.101', '106.51.77.22', '103.91.12.44'];
@@ -263,22 +291,39 @@ function generateAuditLogs(allUsers: UserRecord[]): AuditLog[] {
   logs.push({
     id: 'AUD-SYS-003', timestamp: new Date(now.getTime() - 3 * 3600000).toISOString(),
     userName: 'System', userEmail: 'system@psbsecurewealth.com',
-    eventType: 'system_event', action: 'Face Auth Sync',
-    details: 'Face descriptor embeddings synchronized. 6 active biometric profiles.',
+    eventType: 'system_event', action: 'Security State Sync',
+    details: `Trust score ${securityState?.trustScore ?? 50}. Passkey: ${securityState?.passkeyRegistered ? 'yes' : 'no'}. PQ tunnel: ${securityState?.pqTunnelActive ? 'yes' : 'no'}.`,
     ipAddress: '127.0.0.1', status: 'success',
   });
+
+  // Real-time security signals
+  if (securityState?.passkeyRegistered) {
+    logs.push({ id: 'AUD-SEC-PK', timestamp: new Date(now.getTime() - 20 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'Passkey Registered', details: 'FIDO2 platform authenticator registered successfully.', ipAddress: '127.0.0.1', status: 'success' });
+  }
+  if (securityState?.pqTunnelActive) {
+    logs.push({ id: 'AUD-SEC-PQ', timestamp: new Date(now.getTime() - 18 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'PQ Tunnel Active', details: 'ML-KEM-768 key encapsulation + AES-GCM verified.', ipAddress: '127.0.0.1', status: 'success' });
+  }
+  if (securityState?.lastEbpfAlert) {
+    logs.push({ id: 'AUD-SEC-BT', timestamp: new Date(now.getTime() - 5 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'Browser Threat', details: securityState.lastEbpfAlert, ipAddress: '127.0.0.1', status: 'warning' });
+  }
+  if (securityState?.honeytokenTriggered) {
+    logs.push({ id: 'AUD-SEC-HT', timestamp: new Date(now.getTime() - 2 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'Honeytoken Triggered', details: 'Decoy account touched — account frozen.', ipAddress: '127.0.0.1', status: 'danger' });
+  }
+  if (securityState?.trapTriggered) {
+    logs.push({ id: 'AUD-SEC-TR', timestamp: new Date(now.getTime() - 3 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'Transaction Trap', details: 'Trap confirmation code entered — 24h lockdown activated.', ipAddress: '127.0.0.1', status: 'danger' });
+  }
 
   return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
 function EventTypeBadge({ type }: { type: AuditEventType }) {
   const map: Record<AuditEventType, { label: string; icon: any; color: string; bg: string; border: string }> = {
-    login: { label: 'LOGIN', icon: UserCheck, color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
-    logout: { label: 'LOGOUT', icon: UserX, color: 'text-slate-700', bg: 'bg-slate-100', border: 'border-slate-200' },
-    transaction: { label: 'TRANSACTION', icon: ArrowLeftRight, color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200' },
-    admin_action: { label: 'ADMIN', icon: Shield, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    security_alert: { label: 'SECURITY', icon: AlertTriangle, color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200' },
-    system_event: { label: 'SYSTEM', icon: Settings, color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200' },
+    login: { label: 'LOGIN', icon: UserCheck, color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800' },
+    logout: { label: 'LOGOUT', icon: UserX, color: 'text-slate-700 dark:text-slate-300', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700' },
+    transaction: { label: 'TRANSACTION', icon: ArrowLeftRight, color: 'text-violet-700 dark:text-violet-300', bg: 'bg-violet-50 dark:bg-violet-900/20', border: 'border-violet-200 dark:border-violet-800' },
+    admin_action: { label: 'ADMIN', icon: Shield, color: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800' },
+    security_alert: { label: 'SECURITY', icon: AlertTriangle, color: 'text-red-700 dark:text-red-300', bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800' },
+    system_event: { label: 'SYSTEM', icon: Settings, color: 'text-cyan-700 dark:text-cyan-300', bg: 'bg-cyan-50 dark:bg-cyan-900/20', border: 'border-cyan-200 dark:border-cyan-800' },
   };
   const config = map[type];
   const Icon = config.icon;
@@ -298,8 +343,9 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
   const [logSearch, setLogSearch] = useState('');
   const [eventFilter, setEventFilter] = useState<AuditEventType | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'warning' | 'danger'>('all');
+  const { state: securityState } = useSecurity();
 
-  const allLogs = useMemo(() => generateAuditLogs(users), [users]);
+  const allLogs = useMemo(() => generateAuditLogs(users, securityState), [users, securityState]);
 
   const filteredLogs = useMemo(() => {
     return allLogs.filter(log => {
@@ -329,24 +375,24 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
     <motion.div key="logs" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6 max-w-[1600px]">
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Audit Logs</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Comprehensive activity trail for compliance and monitoring</p>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Audit Logs</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Comprehensive activity trail for compliance and monitoring</p>
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Events', value: counts.total, icon: History, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-          { label: 'Security Alerts', value: counts.alerts, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
-          { label: 'Failed / Blocked', value: counts.failed, icon: XCircle, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
-          { label: 'Successful', value: counts.success, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+          { label: 'Total Events', value: counts.total, icon: History, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-100 dark:border-blue-800' },
+          { label: 'Security Alerts', value: counts.alerts, icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-100 dark:border-red-800' },
+          { label: 'Failed / Blocked', value: counts.failed, icon: XCircle, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-100 dark:border-amber-800' },
+          { label: 'Successful', value: counts.success, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-100 dark:border-emerald-800' },
         ].map((s) => {
           const Icon = s.icon;
           return (
             <div key={s.label} className={`${s.bg} ${s.border} border rounded-xl p-5`}>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{s.label}</span>
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{s.label}</span>
                 <Icon className={`w-5 h-5 ${s.color}`} />
               </div>
               <p className={`text-2xl font-bold ${s.color}`}>{fmtNum(s.value)}</p>
@@ -356,17 +402,17 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           <div className="flex-1 relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <input type="text" value={logSearch} onChange={(e) => setLogSearch(e.target.value)}
               placeholder="Search by user, action, details, IP..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all" />
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-900/30 transition-all" />
           </div>
           <div className="flex items-center gap-2">
             <select value={eventFilter} onChange={(e) => setEventFilter(e.target.value as any)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-emerald-400">
+              className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-400">
               <option value="all">All Events</option>
               <option value="login">Login</option>
               <option value="logout">Logout</option>
@@ -376,13 +422,13 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
               <option value="system_event">System</option>
             </select>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-emerald-400">
+              className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-400">
               <option value="all">All Status</option>
               <option value="success">Success</option>
               <option value="warning">Warning</option>
               <option value="danger">Danger</option>
             </select>
-            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
               <Download className="w-3.5 h-3.5" /> Export
             </button>
           </div>
@@ -390,44 +436,44 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
       </div>
 
       {/* Logs Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50/80">
+              <tr className="bg-slate-50/80 dark:bg-slate-800/80">
                 <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Timestamp</th>
                 <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">User</th>
                 <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Event</th>
                 <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Action</th>
                 <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Details</th>
                 <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">IP Address</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody>
               {filteredLogs.map((log) => (
-                <tr key={log.id} className="border-t border-slate-50 hover:bg-slate-50/40 transition-colors">
-                  <td className="px-5 py-3.5 text-slate-500 text-[11px] whitespace-nowrap font-mono">
+                <tr key={log.id} className="border-t border-slate-50 dark:border-slate-800 hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
+                  <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-[11px] whitespace-nowrap font-mono">
                     {new Date(log.timestamp).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-slate-800 text-xs">{log.userName}</span>
-                      <span className="text-[10px] text-slate-400">{log.userEmail}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">{log.userName}</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">{log.userEmail}</span>
                     </div>
                   </td>
                   <td className="px-5 py-3.5"><EventTypeBadge type={log.eventType} /></td>
-                  <td className="px-5 py-3.5 text-slate-700 text-xs font-medium">{log.action}</td>
-                  <td className="px-5 py-3.5 text-slate-500 text-xs max-w-xs truncate" title={log.details}>{log.details}</td>
-                  <td className="px-5 py-3.5 text-slate-400 text-[11px] font-mono">{log.ipAddress}</td>
+                  <td className="px-5 py-3.5 text-slate-700 dark:text-slate-300 text-xs font-medium">{log.action}</td>
+                  <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-xs max-w-xs truncate" title={log.details}>{log.details}</td>
+                  <td className="px-5 py-3.5 text-slate-400 dark:text-slate-500 text-[11px] font-mono">{log.ipAddress}</td>
                   <td className="px-5 py-3.5"><StatusDot status={log.status} /></td>
                 </tr>
               ))}
               {filteredLogs.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-14 text-center">
+                <tr><td colSpan={7} className="px-5 py-14 text-center dark:text-slate-500">
                   <div className="flex flex-col items-center gap-2">
                     <Search className="w-8 h-8 text-slate-300" />
-                    <p className="text-sm text-slate-500 font-medium">No audit logs match your filters</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No audit logs match your filters</p>
                   </div>
                 </td></tr>
               )}
@@ -436,6 +482,155 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECURITY OPS TAB
+   ═══════════════════════════════════════════════════════════════ */
+function SecurityOpsTab() {
+  const { state, dispatch } = useSecurity();
+
+  const features = [
+    { id: 'tpm', label: 'TPM Attestation', active: state.tpmAttested, icon: MicrochipIcon, color: 'emerald' },
+    { id: 'passkey', label: 'FIDO2 Passkey', active: state.passkeyRegistered, icon: Fingerprint, color: 'sky' },
+    { id: 'enclave', label: 'Secure Enclave', active: state.enclaveVerified, icon: Lock, color: 'violet' },
+    { id: 'pq', label: 'PQ Tunnel', active: state.pqTunnelActive, icon: ScanLine, color: 'pink' },
+    { id: 'behavioral', label: 'Behavioral Bio', active: state.behavioralBaseline !== null && state.behavioralDeviation < 0.3, icon: Activity, color: 'amber' },
+    { id: 'did', label: 'Decentralized ID', active: state.didIssued, icon: Globe, color: 'teal' },
+    { id: 'fraud', label: 'Fraud Engine', active: true, icon: Search, color: 'orange' },
+    { id: 'browser', label: 'Browser Threat', active: !state.lastEbpfAlert, icon: ShieldAlert, color: 'rose' },
+  ];
+
+  const events = [
+    state.tpmAttested && { icon: CheckCircle2, text: 'TPM attestation verified', time: 'Recent', type: 'good' as const },
+    state.passkeyRegistered && { icon: Key, text: 'FIDO2 passkey registered', time: 'Recent', type: 'good' as const },
+    state.pqTunnelActive && { icon: ScanLine, text: 'ML-KEM-768 quantum-safe tunnel active', time: 'Recent', type: 'good' as const },
+    state.didIssued && { icon: Globe, text: `Verifiable credential issued: ${state.didUri?.slice(0, 24)}...`, time: 'Recent', type: 'good' as const },
+    state.lastEbpfAlert && { icon: AlertOctagon, text: `Browser threat: ${state.lastEbpfAlert}`, time: 'Recent', type: 'danger' as const },
+    state.honeytokenTriggered && { icon: Siren, text: 'HONEYTOKEN triggered — account frozen', time: 'Recent', type: 'danger' as const },
+    state.trapTriggered && { icon: AlertTriangle, text: 'Transaction trap activated — lockdown 24h', time: 'Recent', type: 'danger' as const },
+    state.behavioralDeviation > 0.3 && { icon: Activity, text: `Behavioral anomaly: ${(state.behavioralDeviation * 100).toFixed(0)}% deviation`, time: 'Recent', type: 'warning' as const },
+  ].filter(Boolean);
+
+  const scoreConfig = state.trustScore >= 80
+    ? { label: 'High Trust', text: 'text-emerald-600 dark:text-emerald-400', bar: 'bg-emerald-500' }
+    : state.trustScore >= 50
+    ? { label: 'Moderate Trust', text: 'text-amber-600 dark:text-amber-400', bar: 'bg-amber-500' }
+    : { label: 'Low Trust', text: 'text-rose-600 dark:text-rose-400', bar: 'bg-rose-500' };
+
+  return (
+    <motion.div key="security" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6 max-w-[1600px]">
+      <div className="flex items-end justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Security Operations</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Live zero-trust signals and admin controls</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`text-2xl font-bold ${scoreConfig.text}`}>{state.trustScore}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">/ 100 trust</span>
+        </div>
+      </div>
+
+      {/* Trust score bar */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+        <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div className={`h-full ${scoreConfig.bar} rounded-full transition-all duration-500`} style={{ width: `${state.trustScore}%` }} />
+        </div>
+        <div className="flex items-center justify-between mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <span>Low trust</span>
+          <span>High trust</span>
+        </div>
+      </div>
+
+      {/* Feature grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {features.map((f) => {
+          const Icon = f.icon;
+          const activeClass = {
+            emerald: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300',
+            sky: 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300',
+            violet: 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300',
+            pink: 'bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800 text-pink-700 dark:text-pink-300',
+            amber: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300',
+            teal: 'bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300',
+            orange: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300',
+            rose: 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300',
+          }[f.color];
+          return (
+            <div key={f.id} className={`rounded-xl border p-4 ${activeClass} ${f.active ? '' : 'opacity-60 grayscale'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">{f.active ? 'Active' : 'Inactive'}</span>
+              </div>
+              <p className="text-sm font-bold">{f.label}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Admin controls */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Admin Controls</h3>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => dispatch({ type: 'UNFREEZE_ACCOUNT' })} disabled={!state.accountFrozen}
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 disabled:opacity-40 flex items-center gap-1.5">
+            <Unlock className="w-3.5 h-3.5" /> Unfreeze Account
+          </button>
+          <button onClick={() => dispatch({ type: 'HONEYTOKEN_RESET' })} disabled={!state.honeytokenTriggered}
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 disabled:opacity-40 flex items-center gap-1.5">
+            <ShieldAlert className="w-3.5 h-3.5" /> Reset Honeytoken
+          </button>
+          <button onClick={() => dispatch({ type: 'TRAP_RESET' })} disabled={!state.trapTriggered}
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 disabled:opacity-40 flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5" /> Reset Trap
+          </button>
+          <button onClick={() => dispatch({ type: 'EBPF_ALERT', alert: '' })}
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <X className="w-3.5 h-3.5" /> Clear Threat
+          </button>
+        </div>
+      </div>
+
+      {/* Event feed */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recent Security Events</h3>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {events.length > 0 ? events.map((e, i) => {
+            const ev = e as any;
+            const Icon = ev.icon;
+            return (
+              <div key={i} className="px-5 py-3 flex items-start gap-3">
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                  ev.type === 'good' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' :
+                  ev.type === 'warning' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
+                  'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
+                }`}>
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-800 dark:text-slate-200">{ev.text}</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{ev.time}</p>
+                </div>
+              </div>
+            );
+          }) : (
+            <div className="px-5 py-10 text-center text-slate-400 dark:text-slate-500 text-sm">No recent security events</div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function MicrochipIcon(props: any) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M18 12h2" /><path d="M4 12h2" /><path d="M12 18v2" /><path d="M12 4v2" />
+      <path d="M8 8h8v8H8z" />
+    </svg>
   );
 }
 
@@ -562,6 +757,7 @@ export default function AdminDashboard() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null);
+  const { state: securityState } = useSecurity();
 
   const handleLogin = async (adminId: string, password: string) => {
     setLoginError('');
@@ -691,6 +887,7 @@ export default function AdminDashboard() {
     { key: 'dashboard' as AdminTab, label: 'Dashboard', icon: LayoutDashboard },
     { key: 'users' as AdminTab, label: 'Account Holders', icon: Users },
     { key: 'architecture' as AdminTab, label: 'Architecture', icon: Server },
+    { key: 'security' as AdminTab, label: 'Security Ops', icon: ShieldAlert },
     { key: 'features' as AdminTab, label: 'Features', icon: BarChart3 },
     { key: 'logs' as AdminTab, label: 'Audit Logs', icon: Activity },
   ];
@@ -710,18 +907,18 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="h-screen w-full flex overflow-hidden bg-slate-50">
+    <div className="h-screen w-full flex overflow-hidden bg-slate-50 dark:bg-slate-950">
       {/* ─── Sidebar ─── */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed md:static md:translate-x-0 z-50 w-64 h-full flex flex-col border-r border-slate-200 bg-white transition-transform duration-300`}>
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed md:static md:translate-x-0 z-50 w-64 h-full flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-transform duration-300`}>
         {/* Logo */}
-        <div className="p-6 border-b border-slate-100">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center">
               <Landmark className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-sm text-slate-900 leading-tight">Admin Portal</h2>
-              <p className="text-[10px] text-slate-500 font-medium">PSB SecureWealth</p>
+              <h2 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">Admin Portal</h2>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">PSB SecureWealth</p>
             </div>
           </div>
         </div>
@@ -734,9 +931,9 @@ export default function AdminDashboard() {
             return (
               <button key={item.key} onClick={() => { setTab(item.key); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  active ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  active ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}>
-                <Icon className={`w-[18px] h-[18px] ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
+                <Icon className={`w-[18px] h-[18px] ${active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`} />
                 {item.label}
                 {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500" />}
               </button>
@@ -745,30 +942,30 @@ export default function AdminDashboard() {
         </nav>
 
         {/* System Status */}
-        <div className="p-4 mx-4 mb-3 rounded-xl bg-slate-50 border border-slate-100">
+        <div className="p-4 mx-4 mb-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">System Status</span>
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">System Status</span>
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-emerald-600">ONLINE</span>
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">ONLINE</span>
             </div>
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-500 flex items-center gap-1"><Server className="w-3 h-3" /> API</span>
-              <span className="text-emerald-600 font-medium">99.9%</span>
+              <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1"><Server className="w-3 h-3" /> API</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">99.9%</span>
             </div>
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-500 flex items-center gap-1"><Database className="w-3 h-3" /> DB</span>
-              <span className="text-emerald-600 font-medium">Healthy</span>
+              <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1"><Database className="w-3 h-3" /> DB</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">Healthy</span>
             </div>
           </div>
         </div>
 
         {/* Logout */}
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
           <button onClick={() => { localStorage.removeItem('sw-admin-token'); setIsLoggedIn(false); setToken(''); }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
             <LogOut className="w-[18px] h-[18px]" /> Logout
           </button>
         </div>
@@ -782,30 +979,31 @@ export default function AdminDashboard() {
       {/* ─── Main Content ─── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="flex-shrink-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+        <header className="flex-shrink-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-lg hover:bg-slate-50">
-              <Menu className="w-5 h-5 text-slate-600" />
+            <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+              <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
             </button>
             <div>
-              <h1 className="text-base font-bold text-slate-900">
+              <h1 className="text-base font-bold text-slate-900 dark:text-white">
                 {tab === 'dashboard' && 'Control Center'}
                 {tab === 'users' && 'Account Holders'}
                 {tab === 'architecture' && 'System Architecture'}
+                {tab === 'security' && 'Security Operations'}
                 {tab === 'features' && 'Cosmos Features'}
                 {tab === 'logs' && 'Audit Logs'}
               </h1>
-              <p className="text-[11px] text-slate-500">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={loadData} disabled={loading}
-              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40">
+              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </button>
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-bold text-emerald-700">System Online</span>
+              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">System Online</span>
             </div>
           </div>
         </header>
@@ -824,15 +1022,15 @@ export default function AdminDashboard() {
                       <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                         className={`${s.bg} ${s.border} border rounded-xl p-5`}>
                         <div className="flex items-start justify-between mb-4">
-                          <div className={`w-10 h-10 rounded-lg bg-white border ${s.border} flex items-center justify-center`}>
+                          <div className={`w-10 h-10 rounded-lg bg-white dark:bg-slate-900 border ${s.border} dark:border-slate-700 flex items-center justify-center`}>
                             <Icon className={`w-5 h-5 ${s.color}`} />
                           </div>
                           <span className={`flex items-center gap-0.5 text-[11px] font-bold ${s.up ? 'text-emerald-600' : 'text-red-600'}`}>
                             <ArrowUpRight className="w-3 h-3" /> {s.change}
                           </span>
                         </div>
-                        <p className="text-3xl font-bold text-slate-900">{fmtNum(s.value)}</p>
-                        <p className="text-xs text-slate-500 font-medium mt-1">{s.label}</p>
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white">{fmtNum(s.value)}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">{s.label}</p>
                       </motion.div>
                     );
                   })}
@@ -844,12 +1042,12 @@ export default function AdminDashboard() {
                     const Icon = s.icon;
                     return (
                       <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + idx * 0.04 }}
-                        className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
+                        className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                           <Icon className="w-4 h-4 text-slate-500" />
                         </div>
                         <div>
-                          <p className="text-xl font-bold text-slate-900">{fmtNum(s.value)}</p>
+                          <p className="text-xl font-bold text-slate-900 dark:text-white">{fmtNum(s.value)}</p>
                           <p className="text-[11px] text-slate-500 font-medium">{s.label}</p>
                         </div>
                       </motion.div>
@@ -859,16 +1057,16 @@ export default function AdminDashboard() {
 
                 {/* Safety Overview */}
                 {users.length > 0 && (() => {
-                  const safetyMap = users.map(u => computeSafetyScore(u));
+                  const safetyMap = users.map(u => computeSafetyScore(u, securityState));
                   const safe = safetyMap.filter(s => s.level === 'safe').length;
                   const caution = safetyMap.filter(s => s.level === 'caution').length;
                   const atRisk = safetyMap.filter(s => s.level === 'at-risk').length;
                   return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                      className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                      className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h3 className="text-sm font-bold text-slate-900">Safety Overview</h3>
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Safety Overview</h3>
                           <p className="text-[11px] text-slate-500 mt-0.5">Account security health across all holders</p>
                         </div>
                         <button onClick={() => setTab('users')} className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
@@ -876,31 +1074,31 @@ export default function AdminDashboard() {
                         </button>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 border border-emerald-100">
-                          <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
+                          <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
                             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-emerald-700">{safe}</p>
-                            <p className="text-[11px] text-emerald-600 font-medium">Safe Accounts</p>
+                            <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{safe}</p>
+                            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Safe Accounts</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100">
-                          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
+                          <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
                             <AlertTriangle className="w-5 h-5 text-amber-600" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-amber-700">{caution}</p>
-                            <p className="text-[11px] text-amber-600 font-medium">Caution</p>
+                            <p className="text-lg font-bold text-amber-700 dark:text-amber-300">{caution}</p>
+                            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Caution</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 border border-red-100">
-                          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800">
+                          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
                             <XCircle className="w-5 h-5 text-red-600" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-red-700">{atRisk}</p>
-                            <p className="text-[11px] text-red-600 font-medium">At Risk</p>
+                            <p className="text-lg font-bold text-red-700 dark:text-red-300">{atRisk}</p>
+                            <p className="text-[11px] text-red-600 dark:text-red-400 font-medium">At Risk</p>
                           </div>
                         </div>
                       </div>
@@ -910,7 +1108,7 @@ export default function AdminDashboard() {
                         <div className="bg-amber-500" style={{ width: `${users.length ? (caution / users.length) * 100 : 0}%` }} />
                         <div className="bg-red-500" style={{ width: `${users.length ? (atRisk / users.length) * 100 : 0}%` }} />
                       </div>
-                      <div className="flex items-center justify-between mt-2 text-[11px] text-slate-400">
+                      <div className="flex items-center justify-between mt-2 text-[11px] text-slate-400 dark:text-slate-500">
                         <span>{users.length ? Math.round((safe / users.length) * 100) : 0}% Safe</span>
                         <span>{users.length ? Math.round((atRisk / users.length) * 100) : 0}% At Risk</span>
                       </div>
@@ -923,12 +1121,12 @@ export default function AdminDashboard() {
                   <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-slate-900">Activity Overview</h3>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Activity Overview</h3>
                         <p className="text-[11px] text-slate-500 mt-0.5">User registrations vs transactions</p>
                       </div>
                       <div className="flex items-center gap-3 text-[11px]">
-                        <span className="flex items-center gap-1.5 text-slate-500"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Users</span>
-                        <span className="flex items-center gap-1.5 text-slate-500"><div className="w-2 h-2 rounded-full bg-blue-500" /> Transactions</span>
+                        <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Users</span>
+                        <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><div className="w-2 h-2 rounded-full bg-blue-500" /> Transactions</span>
                       </div>
                     </div>
                     <div className="h-60">
@@ -949,7 +1147,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
                     <h3 className="text-sm font-bold text-slate-900 mb-1">Tier Distribution</h3>
                     <p className="text-[11px] text-slate-500 mb-4">User plan breakdown</p>
                     <div className="h-48">
@@ -964,7 +1162,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center justify-center gap-4 mt-2">
                       {TIER_DATA.map((t) => (
-                        <span key={t.name} className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                        <span key={t.name} className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                           <div className="w-2 h-2 rounded-full" style={{ background: t.color }} /> {t.name}
                         </span>
                       ))}
@@ -973,10 +1171,10 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Recent Users */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">Recent Account Holders</h3>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recent Account Holders</h3>
                       <p className="text-[11px] text-slate-500 mt-0.5">Latest user registrations</p>
                     </div>
                     <button onClick={() => setTab('users')} className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
@@ -986,12 +1184,12 @@ export default function AdminDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-slate-50/50">
-                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email</th>
-                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tier</th>
-                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Face Auth</th>
-                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                        <tr className="bg-slate-50/50 dark:bg-slate-800/50">
+                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</th>
+                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tier</th>
+                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Face Auth</th>
+                          <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1002,10 +1200,10 @@ export default function AdminDashboard() {
                                 <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold">
                                   {u.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                 </div>
-                                <span className="font-semibold text-slate-800">{u.name}</span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">{u.name}</span>
                               </div>
                             </td>
-                            <td className="px-5 py-3 text-slate-500">{u.email}</td>
+                            <td className="px-5 py-3 text-slate-500 dark:text-slate-400">{u.email}</td>
                             <td className="px-5 py-3">
                               {u.tier === 'premium' ? <Badge variant="premium"><Crown className="w-3 h-3" /> PREMIUM</Badge> :
                                u.tier === 'enterprise' ? <Badge variant="enterprise"><Sparkles className="w-3 h-3" /> ENTERPRISE</Badge> :
@@ -1038,25 +1236,25 @@ export default function AdminDashboard() {
               <motion.div key="users" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4 max-w-[1600px]">
                 <div className="flex items-end justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-slate-900">Account Holders</h2>
-                    <p className="text-sm text-slate-500 mt-0.5">Manage and monitor all registered users</p>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Account Holders</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage and monitor all registered users</p>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <div className="flex-1 relative w-full sm:w-auto">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                       <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search name, email, phone, PAN, Aadhar..."
-                        className="w-full sm:w-80 pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all" />
+                        className="w-full sm:w-80 pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-900/30 transition-all" />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500 font-medium"><strong className="text-slate-800">{filteredUsers.length}</strong> accounts</span>
-                      <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium"><strong className="text-slate-800">{filteredUsers.length}</strong> accounts</span>
+                      <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                         <Filter className="w-3.5 h-3.5" /> Filter
                       </button>
-                      <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                      <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                         <Download className="w-3.5 h-3.5" /> Export
                       </button>
                     </div>
@@ -1065,7 +1263,7 @@ export default function AdminDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-slate-50/80">
+                        <tr className="bg-slate-50/80 dark:bg-slate-800/80">
                           {[
                             { k: 'name' as SortKey, l: 'Name', sort: true },
                             { k: 'email' as SortKey, l: 'Email', sort: true },
@@ -1093,13 +1291,13 @@ export default function AdminDashboard() {
                       </thead>
                       <tbody>
                         {filteredUsers.map((u) => (
-                          <tr key={u.id} className="border-t border-slate-50 hover:bg-slate-50/40 transition-colors">
+                          <tr key={u.id} className="border-t border-slate-50 dark:border-slate-800 hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
                             <td className="px-4 py-3.5">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold">
                                   {u.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                 </div>
-                                <span className="font-semibold text-slate-800 whitespace-nowrap">{u.name}</span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">{u.name}</span>
                               </div>
                             </td>
                             <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{u.email}</td>
@@ -1111,11 +1309,11 @@ export default function AdminDashboard() {
                               {u.tier === 'premium' ? <Badge variant="premium">PREMIUM</Badge> : u.tier === 'enterprise' ? <Badge variant="enterprise">ENTERPRISE</Badge> : <Badge variant="neutral">FREE</Badge>}
                             </td>
                             <td className="px-4 py-3.5">
-                              {u.face_registered ? <span className="text-emerald-600 text-xs font-medium flex items-center gap-1"><Fingerprint className="w-3.5 h-3.5" /> Linked</span> : <span className="text-slate-400 text-xs font-medium">—</span>}
+                              {u.face_registered ? <span className="text-emerald-600 text-xs font-medium flex items-center gap-1"><Fingerprint className="w-3.5 h-3.5" /> Linked</span> : <span className="text-slate-400 dark:text-slate-500 text-xs font-medium">—</span>}
                             </td>
-                            <td className="px-4 py-3.5 text-slate-400 text-[11px] whitespace-nowrap">{new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                            <td className="px-4 py-3.5 text-slate-400 dark:text-slate-500 text-[11px] whitespace-nowrap">{new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                             <td className="px-4 py-3.5">
-                              <SafetyBadge score={computeSafetyScore(u)} onClick={() => setSelectedUser(u)} />
+                              <SafetyBadge score={computeSafetyScore(u, securityState)} onClick={() => setSelectedUser(u)} />
                             </td>
                             <td className="px-4 py-3.5">
                               {u.is_active ? <Badge variant="success">ACTIVE</Badge> : <Badge variant="danger">INACTIVE</Badge>}
@@ -1123,11 +1321,11 @@ export default function AdminDashboard() {
                           </tr>
                         ))}
                         {filteredUsers.length === 0 && (
-                          <tr><td colSpan={11} className="px-5 py-14 text-center">
+                          <tr><td colSpan={11} className="px-5 py-14 text-center dark:text-slate-500">
                             <div className="flex flex-col items-center gap-2">
                               <Search className="w-8 h-8 text-slate-300" />
-                              <p className="text-sm text-slate-500 font-medium">No account holders found</p>
-                              <p className="text-xs text-slate-400">Try a different search term</p>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No account holders found</p>
+                              <p className="text-xs text-slate-400 dark:text-slate-500">Try a different search term</p>
                             </div>
                           </td></tr>
                         )}
@@ -1143,6 +1341,8 @@ export default function AdminDashboard() {
                 <SystemArchitecture />
               </motion.div>
             )}
+
+            {tab === 'security' && <SecurityOpsTab />}
 
             {tab === 'features' && (
               <motion.div key="feat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -1165,10 +1365,10 @@ export default function AdminDashboard() {
               className="fixed inset-0 bg-black/40 z-50" onClick={() => setSelectedUser(null)} />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg pointer-events-auto overflow-hidden"
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl w-full max-w-lg pointer-events-auto overflow-hidden"
                 onClick={(e) => e.stopPropagation()}>
                 {(() => {
-                  const safety = computeSafetyScore(selectedUser);
+                  const safety = computeSafetyScore(selectedUser, securityState);
                   const headerConfig = {
                     safe: { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-800', sub: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' },
                     caution: { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-800', sub: 'text-amber-600', badge: 'bg-amber-100 text-amber-700' },
@@ -1179,7 +1379,7 @@ export default function AdminDashboard() {
                       <div className={`${headerConfig.bg} ${headerConfig.border} border-b px-6 py-5`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700">
+                            <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-sm font-bold text-slate-700 dark:text-slate-200">
                               {selectedUser.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                             </div>
                             <div>
@@ -1227,8 +1427,8 @@ export default function AdminDashboard() {
                           ))}
                         </div>
                         {safety.level !== 'safe' && (
-                          <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                            <p className="text-xs font-bold text-slate-700 mb-1">Recommended Action</p>
+                          <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Recommended Action</p>
                             <p className="text-xs text-slate-500">
                               {safety.level === 'at-risk'
                                 ? 'Immediate review required. Consider restricting high-value transactions until KYC is completed and biometric authentication is enabled.'

@@ -55,6 +55,11 @@ export default function DynamicCompass() {
     : 100;
 
   const feasibilityColor = overallFeasibility >= 80 ? 'emerald' : overallFeasibility >= 50 ? 'amber' : 'rose';
+  const feasibilityStyles: Record<string, string> = {
+    emerald: 'text-emerald-600',
+    amber: 'text-amber-600',
+    rose: 'text-rose-600',
+  };
 
   return (
     <div className="space-y-5">
@@ -106,7 +111,7 @@ export default function DynamicCompass() {
 
           <CosmosCard variant={`${feasibilityColor === 'emerald' ? 'gradient' : 'default'}`} padding="md">
             <p className="text-[10px] text-slate-500 uppercase font-bold">Overall Goal Feasibility</p>
-            <p className={`text-3xl font-black text-${feasibilityColor}-600`}>{overallFeasibility}%</p>
+            <p className={`text-3xl font-black ${feasibilityStyles[feasibilityColor]}`}>{overallFeasibility}%</p>
             <p className="text-xs text-slate-500 mt-1">
               {overallFeasibility >= 80 ? 'All goals look achievable.' : overallFeasibility >= 50 ? 'Some goals need adjustment.' : 'Major shortfall detected.'}
             </p>

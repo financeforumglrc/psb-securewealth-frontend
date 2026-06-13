@@ -115,11 +115,11 @@ const ARCHITECTURE_LAYERS: ArchLayer[] = [
   {
     id: 'client',
     name: 'Client Layer',
-    subtitle: 'React 19 SPA, PWA, Service Worker',
+    subtitle: 'React 18 SPA, PWA, Service Worker',
     color: 'emerald',
     icon: 'fa-desktop',
     nodes: [
-      { id: 'react19', label: 'React 19 SPA', icon: 'fa-code', status: 'online', details: ['Concurrent rendering', 'Server Components ready', 'Suspense boundaries', 'Error boundaries'], metrics: [{ label: 'Bundle', value: '~420 KB' }, { label: 'FCP', value: '<0.8s' }] },
+      { id: 'react18', label: 'React 18 SPA', icon: 'fa-code', status: 'online', details: ['Concurrent rendering', 'Suspense boundaries', 'Error boundaries', 'Strict Mode enabled'], metrics: [{ label: 'Bundle', value: '~420 KB' }, { label: 'FCP', value: '<0.8s' }] },
       { id: 'pwa', label: 'PWA', icon: 'fa-mobile-screen-button', status: 'online', details: ['Web App Manifest', 'Installable to home screen', 'Background sync', 'Push notifications ready'], metrics: [{ label: 'Lighthouse', value: '98+' }, { label: 'PWA', value: '100' }] },
       { id: 'sw', label: 'Service Worker', icon: 'fa-gear', status: 'online', details: ['Request interception', 'Cache-first strategy', 'Offline fallback pages', 'Background sync queue'], metrics: [{ label: 'Cache', value: 'v2' }, { label: 'Scope', value: '/' }] },
     ],
@@ -151,20 +151,23 @@ const ARCHITECTURE_LAYERS: ArchLayer[] = [
   {
     id: 'security',
     name: 'Security Beast',
-    subtitle: '10-Layer Zero-Trust Defense',
+    subtitle: 'Browser-Native Zero-Trust Defense',
     color: 'rose',
     icon: 'fa-dragon',
     nodes: [
-      { id: 'tpm', label: 'TPM 2.0', icon: 'fa-microchip', status: 'online', details: ['Hardware root of trust', 'ECDSA P-256 key generation', 'Platform attestation quote', 'Anti-tamper boot sequence'], metrics: [{ label: 'Attest', value: '<200ms' }, { label: 'Trust', value: 'L1' }] },
-      { id: 'ebpf', label: 'eBPF Monitor', icon: 'fa-shield-halved', status: 'online', details: ['Kernel runtime monitor', 'Syscall interception', 'Network packet filtering', 'Reverse shell detection'], metrics: [{ label: 'Overhead', value: '<1%' }, { label: 'Trust', value: 'L2' }] },
-      { id: 'honeytokens', label: 'Honeytokens', icon: 'fa-bug', status: 'online', details: ['Decoy accounts worth ₹10L', 'Canary credentials planted', 'Interaction tracking', 'Auto-freeze on touch'], metrics: [{ label: 'Decoys', value: '12' }, { label: 'Trust', value: 'L3' }] },
-      { id: 'passkeys', label: 'FIDO2 Passkeys', icon: 'fa-fingerprint', status: 'online', details: ['WebAuthn API integration', 'Biometric hardware binding', 'Password elimination', 'Cross-device sync ready'], metrics: [{ label: 'Phish', value: '0%' }, { label: 'Trust', value: 'L4' }] },
-      { id: 'pq', label: 'Post-Quantum', icon: 'fa-atom', status: 'online', details: ['CRYSTALS-Kyber KEM', 'NIST FIPS 203 compliant', 'Lattice-based cryptography', 'AES-GCM payload encryption'], metrics: [{ label: 'Key Gen', value: '~5ms' }, { label: 'Trust', value: 'L5' }] },
-      { id: 'behavioral', label: 'Behavioral Bio', icon: 'fa-wave-square', status: 'online', details: ['Keystroke dynamics', 'Mouse curvature tracking', 'Touch pressure analysis', 'On-device ML model'], metrics: [{ label: 'Threshold', value: '30%' }, { label: 'Trust', value: 'L6' }] },
-      { id: 'did', label: 'Decentralized ID', icon: 'fa-id-card', status: 'online', details: ['Verifiable credentials', 'Zero-knowledge proofs', 'No PII stored centrally', 'DID document resolution'], metrics: [{ label: 'ZK Proof', value: '<500ms' }, { label: 'Trust', value: 'L7' }] },
-      { id: 'traps', label: 'Transaction Traps', icon: 'fa-user-secret', status: 'online', details: ['Dynamic trap codes', 'Honey OTP generation', 'Instant lockdown trigger', 'Silent security alerts'], metrics: [{ label: 'Detect', value: '<100ms' }, { label: 'Trust', value: 'L8' }] },
-      { id: 'enclave', label: 'Secure Enclave', icon: 'fa-lock', status: 'online', details: ['ARM TrustZone support', 'Apple SEP compatible', 'Hardware-backed keystore', 'Jailbreak detection'], metrics: [{ label: 'Verify', value: '<100ms' }, { label: 'Trust', value: 'L9' }] },
-      { id: 'blockchain', label: 'Blockchain Audit', icon: 'fa-cubes', status: 'online', details: ['SHA-256 Merkle chain', 'Tamper detection algorithm', 'Per-action receipt hash', 'Mock explorer integration'], metrics: [{ label: 'Blocks', value: 'Live' }, { label: 'Trust', value: 'L10' }] },
+      { id: 'tpm', label: 'TPM / Attestation', icon: 'fa-microchip', status: 'online', details: ['Non-exportable ECDSA P-256 via Web Crypto', 'Challenge signing + verification', 'Platform attestation quote', 'No hardware dependency for demo'], metrics: [{ label: 'Attest', value: '<200ms' }, { label: 'Trust', value: 'L1' }] },
+      { id: 'browser-threat', label: 'Browser Threat Monitor', icon: 'fa-shield-halved', status: 'online', details: ['CSP violation listener', 'DevTools-open detection', 'Suspicious global access heuristics', 'Synthetic injection test'], metrics: [{ label: 'Overhead', value: '<1%' }, { label: 'Trust', value: 'L2' }] },
+      { id: 'fraud-engine', label: 'Fraud Detection Engine', icon: 'fa-magnifying-glass-chart', status: 'online', details: ['Real transaction-history rules', 'Velocity, duplicate & round-amount checks', 'First-time payee + category anomalies', 'Live risk badges per transaction'], metrics: [{ label: 'Detect', value: '<50ms' }, { label: 'Trust', value: 'L3' }] },
+      { id: 'honeytokens', label: 'Honeytokens', icon: 'fa-bug', status: 'online', details: ['Decoy accounts worth ₹10L', 'Canary credentials planted', 'Interaction tracking', 'Auto-freeze on touch'], metrics: [{ label: 'Decoys', value: '12' }, { label: 'Trust', value: 'L4' }] },
+      { id: 'passkeys', label: 'FIDO2 Passkeys', icon: 'fa-fingerprint', status: 'online', details: ['Real WebAuthn create/get', 'Platform authenticator binding', 'Password elimination', 'Cross-device sync ready'], metrics: [{ label: 'Phish', value: '0%' }, { label: 'Trust', value: 'L5' }] },
+      { id: 'pq', label: 'Post-Quantum', icon: 'fa-atom', status: 'online', details: ['ML-KEM-768 KEM (mlkem)', 'NIST FIPS 203 candidate', 'AES-GCM payload encryption', 'Shared-secret verification'], metrics: [{ label: 'Key Gen', value: '~5ms' }, { label: 'Trust', value: 'L6' }] },
+      { id: 'behavioral', label: 'Behavioral Bio', icon: 'fa-wave-square', status: 'online', details: ['Keystroke dwell & flight times', 'Mouse velocity + scroll events', 'Baseline calibration', 'Anomaly lock on deviation'], metrics: [{ label: 'Threshold', value: '30%' }, { label: 'Trust', value: 'L7' }] },
+      { id: 'did', label: 'Decentralized ID', icon: 'fa-id-card', status: 'online', details: ['ECDSA P-256 signed VC', 'JWS + QR code', 'Signature verification', 'IndexedDB key persistence'], metrics: [{ label: 'Verify', value: '<100ms' }, { label: 'Trust', value: 'L8' }] },
+      { id: 'traps', label: 'Transaction Traps', icon: 'fa-user-secret', status: 'online', details: ['RFC 6238 TOTP generation', 'Real + trap confirmation codes', 'Instant lockdown trigger', 'Silent security alerts'], metrics: [{ label: 'Detect', value: '<100ms' }, { label: 'Trust', value: 'L9' }] },
+      { id: 'url-safety', label: 'URL Safety Checker', icon: 'fa-link', status: 'online', details: ['Static heuristic rules', 'Cloudflare DoH lookup', 'Live HTTPS probe', 'Trusted-domain whitelist'], metrics: [{ label: 'Scan', value: '<300ms' }, { label: 'Trust', value: 'L10' }] },
+      { id: 'enclave', label: 'Secure Enclave', icon: 'fa-lock', status: 'online', details: ['Non-exportable Web Crypto keys', 'Signed attestation challenge', 'Hardware-backed keystore when available', 'Jailbreak / root detection stub'], metrics: [{ label: 'Verify', value: '<100ms' }, { label: 'Trust', value: 'L11' }] },
+      { id: 'device-trust', label: 'Device Trust', icon: 'fa-laptop-medical', status: 'online', details: ['SHA-256 device fingerprint', 'Canvas + WebGL + fonts entropy', 'Trust score per session', 'Account takeover warning'], metrics: [{ label: 'Hash', value: 'SHA-256' }, { label: 'Trust', value: 'L12' }] },
+      { id: 'blockchain', label: 'Blockchain Audit', icon: 'fa-cubes', status: 'online', details: ['SHA-256 Merkle chain', 'Tamper detection algorithm', 'Per-action receipt hash', 'Local explorer view'], metrics: [{ label: 'Blocks', value: 'Live' }, { label: 'Trust', value: 'L13' }] },
     ],
   },
   {
@@ -196,16 +199,19 @@ const ARCHITECTURE_LAYERS: ArchLayer[] = [
 ];
 
 const SECURITY_STEPS: SecurityStepData[] = [
-  { step: 1, title: 'TPM 2.0 Hardware Attestation', description: 'Before the app loads, TPM 2.0 verifies the boot chain. Attestation failure = immediate quarantine.', icon: 'fa-microchip', color: 'emerald' },
-  { step: 2, title: 'eBPF Kernel Monitor', description: 'eBPF probes watch every syscall and network packet. Suspicious processes are killed in <1ms.', icon: 'fa-shield-halved', color: 'violet' },
-  { step: 3, title: 'FIDO2 Passkeys + Enclave', description: 'Passwords are eliminated. Biometric passkeys are bound to Secure Enclave / ARM TrustZone hardware.', icon: 'fa-fingerprint', color: 'sky' },
-  { step: 4, title: 'Behavioral Biometrics', description: 'Keystroke cadence, mouse curvature, and touch pressure build a fingerprint. Deviation >30% triggers step-up.', icon: 'fa-wave-square', color: 'amber' },
-  { step: 5, title: 'Decentralized Identity', description: 'User presents a zero-knowledge verifiable credential. No PII is transmitted or stored centrally.', icon: 'fa-id-card', color: 'teal' },
-  { step: 6, title: 'Post-Quantum Tunnel', description: 'All API traffic is encrypted with CRYSTALS-Kyber KEM + AES-GCM. Safe against quantum decryption.', icon: 'fa-atom', color: 'pink' },
-  { step: 7, title: 'Transaction Trap Codes', description: 'High-value transfers present a real OTP and a fake trap code. Entering the trap = instant lockdown.', icon: 'fa-user-secret', color: 'orange' },
-  { step: 8, title: 'AI Honeytokens', description: 'Decoy accounts worth ₹10L are hidden in the UI. Any interaction triggers account freeze + silent alert.', icon: 'fa-bug', color: 'rose' },
-  { step: 9, title: 'Secure Enclave Verification', description: 'Hardware-backed key store with signed attestation. Jailbreak or root detection blocks access.', icon: 'fa-lock', color: 'cyan' },
-  { step: 10, title: 'Blockchain Audit Trail', description: 'Every action is hashed into a Merkle-linked chain. Tampering breaks the chain = immediate alert.', icon: 'fa-cubes', color: 'red' },
+  { step: 1, title: 'TPM / Hardware Attestation', description: 'A non-exportable ECDSA P-256 key pair is generated in the browser. The platform signs a challenge to prove identity before sensitive access.', icon: 'fa-microchip', color: 'emerald' },
+  { step: 2, title: 'Browser Threat Monitor', description: 'CSP violations, devtools-open detection, and suspicious global accesses are monitored in real time. Critical threats reload the session.', icon: 'fa-shield-halved', color: 'violet' },
+  { step: 3, title: 'FIDO2 Passkeys + Enclave', description: 'Real WebAuthn navigator.credentials.create/get with platform authenticators. Biometric passkeys are bound to hardware when available.', icon: 'fa-fingerprint', color: 'sky' },
+  { step: 4, title: 'Behavioral Biometrics', description: 'Live keystroke dwell/flight times, mouse velocity, and scroll events build a profile. Deviation above the calibrated baseline triggers lock.', icon: 'fa-wave-square', color: 'amber' },
+  { step: 5, title: 'Decentralized Identity', description: 'An ECDSA-signed verifiable credential is issued as a JWS and shown as a QR code. Signature verification happens locally without central PII.', icon: 'fa-id-card', color: 'teal' },
+  { step: 6, title: 'Post-Quantum Tunnel', description: 'ML-KEM-768 key encapsulation derives an AES-GCM key. A demo payload is encrypted, transmitted, and decrypted to verify quantum-safe exchange.', icon: 'fa-atom', color: 'pink' },
+  { step: 7, title: 'Fraud Detection Engine', description: 'Every transaction is scored against velocity, duplicate, round-amount, category, and first-time-payee rules. Flagged items surface instantly.', icon: 'fa-magnifying-glass-chart', color: 'orange' },
+  { step: 8, title: 'Transaction Trap Codes', description: 'High-value transfers display a real RFC 6238 TOTP and a trap code. Entering the trap freezes the account for 24 hours and logs a critical alert.', icon: 'fa-user-secret', color: 'rose' },
+  { step: 9, title: 'Honeytokens', description: 'Decoy accounts worth ₹10L are hidden in the UI. Any interaction triggers an immediate account freeze and a silent security alert.', icon: 'fa-bug', color: 'red' },
+  { step: 10, title: 'URL Safety Checker', description: 'URLs are scored with heuristics, Cloudflare DNS-over-HTTPS, and a live HTTPS probe before any sensitive navigation is allowed.', icon: 'fa-link', color: 'cyan' },
+  { step: 11, title: 'Secure Enclave Verification', description: 'Non-exportable Web Crypto keys act as a hardware-backed keystore. Attestation signing and jailbreak/root heuristics block compromised devices.', icon: 'fa-lock', color: 'blue' },
+  { step: 12, title: 'Device Trust Fingerprint', description: 'A SHA-256 fingerprint from canvas, WebGL, fonts, and browser entropy creates a per-session trust score and warns on account takeover.', icon: 'fa-laptop-medical', color: 'slate' },
+  { step: 13, title: 'Blockchain Audit Trail', description: 'Every security-relevant action is hashed into a local Merkle-linked chain. Tampering breaks the chain and raises an immediate alert.', icon: 'fa-cubes', color: 'gray' },
 ];
 
 const LIFECYCLE_STEPS: LifecycleStepData[] = [
@@ -222,11 +228,11 @@ const DEPLOYMENT_ITEMS: DeploymentCardData[] = [
   { category: 'Compute', icon: 'fa-server', color: 'primary', current: 'Static Hosting', currentDetails: ['Client-side only', 'No server runtime', 'Browser processing', 'Vite build'], production: 'ECS Fargate', productionDetails: ['Container orchestration', 'Auto-scaling 2-50', 'Load balancing', 'Blue-green deploy'] },
   { category: 'Database', icon: 'fa-database', color: 'amber', current: 'localStorage + Zustand', currentDetails: ['Client persistence', '5MB limit', 'JSON store', 'No replication'], production: 'PostgreSQL Multi-AZ', productionDetails: ['RDS Multi-AZ', 'Read replicas', 'Automated backups', 'Point-in-time recovery'] },
   { category: 'AI', icon: 'fa-brain', color: 'violet', current: 'Offline Router', currentDetails: ['Rule-based responses', 'Cached templates', 'Limited coverage', 'No model inference'], production: 'Gemini + HF Fallback', productionDetails: ['Gemini 2.0 Flash', 'Hugging Face backup', 'Streaming responses', 'Context memory'] },
-  { category: 'Security', icon: 'fa-dragon', color: 'rose', current: 'Client-Side Engine', currentDetails: ['Browser crypto', 'Local validation', 'Simulated layers', 'Demo mode'], production: '10-Layer Beast', productionDetails: ['Full stack defense', 'Hardware attestation', 'Kernel monitoring', 'Immutable audit'] },
+  { category: 'Security', icon: 'fa-dragon', color: 'rose', current: 'Browser-Native Engine', currentDetails: ['Real WebAuthn + mlkem', 'Web Crypto primitives', 'Local rule engine', 'No backend trust required'], production: '13-Layer Beast', productionDetails: ['Full stack defense', 'Hardware attestation', 'Kernel monitoring', 'Immutable audit'] },
 ];
 
 const TECH_CARDS: TechItemData[] = [
-  { name: 'React 19', description: 'Concurrent UI with Server Components', icon: 'fa-code', color: 'sky' },
+  { name: 'React 18', description: 'Concurrent UI with Suspense boundaries', icon: 'fa-code', color: 'sky' },
   { name: 'TypeScript', description: 'Type-safe development at scale', icon: 'fa-scroll', color: 'blue' },
   { name: 'Vite', description: 'Lightning-fast HMR and builds', icon: 'fa-bolt', color: 'amber' },
   { name: 'Tailwind v4', description: 'Utility-first CSS framework', icon: 'fa-wind', color: 'cyan' },
@@ -595,7 +601,7 @@ function SecurityBeastFlow() {
     const interval = setInterval(() => {
       setActiveStep(prev => {
         const next = (prev + 1) % SECURITY_STEPS.length;
-        setTrustScore(next * 10 + 10);
+        setTrustScore(Math.min(100, next * 8 + 8));
         return next;
       });
     }, 2500);

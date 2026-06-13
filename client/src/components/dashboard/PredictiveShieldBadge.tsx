@@ -133,6 +133,12 @@ export default function PredictiveShieldBadge() {
     : 0;
 
   const shieldColor = highestProb > 60 ? 'rose' : highestProb > 40 ? 'amber' : 'emerald';
+  const shieldStyles: Record<string, { box: string; icon: string; badge: string }> = {
+    emerald: { box: 'bg-emerald-100 dark:bg-emerald-900/20', icon: 'text-emerald-500', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    amber:   { box: 'bg-amber-100 dark:bg-amber-900/20', icon: 'text-amber-500', badge: 'bg-amber-100 text-amber-700 border-amber-200' },
+    rose:    { box: 'bg-rose-100 dark:bg-rose-900/20', icon: 'text-rose-500', badge: 'bg-rose-100 text-rose-700 border-rose-200' },
+  };
+  const ss = shieldStyles[shieldColor];
 
   return (
     <div className="space-y-3">
@@ -140,11 +146,11 @@ export default function PredictiveShieldBadge() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <motion.div
-            className={`relative w-9 h-9 rounded-xl bg-${shieldColor}-100 dark:bg-${shieldColor}-900/20 flex items-center justify-center`}
+            className={`relative w-9 h-9 rounded-xl ${ss.box} flex items-center justify-center`}
             animate={pulseActive ? { scale: [1, 1.15, 1] } : {}}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <i className={`fas fa-brain text-${shieldColor}-500 text-sm`} />
+            <i className={`fas fa-brain ${ss.icon} text-sm`} />
             {activePredictions.length > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
                 {activePredictions.length}
@@ -166,7 +172,7 @@ export default function PredictiveShieldBadge() {
           </div>
         </div>
         {activePredictions.length > 0 && (
-          <span className={`text-[10px] px-2 py-1 rounded-lg font-bold bg-${shieldColor}-100 text-${shieldColor}-700 border border-${shieldColor}-200`}>
+          <span className={`text-[10px] px-2 py-1 rounded-lg font-bold border ${ss.badge}`}>
             {highestProb}% max risk
           </span>
         )}

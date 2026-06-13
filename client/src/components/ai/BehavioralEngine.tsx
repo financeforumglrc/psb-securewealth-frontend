@@ -172,6 +172,12 @@ export default function BehavioralEngine() {
   }, [currentMonthSpend, avgPreviousSpend, savingsRate, monthsOfRunway, user.monthlySavings]);
 
   const scoreColor = habitScore >= 75 ? 'emerald' : habitScore >= 50 ? 'amber' : 'rose';
+  const scoreStyles: Record<string, { card: string; ring: string; num: string; text: string }> = {
+    emerald: { card: 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/20', ring: 'border-emerald-400', num: 'text-emerald-600', text: 'text-emerald-700 dark:text-emerald-300' },
+    amber:   { card: 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800/20', ring: 'border-amber-400', num: 'text-amber-600', text: 'text-amber-700 dark:text-amber-300' },
+    rose:    { card: 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800/20', ring: 'border-rose-400', num: 'text-rose-600', text: 'text-rose-700 dark:text-rose-300' },
+  };
+  const ss = scoreStyles[scoreColor];
 
   return (
     <div className="space-y-5">
@@ -204,13 +210,13 @@ export default function BehavioralEngine() {
           </div>
         </div>
 
-        <div className={`card bg-${scoreColor}-50 dark:bg-${scoreColor}-900/10 border border-${scoreColor}-100 dark:border-${scoreColor}-800/20`}>
+        <div className={`card ${ss.card} border`}>
           <div className="text-center">
             <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-2">Habit Score</p>
-            <div className={`w-20 h-20 mx-auto rounded-full border-4 border-${scoreColor}-400 flex items-center justify-center mb-2`}>
-              <span className={`text-2xl font-black text-${scoreColor}-600`}>{habitScore}</span>
+            <div className={`w-20 h-20 mx-auto rounded-full border-4 ${ss.ring} flex items-center justify-center mb-2`}>
+              <span className={`text-2xl font-black ${ss.num}`}>{habitScore}</span>
             </div>
-            <p className={`text-xs font-bold text-${scoreColor}-700 dark:text-${scoreColor}-300`}>
+            <p className={`text-xs font-bold ${ss.text}`}>
               {habitScore >= 75 ? 'Excellent' : habitScore >= 50 ? 'Improving' : 'Needs Focus'}
             </p>
           </div>
