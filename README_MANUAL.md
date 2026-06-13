@@ -170,7 +170,7 @@ surge dist psb-securewealth-2026-new.surge.sh
 
 After deploy, access with a cache-busting query param. Bump the version each deploy:
 ```
-https://psb-securewealth-2026-new.surge.sh/?v=28
+https://psb-securewealth-2026-new.surge.sh/?v=31
 ```
 
 ### Deploy the backend
