@@ -806,6 +806,23 @@ export default function AdminDashboard() {
   const loadData = async () => {
     if (!token) return;
     setLoading(true);
+
+    // Render demo data instantly so the dashboard never shows empty zeros
+    const demoAccounts = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.assets.length, 0);
+    const demoTxns = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.transactions.length, 0);
+    const demoGoals = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.goals.length, 0);
+    setUsers(demoUsers);
+    setStats({
+      totalUsers: demoUsers.length,
+      faceRegistered: demoUsers.filter(u => u.face_registered).length,
+      activeToday: demoUsers.filter(u => u.is_active).length,
+      totalAccounts: demoAccounts,
+      totalTransactions: demoTxns,
+      totalBills: 0,
+      totalGoals: demoGoals,
+      totalLoans: 0,
+    });
+
     const [usersRes, statsRes] = await Promise.all([
       backendApi.adminGetUsers(token),
       backendApi.adminGetStats(token),
