@@ -75,6 +75,11 @@ export const backendApi = {
     });
   },
 
+  // Business / SME cashflow analyzer
+  async getBusinessCashflow() {
+    return fetchJson('/banking/business/cashflow');
+  },
+
   // Razorpay payment config (test mode)
   async getPaymentConfig() {
     return fetchJson('/banking/payments/config');

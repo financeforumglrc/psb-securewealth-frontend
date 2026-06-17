@@ -38,12 +38,12 @@ export default function BusinessMode() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    backendApi.get('/banking/business/cashflow')
+    backendApi.getBusinessCashflow()
       .then((res) => {
         if (res.data?.success) setData(res.data.data);
         else setError('Could not load business analytics');
       })
-      .catch((err) => setError(err?.response?.data?.error || err.message))
+      .catch((err: any) => setError(err?.response?.data?.error || err.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -153,7 +153,7 @@ export default function BusinessMode() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip formatter={(value: any) => formatCurrency(value)} />
               <Bar dataKey="inflow" fill="#0f766e" radius={[4, 4, 0, 0]} name="Inflow" />
               <Bar dataKey="outflow" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Outflow" />
             </BarChart>
@@ -225,7 +225,7 @@ export default function BusinessMode() {
                 <th className="pb-2 font-medium">Product</th>
                 <th className="pb-2 font-medium">Rate</th>
                 <th className="pb-2 font-medium">Tenor</th>
-                <th classMode="pb-2 font-medium">Risk</th>
+                <th className="pb-2 font-medium">Risk</th>
                 <th className="pb-2 font-medium">Liquidity</th>
               </tr>
             </thead>
