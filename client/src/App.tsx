@@ -2,6 +2,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useAuth } from './context/AuthContext';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { backendApi } from './lib/backendApi';
+import { collectFingerprint } from './services/fingerprintService';
 import DemoShowcase from './components/demo/DemoShowcase';
 
 const LoginPortal = lazyWithRetry(() => import('./components/auth/LoginPortal'));
@@ -63,6 +64,11 @@ export default function App() {
 
   const { state: authState } = useAuth();
   const warmed = useRef(false);
+
+  // Initialize FingerprintJS visitor id early so X-Device-Id is available for auth calls
+  useEffect(() => {
+    collectFingerprint().catch(() => {});
+  }, []);
 
   // Warm the Render backend as soon as we know the user is logged out, and
   // prefetch the authenticated shell so the post-login transition is snappy.

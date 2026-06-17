@@ -31,6 +31,11 @@ async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: num
   }
 }
 
+export interface FingerprintPayload {
+  visitorId?: string;
+  fingerprintHash?: string;
+}
+
 export interface ProtectionRequest {
   user_id: string;
   amount: number;
@@ -42,6 +47,9 @@ export interface ProtectionRequest {
   retry_count?: number;
   behavioral_deviation?: number;
   graph_risk_bonus?: number;
+  visitor_id?: string;
+  fingerprint_hash?: string;
+  device_fingerprint?: FingerprintPayload;
 }
 
 export interface ProtectionResponse {
@@ -110,7 +118,11 @@ export const protectionApi = {
   async evaluateTransaction(payload: ProtectionRequest) {
     return fetchJson('/api/v1/protect-wealth-action', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        visitor_id: payload.visitor_id || payload.device_fingerprint?.visitorId,
+        fingerprint_hash: payload.fingerprint_hash || payload.device_fingerprint?.fingerprintHash,
+      }),
       timeoutMs: 5000,
     });
   },

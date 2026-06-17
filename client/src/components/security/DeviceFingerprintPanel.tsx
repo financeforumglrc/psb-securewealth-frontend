@@ -12,6 +12,7 @@ import {
   Palette,
   Touchpad,
   Wifi,
+  Loader2,
 } from 'lucide-react';
 import CosmosCard, { CosmosBadge } from '../ui/CosmosCard';
 import {
@@ -21,62 +22,110 @@ import {
   compareFingerprints,
   type DeviceFingerprint,
 } from '../../services/fingerprintService';
+import { backendApi } from '../../lib/backendApi';
+
+interface ServerDevice {
+  id: number;
+  visitorId: string;
+  fingerprintHash: string;
+  firstSeen: string;
+  lastSeen: string;
+  isTrusted: boolean;
+  createdAt: string;
+}
 
 interface FingerprintState {
   fingerprint: DeviceFingerprint | null;
   hash: string;
+  visitorId: string;
   trustScore: number;
   storedHash: string | null;
   deviceChanged: boolean;
   loading: boolean;
+  serverDevices: ServerDevice[];
+  currentDeviceTrusted: boolean | null;
+  trusting: boolean;
 }
 
 export default function DeviceFingerprintPanel() {
   const [state, setState] = useState<FingerprintState>({
     fingerprint: null,
     hash: '',
+    visitorId: '',
     trustScore: 0,
     storedHash: null,
     deviceChanged: false,
     loading: true,
+    serverDevices: [],
+    currentDeviceTrusted: null,
+    trusting: false,
   });
 
-  const load = useCallback(async () => {
+  const loadFingerprint = useCallback(async () => {
     const result = await collectFingerprint();
     const stored = getStoredFingerprint();
     const comparison = stored ? compareFingerprints(result.hash, stored) : { changed: false, changedFields: [] };
 
-    setState({
+    setState((s) => ({
+      ...s,
       fingerprint: result.fingerprint,
       hash: result.hash,
+      visitorId: result.visitorId,
       trustScore: result.trustScore,
       storedHash: stored,
       deviceChanged: comparison.changed,
-      loading: false,
-    });
+    }));
   }, []);
+
+  const loadServerDevices = useCallback(async () => {
+    try {
+      const res = await backendApi.getDevices();
+      if (res.ok && Array.isArray(res.data?.data)) {
+        const devices = res.data.data as ServerDevice[];
+        setState((s) => ({
+          ...s,
+          serverDevices: devices,
+          currentDeviceTrusted: devices.some((d) => d.visitorId === s.visitorId && d.isTrusted) || null,
+        }));
+      }
+    } catch {
+      // Non-blocking: local fingerprint still works if backend is unavailable
+    }
+  }, []);
+
+  const load = useCallback(async () => {
+    setState((s) => ({ ...s, loading: true }));
+    await loadFingerprint();
+    await loadServerDevices();
+    setState((s) => ({ ...s, loading: false }));
+  }, [loadFingerprint, loadServerDevices]);
 
   useEffect(() => {
-    let cancelled = false;
-    collectFingerprint().then((result) => {
-      if (cancelled) return;
-      const stored = getStoredFingerprint();
-      const comparison = stored ? compareFingerprints(result.hash, stored) : { changed: false, changedFields: [] };
-      setState({
-        fingerprint: result.fingerprint,
-        hash: result.hash,
-        trustScore: result.trustScore,
-        storedHash: stored,
-        deviceChanged: comparison.changed,
-        loading: false,
-      });
-    });
-    return () => { cancelled = true; };
-  }, []);
+    load();
+  }, [load]);
 
-  const handleTrust = () => {
+  // Re-evaluate server trust when visitorId changes
+  useEffect(() => {
+    if (!state.visitorId) return;
+    const trusted = state.serverDevices.some((d) => d.visitorId === state.visitorId && d.isTrusted);
+    setState((s) => ({ ...s, currentDeviceTrusted: trusted }));
+  }, [state.visitorId, state.serverDevices]);
+
+  const handleTrust = async () => {
     storeFingerprint(state.hash);
-    setState((s) => ({ ...s, storedHash: s.hash, deviceChanged: false }));
+    setState((s) => ({ ...s, storedHash: s.hash, deviceChanged: false, trusting: true }));
+
+    try {
+      const existing = state.serverDevices.find((d) => d.visitorId === state.visitorId);
+      if (existing) {
+        await backendApi.trustDevice(existing.id, true);
+      }
+      await loadServerDevices();
+    } catch {
+      // Ignore backend errors for local trust action
+    } finally {
+      setState((s) => ({ ...s, trusting: false }));
+    }
   };
 
   const fp = state.fingerprint;
@@ -96,6 +145,9 @@ export default function DeviceFingerprintPanel() {
       ]
     : [];
 
+  const isTrusted = state.currentDeviceTrusted === true || (!state.deviceChanged && !!state.storedHash);
+  const showChanged = state.deviceChanged || state.currentDeviceTrusted === false;
+
   return (
     <CosmosCard
       variant="glass"
@@ -103,7 +155,7 @@ export default function DeviceFingerprintPanel() {
         icon: 'fa-fingerprint',
         iconColor: '#0ea5e9',
         title: 'Device Fingerprint',
-        subtitle: 'Real browser API fingerprinting for account takeover detection',
+        subtitle: 'FingerprintJS-powered device identity for account takeover detection',
         action: (
           <button
             onClick={load}
@@ -146,11 +198,11 @@ export default function DeviceFingerprintPanel() {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <h4 className="text-sm font-bold text-slate-800 dark:text-white">Trust Score</h4>
-            {state.deviceChanged ? (
+            {showChanged ? (
               <CosmosBadge color="danger" pulse>
                 <ShieldAlert className="w-3 h-3" /> Device Changed
               </CosmosBadge>
-            ) : state.storedHash ? (
+            ) : isTrusted ? (
               <CosmosBadge color="success">
                 <ShieldCheck className="w-3 h-3" /> Trusted
               </CosmosBadge>
@@ -161,9 +213,9 @@ export default function DeviceFingerprintPanel() {
             )}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            {state.deviceChanged
+            {showChanged
               ? 'This device does not match your previously trusted fingerprint. Possible account takeover.'
-              : state.storedHash
+              : isTrusted
               ? 'Fingerprint matches your trusted device profile.'
               : 'No trusted fingerprint stored. Click "Trust This Device" to register it.'}
           </p>
@@ -172,7 +224,7 @@ export default function DeviceFingerprintPanel() {
 
       {/* Alert Banner */}
       <AnimatePresence>
-        {state.deviceChanged && (
+        {showChanged && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -191,6 +243,14 @@ export default function DeviceFingerprintPanel() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Visitor ID */}
+      {state.visitorId && (
+        <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
+          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">FingerprintJS Visitor ID</p>
+          <code className="text-xs font-mono text-slate-700 dark:text-slate-300 break-all">{state.visitorId}</code>
+        </div>
+      )}
 
       {/* Hash */}
       {fp && (
@@ -241,19 +301,20 @@ export default function DeviceFingerprintPanel() {
 
       {/* Action */}
       <div className="mt-4 flex gap-2">
-        {!state.storedHash || state.deviceChanged ? (
+        {!isTrusted || state.deviceChanged ? (
           <button
             onClick={handleTrust}
-            className="flex-1 py-2.5 bg-sky-500 text-white rounded-xl text-xs font-bold hover:bg-sky-600 transition-colors flex items-center justify-center gap-2"
+            disabled={state.trusting}
+            className="flex-1 py-2.5 bg-sky-500 text-white rounded-xl text-xs font-bold hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            <ShieldCheck className="w-4 h-4" />
+            {state.trusting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
             {state.deviceChanged ? 'Trust This New Device' : 'Trust This Device'}
           </button>
         ) : (
           <button
             onClick={() => {
               storeFingerprint('');
-              setState((s) => ({ ...s, storedHash: null, deviceChanged: false }));
+              setState((s) => ({ ...s, storedHash: null, deviceChanged: false, currentDeviceTrusted: false }));
             }}
             className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
           >

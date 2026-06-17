@@ -4,14 +4,21 @@
  * Comprehensive banking operations with retries & error handling
  */
 
+import { getStoredVisitorId } from '../services/fingerprintService';
+
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'https://psb-banking-backend.onrender.com/api/v1';
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 500;
 
 function getHeaders(): Record<string, string> {
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+  const visitorId = getStoredVisitorId();
+  if (visitorId) {
+    headers['X-Device-Id'] = visitorId;
+  }
+  return headers;
 }
 
 async function sleep(ms: number) {
@@ -51,12 +58,80 @@ export const backendApi = {
     return fetchJson('/health', { timeoutMs: 5000 });
   },
 
+  // OTP (email-based one-time passwords)
+  async sendOtp(payload: { email?: string; userId?: string; purpose?: string }) {
+    return fetchJson('/otp/send', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 15000,
+    });
+  },
+
+  async verifyOtp(payload: { email?: string; userId?: string; otp: string; purpose?: string }) {
+    return fetchJson('/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 10000,
+    });
+  },
+
+  // Razorpay payment config (test mode)
+  async getPaymentConfig() {
+    return fetchJson('/banking/payments/config');
+  },
+
+  async createPaymentOrder(payload: { amount: number; currency?: string; receipt?: string; notes?: Record<string, string> }) {
+    return fetchJson('/banking/payments/create-order', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 15000,
+    });
+  },
+
+  async verifyPayment(payload: {
+    razorpayPaymentId: string;
+    razorpayOrderId: string;
+    razorpaySignature: string;
+    amount: number;
+    payee?: string;
+    description?: string;
+  }) {
+    return fetchJson('/banking/payments/verify', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 15000,
+    });
+  },
+
   // Auth helpers
   async me() {
     return fetchJson('/auth/me');
   },
   async logout() {
     return fetchJson('/auth/logout', { method: 'POST' });
+  },
+  async login(payload: { email: string; password: string }) {
+    return fetchJson('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...payload,
+        fingerprint: {
+          visitorId: getStoredVisitorId(),
+          fingerprintHash: getStoredVisitorId() || undefined,
+        },
+      }),
+      timeoutMs: 35000,
+    });
+  },
+  async getDevices() {
+    return fetchJson('/auth/devices');
+  },
+  async trustDevice(deviceId: number | string, trusted = true) {
+    return fetchJson('/auth/trust-device', {
+      method: 'POST',
+      body: JSON.stringify({ deviceId, trusted }),
+      timeoutMs: 15000,
+    });
   },
 
   // Dashboard
@@ -232,7 +307,13 @@ export const backendApi = {
   async register(payload: { email: string; password: string; name: string; phone?: string; pan_number?: string; aadhar?: string }) {
     return fetchJson('/auth/register', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        fingerprint: {
+          visitorId: getStoredVisitorId(),
+          fingerprintHash: getStoredVisitorId() || undefined,
+        },
+      }),
       timeoutMs: 35000,
     });
   },
@@ -243,7 +324,13 @@ export const backendApi = {
     // minutes if the server is waking up).
     return fetchJson('/auth/demo-login', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        fingerprint: {
+          visitorId: getStoredVisitorId(),
+          fingerprintHash: getStoredVisitorId() || undefined,
+        },
+      }),
       timeoutMs: 35000,
       retry: false,
     });

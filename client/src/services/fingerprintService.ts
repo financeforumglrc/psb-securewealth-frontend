@@ -1,17 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════
-   DEVICE FINGERPRINT SERVICE — Real Browser API Collection
+   DEVICE FINGERPRINT SERVICE — FingerprintJS + Browser Fallback
    ═══════════════════════════════════════════════════════════════ */
 
-export interface DeviceFingerprint {
-  canvas: string;
-  webgl: string;
-  fonts: string[];
-  screen: {
-    width: number;
-    height: number;
-    colorDepth: number;
-    pixelRatio: number;
-  };
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
+
+export interface FingerprintComponents {
   timezone: string;
   language: string;
   platform: string;
@@ -22,9 +15,23 @@ export interface DeviceFingerprint {
   connection: string;
 }
 
+export interface DeviceFingerprint extends FingerprintComponents {
+  visitorId: string;
+  canvas: string;
+  webgl: string;
+  fonts: string[];
+  screen: {
+    width: number;
+    height: number;
+    colorDepth: number;
+    pixelRatio: number;
+  };
+}
+
 export interface FingerprintResult {
   fingerprint: DeviceFingerprint;
   hash: string;
+  visitorId: string;
   trustScore: number;
 }
 
@@ -98,8 +105,8 @@ function getWebGLFingerprint(): string {
     let unmaskedRenderer = renderer;
 
     if (debugInfo) {
-      unmaskedVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) as string || vendor;
-      unmaskedRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) as string || renderer;
+      unmaskedVendor = (gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) as string) || vendor;
+      unmaskedRenderer = (gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) as string) || renderer;
     }
 
     return `${unmaskedVendor}::${unmaskedRenderer}`;
@@ -169,7 +176,7 @@ function getScreenFingerprint() {
   };
 }
 
-function getNavigatorFingerprint() {
+function getNavigatorFingerprint(): FingerprintComponents {
   if (typeof navigator === 'undefined') {
     return {
       timezone: 'UTC',
@@ -200,13 +207,26 @@ function getNavigatorFingerprint() {
   };
 }
 
+async function getFingerprintJS(): Promise<{ visitorId: string; components: Record<string, unknown> } | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const fp = await FingerprintJS.load();
+    const result = await fp.get();
+    return { visitorId: result.visitorId, components: result.components as Record<string, unknown> };
+  } catch {
+    return null;
+  }
+}
+
 /* ── Public API ──────────────────────────────────────────────── */
 
 export async function collectFingerprint(): Promise<FingerprintResult> {
+  const fpjs = await getFingerprintJS();
   const nav = getNavigatorFingerprint();
   const screen = getScreenFingerprint();
 
   const fingerprint: DeviceFingerprint = {
+    visitorId: fpjs?.visitorId || 'fallback-' + nav.userAgent.slice(0, 32),
     canvas: await getCanvasFingerprint(),
     webgl: getWebGLFingerprint(),
     fonts: getFontFingerprint(),
@@ -222,6 +242,7 @@ export async function collectFingerprint(): Promise<FingerprintResult> {
   };
 
   const hashInput = [
+    fingerprint.visitorId,
     fingerprint.canvas,
     fingerprint.webgl,
     fingerprint.fonts.join(','),
@@ -237,14 +258,17 @@ export async function collectFingerprint(): Promise<FingerprintResult> {
 
   // Trust score: higher = more unique/stable fingerprint
   let trustScore = 50;
-  if (fingerprint.canvas !== 'unsupported') trustScore += 15;
-  if (fingerprint.webgl !== 'unsupported') trustScore += 15;
-  if (fingerprint.fonts.length > 10) trustScore += 10;
+  if (fpjs?.visitorId) trustScore += 20;
+  if (fingerprint.canvas !== 'unsupported') trustScore += 10;
+  if (fingerprint.webgl !== 'unsupported') trustScore += 10;
+  if (fingerprint.fonts.length > 10) trustScore += 5;
   if (fingerprint.cores >= 4) trustScore += 5;
   if (fingerprint.memory >= 8) trustScore += 5;
   trustScore = Math.min(100, trustScore);
 
-  return { fingerprint, hash, trustScore };
+  storeVisitorId(fingerprint.visitorId);
+
+  return { fingerprint, hash, visitorId: fingerprint.visitorId, trustScore };
 }
 
 export function getStoredFingerprint(): string | null {
@@ -255,6 +279,16 @@ export function getStoredFingerprint(): string | null {
 export function storeFingerprint(hash: string): void {
   if (typeof localStorage === 'undefined') return;
   localStorage.setItem('sw_device_fingerprint', hash);
+}
+
+export function storeVisitorId(visitorId: string): void {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem('sw_visitor_id', visitorId);
+}
+
+export function getStoredVisitorId(): string | null {
+  if (typeof localStorage === 'undefined') return null;
+  return localStorage.getItem('sw_visitor_id');
 }
 
 export function compareFingerprints(current: string, stored: string): {
