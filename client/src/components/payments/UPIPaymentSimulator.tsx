@@ -4,6 +4,8 @@ import { computeCashback } from '../../services/cashbackEngine';
 import { getStreak } from '../../services/streakService';
 import { addTransactionToChain } from '../../services/blockchainService';
 import { backendApi } from '../../lib/backendApi';
+import { loadRazorpayScript, isRazorpayAvailable } from '../../services/razorpayService';
+import type { RazorpayOptions } from '../../types/razorpay';
 import MPINInput from './MPINInput';
 import QrScannerSimulator from './QrScannerSimulator';
 import TransactionGuardModal from '../protection/TransactionGuardModal';
@@ -68,6 +70,7 @@ export default function UPIPaymentSimulator() {
   const [pendingTx, setPendingTx] = useState<Partial<Transaction> | null>(null);
   const [isPickingContact, setIsPickingContact] = useState(false);
   const [isPaymentRequesting, setIsPaymentRequesting] = useState(false);
+  const [isRazorpayLoading, setIsRazorpayLoading] = useState(false);
 
   const { addCashback } = useRewards();
   const streak = getStreak();
@@ -121,8 +124,79 @@ export default function UPIPaymentSimulator() {
     setShowGuard(true);
   };
 
-  const handleGuardAllow = () => {
+  const handleGuardAllow = async () => {
     setShowGuard(false);
+    if (!pendingTx) return;
+
+    // Try real Razorpay checkout first; fall back to simulated MPIN flow if unavailable.
+    setIsRazorpayLoading(true);
+    try {
+      const configRes = await backendApi.getPaymentConfig();
+      const enabled = configRes.ok && configRes.data?.data?.enabled;
+      const keyId = configRes.ok ? configRes.data?.data?.keyId : null;
+
+      if (enabled && keyId && (isRazorpayAvailable() || (await loadRazorpayScript()))) {
+        const orderRes = await backendApi.createPaymentOrder({
+          amount: pendingTx.amount || 0,
+          currency: 'INR',
+          receipt: `rcpt_${Date.now()}`,
+          notes: {
+            payee: pendingTx.payee || '',
+            upiId: pendingTx.upiId || '',
+            remark: pendingTx.remark || '',
+          },
+        });
+
+        if (!orderRes.ok || !orderRes.data?.data) {
+          showToast('error', orderRes.data?.error || 'Unable to create payment order');
+          setPendingTx(null);
+          return;
+        }
+
+        const order = orderRes.data.data;
+        const options: RazorpayOptions = {
+          key: keyId,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'PSB SecureWealth',
+          description: `Pay ${pendingTx.payee || 'Merchant'}`,
+          order_id: order.id,
+          prefill: {
+            name: pendingTx.payee || 'SecureWealth User',
+          },
+          notes: order.notes || {},
+          theme: { color: '#0f766e' },
+          handler: async (response) => {
+            const verifyRes = await backendApi.verifyPayment({
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
+              amount: pendingTx.amount || 0,
+              payee: pendingTx.payee || '',
+              description: pendingTx.remark || `UPI Payment — ${pendingTx.payee || 'Merchant'}`,
+            });
+
+            if (!verifyRes.ok) {
+              showToast('error', verifyRes.data?.error || 'Payment verification failed');
+              setPendingTx(null);
+              return;
+            }
+
+            finalizeSuccess('razorpay');
+          },
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+        return;
+      }
+    } catch (err) {
+      console.warn('Razorpay checkout unavailable, using simulation fallback', err);
+    } finally {
+      setIsRazorpayLoading(false);
+    }
+
+    // Fallback simulation
     setShowMPIN(true);
   };
 
@@ -140,6 +214,59 @@ export default function UPIPaymentSimulator() {
 
   const handleGuardClose = () => {
     setShowGuard(false);
+    setPendingTx(null);
+  };
+
+  const finalizeSuccess = (mode: 'simulation' | 'razorpay') => {
+    if (!pendingTx) return;
+
+    const cashback = computeCashback({
+      amount: pendingTx.amount || 0,
+      merchant: pendingTx.upiId || pendingTx.payee || '',
+      streakDays: streak.days,
+      isUtility: (pendingTx.remark || '').toLowerCase().includes('bill'),
+      isP2P: activeTab === 'send',
+    });
+
+    const tx: Transaction = {
+      id: 'TXN' + Date.now(),
+      amount: pendingTx.amount || 0,
+      payee: pendingTx.payee || '',
+      date: new Date().toISOString(),
+      status: 'success',
+      cashbackEarned: cashback.total,
+      upiId: pendingTx.upiId,
+      accountNo: pendingTx.accountNo,
+      remark: pendingTx.remark,
+    };
+
+    saveTx(tx);
+    addCashback(cashback.total, 'transaction', tx.payee);
+
+    // Add to blockchain audit
+    addTransactionToChain(tx.id, {
+      amount: tx.amount,
+      payee: tx.payee,
+      upiId: tx.upiId,
+      accountNo: tx.accountNo,
+      remark: tx.remark,
+      cashback: cashback.total,
+      timestamp: tx.date,
+    }).catch(() => { /* silent fail */ });
+
+    // Haptic feedback on supported devices
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
+    const parts: string[] = [];
+    if (cashback.base > 0) parts.push(`₹${cashback.base.toFixed(2)} merchant-funded`);
+    if (cashback.streakBonus > 0) parts.push(`₹${cashback.streakBonus.toFixed(2)} streak bonus`);
+    if (cashback.utilityBonus > 0) parts.push(`₹${cashback.utilityBonus.toFixed(2)} green action`);
+
+    const modeLabel = mode === 'razorpay' ? 'via Razorpay' : '';
+    showToast('success', `Paid ₹${tx.amount.toLocaleString()} ${modeLabel}! Cashback: ${parts.join(', ') || 'None'}`);
+    setAmount(''); setUpiId(''); setAccountNo(''); setIfsc(''); setBeneficiary(''); setRemark('');
     setPendingTx(null);
   };
 
@@ -161,55 +288,7 @@ export default function UPIPaymentSimulator() {
       return;
     }
 
-    // Simulate processing
-    setTimeout(() => {
-      const cashback = computeCashback({
-        amount: pendingTx.amount || 0,
-        merchant: pendingTx.upiId || pendingTx.payee || '',
-        streakDays: streak.days,
-        isUtility: (pendingTx.remark || '').toLowerCase().includes('bill'),
-        isP2P: activeTab === 'send',
-      });
-
-      const tx: Transaction = {
-        id: 'TXN' + Date.now(),
-        amount: pendingTx.amount || 0,
-        payee: pendingTx.payee || '',
-        date: new Date().toISOString(),
-        status: 'success',
-        cashbackEarned: cashback.total,
-        upiId: pendingTx.upiId,
-        accountNo: pendingTx.accountNo,
-        remark: pendingTx.remark,
-      };
-
-      saveTx(tx);
-      addCashback(cashback.total, 'transaction', tx.payee);
-
-      // Add to blockchain audit
-      addTransactionToChain(tx.id, {
-        amount: tx.amount,
-        payee: tx.payee,
-        upiId: tx.upiId,
-        accountNo: tx.accountNo,
-        remark: tx.remark,
-        cashback: cashback.total,
-        timestamp: tx.date,
-      }).catch(() => { /* silent fail */ });
-
-      // Haptic feedback on supported devices
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-
-      const parts: string[] = [];
-      if (cashback.base > 0) parts.push(`₹${cashback.base.toFixed(2)} merchant-funded`);
-      if (cashback.streakBonus > 0) parts.push(`₹${cashback.streakBonus.toFixed(2)} streak bonus`);
-      if (cashback.utilityBonus > 0) parts.push(`₹${cashback.utilityBonus.toFixed(2)} green action`);
-
-      showToast('success', `Paid ₹${tx.amount.toLocaleString()}! Cashback: ${parts.join(', ') || 'None'}`);
-      setAmount(''); setUpiId(''); setAccountNo(''); setIfsc(''); setBeneficiary(''); setRemark('');
-    }, 600);
+    setTimeout(() => finalizeSuccess('simulation'), 600);
   };
 
   const handleQRScan = (scannedUpi: string, scannedName: string, scannedAmount?: number) => {
@@ -471,10 +550,11 @@ export default function UPIPaymentSimulator() {
             )}
             <button
               onClick={handlePay}
-              className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-base hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+              disabled={isRazorpayLoading}
+              className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-base hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-60"
             >
-              <i className="fas fa-shield-halved" />
-              Demo Payment
+              <i className={`fas ${isRazorpayLoading ? 'fa-spinner fa-spin' : 'fa-shield-halved'}`} />
+              {isRazorpayLoading ? 'Loading Checkout…' : 'Demo Payment'}
             </button>
           </div>
         )}

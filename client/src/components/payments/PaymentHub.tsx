@@ -2,11 +2,15 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRewards } from '../../context/RewardsContext';
 import { useWealthStore } from '../../store/wealthStore';
+import { backendApi } from '../../lib/backendApi';
 import { syncTransactionToSupabase } from '../../hooks/useSupabaseSync';
 import { computeCashback } from '../../services/cashbackEngine';
 import { getStreak } from '../../services/streakService';
 import MPINInput from './MPINInput';
 import QrScannerSimulator from './QrScannerSimulator';
+import TransactionGuardModal from '../protection/TransactionGuardModal';
+import { loadRazorpayScript, isRazorpayAvailable } from '../../services/razorpayService';
+import type { RazorpayOptions } from '../../types/razorpay';
 import AnimatedTransactionToast from './AnimatedTransactionToast';
 import VoicePayment from './VoicePayment';
 import SpinWheel from './SpinWheel';
@@ -50,7 +54,9 @@ export default function PaymentHub() {
   const [remark, setRemark] = useState('');
   const [showMPIN, setShowMPIN] = useState(false);
   const [showQR, setShowQR] = useState(false);
-  const [pendingTx, setPendingTx] = useState<{ amount: number; payee: string; remark?: string } | null>(null);
+  const [showGuard, setShowGuard] = useState(false);
+  const [isRazorpayLoading, setIsRazorpayLoading] = useState(false);
+  const [pendingTx, setPendingTx] = useState<{ amount: number; payee: string; remark?: string; upiId?: string } | null>(null);
   const [toast, setToast] = useState<{ show: boolean; type: 'success' | 'error'; title: string; message: string; cashback?: number }>({
     show: false, type: 'success', title: '', message: '',
   });
@@ -82,18 +88,12 @@ export default function PaymentHub() {
       return;
     }
 
-    setPendingTx({ amount: amt, payee, remark });
-    setShowMPIN(true);
+    setPendingTx({ amount: amt, payee, remark, upiId });
+    setShowGuard(true);
   };
 
-  const handleMPINSubmit = (pin: string) => {
-    setShowMPIN(false);
+  const finalizeSuccess = (mode: 'simulation' | 'razorpay') => {
     if (!pendingTx) return;
-    const isSuccess = pin.length === 6;
-    if (!isSuccess) {
-      showToast('error', 'Payment Failed', 'Incorrect MPIN. Please try again.');
-      return;
-    }
 
     const isP2P = activeTab === 'send';
     const isUtility = (remark || '').toLowerCase().includes('bill');
@@ -146,11 +146,115 @@ export default function PaymentHub() {
     if (cashback.streakBonus > 0) parts.push(`₹${cashback.streakBonus.toFixed(2)} streak bonus`);
     if (cashback.utilityBonus > 0) parts.push(`₹${cashback.utilityBonus.toFixed(2)} green action`);
 
-    showToast('success', 'Payment Successful!', `Paid ₹${tx.amount.toLocaleString()} to ${tx.payee}`, cashback.total);
+    const modeLabel = mode === 'razorpay' ? ' (Razorpay)' : '';
+    showToast('success', 'Payment Successful!', `Paid ₹${tx.amount.toLocaleString()} to ${tx.payee}${modeLabel}`, cashback.total);
     setShowSpinWheel(true);
 
     // Reset
     setAmount(''); setUpiId(''); setAccountNo(''); setIfsc(''); setBeneficiary(''); setRemark('');
+    setPendingTx(null);
+  };
+
+  const handleGuardAllow = async () => {
+    setShowGuard(false);
+    if (!pendingTx) return;
+
+    setIsRazorpayLoading(true);
+    try {
+      const configRes = await backendApi.getPaymentConfig();
+      const enabled = configRes.ok && configRes.data?.data?.enabled;
+      const keyId = configRes.ok ? configRes.data?.data?.keyId : null;
+
+      if (enabled && keyId && (isRazorpayAvailable() || (await loadRazorpayScript()))) {
+        const orderRes = await backendApi.createPaymentOrder({
+          amount: pendingTx.amount,
+          currency: 'INR',
+          receipt: `rcpt_${Date.now()}`,
+          notes: {
+            payee: pendingTx.payee,
+            upiId: pendingTx.upiId || '',
+            remark: pendingTx.remark || '',
+          },
+        });
+
+        if (!orderRes.ok || !orderRes.data?.data) {
+          showToast('error', 'Payment Error', orderRes.data?.error || 'Unable to create payment order');
+          setPendingTx(null);
+          return;
+        }
+
+        const order = orderRes.data.data;
+        const options: RazorpayOptions = {
+          key: keyId,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'PSB SecureWealth',
+          description: `Pay ${pendingTx.payee}`,
+          order_id: order.id,
+          prefill: { name: pendingTx.payee },
+          notes: order.notes || {},
+          theme: { color: '#0f766e' },
+          handler: async (response) => {
+            const verifyRes = await backendApi.verifyPayment({
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
+              amount: pendingTx.amount,
+              payee: pendingTx.payee,
+              description: pendingTx.remark || `UPI Payment — ${pendingTx.payee}`,
+            });
+
+            if (!verifyRes.ok) {
+              showToast('error', 'Verification Failed', verifyRes.data?.error || 'Payment verification failed');
+              setPendingTx(null);
+              return;
+            }
+
+            finalizeSuccess('razorpay');
+          },
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+        return;
+      }
+    } catch (err) {
+      console.warn('Razorpay checkout unavailable, using simulation fallback', err);
+    } finally {
+      setIsRazorpayLoading(false);
+    }
+
+    // Fallback to simulated MPIN
+    setShowMPIN(true);
+  };
+
+  const handleGuardBlock = (reason: string) => {
+    setShowGuard(false);
+    showToast('error', 'Blocked', `Blocked for safety: ${reason}`);
+    setAmount(''); setUpiId(''); setAccountNo(''); setIfsc(''); setBeneficiary(''); setRemark('');
+    setPendingTx(null);
+  };
+
+  const handleGuardDelay = () => {
+    setShowGuard(false);
+    showToast('error', 'Delayed', 'Cooling vault activated. Try again later.');
+    setPendingTx(null);
+  };
+
+  const handleGuardClose = () => {
+    setShowGuard(false);
+    setPendingTx(null);
+  };
+
+  const handleMPINSubmit = (pin: string) => {
+    setShowMPIN(false);
+    if (!pendingTx) return;
+    const isSuccess = pin.length === 6;
+    if (!isSuccess) {
+      showToast('error', 'Payment Failed', 'Incorrect MPIN. Please try again.');
+      return;
+    }
+    finalizeSuccess('simulation');
   };
 
   const handleQRScan = (scannedUpi: string, scannedName: string, scannedAmount?: number) => {
@@ -383,13 +487,14 @@ export default function PaymentHub() {
                 {/* Action Button */}
                 {activeTab !== 'voice' && activeTab !== 'scan' && (
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: isRazorpayLoading ? 1 : 1.02 }}
+                    whileTap={{ scale: isRazorpayLoading ? 1 : 0.98 }}
                     onClick={handlePay}
-                    className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                    disabled={isRazorpayLoading}
+                    className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-60"
                   >
-                    <i className="fas fa-shield-halved" />
-                    {activeTab === 'request' ? 'Request Money' : 'Pay Securely'}
+                    <i className={`fas ${isRazorpayLoading ? 'fa-spinner fa-spin' : 'fa-shield-halved'}`} />
+                    {isRazorpayLoading ? 'Loading Checkout…' : activeTab === 'request' ? 'Request Money' : 'Pay Securely'}
                   </motion.button>
                 )}
 
@@ -409,6 +514,19 @@ export default function PaymentHub() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Transaction Guard — runs before Razorpay checkout */}
+      {showGuard && pendingTx && (
+        <TransactionGuardModal
+          show={showGuard}
+          payee={pendingTx.payee || ''}
+          amount={pendingTx.amount || 0}
+          onAllow={handleGuardAllow}
+          onDelay={handleGuardDelay}
+          onBlock={handleGuardBlock}
+          onClose={handleGuardClose}
+        />
+      )}
 
       {/* MPIN */}
       {showMPIN && pendingTx && (
