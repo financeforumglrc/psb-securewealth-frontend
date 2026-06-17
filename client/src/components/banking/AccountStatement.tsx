@@ -58,7 +58,7 @@ export default function AccountStatement() {
         setAccounts(demoAccs);
         if (!selectedAccount) setSelectedAccount(demoAccs[0].id);
       }
-    } catch (e) {
+    } catch {
       const demoAccs = mockAccounts.map(a => ({ ...a, bank_name: 'Punjab & Sind Bank' }));
       setAccounts(demoAccs);
       if (!selectedAccount) setSelectedAccount(demoAccs[0].id);
@@ -80,7 +80,7 @@ export default function AccountStatement() {
       } else {
         setTransactions([]);
       }
-    } catch (e) {
+    } catch {
       setTransactions(mockTransactions as any);
     } finally {
       setLoading(false);

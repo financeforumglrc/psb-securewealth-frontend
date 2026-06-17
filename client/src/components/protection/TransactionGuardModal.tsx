@@ -1,20 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 import { useWealthStore } from '../../store/wealthStore';
+import { protectionApi, type ProtectionResponse } from '../../lib/protectionApi';
+import { getGuardianMessage } from '../../services/guardianService';
 import FamilyApprovalGate from './FamilyApprovalGate';
 import type { RiskSignals, ProtectionDecision } from '../../types';
 
 /* ═══════════════════════════════════════════════════════════════
    TRANSACTION GUARD MODAL — Mandatory Protection Layer
-   Evaluates ALL 6 risk signals from the hackathon PDF:
-   1. Device Trust
-   2. Login/Session Behaviour (speed)
-   3. Action Amount vs History
-   4. OTP Usage Pattern
-   5. New Action / Investment Type
-   6. Behaviour Consistency
-   
-   Outputs: Wealth Protection Risk Score → ALLOW / WARN / BLOCK
+   Calls the FastAPI Protection microservice for 7-point risk scoring
+   plus graph-risk and behavioral-biometrics signals.
+   Falls back to local scoring when the service is unreachable.
    ═══════════════════════════════════════════════════════════════ */
 
 interface Props {
@@ -36,26 +33,44 @@ const SIGNALS_DEF = [
   { key: 'behaviourConsistency', label: 'Behaviour Consistency', icon: 'fa-fingerprint', desc: 'Pattern match with user history' },
 ] as const;
 
+function getDeviceFingerprint(): string {
+  if (typeof window === 'undefined') return 'server';
+  let fp = localStorage.getItem('sw_device_fp');
+  if (!fp) {
+    fp = 'fp-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('sw_device_fp', fp);
+  }
+  return fp;
+}
+
 export default function TransactionGuardModal({ show, payee, amount, onAllow, onDelay, onBlock, onClose }: Props) {
   const transactions = useWealthStore((s) => s.transactions);
   const addTransaction = useWealthStore((s) => s.addTransaction);
+  const loginAt = useWealthStore((s) => s.loginAt);
+  const behavioralDeviation = useWealthStore((s) => s.behavioralDeviation);
+  const { state: authState } = useAuth();
+
   const [phase, setPhase] = useState<'scanning' | 'scored' | 'decision'>('scanning');
   const [scanProgress, setScanProgress] = useState(0);
   const [currentSignal, setCurrentSignal] = useState(0);
   const [showFamilyGate, setShowFamilyGate] = useState(false);
+  const [apiResult, setApiResult] = useState<ProtectionResponse | null>(null);
+  const [guardianMessage, setGuardianMessage] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  // Calculate risk signals
+  // Local fallback scoring (kept for resilience and instant UI)
   const signals = useMemo<RiskSignals>(() => {
-    const avgTxn = transactions.length > 0
-      ? transactions.filter((t) => t.type === 'debit').reduce((s, t) => s + t.amount, 0) / Math.max(1, transactions.filter((t) => t.type === 'debit').length)
+    const debitTxs = transactions.filter((t) => t.type === 'debit');
+    const avgTxn = debitTxs.length > 0
+      ? debitTxs.reduce((s, t) => s + t.amount, 0) / Math.max(1, debitTxs.length)
       : 5000;
-    const maxTxn = transactions.length > 0
-      ? Math.max(...transactions.filter((t) => t.type === 'debit').map((t) => t.amount), 0)
+    const maxTxn = debitTxs.length > 0
+      ? Math.max(...debitTxs.map((t) => t.amount), 0)
       : 10000;
     const isKnownPayee = transactions.some((t) => t.description?.toLowerCase().includes(payee.toLowerCase()));
 
     return {
-      newDevice: false,
+      newDevice: amount > 100000 && !isKnownPayee,
       rushedAction: amount > 100000,
       unusualAmount: amount > avgTxn * 2.5 || amount > maxTxn * 1.5,
       otpRetries: amount > 200000,
@@ -64,8 +79,7 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
     };
   }, [transactions, payee, amount]);
 
-  // Calculate risk score
-  const riskScore = useMemo(() => {
+  const fallbackScore = useMemo(() => {
     let score = 0;
     if (signals.newDevice) score += 15;
     if (signals.rushedAction) score += 10;
@@ -76,24 +90,44 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
     return Math.min(score, 100);
   }, [signals]);
 
-  const riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' = riskScore < 40 ? 'LOW' : riskScore < 70 ? 'MEDIUM' : 'HIGH';
-  const decision: ProtectionDecision = riskLevel === 'LOW'
-    ? { level: 'LOW', action: 'ALLOW', message: 'Transaction passed all security checks.', referenceId: 'PSB-ALW-' + Date.now().toString(36).toUpperCase() }
-    : riskLevel === 'MEDIUM'
-    ? { level: 'MEDIUM', action: 'WARN', cooldown: 30, message: 'Medium risk detected. Cooling vault activated for your safety.', referenceId: 'PSB-WAR-' + Date.now().toString(36).toUpperCase() }
-    : { level: 'HIGH', action: 'BLOCK', message: 'High risk detected. Transaction blocked to protect your wealth.', referenceId: 'PSB-BLK-' + Date.now().toString(36).toUpperCase() };
+  const fallbackLevel: 'LOW' | 'MEDIUM' | 'HIGH' = fallbackScore < 40 ? 'LOW' : fallbackScore < 70 ? 'MEDIUM' : 'HIGH';
+  const fallbackDecision: ProtectionDecision = useMemo(() => {
+    const refId = 'PSB-' + Date.now().toString(36).toUpperCase();
+    if (fallbackLevel === 'LOW') return { level: 'LOW', action: 'ALLOW', message: 'Transaction passed all security checks.', referenceId: refId };
+    if (fallbackLevel === 'MEDIUM') return { level: 'MEDIUM', action: 'WARN', cooldown: 30, message: 'Medium risk detected. Cooling vault activated for your safety.', referenceId: refId };
+    return { level: 'HIGH', action: 'BLOCK', message: 'High risk detected. Transaction blocked to protect your wealth.', referenceId: refId };
+  }, [fallbackLevel]);
 
-  // Scanning animation
+  const decision = apiResult || {
+    risk_score: fallbackScore,
+    risk_level: fallbackLevel,
+    action: fallbackDecision.action as 'ALLOW' | 'WARN_COOL_OFF' | 'BLOCK',
+    explainable_factors: fallbackDecision.message ? [fallbackDecision.message] : [],
+    user_message: fallbackDecision.message,
+    reference_id: fallbackDecision.referenceId,
+  };
+
+  const riskScore = decision.risk_score;
+  const riskLevel = decision.risk_level;
+  const action = decision.action;
+
+  // FastAPI evaluation during scanning
   useEffect(() => {
     if (!show) {
       setPhase('scanning');
       setScanProgress(0);
       setCurrentSignal(0);
+      setApiResult(null);
+      setGuardianMessage(null);
+      setApiError(null);
       return;
     }
+
+    let cancelled = false;
     const totalTime = 2500;
     const interval = 50;
     let elapsed = 0;
+
     const timer = setInterval(() => {
       elapsed += interval;
       setScanProgress(Math.min((elapsed / totalTime) * 100, 100));
@@ -104,8 +138,82 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
         setTimeout(() => setPhase('decision'), 800);
       }
     }, interval);
-    return () => clearInterval(timer);
-  }, [show]);
+
+    async function runFastApiEvaluation() {
+      try {
+        const debitTxs = transactions.filter((t) => t.type === 'debit');
+        const avgTxn = debitTxs.length > 0
+          ? debitTxs.reduce((s, t) => s + t.amount, 0) / Math.max(1, debitTxs.length)
+          : 5000;
+        const secondsSinceLogin = loginAt ? Math.max(0, Math.round((Date.now() - loginAt) / 1000)) : 300;
+        const isKnownPayee = transactions.some((t) => t.description?.toLowerCase().includes(payee.toLowerCase()));
+        const deviceFp = getDeviceFingerprint();
+
+        // Parallel graph + biometric calls
+        const [graphRes, biometricRes] = await Promise.all([
+          protectionApi.graphRisk({
+            user_id: authState.userId || 'demo-user',
+            payee,
+            device_fingerprint: deviceFp,
+          }),
+          protectionApi.biometricRisk({ deviation: behavioralDeviation || 0 }),
+        ]);
+
+        const graphBonus = graphRes.ok ? graphRes.data?.risk_bonus || 0 : 0;
+        const bioBonus = biometricRes.ok ? biometricRes.data?.risk_bonus || 0 : 0;
+
+        const evalRes = await protectionApi.evaluateTransaction({
+          user_id: authState.userId || 'demo-user',
+          amount,
+          historical_avg_amount: Math.round(avgTxn),
+          seconds_since_login: secondsSinceLogin,
+          is_trusted_device: !(amount > 100000 && !isKnownPayee),
+          otp_attempts: 0,
+          is_first_time_investment: !isKnownPayee && amount > 50000,
+          retry_count: 0,
+          behavioral_deviation: behavioralDeviation || 0,
+          graph_risk_bonus: graphBonus + bioBonus,
+        });
+
+        if (cancelled) return;
+
+        if (evalRes.ok && evalRes.data) {
+          setApiResult(evalRes.data);
+        } else {
+          setApiError('Protection service returned an error — using local scoring.');
+        }
+      } catch {
+        if (!cancelled) setApiError('Protection service unreachable — using local scoring.');
+      }
+    }
+
+    runFastApiEvaluation();
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [show, amount, payee, transactions, loginAt, behavioralDeviation, authState.userId]);
+
+  // Generate LLM Guardian message once we have a decision
+  useEffect(() => {
+    if (!show || phase !== 'decision') return;
+    let cancelled = false;
+
+    async function loadGuardian() {
+      const msg = await getGuardianMessage({
+        risk_level: riskLevel,
+        action: action,
+        factors: decision.explainable_factors,
+        amount,
+        payee,
+      });
+      if (!cancelled) setGuardianMessage(msg);
+    }
+
+    loadGuardian();
+    return () => { cancelled = true; };
+  }, [show, phase, riskLevel, action, amount, payee, decision.explainable_factors]);
 
   const handleAllow = () => {
     if (amount >= 200000) {
@@ -125,32 +233,39 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
     handleDecision('block');
   };
 
-  // Record transaction on decision
-  const handleDecision = (action: 'allow' | 'delay' | 'block') => {
+  const handleDecision = useCallback((actionTaken: 'allow' | 'delay' | 'block') => {
     const tx = {
       id: 'TXN-' + Date.now(),
       date: new Date().toISOString().split('T')[0],
-      description: action === 'block' ? `Blocked: ₹${amount.toLocaleString()} to ${payee}` : `${action === 'delay' ? 'Delayed' : 'UPI Payment'} — ${payee}`,
+      description: actionTaken === 'block' ? `Blocked: ₹${amount.toLocaleString()} to ${payee}` : `${actionTaken === 'delay' ? 'Delayed' : 'UPI Payment'} — ${payee}`,
       category: 'Transfer',
       amount,
       type: 'debit' as const,
-      status: (action === 'allow' ? 'ALLOWED' : action === 'delay' ? 'DELAYED' : 'BLOCKED') as 'ALLOWED' | 'BLOCKED' | 'DELAYED',
+      status: (actionTaken === 'allow' ? 'ALLOWED' : actionTaken === 'delay' ? 'DELAYED' : 'BLOCKED') as 'ALLOWED' | 'BLOCKED' | 'DELAYED',
       riskLevel,
       score: riskScore,
       signals,
-      decision,
+      decision: {
+        level: riskLevel,
+        action: action === 'WARN_COOL_OFF' ? 'WARN' : action,
+        cooldown: action === 'WARN_COOL_OFF' ? 15 : undefined,
+        message: guardianMessage || decision.user_message,
+        referenceId: decision.reference_id,
+      } as ProtectionDecision,
     };
     addTransaction(tx);
 
-    if (action === 'allow') onAllow();
-    else if (action === 'delay') onDelay();
-    else onBlock(decision.message);
-  };
+    if (actionTaken === 'allow') onAllow();
+    else if (actionTaken === 'delay') onDelay();
+    else onBlock(guardianMessage || decision.user_message);
+  }, [action, amount, payee, riskLevel, riskScore, signals, decision, guardianMessage, addTransaction, onAllow, onDelay, onBlock]);
 
   if (!show) return null;
 
   const riskText = riskLevel === 'LOW' ? 'text-emerald-600' : riskLevel === 'MEDIUM' ? 'text-amber-600' : 'text-rose-600';
   const riskBg = riskLevel === 'LOW' ? 'bg-emerald-500' : riskLevel === 'MEDIUM' ? 'bg-amber-500' : 'bg-rose-500';
+  const riskBorder = riskLevel === 'LOW' ? 'border-emerald-200 dark:border-emerald-800' : riskLevel === 'MEDIUM' ? 'border-amber-200 dark:border-amber-800' : 'border-rose-200 dark:border-rose-800';
+  const riskSubtleBg = riskLevel === 'LOW' ? 'bg-emerald-50 dark:bg-emerald-900/10' : riskLevel === 'MEDIUM' ? 'bg-amber-50 dark:bg-amber-900/10' : 'bg-rose-50 dark:bg-rose-900/10';
 
   return (
     <AnimatePresence>
@@ -196,6 +311,15 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
             </div>
           </div>
 
+          {/* API error hint */}
+          {apiError && (
+            <div className="px-6 pt-3">
+              <div className="p-2 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg text-[10px] text-amber-700 dark:text-amber-300">
+                <i className="fas fa-triangle-exclamation mr-1" /> {apiError}
+              </div>
+            </div>
+          )}
+
           {/* Scanning Phase */}
           {phase === 'scanning' && (
             <div className="px-6 py-6 space-y-4">
@@ -208,10 +332,9 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
                   <i className="fas fa-shield-virus text-primary text-xl" />
                 </motion.div>
                 <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Analyzing transaction risk...</p>
-                <p className="text-[10px] text-slate-400 mt-1">Running 6-layer cyber-protection scan</p>
+                <p className="text-[10px] text-slate-400 mt-1">Running 6-layer cyber-protection scan + graph intelligence</p>
               </div>
 
-              {/* Signal list */}
               <div className="space-y-2">
                 {SIGNALS_DEF.map((sig, i) => (
                   <div key={sig.key} className={`flex items-center gap-3 p-2 rounded-lg transition-all duration-300 ${
@@ -233,12 +356,8 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
                 ))}
               </div>
 
-              {/* Progress bar */}
               <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                <motion.div
-                  className="bg-primary h-1.5 rounded-full"
-                  style={{ width: `${scanProgress}%` }}
-                />
+                <motion.div className="bg-primary h-1.5 rounded-full" style={{ width: `${scanProgress}%` }} />
               </div>
             </div>
           )}
@@ -271,41 +390,27 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
                 >
                   <i className={`fas fa-${riskLevel === 'LOW' ? 'check-circle' : riskLevel === 'MEDIUM' ? 'clock' : 'ban'} text-lg`} />
                   <div className="text-left">
-                    <p className="text-xs font-extrabold">{riskLevel} RISK — {decision.action}</p>
-                    <p className="text-[9px] opacity-90">Score: {riskScore}/100</p>
+                    <p className="text-xs font-extrabold">{riskLevel} RISK — {action}</p>
+                    <p className="text-[9px] opacity-90">Ref: {decision.reference_id}</p>
                   </div>
                 </motion.div>
               </div>
 
-              {/* Signal Results */}
-              <div className="space-y-1.5">
-                {Object.entries(signals).map(([key, val]) => {
-                  const def = SIGNALS_DEF.find((s) => s.key === key);
-                  if (!def) return null;
-                  return (
-                    <div key={key} className={`flex items-center justify-between p-2 rounded-lg text-xs ${
-                      val ? 'bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-800/20' : 'bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/20'
-                    }`}>
-                      <span className="flex items-center gap-2">
-                        <i className={`fas ${def.icon} ${val ? 'text-rose-500' : 'text-emerald-500'}`} />
-                        <span className="text-slate-700 dark:text-slate-200 font-medium">{def.label}</span>
-                      </span>
-                      <span className={`font-bold ${val ? 'text-rose-600' : 'text-emerald-600'}`}>
-                        {val ? 'FLAGGED' : 'CLEAR'}
-                      </span>
-                    </div>
-                  );
-                })}
+              {/* Explainable Factors */}
+              <div className={`max-h-40 overflow-y-auto space-y-1.5 rounded-xl border ${riskBorder} ${riskSubtleBg} p-3`}>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Why this decision?</p>
+                {decision.explainable_factors.map((factor, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <i className={`fas fa-${riskLevel === 'LOW' ? 'check-circle text-emerald-500' : 'triangle-exclamation text-rose-500'} mt-0.5`} />
+                    <span className="text-slate-700 dark:text-slate-200">{factor}</span>
+                  </div>
+                ))}
               </div>
 
-              {/* Decision Message */}
-              <div className={`p-3 rounded-xl text-xs ${
-                riskLevel === 'LOW' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300' :
-                riskLevel === 'MEDIUM' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' :
-                'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300'
-              }`}>
-                <i className="fas fa-circle-info mr-1" />
-                {decision.message}
+              {/* Guardian Message */}
+              <div className={`p-3 rounded-xl text-xs ${riskSubtleBg} ${riskBorder} border`}>
+                <i className="fas fa-robot mr-1" />
+                {guardianMessage || decision.user_message}
               </div>
 
               {/* Action Buttons */}

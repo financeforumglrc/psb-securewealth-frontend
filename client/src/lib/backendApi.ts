@@ -18,7 +18,7 @@ async function sleep(ms: number) {
   return new Promise(r => setTimeout(r, ms));
 }
 
-async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: number }, attempt = 1): Promise<{ ok: boolean; status: number; data: any }> {
+async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: number; retry?: boolean }, attempt = 1): Promise<{ ok: boolean; status: number; data: any }> {
   try {
     const controller = new AbortController();
     const timeoutMs = options?.timeoutMs || 3000;
@@ -36,7 +36,8 @@ async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: num
     if (err.name === 'AbortError') {
       return { ok: false, status: 0, data: { success: false, error: 'Request timeout' } };
     }
-    if (attempt < MAX_RETRIES && (err.name === 'TypeError' || err.message?.includes('fetch'))) {
+    const allowRetry = options?.retry !== false;
+    if (allowRetry && attempt < MAX_RETRIES && (err.name === 'TypeError' || err.message?.includes('fetch'))) {
       await sleep(RETRY_DELAY * attempt);
       return fetchJson(path, options, attempt + 1);
     }
@@ -45,6 +46,11 @@ async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: num
 }
 
 export const backendApi = {
+  // Health check to warm up the Render backend
+  async health() {
+    return fetchJson('/health', { timeoutMs: 5000 });
+  },
+
   // Auth helpers
   async me() {
     return fetchJson('/auth/me');
@@ -232,10 +238,14 @@ export const backendApi = {
   },
 
   async demoLogin(payload: { email: string; name: string }) {
+    // Long single-attempt timeout to survive a Render cold-start without
+    // multiplying the wait through retries (15s x 3 attempts can feel like
+    // minutes if the server is waking up).
     return fetchJson('/auth/demo-login', {
       method: 'POST',
       body: JSON.stringify(payload),
-      timeoutMs: 15000,
+      timeoutMs: 35000,
+      retry: false,
     });
   },
 

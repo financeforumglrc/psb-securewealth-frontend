@@ -65,33 +65,11 @@ export function useLivePrices(): LivePrices {
     let mounted = true;
 
     async function fetchPrices() {
-      let nifty = prices.nifty;
+      const nifty = prices.nifty;
       const sensex = prices.sensex;
       let gold = prices.gold;
       let usdInr = prices.usdInr;
-      let hasLiveData = false;
-
-      // Try Yahoo Finance for NIFTY
-      try {
-        await fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1d&range=1d', { mode: 'no-cors' });
-        // no-cors means we can't read the response, so we skip this
-      } catch { /* ignore */ }
-
-      // Fallback: use NSE India unofficial endpoint via allorigins proxy
-      try {
-        const niftyProxy = await fetch('https://api.allorigins.win/raw?url=https://www.nseindia.com/api/marketStatus', { cache: 'no-store' });
-        if (niftyProxy.ok) {
-          const data = await niftyProxy.json();
-          const marketState = data?.marketState?.[0];
-          if (marketState?.last) {
-            const last = parseFloat(marketState.last);
-            const prev = parseFloat(marketState.previousClose || marketState.last);
-            const change = last - prev;
-            nifty = { value: last, change, percentChange: (change / prev) * 100 };
-            hasLiveData = true;
-          }
-        }
-      } catch { /* ignore */ }
+      const hasLiveData = false;
 
       // Try exchangerate-api for USD/INR (this one usually works)
       try {

@@ -4,6 +4,15 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/protection': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/protection/, ''),
+      },
+    },
+  },
   build: {
     target: 'es2020',
     cssTarget: 'es2020',
@@ -24,7 +33,7 @@ export default defineConfig({
             return 'vendor-utils';
           }
           if (id.includes('node_modules/jspdf') || id.includes('node_modules/html2canvas')) {
-            return 'vendor-ui';
+            return 'vendor-pdf';
           }
         },
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -43,9 +52,16 @@ export default defineConfig({
     },
     sourcemap: 'hidden',
     reportCompressedSize: true,
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 1200,
+    modulePreload: {
+      polyfill: true,
+      resolveDependencies(_filename: string, deps: string[]) {
+        // Keep PDF/report libraries off the critical path until they are needed.
+        return deps.filter((d: string) => !/vendor-pdf/.test(d));
+      },
+    },
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'framer-motion', 'zustand'],
   },
-} as any)
+})

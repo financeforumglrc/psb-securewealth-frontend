@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useWealthStore } from '../../store/wealthStore';
+import { formatCroreMask } from '../../utils/duressMask';
 import { syncAssetToSupabase } from '../../hooks/useSupabaseSync';
 import { supabase } from '../../lib/supabase';
 import CosmosCard from '../ui/CosmosCard';
@@ -10,6 +11,7 @@ export default function ProfileSettings() {
   const updateUser = useWealthStore((s) => s.updateUser);
   const assets = useWealthStore((s) => s.assets);
   const updateAsset = useWealthStore((s) => s.updateAsset);
+  const duressModeActive = useWealthStore((s) => s.duressModeActive);
 
   const [form, setForm] = useState({ ...user });
   const [saved, setSaved] = useState(false);
@@ -164,7 +166,7 @@ export default function ProfileSettings() {
         <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
           <i className="fas fa-wallet text-primary" /> Your Assets
           <span className="ml-auto text-sm font-normal text-slate-500">
-            Net Worth: <strong className="text-slate-800 dark:text-white">₹{(netWorth / 1e7).toFixed(2)} Cr</strong>
+            Net Worth: <strong className="text-slate-800 dark:text-white">{formatCroreMask(netWorth, duressModeActive)}</strong>
           </span>
         </h2>
         <div className="space-y-2">

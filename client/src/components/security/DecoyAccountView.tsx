@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clearDuressLockdown } from '../../services/duressService';
 import { logSecurityEvent } from '../../utils/securityLogger';
@@ -19,6 +19,9 @@ export default function DecoyAccountView() {
   const [transferStep, setTransferStep] = useState<'input' | 'confirm' | 'fake-success'>('input');
   const [gpsLocation, setGpsLocation] = useState<string | null>(null);
   const [silentAlerts, setSilentAlerts] = useState<string[]>([]);
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [scanStep, setScanStep] = useState<'scanning' | 'success'>('scanning');
+  const scanTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Capture "GPS" location
@@ -41,6 +44,10 @@ export default function DecoyAccountView() {
     ];
     setSilentAlerts(alerts);
     alerts.forEach((a) => logSecurityEvent('Duress', a, 'critical', 'Coercion Response System'));
+
+    return () => {
+      if (scanTimerRef.current) clearTimeout(scanTimerRef.current);
+    };
   }, []);
 
   function handleTransfer() {
@@ -58,6 +65,24 @@ export default function DecoyAccountView() {
       setTransferTo('');
     }, 3000);
   }
+
+  const handleScanAndPay = () => {
+    setShowScanModal(true);
+    setScanStep('scanning');
+    logSecurityEvent('Duress', 'Decoy Scan & Pay opened', 'critical', 'Attacker shown fake QR flow');
+    scanTimerRef.current = setTimeout(() => {
+      setScanStep('success');
+      scanTimerRef.current = setTimeout(() => {
+        setShowScanModal(false);
+      }, 2000);
+    }, 2000);
+  };
+
+  const handleHistory = () => {
+    const el = document.getElementById('decoy-transactions');
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    logSecurityEvent('Duress', 'Decoy history viewed', 'info', 'Attacker shown fake transaction history');
+  };
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -99,8 +124,8 @@ export default function DecoyAccountView() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { icon: 'fa-paper-plane', label: 'Transfer', color: 'bg-primary', onClick: () => setShowTransferModal(true) },
-          { icon: 'fa-qrcode', label: 'Scan & Pay', color: 'bg-slate-600', onClick: () => {} },
-          { icon: 'fa-clock-rotate-left', label: 'History', color: 'bg-slate-600', onClick: () => {} },
+          { icon: 'fa-qrcode', label: 'Scan & Pay', color: 'bg-slate-600', onClick: handleScanAndPay },
+          { icon: 'fa-clock-rotate-left', label: 'History', color: 'bg-slate-600', onClick: handleHistory },
         ].map((btn) => (
           <button
             key={btn.label}
@@ -114,7 +139,7 @@ export default function DecoyAccountView() {
       </div>
 
       {/* Fake Transactions */}
-      <div className="card">
+      <div id="decoy-transactions" className="card">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-3">Recent Transactions (FAKE)</h3>
         <div className="space-y-2">
           {FAKE_TRANSACTIONS.map((tx) => (
@@ -240,6 +265,45 @@ export default function DecoyAccountView() {
                     ATTACKER FOOLED. Real account untouched.
                   </p>
                 </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Fake Scan & Pay Modal */}
+      <AnimatePresence>
+        {showScanModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center"
+            >
+              {scanStep === 'scanning' ? (
+                <>
+                  <div className="w-20 h-20 mx-auto mb-4 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">Scanning QR...</h3>
+                  <p className="text-xs text-slate-500 mt-1">Point camera at any QR code</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i className="fas fa-check text-emerald-500 text-2xl" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">Merchant Detected</h3>
+                  <p className="text-xs text-slate-500 mt-1">Fake merchant &quot;Tea Stall&quot; selected</p>
+                  <p className="text-[10px] text-rose-500 mt-3 font-bold">
+                    <i className="fas fa-user-secret mr-1" />
+                    Real camera was never activated.
+                  </p>
+                </>
               )}
             </motion.div>
           </motion.div>

@@ -5,12 +5,18 @@ interface Props {
   onCancel: () => void;
   amount: number;
   payee: string;
+  demoHint?: string;
 }
 
-export default function MPINInput({ onSubmit, onCancel, amount, payee }: Props) {
+export default function MPINInput({ onSubmit, onCancel, amount, payee, demoHint }: Props) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const onSubmitRef = useRef(onSubmit);
+  const onCancelRef = useRef(onCancel);
+
+  useEffect(() => { onSubmitRef.current = onSubmit; }, [onSubmit]);
+  useEffect(() => { onCancelRef.current = onCancel; }, [onCancel]);
 
   const handleKey = (n: string) => {
     if (pin.length < 6) setPin((p) => p + n);
@@ -24,7 +30,7 @@ export default function MPINInput({ onSubmit, onCancel, amount, payee }: Props) 
       return;
     }
     setError('');
-    onSubmit(pin);
+    onSubmitRef.current(pin);
   };
 
   // Keyboard support + auto-focus
@@ -38,22 +44,21 @@ export default function MPINInput({ onSubmit, onCancel, amount, payee }: Props) 
         setPin((p) => p.slice(0, -1));
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        const currentPin = (inputRef.current?.dataset.pin || '');
+        const currentPin = inputRef.current?.dataset.pin || '';
         if (currentPin.length === 6) {
           setError('');
-          onSubmit(currentPin);
+          onSubmitRef.current(currentPin);
         } else {
           setError('Enter 6-digit MPIN');
         }
       } else if (e.key === 'Escape') {
-        onCancel();
+        onCancelRef.current();
       }
     };
     window.addEventListener('keydown', handler);
-    // Auto-focus hidden input so mobile keyboards can appear if user taps
     inputRef.current?.focus();
     return () => window.removeEventListener('keydown', handler);
-  }, [onSubmit, onCancel]);
+  }, []);
 
   // Sync hidden input dataset for Enter key handler
   useEffect(() => {
@@ -86,6 +91,15 @@ export default function MPINInput({ onSubmit, onCancel, amount, payee }: Props) 
           <h3 className="text-lg font-bold text-slate-800 dark:text-white">Enter MPIN</h3>
           <p className="text-xs text-slate-400 mt-1">Paying ₹{amount.toLocaleString()} to {payee}</p>
         </div>
+
+        {demoHint && (
+          <div className="mb-4 p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-800 text-center">
+            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+              <i className="fas fa-circle-info mr-1" />
+              Demo MPIN: <span className="font-bold tracking-widest">{demoHint}</span>
+            </p>
+          </div>
+        )}
 
         {/* PIN Dots */}
         <div
@@ -127,7 +141,7 @@ export default function MPINInput({ onSubmit, onCancel, amount, payee }: Props) 
         </div>
 
         <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-200 transition-colors">
+          <button onClick={() => onCancelRef.current()} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-200 transition-colors">
             Cancel
           </button>
           <button onClick={handleSubmit} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors">

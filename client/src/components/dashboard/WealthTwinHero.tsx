@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useWealthStore } from '../../store/wealthStore';
 import { useRecommendationEngine } from '../../hooks/useRecommendationEngine';
+import { formatCroreMask } from '../../utils/duressMask';
 import CosmosCard from '../ui/CosmosCard';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -27,6 +28,7 @@ export default function WealthTwinHero() {
   const transactions = useWealthStore((s) => s.transactions);
   const recommendations = useRecommendationEngine(user, marketData);
   const setView = useWealthStore((s) => s.setView);
+  const duressModeActive = useWealthStore((s) => s.duressModeActive);
 
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
   const savingsRate = user.monthlyIncome > 0
@@ -260,7 +262,7 @@ export default function WealthTwinHero() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Net Worth</p>
-                  <p className="text-lg font-black text-slate-800 dark:text-white">₹{(netWorth / 1e7).toFixed(2)}Cr</p>
+                  <p className="text-lg font-black text-slate-800 dark:text-white">{formatCroreMask(netWorth, duressModeActive)}</p>
                 </div>
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                   <i className="fas fa-wallet" />

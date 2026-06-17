@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
 import { formatCurrency } from '../../utils/demoMode';
+import { formatCurrencyMask, maskValue } from '../../utils/duressMask';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { CosmosEmptyState } from '../ui/CosmosCard';
 
@@ -8,6 +9,7 @@ const COLORS = ['#0f766e', '#14b8a6', '#f59e0b', '#8b5cf6', '#64748b', '#ef4444'
 
 export default function NetWorthCard() {
   const assets = useWealthStore((s) => s.assets);
+  const duressModeActive = useWealthStore((s) => s.duressModeActive);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
   const liquid = assets.filter((a) => a.liquidity === 'high').reduce((s, a) => s + a.value, 0);
@@ -64,10 +66,10 @@ export default function NetWorthCard() {
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <Stat label="Total Net Worth" value={formatCurrency(netWorth)} icon="fa-wallet" color="text-primary" />
-            <Stat label="Liquid Assets" value={formatCurrency(liquid)} icon="fa-droplet" color="text-secondary" />
-            <Stat label="Investments" value={formatCurrency(investments)} icon="fa-chart-pie" color="text-accent" />
-            <Stat label="Physical" value={formatCurrency(physical)} icon="fa-gem" color="text-purple-500" />
+            <Stat label="Total Net Worth" value={formatCurrencyMask(netWorth, duressModeActive)} icon="fa-wallet" color="text-primary" />
+            <Stat label="Liquid Assets" value={formatCurrencyMask(liquid, duressModeActive)} icon="fa-droplet" color="text-secondary" />
+            <Stat label="Investments" value={formatCurrencyMask(investments, duressModeActive)} icon="fa-chart-pie" color="text-accent" />
+            <Stat label="Physical" value={formatCurrencyMask(physical, duressModeActive)} icon="fa-gem" color="text-purple-500" />
           </div>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
@@ -77,7 +79,7 @@ export default function NetWorthCard() {
                     <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(val) => formatCurrency(Number(val))} />
+                <Tooltip formatter={(val) => formatCurrencyMask(maskValue(Number(val), duressModeActive), false)} />
               </PieChart>
             </ResponsiveContainer>
           </div>

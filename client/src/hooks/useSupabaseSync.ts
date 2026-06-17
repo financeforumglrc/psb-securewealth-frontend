@@ -13,43 +13,6 @@ export function useSupabaseSync() {
   const lastUserId = useRef<string | null>(null);
   const hasHydrated = useRef(false);
 
-  // Hydrate from Supabase when user logs in
-  useEffect(() => {
-    let cancelled = false;
-
-    const unsubscribe = supabase.auth.onAuthStateChange((event, session) => {
-      if (cancelled) return;
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        const userId = session.user.id;
-        if (lastUserId.current === userId && hasHydrated.current) return;
-        lastUserId.current = userId;
-        hasHydrated.current = true;
-
-        // Defer hydration to avoid render-phase state updates
-        setTimeout(() => {
-          if (!cancelled) hydrateStore(userId);
-        }, 0);
-      } else if (event === 'SIGNED_OUT') {
-        lastUserId.current = null;
-        hasHydrated.current = false;
-      }
-    });
-
-    return () => {
-      cancelled = true;
-      unsubscribe.data.subscription.unsubscribe();
-    };
-  }, []);
-
-  // Periodic sync: push local changes to Supabase every 10 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      syncToSupabase();
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
   async function hydrateStore(userId: string) {
     if (isSyncing.current) return;
     isSyncing.current = true;
@@ -194,6 +157,43 @@ export function useSupabaseSync() {
       console.error('Profile sync failed:', e);
     }
   }
+
+  // Hydrate from Supabase when user logs in
+  useEffect(() => {
+    let cancelled = false;
+
+    const unsubscribe = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        const userId = session.user.id;
+        if (lastUserId.current === userId && hasHydrated.current) return;
+        lastUserId.current = userId;
+        hasHydrated.current = true;
+
+        // Defer hydration to avoid render-phase state updates
+        setTimeout(() => {
+          if (!cancelled) hydrateStore(userId);
+        }, 0);
+      } else if (event === 'SIGNED_OUT') {
+        lastUserId.current = null;
+        hasHydrated.current = false;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe.data.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Periodic sync: push local changes to Supabase every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      syncToSupabase();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 }
 
 // Standalone helpers for components to use directly

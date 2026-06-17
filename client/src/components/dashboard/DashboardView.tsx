@@ -7,7 +7,7 @@ import { getStreak } from '../../services/streakService';
 import { getSalaryHistory } from '../salary/AddSalaryModal';
 import { useVoiceNarration, numberToWords } from '../../hooks/useVoiceNarration';
 import { speak, cancelSpeech, isSpeechSupported } from '../../services/voiceService';
-import { useLivePrices } from '../../hooks/useLivePrices';
+import { formatCurrencyMask, formatCroreMask } from '../../utils/duressMask';
 import CosmosCard from '../ui/CosmosCard';
 
 import FinancialPulse from './FinancialPulse';
@@ -63,11 +63,12 @@ export default function DashboardView() {
   const assets = useWealthStore((s) => s.assets);
   const goals = useWealthStore((s) => s.goals);
   const coercedMode = useWealthStore((s) => s.coercedMode);
+  const duressModeActive = useWealthStore((s) => s.duressModeActive);
   const setCoercedMode = useWealthStore((s) => s.setCoercedMode);
   const setView = useWealthStore((s) => s.setView);
 
-
-  const netWorth = coercedMode ? 5000 : assets.reduce((sum, a) => sum + a.value, 0);
+  const rawNetWorth = assets.reduce((sum, a) => sum + a.value, 0);
+  const netWorth = coercedMode ? 5000 : rawNetWorth;
   const healthScore = coercedMode ? 15 : Math.min(Math.round((user.monthlySavings / user.monthlyIncome) * 200 + 40), 100);
   const { cashbackBalance } = useRewards();
   const streak = getStreak();
@@ -142,9 +143,6 @@ export default function DashboardView() {
         {/* Live Financial Pulse */}
         <FinancialPulse />
 
-        {/* Market Ticker Bar */}
-        <LiveMarketBar />
-
         {/* ═══════════════════════════════════════════════════════
             ROW 2: MARKET INTELLIGENCE + PREDICTIVE SHIELD
             ═══════════════════════════════════════════════════════ */}
@@ -177,10 +175,10 @@ export default function DashboardView() {
             ═══════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
-            { label: 'Net Worth', value: coercedMode ? '₹5,000' : `₹${(netWorth / 1e7).toFixed(2)}Cr`, icon: 'fa-wallet', color: 'from-primary/20 to-primary/5', text: 'text-primary', speakText: `Net worth ${numberToWords(netWorth)} rupees`, inrValue: netWorth, trend: '+2.4%', trendUp: true },
-            { label: 'Monthly Savings', value: coercedMode ? '₹500' : `₹${user.monthlySavings.toLocaleString()}`, icon: 'fa-piggy-bank', color: 'from-emerald-500/20 to-emerald-500/5', text: 'text-emerald-600', speakText: `Monthly savings ${numberToWords(user.monthlySavings)} rupees`, inrValue: user.monthlySavings, trend: '+12%', trendUp: true },
+            { label: 'Net Worth', value: coercedMode ? '₹5,000' : formatCroreMask(rawNetWorth, duressModeActive), icon: 'fa-wallet', color: 'from-primary/20 to-primary/5', text: 'text-primary', speakText: `Net worth ${numberToWords(netWorth)} rupees`, inrValue: netWorth, trend: '+2.4%', trendUp: true },
+            { label: 'Monthly Savings', value: coercedMode ? '₹500' : formatCurrencyMask(user.monthlySavings, duressModeActive), icon: 'fa-piggy-bank', color: 'from-emerald-500/20 to-emerald-500/5', text: 'text-emerald-600', speakText: `Monthly savings ${numberToWords(user.monthlySavings)} rupees`, inrValue: user.monthlySavings, trend: '+12%', trendUp: true },
             { label: 'Health Score', value: `${healthScore}/100`, icon: 'fa-heart-pulse', color: 'from-amber-500/20 to-amber-500/5', text: 'text-amber-600', speakText: `Health score ${healthScore} out of 100`, trend: healthScore > 70 ? 'Good' : 'Needs work', trendUp: healthScore > 70 },
-            { label: 'Cashback', value: `₹${cashbackBalance.toFixed(0)}`, icon: 'fa-gift', color: 'from-pink-500/20 to-pink-500/5', text: 'text-pink-500', trend: 'Available', trendUp: true },
+            { label: 'Cashback', value: formatCurrencyMask(cashbackBalance, duressModeActive), icon: 'fa-gift', color: 'from-pink-500/20 to-pink-500/5', text: 'text-pink-500', trend: 'Available', trendUp: true },
             { label: 'Streak', value: `${streak.days} days`, icon: 'fa-fire', color: 'from-orange-500/20 to-orange-500/5', text: 'text-orange-500', trend: streak.days > 5 ? 'On fire!' : 'Keep going', trendUp: streak.days > 5 },
           ].map((card, i) => (
             <motion.div
@@ -431,44 +429,6 @@ function StatCardV2({
           <p className="text-[10px] text-primary mt-1 font-medium">≈ ${usdEquivalent} USD</p>
         )}
       </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   LIVE MARKET BAR — Real-time NSE / BSE / Gold / FX
-   ═══════════════════════════════════════════════════════════════ */
-
-function LiveMarketBar() {
-  const { nifty, sensex, gold, usdInr, loading, error } = useLivePrices();
-  const markets = [
-    { label: 'NIFTY 50', value: nifty.value.toLocaleString('en-IN', { maximumFractionDigits: 2 }), change: nifty.percentChange },
-    { label: 'SENSEX', value: sensex.value.toLocaleString('en-IN', { maximumFractionDigits: 2 }), change: sensex.percentChange },
-    { label: 'Gold', value: `₹${gold.value.toLocaleString('en-IN')}`, change: gold.percentChange },
-    { label: 'USD/INR', value: `₹${usdInr.value.toFixed(2)}`, change: usdInr.percentChange },
-  ];
-
-  return (
-    <div className="flex items-center gap-4 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800/80 border border-slate-700/50 overflow-x-auto">
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex-shrink-0">Markets</span>
-      {markets.map((m) => (
-        <div key={m.label} className="flex items-center gap-1.5 flex-shrink-0">
-          <span className="text-[10px] text-slate-500">{m.label}</span>
-          <span className="text-[11px] font-bold text-white">{m.value}</span>
-          <span className={`text-[10px] font-semibold ${m.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            <i className={`fas fa-caret-${m.change >= 0 ? 'up' : 'down'} mr-0.5`} />
-            {Math.abs(m.change).toFixed(2)}%
-          </span>
-        </div>
-      ))}
-      <div className="flex-1" />
-      {loading ? (
-        <span className="text-[9px] text-slate-600 flex-shrink-0 animate-pulse">Fetching…</span>
-      ) : error ? (
-        <span className="text-[9px] text-amber-500 flex-shrink-0" title={error}>Live <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block ml-1 animate-pulse" /></span>
-      ) : (
-        <span className="text-[9px] text-slate-600 flex-shrink-0">Live <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block ml-1 animate-pulse" /></span>
-      )}
     </div>
   );
 }

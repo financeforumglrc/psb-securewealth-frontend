@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
@@ -11,11 +11,14 @@ interface Props {
 }
 
 export default function AnimatedTransactionToast({ show, type, title, message, amount, onClose }: Props) {
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
   useEffect(() => {
     if (!show) return;
-    const timer = setTimeout(onClose, 4000);
+    const timer = setTimeout(() => onCloseRef.current?.(), 4000);
     return () => clearTimeout(timer);
-  }, [show, onClose]);
+  }, [show]);
 
   return (
     <AnimatePresence>
@@ -56,7 +59,7 @@ export default function AnimatedTransactionToast({ show, type, title, message, a
                 </motion.p>
               )}
             </div>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <button onClick={() => onCloseRef.current?.()} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
               <i className="fas fa-xmark" />
             </button>
           </div>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { isDuressPin, triggerDuressLockdown } from '../../services/duressService';
-import { getOrCreateTotpSecret, verifyTotp, getTotpTimeRemaining } from '../../services/totpService';
+import { getOrCreateTotpSecret, verifyTotp, getTotpTimeRemaining, generateTotp } from '../../services/totpService';
 import { useWealthStore } from '../../store/wealthStore';
 
 interface OTPSimulationProps {
@@ -17,29 +17,49 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
   const [error, setError] = useState(false);
   const [verified, setVerified] = useState(false);
   const [duressTriggered, setDuressTriggered] = useState(false);
+  const [demoCode, setDemoCode] = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const onConfirmRef = useRef(onConfirm);
+  const onCancelRef = useRef(onCancel);
   const setLockdownActive = useWealthStore((s) => s.setLockdownActive);
   const secret = getOrCreateTotpSecret();
 
+  // Keep latest callbacks without restarting effects on parent re-render.
+  useEffect(() => { onConfirmRef.current = onConfirm; }, [onConfirm]);
+  useEffect(() => { onCancelRef.current = onCancel; }, [onCancel]);
+
+  // Compute the demo TOTP code and refresh it with the timer.
+  useEffect(() => {
+    if (skip) return;
+    let mounted = true;
+    const updateCode = async () => {
+      const code = await generateTotp(secret);
+      if (mounted) setDemoCode(code);
+    };
+    updateCode();
+    const interval = setInterval(() => {
+      setTimer(getTotpTimeRemaining());
+      updateCode();
+    }, 1000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [secret, skip]);
+
   useEffect(() => {
     if (skip) {
-      onConfirm();
+      onConfirmRef.current();
       return;
     }
     inputRefs.current[0]?.focus();
-  }, [skip, onConfirm]);
+  }, [skip]);
 
   useEffect(() => {
-    if (skip || verified) return;
-    const interval = setInterval(() => setTimer(getTotpTimeRemaining()), 1000);
-    return () => clearInterval(interval);
-  }, [skip, verified]);
-
-  useEffect(() => {
-    if (verified) {
-      setTimeout(onConfirm, 500);
-    }
-  }, [verified, onConfirm]);
+    if (!verified) return;
+    const timerId = setTimeout(() => onConfirmRef.current(), 500);
+    return () => clearTimeout(timerId);
+  }, [verified]);
 
   const handleChange = (i: number, val: string) => {
     if (!/^\d?$/.test(val)) return;
@@ -108,6 +128,15 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
           <i className="fas fa-shield-halved mr-1" />
           Duress PIN active if set
         </p>
+
+        {/* Demo code hint */}
+        <div className="mb-4 p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-800">
+          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+            <i className="fas fa-circle-info mr-1" />
+            Demo code: <span className="font-bold tracking-widest">{demoCode}</span>
+          </p>
+        </div>
+
         <div className="flex justify-center gap-2 mb-4">
           {digits.map((d, i) => (
             <input
@@ -128,7 +157,7 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
         <button onClick={handleVerify} disabled={digits.some((d) => !d)} className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
           Verify
         </button>
-        <button onClick={onCancel} className="mt-2 text-xs text-slate-400 hover:text-slate-600">Cancel Transaction</button>
+        <button onClick={() => onCancelRef.current()} className="mt-2 text-xs text-slate-400 hover:text-slate-600">Cancel Transaction</button>
       </div>
     </div>
   );

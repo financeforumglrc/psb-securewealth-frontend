@@ -49,7 +49,7 @@ export default function MarketNewsFeed() {
       const result = await getMarketNews(force);
       setItems(result.items);
       setError(result.error);
-    } catch (e) {
+    } catch {
       setError('Unable to load market news. Please try again later.');
       setItems([]);
     } finally {

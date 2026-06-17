@@ -37,6 +37,7 @@ function generateNeurons(): Neuron[] {
 }
 
 function generateSignals(_neurons: Neuron[]): Signal[] {
+  void _neurons;
   const signals: Signal[] = [];
   for (let layer = 0; layer < LAYER_CONFIG.length - 1; layer++) {
     const fromStart = LAYER_CONFIG.slice(0, layer).reduce((a, b) => a + b, 0);

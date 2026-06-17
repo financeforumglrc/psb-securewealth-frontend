@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { logSecurityEvent } from '../../utils/securityLogger';
+import { useWealthStore } from '../../store/wealthStore';
 
 declare global {
   interface Window {
@@ -10,14 +11,14 @@ declare global {
 }
 
 const COMMANDS = [
-  { phrase: 'show balance', action: 'Displays current balance' },
-  { phrase: 'send money to', action: 'Opens transfer form' },
-  { phrase: 'pay bill', action: 'Opens bill payment' },
-  { phrase: 'what is my net worth', action: 'Shows net worth summary' },
-  { phrase: 'show transactions', action: 'Opens transaction history' },
-  { phrase: 'help', action: 'Shows command list' },
-  { phrase: 'lock app', action: 'Locks the app immediately' },
-  { phrase: 'duress', action: 'Silent alert to fraud team' },
+  { phrase: 'show balance', action: 'Dashboard', view: 'dashboard' },
+  { phrase: 'send money to', action: 'Payments', view: 'payments' },
+  { phrase: 'pay bill', action: 'Bills', view: 'bills' },
+  { phrase: 'what is my net worth', action: 'Wealth Twin', view: 'wealth-twin' },
+  { phrase: 'show transactions', action: 'Transactions', view: 'transactions' },
+  { phrase: 'help', action: 'Voice commands', view: null as string | null },
+  { phrase: 'lock app', action: 'Lock app', view: null as string | null },
+  { phrase: 'duress', action: 'Silent duress alert', view: null as string | null },
 ];
 
 export default function VoiceCommandBar() {
@@ -25,8 +26,44 @@ export default function VoiceCommandBar() {
   const [transcript, setTranscript] = useState('');
   const [matchedCommand, setMatchedCommand] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const waveRef = useRef<HTMLDivElement>(null);
+  const setView = useWealthStore((s) => s.setView);
+  const matchedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const executeCommand = (phrase: string) => {
+    const cmd = COMMANDS.find((c) => c.phrase === phrase);
+    if (!cmd) return;
+
+    if (cmd.view) {
+      setView(cmd.view as any);
+      setToast(`Opened ${cmd.action}`);
+    } else if (phrase === 'help') {
+      setShowHelp(true);
+      setToast('Showing voice commands');
+    } else if (phrase === 'lock app') {
+       
+      alert('App locked for security. Re-authenticate to continue.');
+      logSecurityEvent('Voice', 'App locked via voice command', 'info', 'Voice navigation');
+    } else if (phrase === 'duress') {
+      localStorage.setItem('sw_duress', 'active');
+      window.dispatchEvent(new StorageEvent('storage', { key: 'sw_duress', newValue: 'active' }));
+       
+      alert('Duress mode activated. Balances sanitized.');
+      logSecurityEvent('Voice', 'Duress mode activated via voice', 'critical', 'Voice navigation');
+    }
+
+    setMatchedCommand(phrase);
+    logSecurityEvent('Voice', `Command executed: "${phrase}"`, 'info', 'Voice navigation');
+
+    if (matchedTimerRef.current) clearTimeout(matchedTimerRef.current);
+    matchedTimerRef.current = setTimeout(() => {
+      setMatchedCommand(null);
+      setTranscript('');
+      setToast(null);
+    }, 3000);
+  };
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -45,7 +82,7 @@ export default function VoiceCommandBar() {
 
       for (const cmd of COMMANDS) {
         if (interim.toLowerCase().includes(cmd.phrase)) {
-          setMatchedCommand(cmd.phrase);
+          executeCommand(cmd.phrase);
           break;
         }
       }
@@ -53,13 +90,6 @@ export default function VoiceCommandBar() {
 
     recognition.onend = () => {
       setListening(false);
-      if (matchedCommand) {
-        logSecurityEvent('Voice', `Command executed: "${matchedCommand}"`, 'info', 'Voice navigation');
-        setTimeout(() => {
-          setMatchedCommand(null);
-          setTranscript('');
-        }, 3000);
-      }
     };
 
     recognition.onerror = () => {
@@ -67,10 +97,20 @@ export default function VoiceCommandBar() {
     };
 
     recognitionRef.current = recognition;
-  }, [matchedCommand]);
+
+    return () => {
+      try {
+        recognition.stop();
+      } catch {
+        // ignore cleanup errors
+      }
+      if (matchedTimerRef.current) clearTimeout(matchedTimerRef.current);
+    };
+  }, []);
 
   function toggleListening() {
     if (!recognitionRef.current) {
+       
       alert('Speech recognition not supported in this browser.');
       return;
     }
@@ -80,6 +120,7 @@ export default function VoiceCommandBar() {
     } else {
       setTranscript('');
       setMatchedCommand(null);
+      setToast(null);
       recognitionRef.current.start();
       setListening(true);
       logSecurityEvent('Voice', 'Listening started', 'info', 'Voice navigation');
@@ -112,7 +153,7 @@ export default function VoiceCommandBar() {
 
       {/* Voice Panel */}
       <AnimatePresence>
-        {(listening || transcript) && (
+        {(listening || transcript || toast) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -158,6 +199,13 @@ export default function VoiceCommandBar() {
                   Command: "{matchedCommand}"
                 </p>
               </motion.div>
+            )}
+
+            {/* Action toast */}
+            {toast && !matchedCommand && (
+              <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-center">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{toast}</p>
+              </div>
             )}
 
             {/* Help Button */}

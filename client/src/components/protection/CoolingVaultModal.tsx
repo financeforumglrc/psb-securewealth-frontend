@@ -1,20 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { logAudit } from '../../utils/auditLogger';
 import { useWealthStore } from '../../store/wealthStore';
+import { useAuth } from '../../context/AuthContext';
+import { lockFunds, isLocked, releaseLock, type SmartContractLock } from '../../services/blockchainService';
 
 interface Props {
   show: boolean;
   onClose: () => void;
+  amount?: number;
+  payee?: string;
+  durationSec?: number;
 }
 
 const TOTAL_SECONDS = 30;
 
-export default function CoolingVaultModal({ show, onClose }: Props) {
-  const [secondsLeft, setSecondsLeft] = useState(TOTAL_SECONDS);
+export default function CoolingVaultModal({ show, onClose, amount = 250000, payee = 'new payee', durationSec = TOTAL_SECONDS }: Props) {
+  const [secondsLeft, setSecondsLeft] = useState(durationSec);
   const [phase, setPhase] = useState<'holding' | 'ready' | 'completed' | 'cancelled'>('holding');
   const [checked, setChecked] = useState(false);
+  const [smartLock, setSmartLock] = useState<SmartContractLock | null>(null);
   const addTransaction = useWealthStore((s) => s.addTransaction);
-  const txIdRef = useState(() => ({ current: 'tx-' + Date.now() }))[0];
+  const { state: authState } = useAuth();
+  const txIdRef = useRef('tx-' + Date.now());
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   useEffect(() => {
     if (!show) {
@@ -24,36 +35,41 @@ export default function CoolingVaultModal({ show, onClose }: Props) {
       return;
     }
     const refId = 'CV-' + Date.now().toString(36).toUpperCase();
-    // Log the cooling vault start
+    txIdRef.current = 'tx-' + Date.now();
+    const summary = `Cooling vault activated for transfer of ₹${amount.toLocaleString()} to ${payee}`;
     logAudit(
-      'Cooling Vault - Transfer ₹2,50,000 to new payee',
+      summary,
       { newDevice: false, rushedAction: true, unusualAmount: true, otpRetries: false, firstTimeInvest: false, abnormalBehavior: false },
       55,
       {
         level: 'MEDIUM',
         action: 'WARN',
-        cooldown: 30,
-        message: 'Cooling vault activated for high-value transfer to new payee.',
+        cooldown: durationSec,
+        message: summary,
         referenceId: refId,
       }
     );
-    txIdRef.current = 'tx-' + Date.now();
-    // Add DELAYED transaction
+    // Add DELAYED transaction once when the modal opens.
     addTransaction({
       id: txIdRef.current,
       date: new Date().toISOString().split('T')[0],
-      description: 'Delayed: ₹2,50,000 to new payee',
+      description: `Delayed: ₹${amount.toLocaleString()} to ${payee}`,
       category: 'Transfer',
-      amount: 250000,
+      amount,
       type: 'debit',
       status: 'DELAYED',
       riskLevel: 'MEDIUM',
       score: 55,
       signals: { newDevice: false, rushedAction: true, unusualAmount: true, otpRetries: false, firstTimeInvest: false, abnormalBehavior: false },
-      decision: { level: 'MEDIUM', action: 'WARN', cooldown: 30, message: 'Cooling vault activated for high-value transfer to new payee.', referenceId: refId },
+      decision: { level: 'MEDIUM', action: 'WARN', cooldown: durationSec, message: summary, referenceId: refId },
       referenceId: refId,
     });
-  }, [show]);
+
+    // Deploy a virtual smart-contract timelock
+    lockFunds(authState.userId || 'demo-user', amount, durationSec, txIdRef.current).then((lock) => {
+      setSmartLock(lock);
+    });
+  }, [show, addTransaction, authState.userId, amount, payee, durationSec]);
 
   useEffect(() => {
     if (!show || phase !== 'holding') return;
@@ -67,11 +83,35 @@ export default function CoolingVaultModal({ show, onClose }: Props) {
     return () => clearInterval(timer);
   }, [show, phase, secondsLeft]);
 
-  const progress = ((TOTAL_SECONDS - secondsLeft) / TOTAL_SECONDS) * 100;
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
+  const scheduleClose = (ms: number) => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => {
+      onCloseRef.current?.();
+      // Reset state after close animation
+      setTimeout(() => {
+        setSecondsLeft(durationSec);
+        setPhase('holding');
+        setChecked(false);
+      }, 300);
+    }, ms);
+  };
+
+  const progress = ((durationSec - secondsLeft) / durationSec) * 100;
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   const handleProceed = useCallback(() => {
+    if (smartLock && isLocked(smartLock.contractId)) {
+      // Timelock still active — support override via checked confirmation
+      if (!checked) return;
+    }
+    if (smartLock) releaseLock(smartLock.contractId);
     setPhase('completed');
     const refId = 'CV-PASS-' + Date.now().toString(36).toUpperCase();
     logAudit(
@@ -85,20 +125,19 @@ export default function CoolingVaultModal({ show, onClose }: Props) {
         referenceId: refId,
       }
     );
-    // Update transaction to ALLOWED
     addTransaction({
       id: txIdRef.current + '-complete',
       date: new Date().toISOString().split('T')[0],
-      description: 'Transfer: ₹2,50,000 to new payee (post cooling vault)',
+      description: `Transfer: ₹${amount.toLocaleString()} to ${payee} (post cooling vault)`,
       category: 'Transfer',
-      amount: 250000,
+      amount,
       type: 'debit',
       status: 'ALLOWED',
       riskLevel: 'LOW',
       referenceId: refId,
     });
-    setTimeout(onClose, 1500);
-  }, [onClose, txIdRef, addTransaction]);
+    scheduleClose(1500);
+  }, [addTransaction]);
 
   const handleCancel = useCallback(() => {
     setPhase('cancelled');
@@ -114,13 +153,12 @@ export default function CoolingVaultModal({ show, onClose }: Props) {
         referenceId: refId,
       }
     );
-    // Add BLOCKED transaction for cancellation
     addTransaction({
       id: txIdRef.current + '-cancel',
       date: new Date().toISOString().split('T')[0],
-      description: 'Blocked: ₹2,50,000 to new payee (cancelled in cooling vault)',
+      description: `Blocked: ₹${amount.toLocaleString()} to ${payee} (cancelled in cooling vault)`,
       category: 'Transfer',
-      amount: 250000,
+      amount,
       type: 'debit',
       status: 'BLOCKED',
       riskLevel: 'MEDIUM',
@@ -129,8 +167,8 @@ export default function CoolingVaultModal({ show, onClose }: Props) {
       decision: { level: 'LOW', action: 'BLOCK', message: 'User cancelled transfer during cooling-off period.', referenceId: refId },
       referenceId: refId,
     });
-    setTimeout(onClose, 1200);
-  }, [onClose, txIdRef, addTransaction]);
+    scheduleClose(1200);
+  }, [addTransaction]);
 
   if (!show) return null;
 
@@ -157,7 +195,7 @@ export default function CoolingVaultModal({ show, onClose }: Props) {
             </div>
             <div>
               <h3 className="text-lg font-bold">Cooling Vault Active</h3>
-              <p className="text-xs text-white/80">Transaction held for security verification</p>
+              <p className="text-xs text-white/80">₹{amount.toLocaleString()} to {payee} held for security verification</p>
             </div>
           </div>
           <button onClick={handleCancel} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
@@ -189,6 +227,19 @@ export default function CoolingVaultModal({ show, onClose }: Props) {
               <span className="text-xs text-slate-500">Triggers</span>
               <span className="text-xs text-rose-600 font-medium">New Payee + High Amount</span>
             </div>
+            {smartLock && (
+              <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1 flex items-center gap-1">
+                  <i className="fas fa-cube text-orange-500" /> Smart Contract Timelock
+                </p>
+                <p className="text-[10px] font-mono text-slate-600 dark:text-slate-300 break-all">
+                  {smartLock.contractId}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Funds locked until {new Date(smartLock.expiresAt).toLocaleTimeString()}. The contract enforces the cooling-off period at code level.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Countdown circle */}
@@ -287,7 +338,7 @@ export default function CoolingVaultModal({ show, onClose }: Props) {
               </>
             )}
             {(phase === 'completed' || phase === 'cancelled') && (
-              <button onClick={onClose} className="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+              <button onClick={() => onCloseRef.current?.()} className="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
                 Close
               </button>
             )}

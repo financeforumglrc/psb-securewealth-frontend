@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface SecureCheckoutProps {
   show: boolean;
@@ -15,22 +15,39 @@ const STEPS = [
 export default function SecureCheckout({ show, onComplete }: SecureCheckoutProps) {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(-1);
+  const onCompleteRef = useRef(onComplete);
+
+  // Keep the latest callback without restarting the animation when the
+  // parent re-renders (which was causing the modal to stay stuck).
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     if (!show) return;
     setProgress(0);
     setCurrentStep(-1);
+
+    const timers: number[] = [];
     STEPS.forEach((step, i) => {
-      setTimeout(() => {
-        setCurrentStep(i);
-        setProgress(parseInt(step.width));
-      }, step.delay);
+      timers.push(
+        window.setTimeout(() => {
+          setCurrentStep(i);
+          setProgress(parseInt(step.width));
+        }, step.delay)
+      );
     });
-    const timer = setTimeout(() => {
-      onComplete();
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, [show, onComplete]);
+
+    timers.push(
+      window.setTimeout(() => {
+        onCompleteRef.current?.();
+      }, 2500)
+    );
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [show]);
 
   if (!show) return null;
 

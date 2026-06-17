@@ -1240,7 +1240,6 @@ function GalaxyOrbital() {
       // Schedule rotation update via raf to avoid synchronous setState in effect
       requestAnimationFrame(() => setRotY(newRotY));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, planets, rotY]);
 
   return (

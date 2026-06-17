@@ -59,7 +59,7 @@ export default function RecurringPayments() {
       } else {
         setItems([]);
       }
-    } catch (e) {
+    } catch {
       setItems(mockRecurring as any);
     } finally {
       setLoading(false);

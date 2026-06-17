@@ -23,6 +23,7 @@ interface WealthState {
   quizResult: { name: string; score: number; date: string } | null;
   lockdownActive: boolean;
   coercedMode: boolean;
+  duressModeActive: boolean;
   includeInCommunityData: boolean;
   bills: RecurringBill[];
   triggers: InvestmentTrigger[];
@@ -53,10 +54,15 @@ interface WealthState {
   demoModeActive: boolean;
   demoPhase: number;
   demoPaused: boolean;
-  
+  aaFetchComplete: boolean;
+  behavioralDeviation: number;
+  loginAt: number;
+
   setView: (view: ViewType) => void;
   setLockdownActive: (val: boolean) => void;
   setCoercedMode: (val: boolean) => void;
+  setDuressModeActive: (val: boolean) => void;
+  toggleDuressMode: () => void;
   toggleCommunityData: () => void;
   setPitchModeActive: (val: boolean) => void;
   toggleFamilyMode: () => void;
@@ -111,6 +117,9 @@ interface WealthState {
   setDemoModeActive: (val: boolean) => void;
   setDemoPhase: (phase: number) => void;
   toggleDemoPaused: () => void;
+  setAAFetchComplete: (val: boolean) => void;
+  setBehavioralDeviation: (val: number) => void;
+  setLoginAt: (val: number) => void;
 }
 
 const SEED_ASSETS: Asset[] = [
@@ -200,6 +209,7 @@ export const useWealthStore = create<WealthState>()(
       quizResult: null,
       lockdownActive: false,
       coercedMode: false,
+      duressModeActive: typeof window !== 'undefined' && localStorage.getItem('sw_duress') === 'active',
       includeInCommunityData: true,
       bills: [],
       triggers: [],
@@ -230,10 +240,24 @@ export const useWealthStore = create<WealthState>()(
       demoModeActive: false,
       demoPhase: 0,
       demoPaused: false,
-      
+      aaFetchComplete: false,
+      behavioralDeviation: 0,
+      loginAt: Date.now(),
+
       setView: (view) => set({ currentView: view }),
       setLockdownActive: (val) => set({ lockdownActive: val }),
       setCoercedMode: (val) => set({ coercedMode: val }),
+      setDuressModeActive: (val) => {
+        if (val) localStorage.setItem('sw_duress', 'active');
+        else localStorage.removeItem('sw_duress');
+        set({ duressModeActive: val });
+      },
+      toggleDuressMode: () => set((s) => {
+        const next = !s.duressModeActive;
+        if (next) localStorage.setItem('sw_duress', 'active');
+        else localStorage.removeItem('sw_duress');
+        return { duressModeActive: next };
+      }),
       toggleCommunityData: () => set((s) => ({ includeInCommunityData: !s.includeInCommunityData })),
       setPitchModeActive: (val) => set({ pitchModeActive: val }),
       toggleFamilyMode: () => set((s) => ({ familyMode: !s.familyMode })),
@@ -330,6 +354,9 @@ export const useWealthStore = create<WealthState>()(
       setDemoModeActive: (val) => set({ demoModeActive: val }),
       setDemoPhase: (phase) => set({ demoPhase: phase }),
       toggleDemoPaused: () => set((s) => ({ demoPaused: !s.demoPaused })),
+      setAAFetchComplete: (val) => set({ aaFetchComplete: val }),
+      setBehavioralDeviation: (val) => set({ behavioralDeviation: val }),
+      setLoginAt: (val) => set({ loginAt: val }),
       // Seed realistic data for judges
       seedRealData: () => set({
         user: { name: 'Deepanshu Sharma', riskProfile: 'Aggressive', taxBracket: 30, monthlyIncome: 85000, monthlySavings: 35000, monthlyExpenses: 50000 },
@@ -365,7 +392,7 @@ export const useWealthStore = create<WealthState>()(
             transactions: d.recentTransactions?.map((t: any) => ({ id: String(t.id), date: t.created_at?.split(' ')[0] || new Date().toISOString().split('T')[0], description: t.description, category: t.type, amount: t.amount, type: t.type, status: t.status?.toUpperCase() || 'ALLOWED', riskLevel: 'LOW' })) || current.transactions,
             bills: d.bills?.map((b: any) => ({ id: String(b.id), name: b.name, category: b.category, amount: b.amount, dueDay: b.due_date ? parseInt(b.due_date.split('-')[2]) : 1, icon: 'fa-file-invoice', color: 'bg-primary', status: b.status, isRecurring: !!b.is_recurring, frequency: b.frequency || 'monthly' })) || current.bills,
           });
-        } catch (e) { /* backend optional */ }
+        } catch { /* backend optional */ }
       },
     }),
     {
@@ -422,11 +449,13 @@ export const useWealthStore = create<WealthState>()(
 );
 
 export function loadDemoAccount(_accountId: string) {
+  void _accountId;
   // Deprecated: use seedRealData or backend APIs
   console.warn('loadDemoAccount is deprecated');
 }
 
 export function getUserByEmail(_email: string) {
+  void _email;
   return null;
 }
 

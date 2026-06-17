@@ -84,3 +84,85 @@ export function getChainStats() {
     lastBlock: chain[chain.length - 1]?.timestamp || null,
   };
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SMART CONTRACT TIMELOCK — Virtual on-chain lock registry
+   Simulates a Polygon testnet smart contract that enforces a
+   cooling-off period before high-risk funds can be released.
+   ═══════════════════════════════════════════════════════════════ */
+
+export interface SmartContractLock {
+  contractId: string;
+  userId: string;
+  amount: number;
+  lockedAt: string;
+  expiresAt: string;
+  released: boolean;
+  txId: string;
+}
+
+const LOCKS_KEY = 'sw_smart_contract_locks';
+
+function loadLocks(): SmartContractLock[] {
+  try {
+    return JSON.parse(localStorage.getItem(LOCKS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveLocks(locks: SmartContractLock[]) {
+  localStorage.setItem(LOCKS_KEY, JSON.stringify(locks.slice(-100)));
+}
+
+export async function lockFunds(
+  userId: string,
+  amount: number,
+  durationSeconds: number,
+  txId: string
+): Promise<SmartContractLock> {
+  const locks = loadLocks();
+  const now = Date.now();
+  const payload = `${userId}:${amount}:${now}:${txId}`;
+  const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload));
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const contractId = '0x' + hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 40);
+
+  const lock: SmartContractLock = {
+    contractId,
+    userId,
+    amount,
+    lockedAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + durationSeconds * 1000).toISOString(),
+    released: false,
+    txId,
+  };
+
+  locks.push(lock);
+  saveLocks(locks);
+  return lock;
+}
+
+export function getLockByTxId(txId: string): SmartContractLock | undefined {
+  return loadLocks().find((l) => l.txId === txId);
+}
+
+export function isLocked(contractId: string): boolean {
+  const lock = loadLocks().find((l) => l.contractId === contractId);
+  if (!lock) return false;
+  if (lock.released) return false;
+  return new Date(lock.expiresAt).getTime() > Date.now();
+}
+
+export function releaseLock(contractId: string): boolean {
+  const locks = loadLocks();
+  const lock = locks.find((l) => l.contractId === contractId);
+  if (!lock || lock.released) return false;
+  lock.released = true;
+  saveLocks(locks);
+  return true;
+}
+
+export function getLocks(): SmartContractLock[] {
+  return loadLocks();
+}

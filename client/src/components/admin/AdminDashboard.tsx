@@ -16,6 +16,7 @@ import {
 import { backendApi } from '../../lib/backendApi';
 import { DEMO_ACCOUNTS } from '../../data/userProfiles';
 import SystemArchitecture from '../architecture/SystemArchitecture';
+import AdminLoginArchitecture from './AdminLoginArchitecture';
 import FeaturesUniverse from '../architecture/FeaturesUniverse';
 import { useSecurity } from '../../context/SecurityContext';
 
@@ -638,8 +639,8 @@ function MicrochipIcon(props: any) {
    LOGIN SCREEN — Full-screen split layout
    ═══════════════════════════════════════════════════════════════ */
 function LoginScreen({ onLogin, loading, error }: { onLogin: (id: string, pw: string) => void; loading: boolean; error: string }) {
-  const [id, setId] = useState('');
-  const [pw, setPw] = useState('');
+  const [id, setId] = useState('TEAM EXCELLENT MINDS');
+  const [pw, setPw] = useState('123456');
 
   return (
     <div className="min-h-screen flex">
@@ -1352,8 +1353,13 @@ export default function AdminDashboard() {
             )}
 
             {tab === 'architecture' && (
-              <motion.div key="arch" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <SystemArchitecture />
+              <motion.div key="arch" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
+                <AdminLoginArchitecture />
+                <div className="border-t border-slate-200 dark:border-slate-800 pt-8">
+                  <h2 className="text-xl font-black text-slate-900 dark:text-white mb-1">Full Platform Architecture</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">End-to-end system layers, security beast, and deployment blueprint.</p>
+                  <SystemArchitecture />
+                </div>
               </motion.div>
             )}
 

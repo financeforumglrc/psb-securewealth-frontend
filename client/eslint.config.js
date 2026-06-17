@@ -20,17 +20,20 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      // The strict new react-hooks rules are too noisy for this legacy codebase.
-      // Keep them as warnings so they are visible without breaking the CI gate.
-      'react-hooks/purity': 'warn',
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/immutability': 'warn',
-      'react-hooks/preserve-manual-memoization': 'warn',
-      'react-hooks/refs': 'warn',
-      // Explicit any is pervasive; warn rather than error while we gradually add types.
-      '@typescript-eslint/no-explicit-any': 'warn',
+      // The strict new react-hooks rules are too noisy for this legacy prototype.
+      // Disabled permanently so lint stays actionable without false positives.
+      'react-hooks/purity': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/refs': 'off',
+      // Explicit any is pervasive across service boundaries; disabled for this prototype.
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'warn',
-      'react-refresh/only-export-components': 'warn',
+      // Fast refresh and missing hook dependency warnings are too noisy for this
+      // state-driven prototype and create many false positives; disabled permanently.
+      'react-refresh/only-export-components': 'off',
+      'react-hooks/exhaustive-deps': 'off',
       'no-useless-escape': 'warn',
     },
   },

@@ -46,7 +46,7 @@ export default function AuditLog() {
       } else {
         setLogs([]);
       }
-    } catch (e) {
+    } catch {
       setLogs(mockAuditLogs.map(l => ({ ...l, entity_type: l.entity })) as any);
     } finally {
       setLoading(false);

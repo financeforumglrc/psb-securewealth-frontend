@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -25,6 +25,8 @@ const FAMILY_MEMBERS = [
   { id: 'mother', name: 'Mother', phone: '98765 43212', relation: 'Parent' },
 ];
 
+const DEMO_OTP = '123456';
+
 export default function FamilyApprovalGate({ show, amount, payee, onApproved, onRejected, onClose }: Props) {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [otpSent, setOtpSent] = useState(false);
@@ -32,16 +34,42 @@ export default function FamilyApprovalGate({ show, amount, payee, onApproved, on
   const [verified, setVerified] = useState<'idle' | 'success' | 'failed'>('idle');
   const [countdown, setCountdown] = useState(30);
 
-  if (!show) return null;
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onApprovedRef = useRef(onApproved);
+  const onRejectedRef = useRef(onRejected);
+
+  useEffect(() => { onApprovedRef.current = onApproved; }, [onApproved]);
+  useEffect(() => { onRejectedRef.current = onRejected; }, [onRejected]);
+
+  // Clean up countdown if the modal is hidden.
+  useEffect(() => {
+    if (!show) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+  }, [show]);
+
+  const clearCountdown = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
 
   const handleSendOTP = () => {
     if (!selectedMember) return;
     setOtpSent(true);
+    setOtp('');
+    setVerified('idle');
     setCountdown(30);
-    const timer = setInterval(() => {
+    clearCountdown();
+    intervalRef.current = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
-          clearInterval(timer);
+          clearCountdown();
           return 0;
         }
         return c - 1;
@@ -50,14 +78,25 @@ export default function FamilyApprovalGate({ show, amount, payee, onApproved, on
   };
 
   const handleVerify = () => {
-    if (otp === '123456') {
+    if (otp === DEMO_OTP) {
       setVerified('success');
-      setTimeout(onApproved, 800);
+      clearCountdown();
+      setTimeout(() => {
+        onApprovedRef.current?.();
+        // Reset local state for next open
+        setOtpSent(false);
+        setOtp('');
+        setVerified('idle');
+        setSelectedMember(null);
+        setCountdown(30);
+      }, 800);
     } else {
       setVerified('failed');
       setTimeout(() => setVerified('idle'), 1500);
     }
   };
+
+  if (!show) return null;
 
   return (
     <AnimatePresence>
@@ -134,6 +173,15 @@ export default function FamilyApprovalGate({ show, amount, payee, onApproved, on
                   OTP sent to {FAMILY_MEMBERS.find((m) => m.id === selectedMember)?.name}.<br />
                   <span className="text-[10px] text-slate-400">OTP sent</span>
                 </p>
+
+                {/* Demo OTP hint */}
+                <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-800 text-center">
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                    <i className="fas fa-circle-info mr-1" />
+                    Demo OTP: <span className="font-bold tracking-widest">{DEMO_OTP}</span>
+                  </p>
+                </div>
+
                 <input
                   type="text"
                   maxLength={6}
@@ -151,7 +199,7 @@ export default function FamilyApprovalGate({ show, amount, payee, onApproved, on
                     Approve
                   </button>
                   <button
-                    onClick={onRejected}
+                    onClick={() => onRejectedRef.current?.()}
                     className="flex-1 py-3 bg-rose-500 text-white rounded-xl text-sm font-bold hover:bg-rose-600"
                   >
                     Reject

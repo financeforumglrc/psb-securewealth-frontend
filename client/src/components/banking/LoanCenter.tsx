@@ -60,7 +60,7 @@ export default function LoanCenter() {
       } else {
         setLoans([]);
       }
-    } catch (e) {
+    } catch {
       setLoans(mockLoans);
     } finally {
       setLoading(false);

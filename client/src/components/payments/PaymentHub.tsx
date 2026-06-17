@@ -196,8 +196,8 @@ export default function PaymentHub() {
 
   return (
     <>
-      {/* Sticky Payment Bar */}
-      <div className="sticky top-0 z-40 px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+      {/* Payment Bar (scrolls with page) */}
+      <div className="px-4 py-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3 max-w-4xl mx-auto">
           <div className="flex-1 relative">
             <i className="fas fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
@@ -206,14 +206,14 @@ export default function PaymentHub() {
               onChange={(e) => setQuickInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleQuickPay()}
               placeholder="Enter UPI ID, Phone, or Name..."
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/30 dark:text-white transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/30 dark:text-white transition-all"
             />
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleQuickPay}
-            className="px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20"
+            className="px-4 py-2 bg-primary text-white rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20"
           >
             <i className="fas fa-bolt" />
             Pay
@@ -222,7 +222,7 @@ export default function PaymentHub() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setExpanded(true)}
-            className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-sm flex items-center gap-2"
+            className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-sm flex items-center gap-2"
           >
             <i className="fas fa-expand" />
             <span className="hidden sm:inline">More</span>

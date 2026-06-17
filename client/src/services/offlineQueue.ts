@@ -67,7 +67,8 @@ export async function syncQueuedActions(): Promise<void> {
   writeQueue(failed);
 }
 
-async function processAction(_action: QueuedAction): Promise<void> {
+async function processAction(action: QueuedAction): Promise<void> {
+  void action;
   // Simulate network request — replace with real API calls
   return new Promise((resolve, reject) => {
     setTimeout(() => {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
+import { formatCurrencyMask } from '../../utils/duressMask';
 
 interface MenuItem {
   id: string;
@@ -16,6 +17,7 @@ export default function QuickActions({ children }: { children: React.ReactNode }
   const setView = useWealthStore((s) => s.setView);
   const toggleDarkMode = useWealthStore((s) => s.toggleDarkMode);
   const darkMode = useWealthStore((s) => s.darkMode);
+  const duressModeActive = useWealthStore((s) => s.duressModeActive);
 
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -185,12 +187,12 @@ export default function QuickActions({ children }: { children: React.ReactNode }
                     <i className={`fas fa-${a.type === 'bank' ? 'building-columns' : a.type === 'property' ? 'house' : a.type === 'gold' ? 'coins' : 'chart-pie'} text-slate-400 text-xs`} />
                     <span className="text-sm text-slate-700 dark:text-slate-200">{a.name}</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-800 dark:text-white">₹{a.value.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrencyMask(a.value, duressModeActive)}</span>
                 </div>
               ))}
               <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100">
                 <span className="text-sm font-medium text-emerald-700">Total Net Worth</span>
-                <span className="text-sm font-bold text-emerald-700">₹{assets.reduce((s, a) => s + a.value, 0).toLocaleString()}</span>
+                <span className="text-sm font-bold text-emerald-700">{formatCurrencyMask(assets.reduce((s, a) => s + a.value, 0), duressModeActive)}</span>
               </div>
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full mt-3 py-2 text-xs text-slate-400 hover:text-slate-600 dark:text-slate-400">Close</button>

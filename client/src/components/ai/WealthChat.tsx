@@ -1,7 +1,21 @@
 import { useState, useRef, useEffect, useMemo, type ReactNode } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
 import { useLivePrices } from '../../hooks/useLivePrices';
-import { callGeminiDirect, isGeminiConfigured, getGeminiConfig, setGeminiConfig, clearGeminiConfig } from '../../services/geminiService';
+import { callAI } from '../../services/aiOrchestrator';
+import {
+  getProviderConfigs,
+  updateProviderConfig,
+  setRoutingMode,
+  getRoutingMode,
+  getEnsembleCount,
+  setEnsembleCount,
+  isAIConfigured,
+  getActiveProviderCount,
+  type ProviderConfig,
+  type RoutingMode,
+  PROVIDER_MODELS,
+} from '../../services/aiConfig';
+import type { AIResponse } from '../../services/aiRouter';
 import { speak, isSpeechSupported } from '../../services/voiceService';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1549,11 +1563,27 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
   const [typing, setTyping] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(!initialCompact);
   const [showSidebar, setShowSidebar] = useState(true);
-  const [aiSource, setAiSource] = useState<'gemini' | 'offline'>('offline');
+  const [aiSource, setAiSource] = useState<string>('offline');
   const [showAiConfig, setShowAiConfig] = useState(false);
-  const [geminiKey, setGeminiKey] = useState(getGeminiConfig()?.apiKey || '');
+  const [providerConfigs, setProviderConfigs] = useState<ProviderConfig[]>(getProviderConfigs());
+  const [routingMode, setRoutingModeState] = useState<RoutingMode>(getRoutingMode());
+  const [ensembleCount, setEnsembleCountState] = useState<number>(getEnsembleCount());
   const scrollRef = useRef<HTMLDivElement>(null);
   const sendRef = useRef<(text: string) => Promise<void>>(async () => {});
+
+  const refreshProviderConfigs = () => setProviderConfigs(getProviderConfigs());
+  const handleProviderUpdate = (id: string, patch: Partial<ProviderConfig>) => {
+    updateProviderConfig(id, patch);
+    refreshProviderConfigs();
+  };
+  const handleModeChange = (mode: RoutingMode) => {
+    setRoutingModeState(mode);
+    setRoutingMode(mode);
+  };
+  const handleEnsembleChange = (count: number) => {
+    setEnsembleCountState(count);
+    setEnsembleCount(count);
+  };
 
   const PRESETS = [
     { label: '💰 Save Tax', query: 'How do I save tax?' },
@@ -1570,6 +1600,159 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
     { label: '🤖 Agent', query: 'Autonomous agent status' },
     { label: '🔒 Vault', query: 'Sovereign data vault' },
   ];
+
+  const aiConfigModal = showAiConfig && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowAiConfig(false); }}>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-600" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <i className="fas fa-sparkles text-emerald-500" /> AI Provider Hub
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">Connect multiple LLM providers for redundancy, speed, and quality</p>
+            </div>
+            <button onClick={() => setShowAiConfig(false)} className="w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600">
+              <i className="fas fa-times" />
+            </button>
+          </div>
+
+          {/* Routing Mode */}
+          <div className="mb-5 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-200 mb-2 block">Routing Strategy</label>
+            <div className="flex flex-wrap gap-2">
+              {(['fallback', 'fastest', 'ensemble', 'cost-aware'] as RoutingMode[]).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => handleModeChange(m)}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
+                    routingMode === m
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {m === 'fallback' && 'Fallback Chain'}
+                  {m === 'fastest' && 'Fastest First'}
+                  {m === 'ensemble' && 'Ensemble'}
+                  {m === 'cost-aware' && 'Cost Aware'}
+                </button>
+              ))}
+            </div>
+            {routingMode === 'ensemble' && (
+              <div className="mt-3 flex items-center gap-3">
+                <label className="text-[11px] text-slate-600 dark:text-slate-300">Providers per ensemble:</label>
+                <input
+                  type="range"
+                  min={2}
+                  max={5}
+                  value={ensembleCount}
+                  onChange={(e) => handleEnsembleChange(parseInt(e.target.value, 10))}
+                  className="w-32"
+                />
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{ensembleCount}</span>
+              </div>
+              )}
+            </div>
+
+          {/* Provider Grid */}
+          <div className="space-y-3">
+            {providerConfigs
+              .sort((a, b) => a.priority - b.priority)
+              .map((provider) => {
+                const configured = provider.apiKey.trim().length > 0;
+                const models = PROVIDER_MODELS[provider.id] || [provider.model];
+                return (
+                  <div
+                    key={provider.id}
+                    className={`p-3 rounded-xl border transition-colors ${
+                      provider.enabled && configured
+                        ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{provider.name}</h4>
+                          <div className={`w-2 h-2 rounded-full ${provider.enabled && configured ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                        </div>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
+                          Priority {provider.priority} · {configured ? 'Key saved' : 'No key'}
+                        </p>
+                        <div className="space-y-2">
+                          <input
+                            type="password"
+                            value={provider.apiKey}
+                            onChange={(e) => handleProviderUpdate(provider.id, { apiKey: e.target.value })}
+                            placeholder={`Paste ${provider.name} API key`}
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white font-mono"
+                          />
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={provider.model}
+                              onChange={(e) => handleProviderUpdate(provider.id, { model: e.target.value })}
+                              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg text-xs dark:text-white"
+                            >
+                              {models.map((m) => (
+                                <option key={m} value={m}>
+                                  {m}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="number"
+                              min={1}
+                              max={50}
+                              value={provider.priority}
+                              onChange={(e) => handleProviderUpdate(provider.id, { priority: parseInt(e.target.value, 10) || 1 })}
+                              className="w-16 px-2 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg text-xs dark:text-white"
+                              title="Priority (lower = tried first)"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={provider.enabled}
+                          onChange={(e) => handleProviderUpdate(provider.id, { enabled: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary" />
+                      </label>
+                    </div>
+                  </div>
+                    );
+                  })}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between">
+                <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                  <div className={`w-2 h-2 rounded-full ${isAIConfigured() ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                  <p className="text-[10px] text-slate-500">
+                    {isAIConfigured()
+                      ? `${getActiveProviderCount()} provider${getActiveProviderCount() === 1 ? '' : 's'} active — ${routingMode} mode`
+                      : 'Offline mode — add at least one provider key'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    // Clear all provider keys for privacy
+                    providerConfigs.forEach((p) => handleProviderUpdate(p.id, { apiKey: '', enabled: false }));
+                    setAiSource('offline');
+                  }}
+                  className="px-3 py-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300 rounded-lg text-[11px] font-bold hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors"
+                >
+                  Clear All Keys
+                </button>
+              </div>
+
+              <p className="mt-3 text-[10px] text-slate-400">
+                Keys are stored only in your browser&apos;s localStorage. No key is sent to our servers.
+              </p>
+            </div>
+          </div>
+  );
+
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1595,8 +1778,8 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
     setInput('');
     setTyping(true);
 
-    // Try Gemini first if configured
-    if (isGeminiConfigured()) {
+    // Try configured AI providers via the orchestrator
+    if (isAIConfigured()) {
       try {
         const history = messages
           .filter((m): m is UserMessage | BotMessage => m.role === 'user' || m.role === 'bot')
@@ -1608,7 +1791,8 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
             return acc;
           }, []);
 
-        const result = await callGeminiDirect(text, {
+        const result: AIResponse = await callAI(text, {
+          mode: routingMode,
           history,
           userContext: {
             name: user.name,
@@ -1618,7 +1802,11 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
             netWorth,
             riskAppetite: user.riskProfile,
           },
+          ensembleCount,
         });
+
+        const providerDisplay = result.provider;
+        const modelDisplay = result.model;
 
         const botMsg: BotMessage = {
           id: Date.now().toString(),
@@ -1627,13 +1815,19 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
           time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
           confidence: 92,
           reasoning: [
-            { step: 1, title: 'Gemini AI Analysis', description: 'Processed through Google Gemini 2.0 Flash with user financial context.' },
+            { step: 1, title: `${providerDisplay} AI Analysis`, description: `Processed through ${modelDisplay} with user financial context.` },
             { step: 2, title: 'Response Generated', description: 'AI-generated advice tailored to your profile.' },
           ],
           evidence: [
-            { label: 'AI Model', value: 'Gemini 2.0 Flash', source: 'Google AI Studio', icon: 'fa-brain' },
+            { label: 'AI Model', value: modelDisplay, source: providerDisplay, icon: 'fa-brain' },
             { label: 'Net Worth', value: `₹${(netWorth / 1e7).toFixed(2)}Cr`, source: 'User Profile', icon: 'fa-gem' },
             { label: 'Savings Rate', value: `${savingsRate.toFixed(1)}%`, source: 'User Profile', icon: 'fa-piggy-bank' },
+            ...(result.usage
+              ? [
+                  { label: 'Tokens', value: `${result.usage.promptTokens || '-'} → ${result.usage.completionTokens || '-'}`, source: 'API', icon: 'fa-microchip' },
+                  { label: 'Latency', value: `${result.latencyMs}ms`, source: 'API', icon: 'fa-bolt' },
+                ]
+              : []),
           ],
           citations: [
             { id: 'SEBI-ROBO', text: 'SEBI Circular: Investment advice through robo-advisory services (CIR/IMD/DF/21/2016)' },
@@ -1642,7 +1836,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
         };
 
         setMessages((m) => [...m, botMsg]);
-        setAiSource('gemini');
+        setAiSource(providerDisplay);
         setTyping(false);
         return;
       } catch {
@@ -1682,16 +1876,16 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
             <div className="flex items-center gap-2">
               {/* AI Source Badge */}
               <button
-                onClick={() => setShowAiConfig(true)}
+                onClick={(e) => { e.stopPropagation(); setShowAiConfig(true); }}
                 className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors ${
-                  aiSource === 'gemini'
+                  aiSource !== 'offline'
                     ? 'bg-emerald-400/20 text-emerald-300 hover:bg-emerald-400/30'
                     : 'bg-amber-400/20 text-amber-300 hover:bg-amber-400/30'
                 }`}
-                title={aiSource === 'gemini' ? 'Powered by Gemini 2.0 Flash — Click to configure' : 'Offline Mode — Click to add Gemini API key'}
+                title={aiSource !== 'offline' ? `Powered by ${aiSource} — Click to configure` : 'Offline Mode — Click to add AI provider keys'}
               >
-                <i className={`fas ${aiSource === 'gemini' ? 'fa-sparkles' : 'fa-wifi-slash'}`} />
-                {aiSource === 'gemini' ? 'Gemini AI' : 'Offline'}
+                <i className={`fas ${aiSource !== 'offline' ? 'fa-sparkles' : 'fa-wifi-slash'}`} />
+                {aiSource !== 'offline' ? aiSource : 'Offline'}
               </button>
               <div className="hidden sm:flex items-center gap-4">
                 <div className="text-right">
@@ -1909,6 +2103,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
             </div>
           </div>
         </div>
+      {aiConfigModal}
       </div>
     );
   }
@@ -2110,83 +2305,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
             </div>
           </div>
         </div>
-
-        {/* AI Config Modal */}
-        {showAiConfig && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setShowAiConfig(false)}>
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-600" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                    <i className="fas fa-sparkles text-emerald-500" /> AI Configuration
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Add your Gemini API key for real AI responses</p>
-                </div>
-                <button onClick={() => setShowAiConfig(false)} className="w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600">
-                  <i className="fas fa-times" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
-                  <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
-                    <i className="fas fa-gift mr-1" /> Free Tier: 1,500 requests/day
-                  </p>
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1">
-                    Get your free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a>. Your key is stored locally in your browser.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5 block">Gemini API Key</label>
-                  <input
-                    type="password"
-                    value={geminiKey}
-                    onChange={(e) => setGeminiKey(e.target.value)}
-                    placeholder="AIzaSy..."
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white font-mono"
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      if (geminiKey.trim()) {
-                        setGeminiConfig({ apiKey: geminiKey.trim(), model: 'gemini-2.0-flash' });
-                        setAiSource('gemini');
-                        setShowAiConfig(false);
-                      }
-                    }}
-                    disabled={!geminiKey.trim()}
-                    className="flex-1 px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    <i className="fas fa-check" /> Save Key
-                  </button>
-                  {isGeminiConfigured() && (
-                    <button
-                      onClick={() => {
-                        clearGeminiConfig();
-                        setGeminiKey('');
-                        setAiSource('offline');
-                        setShowAiConfig(false);
-                      }}
-                      className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors"
-                    >
-                      <i className="fas fa-trash" />
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <div className={`w-2 h-2 rounded-full ${isGeminiConfigured() ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                  <p className="text-[10px] text-slate-500">
-                    {isGeminiConfigured() ? 'Gemini AI is active — all responses will use real AI' : 'Offline mode — responses use built-in financial rules'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {aiConfigModal}
       </div>
     </div>
   );

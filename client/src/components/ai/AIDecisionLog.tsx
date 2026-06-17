@@ -1,3 +1,7 @@
+import { useMemo } from 'react';
+import { useWealthStore } from '../../store/wealthStore';
+import type { Transaction } from '../../types';
+
 interface DecisionEntry {
   id: string;
   timestamp: string;
@@ -9,45 +13,60 @@ interface DecisionEntry {
   confidence: number;
 }
 
-const MOCK_DECISIONS: DecisionEntry[] = [
-  {
-    id: 'dec-1', timestamp: '2 min ago', action: 'Suggested SIP Increase',
-    aiReason: 'NIFTY P/E above 20 → stagger entry reduces timing risk',
-    marketFactor: 'NIFTY P/E: 23.4 (historical avg: 20)',
-    userFactor: 'Surplus liquid funds: Rs 3.2L idle in savings',
-    outcome: 'Recommend Rs 10K monthly STP', confidence: 82,
-  },
-  {
-    id: 'dec-2', timestamp: '15 min ago', action: 'Blocked High-Risk Transfer',
-    aiReason: 'Multiple risk signals: new device + unusual amount + rushed action',
-    marketFactor: 'N/A',
-    userFactor: 'Rs 50K transfer to unknown payee within 10s of login',
-    outcome: 'BLOCKED — Reference AUD-LX9KP2', confidence: 99,
-  },
-  {
-    id: 'dec-3', timestamp: '1 hour ago', action: 'Gold Rebalance Alert',
-    aiReason: 'Gold -8% QoQ + FD rates at 5-year high → capital preservation',
-    marketFactor: 'Gold: Rs 78,500 (-8% QoQ) | FD: 8.1% (+1.2%)',
-    userFactor: 'Gold allocation: 21% of portfolio (above 15% target)',
-    outcome: 'Suggest shift Rs 50K Gold → FD', confidence: 87,
-  },
-  {
-    id: 'dec-4', timestamp: '3 hours ago', action: 'Tax Optimization',
-    aiReason: 'User in 30% bracket → ELSS offers tax + growth',
-    marketFactor: 'ELSS avg returns: 12% | Lock-in: 3 years',
-    userFactor: 'Tax bracket: 30% | 80C utilization: 45%',
-    outcome: 'Recommend Rs 82,500 ELSS investment', confidence: 91,
-  },
-  {
-    id: 'dec-5', timestamp: '5 hours ago', action: 'Subscription Alert',
-    aiReason: 'Hotstar unused 60 days → save Rs 899/quarter',
-    marketFactor: 'N/A',
-    userFactor: 'Last used: 18 Feb 2026 | Next renewal: tomorrow',
-    outcome: 'Flagged for cancellation', confidence: 95,
-  },
-];
+function buildEntry(tx: Transaction): DecisionEntry {
+  const action = tx.status === 'BLOCKED'
+    ? 'Blocked High-Risk Transfer'
+    : tx.status === 'DELAYED'
+    ? 'Cooling Vault Activated'
+    : tx.status === 'ALLOWED'
+    ? 'Approved Transaction'
+    : 'Wealth Action Reviewed';
+
+  const signals = tx.signals || {};
+  const flagged = Object.entries(signals)
+    .filter(([, v]) => v)
+    .map(([k]) => k.replace(/([A-Z])/g, ' $1').trim());
+
+  const aiReason = flagged.length > 0
+    ? `Risk engine flagged: ${flagged.join(', ')}. Score ${tx.score ?? 0}/100.`
+    : 'No risk signals detected — transaction matched your normal pattern.';
+
+  const marketFactor = tx.category === 'Investment'
+    ? 'Market volatility and portfolio allocation reviewed.'
+    : tx.category === 'Income'
+    ? 'Income credited; savings rate recalculated.'
+    : 'Real-time market risk posture: stable.';
+
+  const userFactor = `${tx.description} for ₹${tx.amount.toLocaleString()}`;
+
+  const outcome = tx.status === 'BLOCKED'
+    ? `BLOCKED — Ref ${tx.referenceId || tx.decision?.referenceId || 'N/A'}`
+    : tx.status === 'DELAYED'
+    ? `DELAYED — Ref ${tx.referenceId || tx.decision?.referenceId || 'N/A'}`
+    : `ALLOWED — Ref ${tx.referenceId || tx.decision?.referenceId || 'N/A'}`;
+
+  return {
+    id: tx.id,
+    timestamp: tx.date,
+    action,
+    aiReason,
+    marketFactor,
+    userFactor,
+    outcome,
+    confidence: tx.score ? Math.max(50, Math.min(99, 100 - tx.score)) : 95,
+  };
+}
 
 export default function AIDecisionLog() {
+  const transactions = useWealthStore((s) => s.transactions);
+
+  const decisions = useMemo(() => {
+    return transactions
+      .filter((t) => t.status !== 'ALLOWED' || t.riskLevel !== 'LOW' || t.decision)
+      .slice(0, 8)
+      .map(buildEntry);
+  }, [transactions]);
+
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
@@ -62,8 +81,15 @@ export default function AIDecisionLog() {
         </span>
       </div>
 
-      <div className="space-y-3">
-        {MOCK_DECISIONS.map((dec) => (
+      <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+        {decisions.length === 0 && (
+          <div className="text-center py-8 text-slate-400">
+            <i className="fas fa-clipboard-check text-3xl mb-2 opacity-30" />
+            <p className="text-sm">No AI decisions yet. Make a transaction to see the audit trail.</p>
+          </div>
+        )}
+
+        {decisions.map((dec) => (
           <div key={dec.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -72,7 +98,7 @@ export default function AIDecisionLog() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-800 dark:text-white">{dec.action}</p>
-                  <p className="text-[10px] text-slate-400">{dec.timestamp}</p>
+                  <p className="text-[10px] text-slate-400">{new Date(dec.timestamp).toLocaleString()}</p>
                 </div>
               </div>
               <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium">{dec.confidence}% confidence</span>
@@ -96,9 +122,9 @@ export default function AIDecisionLog() {
             <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
               <span className={'text-xs font-medium px-2 py-0.5 rounded-full ' +
                 (dec.outcome.startsWith('BLOCKED') ? 'bg-rose-500/10 text-rose-600' :
-                 dec.outcome.startsWith('Flagged') ? 'bg-amber-500/10 text-amber-600' :
+                 dec.outcome.startsWith('DELAYED') ? 'bg-amber-500/10 text-amber-600' :
                  'bg-emerald-500/10 text-emerald-600')}>
-                <i className={'fas fa-' + (dec.outcome.startsWith('BLOCKED') ? 'shield-virus' : dec.outcome.startsWith('Flagged') ? 'flag' : 'check') + ' mr-1'} />
+                <i className={'fas fa-' + (dec.outcome.startsWith('BLOCKED') ? 'shield-virus' : dec.outcome.startsWith('DELAYED') ? 'clock' : 'check') + ' mr-1'} />
                 {dec.outcome}
               </span>
             </div>

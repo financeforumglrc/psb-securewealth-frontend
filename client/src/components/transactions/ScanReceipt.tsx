@@ -27,8 +27,8 @@ function inferCategory(text: string, merchant: string): string {
 function extractMerchant(lines: string[]): string {
   for (const line of lines.slice(0, 10)) {
     const clean = line.trim();
-    if (clean.length >= 3 && clean.length <= 40 && !/^\d+$/.test(clean) && !/^\d{1,2}[\/\-\.]/.test(clean)) {
-      if (/^[A-Z][A-Z0-9\s&\-\.]+$/.test(clean) || /^[A-Z][a-z]+/.test(clean)) {
+    if (clean.length >= 3 && clean.length <= 40 && !/^\d+$/.test(clean) && !/^\d{1,2}[./-]/.test(clean)) {
+      if (/^[A-Z][A-Z0-9\s&.-]+$/.test(clean) || /^[A-Z][a-z]+/.test(clean)) {
         return clean;
       }
     }
@@ -56,13 +56,13 @@ function extractAmount(text: string): number {
 
 function extractDate(text: string): string {
   const patterns = [
-    /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/,
-    /\b(\d{2,4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2})\b/,
+    /\b(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})\b/,
+    /\b(\d{2,4}[./-]\d{1,2}[./-]\d{1,2})\b/,
   ];
   for (const p of patterns) {
     const m = text.match(p);
     if (m) {
-      const parts = m[1].split(/[\/\-\.]/);
+      const parts = m[1].split(/[./-]/);
       if (parts.length === 3) {
         const a = parseInt(parts[0]);
         const b = parseInt(parts[1]);

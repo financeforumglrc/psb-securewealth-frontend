@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface CelebrationProps {
   show: boolean;
@@ -8,20 +8,24 @@ interface CelebrationProps {
 
 export default function GoalCelebration({ show, goalName, onClose }: CelebrationProps) {
   const [particles, setParticles] = useState<{ id: number; left: number; delay: number; duration: number }[]>([]);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   useEffect(() => {
-    if (show) {
-      const p = Array.from({ length: 30 }, (_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 0.5,
-        duration: 1 + Math.random() * 2,
-      }));
-      setParticles(p);
-      const timer = setTimeout(onClose, 4000);
-      return () => clearTimeout(timer);
+    if (!show) {
+      setParticles([]);
+      return;
     }
-  }, [show, onClose]);
+    const p = Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 0.5,
+      duration: 1 + Math.random() * 2,
+    }));
+    setParticles(p);
+    const timer = setTimeout(() => onCloseRef.current?.(), 4000);
+    return () => clearTimeout(timer);
+  }, [show]);
 
   if (!show) return null;
 
@@ -35,7 +39,7 @@ export default function GoalCelebration({ show, goalName, onClose }: Celebration
         <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Goal Achieved! 🎉</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">You reached your <strong>{goalName}</strong> goal!</p>
         <p className="text-xs text-slate-400 mt-2">Keep up the great financial discipline.</p>
-        <button onClick={onClose} className="mt-4 px-6 py-2 bg-success text-white rounded-lg text-sm font-medium hover:bg-success/90">Awesome!</button>
+        <button onClick={() => onCloseRef.current?.()} className="mt-4 px-6 py-2 bg-success text-white rounded-lg text-sm font-medium hover:bg-success/90">Awesome!</button>
       </div>
       {particles.map((p) => (
         <div

@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { logAudit } from '../../utils/auditLogger';
+import { useWealthStore } from '../../store/wealthStore';
 import { BehavioralMonitor, type BehavioralState } from '../../services/behavioralBiometricsService';
 
 export default function BehavioralBiometrics() {
   const monitorRef = useRef<BehavioralMonitor | null>(null);
   const [state, setState] = useState<BehavioralState | null>(null);
+  const setBehavioralDeviation = useWealthStore((s) => s.setBehavioralDeviation);
   const [locked, setLocked] = useState(false);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
@@ -13,6 +15,7 @@ export default function BehavioralBiometrics() {
   useEffect(() => {
     const monitor = new BehavioralMonitor((s) => {
       setState(s);
+      setBehavioralDeviation(s.deviation);
       if (s.anomaly === 'high' && !locked) {
         setAnomalyLog('Live behavioral anomaly detected');
         setLocked(true);
@@ -49,11 +52,12 @@ export default function BehavioralBiometrics() {
 
   const handleReset = useCallback(() => {
     monitorRef.current?.resetBaseline();
+    setBehavioralDeviation(0);
     setAnomalyLog(null);
     setLocked(false);
     setPin('');
     setPinError(false);
-  }, []);
+  }, [setBehavioralDeviation]);
 
   function unlock() {
     if (pin === '1234') {

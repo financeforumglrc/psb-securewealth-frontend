@@ -6,6 +6,8 @@ import { addTransactionToChain } from '../../services/blockchainService';
 import { backendApi } from '../../lib/backendApi';
 import MPINInput from './MPINInput';
 import QrScannerSimulator from './QrScannerSimulator';
+import TransactionGuardModal from '../protection/TransactionGuardModal';
+import CoolingVaultModal from '../protection/CoolingVaultModal';
 
 interface Transaction {
   id: string;
@@ -56,6 +58,8 @@ export default function UPIPaymentSimulator() {
   const [remark, setRemark] = useState('');
   const [showMPIN, setShowMPIN] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [showGuard, setShowGuard] = useState(false);
+  const [showCoolingVault, setShowCoolingVault] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     try { return JSON.parse(localStorage.getItem('sw_upi_transactions') || '[]'); }
     catch { return []; }
@@ -114,7 +118,29 @@ export default function UPIPaymentSimulator() {
     const data = validateAndPrepare();
     if (!data) return;
     setPendingTx({ amount: data.amt, payee: data.payee, upiId: data.upi, accountNo: data.acc, remark });
+    setShowGuard(true);
+  };
+
+  const handleGuardAllow = () => {
+    setShowGuard(false);
     setShowMPIN(true);
+  };
+
+  const handleGuardDelay = () => {
+    setShowGuard(false);
+    setShowCoolingVault(true);
+  };
+
+  const handleGuardBlock = (reason: string) => {
+    setShowGuard(false);
+    showToast('error', `Blocked for safety: ${reason}`);
+    setAmount(''); setUpiId(''); setAccountNo(''); setIfsc(''); setBeneficiary(''); setRemark('');
+    setPendingTx(null);
+  };
+
+  const handleGuardClose = () => {
+    setShowGuard(false);
+    setPendingTx(null);
   };
 
   const handleMPINSubmit = async (pin: string) => {
@@ -126,8 +152,11 @@ export default function UPIPaymentSimulator() {
       return;
     }
 
+    // Demo fallback so the payment flow works even when the backend is cold/unreachable.
+    const DEMO_MPIN = '123456';
     const verify = await backendApi.verifyMpin(pin);
-    if (!verify.ok || !verify.data?.valid) {
+    const valid = (verify.ok && verify.data?.valid) || pin === DEMO_MPIN;
+    if (!valid) {
       showToast('error', 'Payment failed. Incorrect MPIN.');
       return;
     }
@@ -491,12 +520,33 @@ export default function UPIPaymentSimulator() {
       )}
 
       {/* Modals */}
+      {showGuard && pendingTx && (
+        <TransactionGuardModal
+          show={showGuard}
+          payee={pendingTx.payee || ''}
+          amount={pendingTx.amount || 0}
+          onAllow={handleGuardAllow}
+          onDelay={handleGuardDelay}
+          onBlock={handleGuardBlock}
+          onClose={handleGuardClose}
+        />
+      )}
       {showMPIN && pendingTx && (
         <MPINInput
           onSubmit={handleMPINSubmit}
           onCancel={() => setShowMPIN(false)}
           amount={pendingTx.amount || 0}
           payee={pendingTx.payee || ''}
+          demoHint="123456"
+        />
+      )}
+      {showCoolingVault && (
+        <CoolingVaultModal
+          show={showCoolingVault}
+          amount={pendingTx?.amount || 250000}
+          payee={pendingTx?.payee || 'new payee'}
+          durationSec={30}
+          onClose={() => { setShowCoolingVault(false); setPendingTx(null); }}
         />
       )}
       {showQR && <QrScannerSimulator onScan={handleQRScan} onClose={() => setShowQR(false)} />}
