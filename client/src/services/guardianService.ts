@@ -1,6 +1,6 @@
 import { protectionApi, type GuardianMessageRequest } from '../lib/protectionApi';
 
-const BACKEND_BASE = import.meta.env.VITE_BACKEND_URL || 'https://psb-banking-backend.onrender.com/api/v1';
+const BACKEND_BASE = import.meta.env.VITE_BACKEND_URL || 'https://psb-securewealth-backend.onrender.com/api/v1';
 
 async function fetchBackendGuardian(payload: GuardianMessageRequest): Promise<string | null> {
   try {

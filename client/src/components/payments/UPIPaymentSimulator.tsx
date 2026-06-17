@@ -10,6 +10,7 @@ import MPINInput from './MPINInput';
 import QrScannerSimulator from './QrScannerSimulator';
 import TransactionGuardModal from '../protection/TransactionGuardModal';
 import CoolingVaultModal from '../protection/CoolingVaultModal';
+import OTPSimulation from '../protection/OTPSimulation';
 
 interface Transaction {
   id: string;
@@ -62,6 +63,7 @@ export default function UPIPaymentSimulator() {
   const [showQR, setShowQR] = useState(false);
   const [showGuard, setShowGuard] = useState(false);
   const [showCoolingVault, setShowCoolingVault] = useState(false);
+  const [showOTP, setShowOTP] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     try { return JSON.parse(localStorage.getItem('sw_upi_transactions') || '[]'); }
     catch { return []; }
@@ -288,7 +290,19 @@ export default function UPIPaymentSimulator() {
       return;
     }
 
+    // Require email OTP verification before completing the payment
+    setShowOTP(true);
+  };
+
+  const handleOTPConfirm = () => {
+    setShowOTP(false);
     setTimeout(() => finalizeSuccess('simulation'), 600);
+  };
+
+  const handleOTPCancel = () => {
+    setShowOTP(false);
+    setPendingTx(null);
+    showToast('error', 'Transaction cancelled. OTP not verified.');
   };
 
   const handleQRScan = (scannedUpi: string, scannedName: string, scannedAmount?: number) => {
@@ -627,6 +641,15 @@ export default function UPIPaymentSimulator() {
           payee={pendingTx?.payee || 'new payee'}
           durationSec={30}
           onClose={() => { setShowCoolingVault(false); setPendingTx(null); }}
+        />
+      )}
+      {showOTP && pendingTx && (
+        <OTPSimulation
+          actionType="UPI Payment"
+          amount={pendingTx.amount || 0}
+          onConfirm={handleOTPConfirm}
+          onCancel={handleOTPCancel}
+          purpose="upi-payment"
         />
       )}
       {showQR && <QrScannerSimulator onScan={handleQRScan} onClose={() => setShowQR(false)} />}

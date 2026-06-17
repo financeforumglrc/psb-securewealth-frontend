@@ -1,12 +1,12 @@
 /**
  * PSB SecureWealth — Backend API Client v2
- * Connects to the DS Financial backend (localhost:5000)
+ * Connects to the PSB SecureWealth Node backend
  * Comprehensive banking operations with retries & error handling
  */
 
 import { getStoredVisitorId } from '../services/fingerprintService';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'https://psb-banking-backend.onrender.com/api/v1';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'https://psb-securewealth-backend.onrender.com/api/v1';
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 500;
 

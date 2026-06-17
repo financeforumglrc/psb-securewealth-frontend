@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { isDuressPin, triggerDuressLockdown } from '../../services/duressService';
-import { getOrCreateTotpSecret, verifyTotp, getTotpTimeRemaining, generateTotp } from '../../services/totpService';
 import { useWealthStore } from '../../store/wealthStore';
+import { backendApi } from '../../lib/backendApi';
+import { useAuth } from '../../context/AuthContext';
 
 interface OTPSimulationProps {
   actionType: string;
@@ -9,43 +10,80 @@ interface OTPSimulationProps {
   onConfirm: () => void;
   onCancel: () => void;
   skip?: boolean;
+  purpose?: string;
 }
 
-export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCancel, skip = false }: OTPSimulationProps) {
+const OTP_TTL_SECONDS = 300;
+const MAX_RESENDS = 3;
+
+export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCancel, skip = false, purpose = 'secure transaction' }: OTPSimulationProps) {
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(getTotpTimeRemaining());
-  const [error, setError] = useState(false);
+  const [timer, setTimer] = useState(OTP_TTL_SECONDS);
+  const [error, setError] = useState<string | null>(null);
   const [verified, setVerified] = useState(false);
   const [duressTriggered, setDuressTriggered] = useState(false);
-  const [demoCode, setDemoCode] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendCount, setSendCount] = useState(0);
+  const [maskedRecipient, setMaskedRecipient] = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const onConfirmRef = useRef(onConfirm);
   const onCancelRef = useRef(onCancel);
   const setLockdownActive = useWealthStore((s) => s.setLockdownActive);
-  const secret = getOrCreateTotpSecret();
+  const { state: authState } = useAuth();
 
-  // Keep latest callbacks without restarting effects on parent re-render.
+  const recipient = authState.userEmail || authState.userId || '';
+
   useEffect(() => { onConfirmRef.current = onConfirm; }, [onConfirm]);
   useEffect(() => { onCancelRef.current = onCancel; }, [onCancel]);
 
-  // Compute the demo TOTP code and refresh it with the timer.
+  const sendOtp = useCallback(async () => {
+    if (!recipient) {
+      setError('No authenticated user email found.');
+      return;
+    }
+    if (sendCount >= MAX_RESENDS) {
+      setError('Maximum OTP resend limit reached. Please try again later.');
+      return;
+    }
+    setSending(true);
+    setError(null);
+    try {
+      const res = await backendApi.sendOtp({
+        email: authState.userEmail || undefined,
+        userId: authState.userId || undefined,
+        purpose,
+      });
+      if (res.ok && res.data?.success) {
+        setEmailSent(true);
+        setSendCount((c) => c + 1);
+        setTimer(OTP_TTL_SECONDS);
+        setMaskedRecipient(res.data.data?.recipient || 'your email');
+      } else {
+        setError(res.data?.error || 'Failed to send OTP. Please try again.');
+      }
+    } catch {
+      setError('Network error while sending OTP.');
+    } finally {
+      setSending(false);
+    }
+  }, [recipient, sendCount, authState.userEmail, authState.userId, purpose]);
+
+  // Send OTP automatically on first mount
   useEffect(() => {
     if (skip) return;
-    let mounted = true;
-    const updateCode = async () => {
-      const code = await generateTotp(secret);
-      if (mounted) setDemoCode(code);
-    };
-    updateCode();
-    const interval = setInterval(() => {
-      setTimer(getTotpTimeRemaining());
-      updateCode();
-    }, 1000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [secret, skip]);
+    if (!emailSent && !verified && !duressTriggered) {
+      sendOtp();
+    }
+  }, [skip, emailSent, verified, duressTriggered, sendOtp]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (skip || verified || duressTriggered) return;
+    if (timer <= 0) return;
+    const interval = setInterval(() => setTimer((t) => Math.max(0, t - 1)), 1000);
+    return () => clearInterval(interval);
+  }, [skip, verified, duressTriggered, timer]);
 
   useEffect(() => {
     if (skip) {
@@ -86,15 +124,38 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
       }, 1200);
       return;
     }
-    const valid = await verifyTotp(code, secret);
-    if (valid) {
-      setVerified(true);
-    } else {
-      setError(true);
+
+    if (!recipient) {
+      setError('No authenticated user email found.');
+      return;
+    }
+
+    setError(null);
+    try {
+      const res = await backendApi.verifyOtp({
+        email: authState.userEmail || undefined,
+        userId: authState.userId || undefined,
+        otp: code,
+        purpose,
+      });
+      if (res.ok && res.data?.success) {
+        setVerified(true);
+      } else {
+        setError(res.data?.error || 'Invalid OTP. Please try again.');
+        setDigits(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+      }
+    } catch {
+      setError('Network error while verifying OTP.');
       setDigits(['', '', '', '', '', '']);
-      setTimeout(() => setError(false), 500);
       inputRefs.current[0]?.focus();
     }
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   if (skip || (verified && !duressTriggered)) return null;
@@ -122,20 +183,23 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
           <i className="fas fa-mobile-screen-button text-xl" />
         </div>
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1">Verify Transaction</h3>
-        <p className="text-xs text-slate-500 mb-1">Enter the 6-digit TOTP from your authenticator</p>
+        <p className="text-xs text-slate-500 mb-1">
+          {emailSent ? `Enter the 6-digit code sent to ${maskedRecipient || 'your email'}` : 'Sending OTP to your registered email...'}
+        </p>
         <p className="text-[10px] text-slate-400 mb-1">Action: {actionType} {amount > 0 ? `· ₹${amount.toLocaleString()}` : ''}</p>
         <p className="text-[10px] text-rose-500 mb-4 font-medium">
           <i className="fas fa-shield-halved mr-1" />
           Duress PIN active if set
         </p>
 
-        {/* Demo code hint */}
-        <div className="mb-4 p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-800">
-          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-            <i className="fas fa-circle-info mr-1" />
-            Demo code: <span className="font-bold tracking-widest">{demoCode}</span>
-          </p>
-        </div>
+        {error && (
+          <div className="mb-4 p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-100 dark:border-rose-800">
+            <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium">
+              <i className="fas fa-circle-exclamation mr-1" />
+              {error}
+            </p>
+          </div>
+        )}
 
         <div className="flex justify-center gap-2 mb-4">
           {digits.map((d, i) => (
@@ -152,12 +216,27 @@ export default function OTPSimulation({ actionType, amount = 0, onConfirm, onCan
           ))}
         </div>
         <div className="flex items-center justify-center gap-2 mb-4 text-xs text-slate-500">
-          <span>Code refreshes in {timer}s</span>
+          <span>Code expires in {formatTime(timer)}</span>
         </div>
-        <button onClick={handleVerify} disabled={digits.some((d) => !d)} className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
+        <button
+          onClick={handleVerify}
+          disabled={digits.some((d) => !d) || sending}
+          className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          {sending ? <i className="fas fa-spinner fa-spin mr-1" /> : null}
           Verify
         </button>
-        <button onClick={() => onCancelRef.current()} className="mt-2 text-xs text-slate-400 hover:text-slate-600">Cancel Transaction</button>
+        <div className="mt-3 flex items-center justify-center gap-3 text-xs">
+          <button
+            onClick={sendOtp}
+            disabled={sending || sendCount >= MAX_RESENDS || timer > OTP_TTL_SECONDS - 10}
+            className="text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Resend OTP {sendCount > 0 ? `(${sendCount}/${MAX_RESENDS})` : ''}
+          </button>
+          <span className="text-slate-300">|</span>
+          <button onClick={() => onCancelRef.current()} className="text-slate-400 hover:text-slate-600">Cancel Transaction</button>
+        </div>
       </div>
     </div>
   );
