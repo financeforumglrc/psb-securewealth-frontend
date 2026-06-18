@@ -24,6 +24,7 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [syncWarning, setSyncWarning] = useState<string | null>(null);
+  const [createdAccount, setCreatedAccount] = useState<{ id: string; email: string; profile: { name: string; riskProfile: string; taxBracket: number; monthlyIncome: number; monthlyExpenses: number; monthlySavings: number } } | null>(null);
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [otpError, setOtpError] = useState<string | null>(null);
@@ -162,6 +163,11 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
       setSyncWarning(registerRes.data?.error || 'Account created locally, but server sync failed.');
     }
 
+    setCreatedAccount({
+      id: newAccount.id,
+      email: newAccount.email,
+      profile: newAccount.profile,
+    });
     setStep('success');
   };
 
@@ -249,6 +255,7 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
     setOtpTimer(OTP_TTL_SECONDS);
     setOtpResends(0);
     setMaskedEmail('');
+    setCreatedAccount(null);
     onClose();
   };
 
@@ -473,7 +480,12 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
                   </p>
                 )}
                 <button
-                  onClick={handleClose}
+                  onClick={() => {
+                    if (createdAccount) {
+                      onCreated?.(createdAccount);
+                    }
+                    handleClose();
+                  }}
                   className="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
                 >
                   Go to Dashboard

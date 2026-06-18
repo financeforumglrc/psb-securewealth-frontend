@@ -82,6 +82,8 @@ describe('CreateAccountModal', () => {
     expect(backendApi.verifyOtp).toHaveBeenCalledWith({ email: 'amit@email.com', otp: '123456', purpose: 'registration' });
     expect(backendApi.register).toHaveBeenCalledWith({ name: 'Amit Kumar', email: 'amit@email.com', password: 'Password1' });
     expect(useWealthStore.setState).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Go to Dashboard/i }));
     expect(onCreated).toHaveBeenCalled();
   });
 
