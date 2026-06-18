@@ -380,4 +380,26 @@ export const backendApi = {
       timeoutMs: 15000,
     });
   },
+
+  // KYC
+  async getKycStatus() {
+    return fetchJson('/kyc/status');
+  },
+  async submitKyc(payload: { panNumber: string; aadhaarMasked: string }) {
+    return fetchJson('/kyc/submit', { method: 'POST', body: JSON.stringify(payload) });
+  },
+  async verifyKyc(reference?: string) {
+    return fetchJson('/kyc/verify', { method: 'POST', body: JSON.stringify({ reference }) });
+  },
+
+  // Account Aggregator (AA) consents
+  async getAaConsents() {
+    return fetchJson('/aa/consents');
+  },
+  async createAaConsent(payload: { bankName: string; accountMask?: string; scopes?: string[] }) {
+    return fetchJson('/aa/consents', { method: 'POST', body: JSON.stringify(payload) });
+  },
+  async revokeAaConsent(consentId: number | string) {
+    return fetchJson(`/aa/consents/${consentId}`, { method: 'DELETE' });
+  },
 };

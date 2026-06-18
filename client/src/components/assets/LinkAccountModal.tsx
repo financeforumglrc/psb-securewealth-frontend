@@ -1,12 +1,8 @@
 import { useState } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
+import { AA_BANKS } from '../../data/aaBanks';
+import { backendApi } from '../../lib/backendApi';
 import type { Asset, ConsentRecord } from '../../types';
-
-const BANKS = [
-  { id: 'sbi', name: 'State Bank of India', code: 'SBI', color: 'bg-blue-600', initial: 'S' },
-  { id: 'hdfc', name: 'HDFC Bank', code: 'HDFC', color: 'bg-indigo-700', initial: 'H' },
-  { id: 'icici', name: 'ICICI Bank', code: 'ICICI', color: 'bg-rose-700', initial: 'I' },
-];
 
 const CONSENT_SCOPES = ['Account Balance', 'Transaction History', 'Fixed Deposits', 'Recurring Deposits'];
 
@@ -17,17 +13,22 @@ interface Props {
 
 export default function LinkAccountModal({ show, onClose }: Props) {
   const [step, setStep] = useState<'bank' | 'consent' | 'loading' | 'success'>('bank');
-  const [selectedBank, setSelectedBank] = useState<typeof BANKS[0] | null>(null);
+  const [selectedBank, setSelectedBank] = useState<typeof AA_BANKS[0] | null>(null);
   const addAsset = useWealthStore((s) => s.addAsset);
   const addConsent = useWealthStore((s) => s.addConsent);
 
-  function selectBank(bank: typeof BANKS[0]) {
+  function selectBank(bank: typeof AA_BANKS[0]) {
     setSelectedBank(bank);
     setStep('consent');
   }
 
-  function approveConsent() {
+  async function approveConsent() {
     setStep('loading');
+    const consentRes = await backendApi.createAaConsent({
+      bankName: selectedBank!.name,
+      scopes: CONSENT_SCOPES,
+    });
+
     setTimeout(() => {
       const newAsset: Asset = {
         id: 'aa-' + Date.now(),
@@ -38,7 +39,7 @@ export default function LinkAccountModal({ show, onClose }: Props) {
         linkedViaAA: true,
       };
       const consent: ConsentRecord = {
-        consentId: 'AA-' + Date.now().toString(36).toUpperCase(),
+        consentId: consentRes.data?.data?.consentId || 'AA-' + Date.now().toString(36).toUpperCase(),
         dataScope: CONSENT_SCOPES,
         purpose: `Account aggregation from ${selectedBank!.name}`,
         validityDays: 30,
@@ -48,7 +49,7 @@ export default function LinkAccountModal({ show, onClose }: Props) {
       addAsset(newAsset);
       addConsent(consent);
       setStep('success');
-    }, 2000);
+    }, 1500);
   }
 
   function denyConsent() {
@@ -93,14 +94,14 @@ export default function LinkAccountModal({ show, onClose }: Props) {
           {step === 'bank' && (
             <div className="space-y-3">
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Choose a bank to link via RBI Account Aggregator framework:</p>
-              {BANKS.map((bank) => (
+              {AA_BANKS.map((bank) => (
                 <button
                   key={bank.id}
                   onClick={() => selectBank(bank)}
                   className="w-full flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-primary hover:shadow-md transition-all text-left"
                 >
-                  <div className={`w-12 h-12 ${bank.color} rounded-xl flex items-center justify-center text-white text-xl font-bold`}>
-                    {bank.initial}
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl font-bold" style={{ backgroundColor: bank.color }}>
+                    {bank.shortName[0]}
                   </div>
                   <div>
                     <p className="font-semibold text-sm text-slate-800 dark:text-white">{bank.name}</p>
@@ -122,8 +123,8 @@ export default function LinkAccountModal({ show, onClose }: Props) {
           {step === 'consent' && selectedBank && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                <div className={`w-10 h-10 ${selectedBank.color} rounded-lg flex items-center justify-center text-white font-bold`}>
-                  {selectedBank.initial}
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: selectedBank.color }}>
+                  {selectedBank.shortName[0]}
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white">{selectedBank.name}</p>

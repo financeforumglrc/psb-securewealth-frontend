@@ -1,12 +1,7 @@
 import { useState } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
-
-const BANKS = [
-  { id: 'sbi', name: 'State Bank of India', code: 'SBI', color: 'bg-blue-600', balance: 0, status: 'available' },
-  { id: 'hdfc', name: 'HDFC Bank', code: 'HDFC', color: 'bg-indigo-700', balance: 0, status: 'available' },
-  { id: 'icici', name: 'ICICI Bank', code: 'ICICI', color: 'bg-rose-700', balance: 0, status: 'available' },
-  { id: 'axis', name: 'Axis Bank', code: 'AXIS', color: 'bg-emerald-600', balance: 0, status: 'available' },
-];
+import { AA_BANKS } from '../../data/aaBanks';
+import { backendApi } from '../../lib/backendApi';
 
 export default function AccountAggregatorWidget() {
   const assets = useWealthStore((s) => s.assets);
@@ -18,8 +13,13 @@ export default function AccountAggregatorWidget() {
 
   const activeConsents = consents.filter((c) => c.status === 'ACTIVE');
 
-  function linkBank(bank: typeof BANKS[0]) {
+  async function linkBank(bank: typeof AA_BANKS[0]) {
     setLinking(bank.id);
+    const consentRes = await backendApi.createAaConsent({
+      bankName: bank.name,
+      scopes: ['Account Balance', 'Transaction History', 'Fixed Deposits', 'Recurring Deposits'],
+    });
+
     setTimeout(() => {
       const newAsset = {
         id: 'aa-' + Date.now(),
@@ -30,7 +30,7 @@ export default function AccountAggregatorWidget() {
         linkedViaAA: true,
       };
       const consent = {
-        consentId: 'AA-' + Date.now().toString(36).toUpperCase(),
+        consentId: consentRes.data?.data?.consentId || 'AA-' + Date.now().toString(36).toUpperCase(),
         dataScope: ['Account Balance', 'Transaction History', 'Fixed Deposits', 'Recurring Deposits'],
         purpose: 'Account aggregation from ' + bank.name,
         validityDays: 30,
@@ -60,12 +60,12 @@ export default function AccountAggregatorWidget() {
       </div>
 
       <div className="space-y-2">
-        {BANKS.map((bank) => {
+        {AA_BANKS.map((bank) => {
           const isLinked = Array.from(linkedAssetIds).some((name) => name.includes(bank.name));
           return (
             <div key={bank.id} className={'flex items-center gap-3 p-3 rounded-xl border ' + (isLinked ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800')}>
-              <div className={'w-10 h-10 ' + bank.color + ' rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0'}>
-                {bank.code[0]}
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0" style={{ backgroundColor: bank.color }}>
+                {bank.shortName[0]}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-800 dark:text-white">{bank.name}</p>

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
+import { useAuth } from '../../context/AuthContext';
+import { backendApi } from '../../lib/backendApi';
 
 interface Props {
   show: boolean;
@@ -13,19 +15,46 @@ export default function KYCModal({ show, onClose, onVerified, purpose = 'investm
   const [pan, setPan] = useState('');
   const [aadhaar, setAadhaar] = useState('');
   const [otp, setOtp] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const setKycVerified = useWealthStore((s: any) => s.setKycVerified);
   const kycVerified = useWealthStore((s: any) => s.kycVerified);
+  const { state: authState } = useAuth();
 
   if (!show) return null;
 
-  function verify() {
+  async function verify() {
     setStep('verify');
-    setTimeout(() => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const submitRes = await backendApi.submitKyc({
+        panNumber: pan,
+        aadhaarMasked: aadhaar,
+      });
+
+      if (!submitRes.ok || !submitRes.data?.success) {
+        throw new Error(submitRes.data?.error || 'KYC submission failed');
+      }
+
+      // In a real flow the eKYC provider would verify the user. Here we call the
+      // backend verify endpoint to mark the record as verified after the mock OTP.
+      const verifyRes = await backendApi.verifyKyc(`ekyc-${authState.userId || Date.now()}`);
+      if (!verifyRes.ok || !verifyRes.data?.success) {
+        throw new Error(verifyRes.data?.error || 'KYC verification failed');
+      }
+
       setKycVerified(true);
       setStep('success');
       onVerified?.();
-    }, 1500);
+    } catch (err: any) {
+      setError(err.message || 'Verification failed. Please try again.');
+      setStep('aadhaar');
+    } finally {
+      setLoading(false);
+    }
   }
 
   function close() {
@@ -33,6 +62,7 @@ export default function KYCModal({ show, onClose, onVerified, purpose = 'investm
     setPan('');
     setAadhaar('');
     setOtp('');
+    setError(null);
     onClose();
   }
 
@@ -78,6 +108,12 @@ export default function KYCModal({ show, onClose, onVerified, purpose = 'investm
                   {i < 3 && <div className={`flex-1 h-0.5 ${currentIdx > i ? 'bg-emerald-500' : 'bg-slate-200'}`} />}
                 </div>
               ))}
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-100 dark:border-rose-800 text-xs text-rose-600 dark:text-rose-400">
+              <i className="fas fa-circle-exclamation mr-1" /> {error}
             </div>
           )}
 
@@ -139,12 +175,6 @@ export default function KYCModal({ show, onClose, onVerified, purpose = 'investm
                 />
                 <p className="text-[10px] text-slate-400 mt-1">Format: ABCDE1234F</p>
               </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                <p className="text-xs text-slate-600 dark:text-slate-300">
-                  <i className="fas fa-info-circle text-primary mr-1" />
-                  Demo mode: Enter any 10-character PAN to proceed.
-                </p>
-              </div>
               <button
                 onClick={() => setStep('aadhaar')}
                 disabled={pan.length < 10}
@@ -181,9 +211,10 @@ export default function KYCModal({ show, onClose, onVerified, purpose = 'investm
               </div>
               <button
                 onClick={verify}
-                disabled={aadhaar.length < 12 || otp.length < 6}
+                disabled={aadhaar.length < 12 || otp.length < 6 || loading}
                 className="w-full py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 disabled:opacity-40 transition-colors"
               >
+                {loading ? <i className="fas fa-spinner fa-spin mr-1" /> : null}
                 Verify & Complete KYC
               </button>
             </div>

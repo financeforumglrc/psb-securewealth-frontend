@@ -1,26 +1,34 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useWealthStore } from '../../store/wealthStore';
+import { AA_BANKS } from '../../data/aaBanks';
+import { backendApi } from '../../lib/backendApi';
 
-const BANKS = [
-  { id: 'sbi', name: 'State Bank of India', code: 'SBI', color: 'bg-blue-600', initial: 'S', mockBalance: 245000, mockTxs: [
+const BANK_META: Record<string, { mockBalance: number; color: string; initial: string; mockTxs: { desc: string; amount: number; date: string; type?: 'credit' }[] }> = {
+  sbi: { mockBalance: 245000, color: 'bg-blue-600', initial: 'S', mockTxs: [
     { desc: 'UPI Transfer', amount: 2500, date: '2026-05-18' },
-    { desc: 'Interest Credit', amount: 420, date: '2026-05-15', type: 'credit' as const },
+    { desc: 'Interest Credit', amount: 420, date: '2026-05-15', type: 'credit' },
     { desc: 'ATM Withdrawal', amount: 10000, date: '2026-05-12' },
   ]},
-  { id: 'hdfc', name: 'HDFC Bank', code: 'HDFC', color: 'bg-indigo-700', initial: 'H', mockBalance: 380000, mockTxs: [
-    { desc: 'Salary Credit', amount: 125000, date: '2026-05-22', type: 'credit' as const },
+  hdfc: { mockBalance: 380000, color: 'bg-indigo-700', initial: 'H', mockTxs: [
+    { desc: 'Salary Credit', amount: 125000, date: '2026-05-22', type: 'credit' },
     { desc: 'Amazon Purchase', amount: 3499, date: '2026-05-20' },
     { desc: 'SIP Auto-debit', amount: 15000, date: '2026-05-05' },
   ]},
-  { id: 'icici', name: 'ICICI Bank', code: 'ICICI', color: 'bg-rose-700', initial: 'I', mockBalance: 120000, mockTxs: [
+  icici: { mockBalance: 120000, color: 'bg-rose-700', initial: 'I', mockTxs: [
     { desc: 'Electricity Bill', amount: 3200, date: '2026-05-18' },
-    { desc: 'Cash Deposit', amount: 20000, date: '2026-05-10', type: 'credit' as const },
+    { desc: 'Cash Deposit', amount: 20000, date: '2026-05-10', type: 'credit' },
   ]},
-  { id: 'axis', name: 'Axis Bank', code: 'AXIS', color: 'bg-emerald-600', initial: 'A', mockBalance: 195000, mockTxs: [
+  axis: { mockBalance: 195000, color: 'bg-emerald-600', initial: 'A', mockTxs: [
     { desc: 'BigBasket Grocery', amount: 2400, date: '2026-05-21' },
-    { desc: 'FD Interest', amount: 1800, date: '2026-05-01', type: 'credit' as const },
+    { desc: 'FD Interest', amount: 1800, date: '2026-05-01', type: 'credit' },
   ]},
-];
+  kotak: { mockBalance: 90000, color: 'bg-red-600', initial: 'K', mockTxs: [
+    { desc: 'PhonePe UPI', amount: 1200, date: '2026-05-19' },
+  ]},
+  pnb: { mockBalance: 65000, color: 'bg-red-800', initial: 'P', mockTxs: [
+    { desc: 'Cash Withdrawal', amount: 5000, date: '2026-05-17' },
+  ]},
+};
 
 const CONSENT_SCOPES = ['Account Balance', 'Transaction History', 'Fixed Deposits'];
 
@@ -31,7 +39,6 @@ function CrossBankFraudPanel({ transactions, linkedAssets }: { transactions: any
 
   const alerts: { type: string; severity: 'low' | 'medium' | 'high'; message: string; detail: string }[] = [];
 
-  // Duplicate amount across banks same day
   const byDateAmount: Record<string, any[]> = {};
   aaTxs.filter((t) => t.type === 'debit').forEach((t) => {
     const key = `${t.date}-${t.amount}`;
@@ -49,7 +56,6 @@ function CrossBankFraudPanel({ transactions, linkedAssets }: { transactions: any
     }
   });
 
-  // Round-number high debits
   aaTxs.filter((t) => t.type === 'debit' && t.amount >= 50000 && t.amount % 10000 === 0).forEach((t) => {
     alerts.push({
       type: 'Round-Number High Debit',
@@ -59,7 +65,6 @@ function CrossBankFraudPanel({ transactions, linkedAssets }: { transactions: any
     });
   });
 
-  // High velocity day
   const txDates: Record<string, number> = {};
   aaTxs.filter((t) => t.type === 'debit').forEach((t) => {
     txDates[t.date] = (txDates[t.date] || 0) + t.amount;
@@ -128,27 +133,42 @@ export default function AccountAggregatorFull() {
   const addTransaction = useWealthStore((s) => s.addTransaction);
 
   const [linkingBank, setLinkingBank] = useState<string | null>(null);
-  const [showConsent, setShowConsent] = useState<typeof BANKS[0] | null>(null);
+  const [showConsent, setShowConsent] = useState<typeof AA_BANKS[0] | null>(null);
   const [consentDuration, setConsentDuration] = useState(6);
+  const [aaError, setAaError] = useState<string | null>(null);
+
+  // Sync backend AA consents on mount (best-effort)
+  useEffect(() => {
+    backendApi.getAaConsents().catch(() => {});
+  }, []);
 
   const linkedAssets = assets.filter((a) => a.linkedViaAA);
   const activeConsents = consents.filter((c) => c.status === 'ACTIVE');
 
   const isLinked = (bankName: string) => linkedAssets.some((a) => a.name.includes(bankName));
 
-  const handleLink = (bank: typeof BANKS[0]) => {
+  const handleLink = async (bank: typeof AA_BANKS[0]) => {
     setLinkingBank(bank.id);
+    setAaError(null);
+
+    // Persist consent to backend first (best-effort; UI still works if offline)
+    const consentRes = await backendApi.createAaConsent({
+      bankName: bank.name,
+      scopes: CONSENT_SCOPES,
+    });
+
     setTimeout(() => {
+      const meta = BANK_META[bank.id] || { mockBalance: 0, color: 'bg-slate-500', initial: bank.shortName[0], mockTxs: [] };
       const newAsset = {
         id: 'aa-' + Date.now(),
         name: bank.name + ' (Linked)',
         type: 'bank' as const,
-        value: bank.mockBalance,
+        value: meta.mockBalance,
         liquidity: 'high' as const,
         linkedViaAA: true,
       };
       const consent = {
-        consentId: 'AA-' + Date.now().toString(36).toUpperCase(),
+        consentId: consentRes.data?.data?.consentId || 'AA-' + Date.now().toString(36).toUpperCase(),
         dataScope: CONSENT_SCOPES,
         purpose: `Account aggregation from ${bank.name}`,
         validityDays: consentDuration * 30,
@@ -158,12 +178,11 @@ export default function AccountAggregatorFull() {
       addAsset(newAsset);
       addConsent(consent);
 
-      // Add mock transactions
-      bank.mockTxs.forEach((tx) => {
+      meta.mockTxs.forEach((tx) => {
         addTransaction({
           id: 'aa-tx-' + Math.random().toString(36).slice(2),
           date: tx.date,
-          description: `${bank.code} - ${tx.desc}`,
+          description: `${bank.shortName} - ${tx.desc}`,
           category: tx.desc.includes('Salary') ? 'Income' : tx.desc.includes('Interest') ? 'Investment' : 'Utilities',
           amount: tx.amount,
           type: tx.type || 'debit',
@@ -174,10 +193,11 @@ export default function AccountAggregatorFull() {
 
       setLinkingBank(null);
       setShowConsent(null);
-    }, 2000);
+    }, 1500);
   };
 
-  const handleRevoke = (assetId: string, consentId: string) => {
+  const handleRevoke = async (assetId: string, consentId: string) => {
+    await backendApi.revokeAaConsent(consentId).catch(() => {});
     removeAsset(assetId);
     revokeConsent(consentId);
   };
@@ -197,8 +217,15 @@ export default function AccountAggregatorFull() {
           </span>
         </div>
 
+        {aaError && (
+          <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-100 dark:border-rose-800 text-xs text-rose-600 dark:text-rose-400">
+            <i className="fas fa-circle-exclamation mr-1" /> {aaError}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {BANKS.map((bank) => {
+          {AA_BANKS.map((bank) => {
+            const meta = BANK_META[bank.id] || { mockBalance: 0, color: 'bg-slate-500', initial: bank.shortName[0], mockTxs: [] };
             const linked = isLinked(bank.name);
             const asset = linkedAssets.find((a) => a.name.includes(bank.name));
             const consent = activeConsents.find((c) => c.purpose.includes(bank.name));
@@ -212,8 +239,8 @@ export default function AccountAggregatorFull() {
                 }`}
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-10 h-10 ${bank.color} rounded-lg flex items-center justify-center text-white font-bold`}>
-                    {bank.initial}
+                  <div className={`w-10 h-10 ${meta.color} rounded-lg flex items-center justify-center text-white font-bold`}>
+                    {meta.initial}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-bold text-slate-800 dark:text-white">{bank.name}</p>
@@ -241,7 +268,7 @@ export default function AccountAggregatorFull() {
                   <div className="space-y-2">
                     <div className="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-700">
                       <p className="text-[10px] text-slate-400 uppercase font-bold">Latest Transactions</p>
-                      {bank.mockTxs.slice(0, 2).map((tx, i) => (
+                      {meta.mockTxs.slice(0, 2).map((tx, i) => (
                         <div key={i} className="flex items-center justify-between text-xs mt-1">
                           <span className="text-slate-600 dark:text-slate-300">{tx.desc}</span>
                           <span className={tx.type === 'credit' ? 'text-emerald-600' : 'text-slate-700 dark:text-slate-200'}>
@@ -274,7 +301,6 @@ export default function AccountAggregatorFull() {
           </div>
         )}
 
-        {/* Cross-Bank Fraud Intelligence */}
         {linkedAssets.length > 1 && (
           <div className="mt-5">
             <div className="flex items-center justify-between mb-3">
@@ -288,7 +314,6 @@ export default function AccountAggregatorFull() {
         )}
       </div>
 
-      {/* Consent Modal */}
       {showConsent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4" onClick={() => setShowConsent(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fade-in" onClick={(e) => e.stopPropagation()}>
