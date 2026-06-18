@@ -32,6 +32,7 @@ import {
   authenticateWithPasskey,
 } from '../../services/passkeyService';
 import FaceLoginModal from './FaceLoginModal';
+import CreateAccountModal from './CreateAccountModal';
 
 const FEATURES = [
   {
@@ -62,6 +63,7 @@ export default function LoginPortal() {
   const [error, setError] = useState<string | null>(null);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
   const [faceLoginOpen, setFaceLoginOpen] = useState(false);
+  const [createAccountOpen, setCreateAccountOpen] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
   const [passkeySuccess, setPasskeySuccess] = useState<string | null>(null);
@@ -394,6 +396,17 @@ export default function LoginPortal() {
               </button>
             </div>
 
+            <div className="mt-4 text-center text-xs">
+              <span className="text-slate-500">New to PSB SecureWealth? </span>
+              <button
+                type="button"
+                onClick={() => setCreateAccountOpen(true)}
+                className="font-semibold text-cyan-400 transition-colors hover:text-cyan-300"
+              >
+                Create account
+              </button>
+            </div>
+
             {/* Security badge */}
             <div className="mt-6 flex items-center justify-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
@@ -556,6 +569,16 @@ export default function LoginPortal() {
                 dispatch({ type: 'LOGIN', userId: user.id, userEmail: user.email });
                 useWealthStore.getState().updateUser({ name: user.name || user.email?.split('@')[0] || 'User' });
                 setFaceLoginOpen(false);
+              }}
+            />
+
+            <CreateAccountModal
+              open={createAccountOpen}
+              onClose={() => setCreateAccountOpen(false)}
+              onCreated={(account) => {
+                // Notify AuthContext so the authenticated app renders.
+                dispatch({ type: 'LOGIN', userId: account.id, userEmail: account.email });
+                setCreateAccountOpen(false);
               }}
             />
           </div>

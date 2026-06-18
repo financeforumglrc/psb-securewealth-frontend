@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '../../store/wealthStore';
 import { DEMO_ACCOUNTS } from '../../data/userProfiles';
+import { backendApi } from '../../lib/backendApi';
 
 interface CreateAccountModalProps {
   open: boolean;
   onClose: () => void;
+  onCreated?: (account: { id: string; email: string; profile: { name: string; riskProfile: string; taxBracket: number; monthlyIncome: number; monthlyExpenses: number; monthlySavings: number } }) => void;
 }
 
-export default function CreateAccountModal({ open, onClose }: CreateAccountModalProps) {
+export default function CreateAccountModal({ open, onClose, onCreated }: CreateAccountModalProps) {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -16,19 +18,44 @@ export default function CreateAccountModal({ open, onClose }: CreateAccountModal
   const [riskProfile, setRiskProfile] = useState<'Conservative' | 'Moderate' | 'Aggressive'>('Moderate');
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [syncWarning, setSyncWarning] = useState<string | null>(null);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     setError('');
+    setSyncWarning(null);
     if (!name.trim() || !email.trim() || !password.trim()) {
       setError('Please fill all required fields');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Please enter a valid email');
       return;
     }
-    if (!email.includes('@')) {
-      setError('Please enter a valid email');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    if (!hasUppercase || !hasLowercase || !hasNumber) {
+      setError('Password must contain uppercase, lowercase and a number');
+      return;
+    }
+
+    setLoading(true);
+
+    // Attempt to register with the backend so the account is persisted.
+    const registerRes = await backendApi.register({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password: password.trim(),
+    });
+
+    if (!registerRes.ok && registerRes.status === 409) {
+      setLoading(false);
+      setError(registerRes.data?.error || 'An account with this email already exists');
       return;
     }
 
@@ -38,9 +65,11 @@ export default function CreateAccountModal({ open, onClose }: CreateAccountModal
     const expenses = Math.round(income * 0.55);
     const savings = income - expenses;
 
-    // Add to DEMO_ACCOUNTS (mutating for demo)
+    const backendUser = registerRes.ok ? registerRes.data?.data?.user : null;
+
+    // Add to DEMO_ACCOUNTS (mutating for demo) so the user can quick-login later
     const newAccount = {
-      id: email.replace(/[@.]/g, '-'),
+      id: backendUser?.id || email.replace(/[@.]/g, '-'),
       email: email.trim().toLowerCase(),
       password: password.trim(),
       tagline: 'New Account · Portfolio: ₹0',
@@ -73,6 +102,17 @@ export default function CreateAccountModal({ open, onClose }: CreateAccountModal
       isAuthenticated: true,
     });
 
+    onCreated?.({
+      id: newAccount.id,
+      email: newAccount.email,
+      profile: newAccount.profile,
+    });
+
+    if (!registerRes.ok) {
+      setSyncWarning(registerRes.data?.error || 'Account created locally, but server sync failed.');
+    }
+
+    setLoading(false);
     setStep('success');
   };
 
@@ -83,6 +123,8 @@ export default function CreateAccountModal({ open, onClose }: CreateAccountModal
     setPassword('');
     setMonthlyIncome('');
     setError('');
+    setSyncWarning(null);
+    setLoading(false);
     onClose();
   };
 
@@ -148,7 +190,7 @@ export default function CreateAccountModal({ open, onClose }: CreateAccountModal
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min 6 characters"
+                      placeholder="Min 8 chars, A-Z, a-z, 0-9"
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                     />
                   </div>
@@ -188,9 +230,17 @@ export default function CreateAccountModal({ open, onClose }: CreateAccountModal
                   </button>
                   <button
                     onClick={handleCreate}
-                    className="flex-1 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
+                    disabled={loading}
+                    className="flex-1 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Create Account
+                    {loading ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Creating…
+                      </>
+                    ) : (
+                      'Create Account'
+                    )}
                   </button>
                 </div>
               </>
@@ -201,6 +251,11 @@ export default function CreateAccountModal({ open, onClose }: CreateAccountModal
                 </div>
                 <h2 className="text-xl font-bold text-gray-800 mb-1">Account Created!</h2>
                 <p className="text-sm text-gray-500 mb-6">Welcome to PSB SecureWealth, {name}.</p>
+                {syncWarning && (
+                  <p className="mb-4 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                    <i className="fas fa-triangle-exclamation mr-1" /> {syncWarning}
+                  </p>
+                )}
                 <button
                   onClick={handleClose}
                   className="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
