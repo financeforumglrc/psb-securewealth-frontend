@@ -7,6 +7,8 @@ import { useWealthStore } from '../../store/wealthStore';
 vi.mock('../../lib/backendApi', () => ({
   backendApi: {
     register: vi.fn(),
+    sendOtp: vi.fn(),
+    verifyOtp: vi.fn(),
   },
 }));
 
@@ -22,8 +24,26 @@ describe('CreateAccountModal', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the registration form and creates an account', async () => {
+  const fillForm = () => {
+    fireEvent.change(screen.getByPlaceholderText(/Amit Kumar/i), { target: { value: 'Amit Kumar' } });
+    fireEvent.change(screen.getByPlaceholderText(/amit@email.com/i), { target: { value: 'amit@email.com' } });
+    fireEvent.change(screen.getByPlaceholderText(/Min 8 chars/i), { target: { value: 'Password1' } });
+  };
+
+  it('sends OTP after filling the form, then creates the account on verify', async () => {
     const onCreated = vi.fn();
+
+    vi.mocked(backendApi.sendOtp).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { success: true, data: { recipient: 'am***@email.com' } },
+    } as any);
+
+    vi.mocked(backendApi.verifyOtp).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { success: true, data: { verified: true } },
+    } as any);
 
     vi.mocked(backendApi.register).mockResolvedValue({
       ok: true,
@@ -38,23 +58,29 @@ describe('CreateAccountModal', () => {
 
     render(<CreateAccountModal open onClose={() => {}} onCreated={onCreated} />);
 
-    expect(screen.getByRole('heading', { name: /Open New Account/i })).toBeInTheDocument();
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
-    fireEvent.change(screen.getByPlaceholderText(/Amit Kumar/i), { target: { value: 'Amit Kumar' } });
-    fireEvent.change(screen.getByPlaceholderText(/amit@email.com/i), { target: { value: 'amit@email.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/Min 8 chars/i), { target: { value: 'Password1' } });
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /Verify your email/i })).toBeInTheDocument();
+    });
 
-    fireEvent.click(screen.getByRole('button', { name: /Create Account/i }));
+    expect(backendApi.sendOtp).toHaveBeenCalledWith({ email: 'amit@email.com', purpose: 'registration' });
+
+    const inputs = screen.getAllByRole('textbox');
+    expect(inputs.length).toBeGreaterThanOrEqual(6);
+    '123456'.split('').forEach((digit, i) => {
+      fireEvent.change(inputs[i], { target: { value: digit } });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Verify & Create Account/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /Account Created!/i })).toBeInTheDocument();
     });
 
-    expect(backendApi.register).toHaveBeenCalledWith({
-      name: 'Amit Kumar',
-      email: 'amit@email.com',
-      password: 'Password1',
-    });
+    expect(backendApi.verifyOtp).toHaveBeenCalledWith({ email: 'amit@email.com', otp: '123456', purpose: 'registration' });
+    expect(backendApi.register).toHaveBeenCalledWith({ name: 'Amit Kumar', email: 'amit@email.com', password: 'Password1' });
     expect(useWealthStore.setState).toHaveBeenCalled();
     expect(onCreated).toHaveBeenCalled();
   });
@@ -62,18 +88,62 @@ describe('CreateAccountModal', () => {
   it('shows validation errors for weak passwords', async () => {
     render(<CreateAccountModal open onClose={() => {}} />);
 
-    fireEvent.change(screen.getByPlaceholderText(/Amit Kumar/i), { target: { value: 'Amit Kumar' } });
-    fireEvent.change(screen.getByPlaceholderText(/amit@email.com/i), { target: { value: 'amit@email.com' } });
-    // 8 chars, upper + lower, but no number
+    fillForm();
+    // Override password to an 8-char value missing a number
     fireEvent.change(screen.getByPlaceholderText(/Min 8 chars/i), { target: { value: 'Shortest' } });
 
-    fireEvent.click(screen.getByRole('button', { name: /Create Account/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     expect(await screen.findByText(/Password must contain uppercase, lowercase and a number/i)).toBeInTheDocument();
+    expect(backendApi.sendOtp).not.toHaveBeenCalled();
+  });
+
+  it('shows an error when OTP verification fails', async () => {
+    vi.mocked(backendApi.sendOtp).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { success: true, data: { recipient: 'am***@email.com' } },
+    } as any);
+
+    vi.mocked(backendApi.verifyOtp).mockResolvedValue({
+      ok: false,
+      status: 400,
+      data: { success: false, error: 'Invalid OTP' },
+    } as any);
+
+    render(<CreateAccountModal open onClose={() => {}} />);
+
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /Verify your email/i })).toBeInTheDocument();
+    });
+
+    const inputs = screen.getAllByRole('textbox');
+    '111111'.split('').forEach((digit, i) => {
+      fireEvent.change(inputs[i], { target: { value: digit } });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Verify & Create Account/i }));
+
+    expect(await screen.findByText(/Invalid OTP/i)).toBeInTheDocument();
     expect(backendApi.register).not.toHaveBeenCalled();
   });
 
   it('shows an error when the email is already registered', async () => {
+    vi.mocked(backendApi.sendOtp).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { success: true, data: { recipient: 'am***@email.com' } },
+    } as any);
+
+    vi.mocked(backendApi.verifyOtp).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { success: true, data: { verified: true } },
+    } as any);
+
     vi.mocked(backendApi.register).mockResolvedValue({
       ok: false,
       status: 409,
@@ -82,11 +152,19 @@ describe('CreateAccountModal', () => {
 
     render(<CreateAccountModal open onClose={() => {}} />);
 
-    fireEvent.change(screen.getByPlaceholderText(/Amit Kumar/i), { target: { value: 'Amit Kumar' } });
-    fireEvent.change(screen.getByPlaceholderText(/amit@email.com/i), { target: { value: 'amit@email.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/Min 8 chars/i), { target: { value: 'Password1' } });
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
-    fireEvent.click(screen.getByRole('button', { name: /Create Account/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /Verify your email/i })).toBeInTheDocument();
+    });
+
+    const inputs = screen.getAllByRole('textbox');
+    '123456'.split('').forEach((digit, i) => {
+      fireEvent.change(inputs[i], { target: { value: digit } });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Verify & Create Account/i }));
 
     expect(await screen.findByText(/User already exists/i)).toBeInTheDocument();
   });

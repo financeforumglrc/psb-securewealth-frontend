@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '../../store/wealthStore';
 import { DEMO_ACCOUNTS } from '../../data/userProfiles';
@@ -10,8 +10,12 @@ interface CreateAccountModalProps {
   onCreated?: (account: { id: string; email: string; profile: { name: string; riskProfile: string; taxBracket: number; monthlyIncome: number; monthlyExpenses: number; monthlySavings: number } }) => void;
 }
 
+const OTP_TTL_SECONDS = 300;
+const MAX_RESENDS = 3;
+const OTP_PURPOSE = 'registration';
+
 export default function CreateAccountModal({ open, onClose, onCreated }: CreateAccountModalProps) {
-  const [step, setStep] = useState<'form' | 'success'>('form');
+  const [step, setStep] = useState<'form' | 'otp' | 'success'>('form');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,31 +25,76 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
   const [loading, setLoading] = useState(false);
   const [syncWarning, setSyncWarning] = useState<string | null>(null);
 
-  const handleCreate = async () => {
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(OTP_TTL_SECONDS);
+  const [otpResends, setOtpResends] = useState(0);
+  const [maskedEmail, setMaskedEmail] = useState('');
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // OTP countdown timer
+  useEffect(() => {
+    if (step !== 'otp' || otpTimer <= 0) return;
+    const id = setInterval(() => setOtpTimer((t) => t - 1), 1000);
+    return () => clearInterval(id);
+  }, [step, otpTimer]);
+
+  const validateForm = () => {
     setError('');
-    setSyncWarning(null);
     if (!name.trim() || !email.trim() || !password.trim()) {
       setError('Please fill all required fields');
-      return;
+      return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError('Please enter a valid email');
-      return;
+      return false;
     }
     if (password.length < 8) {
       setError('Password must be at least 8 characters');
-      return;
+      return false;
     }
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
     if (!hasUppercase || !hasLowercase || !hasNumber) {
       setError('Password must contain uppercase, lowercase and a number');
-      return;
+      return false;
     }
+    return true;
+  };
 
+  const sendRegistrationOtp = async () => {
+    setOtpSending(true);
+    setError('');
+    setOtpError(null);
+    try {
+      const res = await backendApi.sendOtp({
+        email: email.trim().toLowerCase(),
+        purpose: OTP_PURPOSE,
+      });
+      if (res.ok && res.data?.success) {
+        setMaskedEmail(res.data.data?.recipient || email.trim().toLowerCase());
+        setOtpTimer(OTP_TTL_SECONDS);
+        setStep('otp');
+      } else {
+        setError(res.data?.error || 'Failed to send OTP. Please try again.');
+      }
+    } catch {
+      setError('Network error while sending OTP.');
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!validateForm()) return;
     setLoading(true);
+    await sendRegistrationOtp();
+    setLoading(false);
+  };
 
+  const registerAndLogin = async () => {
     // Attempt to register with the backend so the account is persisted.
     const registerRes = await backendApi.register({
       name: name.trim(),
@@ -55,6 +104,7 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
 
     if (!registerRes.ok && registerRes.status === 409) {
       setLoading(false);
+      setStep('form');
       setError(registerRes.data?.error || 'An account with this email already exists');
       return;
     }
@@ -112,8 +162,77 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
       setSyncWarning(registerRes.data?.error || 'Account created locally, but server sync failed.');
     }
 
-    setLoading(false);
     setStep('success');
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const next = [...otp];
+    next[index] = value.slice(-1);
+    setOtp(next);
+    setOtpError(null);
+    if (value && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const code = otp.join('');
+    if (code.length !== 6) {
+      setOtpError('Please enter the 6-digit OTP');
+      return;
+    }
+    setLoading(true);
+    setOtpError(null);
+    try {
+      const res = await backendApi.verifyOtp({
+        email: email.trim().toLowerCase(),
+        otp: code,
+        purpose: OTP_PURPOSE,
+      });
+      if (res.ok && res.data?.success) {
+        await registerAndLogin();
+      } else {
+        setOtpError(res.data?.error || 'Invalid OTP. Please try again.');
+      }
+    } catch {
+      setOtpError('Network error while verifying OTP.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (otpResends >= MAX_RESENDS) {
+      setOtpError('Maximum resend limit reached. Please try again later.');
+      return;
+    }
+    setOtpSending(true);
+    setOtpError(null);
+    try {
+      const res = await backendApi.sendOtp({
+        email: email.trim().toLowerCase(),
+        purpose: OTP_PURPOSE,
+      });
+      if (res.ok && res.data?.success) {
+        setOtpTimer(OTP_TTL_SECONDS);
+        setOtpResends((c) => c + 1);
+        setOtp(['', '', '', '', '', '']);
+        otpRefs.current[0]?.focus();
+      } else {
+        setOtpError(res.data?.error || 'Failed to resend OTP.');
+      }
+    } catch {
+      setOtpError('Network error while resending OTP.');
+    } finally {
+      setOtpSending(false);
+    }
   };
 
   const handleClose = () => {
@@ -125,7 +244,18 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
     setError('');
     setSyncWarning(null);
     setLoading(false);
+    setOtp(['', '', '', '', '', '']);
+    setOtpError(null);
+    setOtpTimer(OTP_TTL_SECONDS);
+    setOtpResends(0);
+    setMaskedEmail('');
     onClose();
+  };
+
+  const formatTimer = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -143,7 +273,7 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
             className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
           >
-            {step === 'form' ? (
+            {step === 'form' && (
               <>
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                   <div>
@@ -230,13 +360,13 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
                   </button>
                   <button
                     onClick={handleCreate}
-                    disabled={loading}
+                    disabled={loading || otpSending}
                     className="flex-1 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {loading ? (
+                    {loading || otpSending ? (
                       <>
                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                        Creating…
+                        Sending OTP…
                       </>
                     ) : (
                       'Create Account'
@@ -244,7 +374,93 @@ export default function CreateAccountModal({ open, onClose, onCreated }: CreateA
                   </button>
                 </div>
               </>
-            ) : (
+            )}
+
+            {step === 'otp' && (
+              <>
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-800">Verify your email</h2>
+                    <p className="text-xs text-gray-500">Enter the 6-digit code sent to {maskedEmail}</p>
+                  </div>
+                  <button onClick={handleClose} className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400">
+                    <i className="fas fa-xmark" />
+                  </button>
+                </div>
+
+                <div className="px-6 py-6 space-y-5">
+                  {otpError && (
+                    <div className="px-3 py-2 bg-rose-50 text-rose-600 text-sm rounded-lg flex items-center gap-2">
+                      <i className="fas fa-circle-exclamation" /> {otpError}
+                    </div>
+                  )}
+
+                  <div className="flex justify-center gap-2">
+                    {otp.map((digit, i) => (
+                      <input
+                        key={i}
+                        ref={(el) => { otpRefs.current[i] = el; }}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(i, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                        className="w-11 h-12 text-center text-lg font-semibold border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                      />
+                    ))}
+                  </div>
+
+                  <div className="text-center text-xs text-gray-500">
+                    {otpTimer > 0 ? (
+                      <span>Code expires in <span className="font-medium text-gray-700">{formatTimer(otpTimer)}</span></span>
+                    ) : (
+                      <span className="text-rose-500">Code expired</span>
+                    )}
+                  </div>
+
+                  <div className="text-center text-xs">
+                    {otpResends < MAX_RESENDS ? (
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={otpSending || otpTimer > 0}
+                        className="text-cyan-600 hover:text-cyan-500 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+                      >
+                        {otpSending ? 'Resending…' : 'Resend OTP'}
+                      </button>
+                    ) : (
+                      <span className="text-gray-400">Resend limit reached</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+                  <button
+                    onClick={() => setStep('form')}
+                    className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleVerifyOtp}
+                    disabled={loading || otp.join('').length !== 6}
+                    className="flex-1 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Verifying…
+                      </>
+                    ) : (
+                      'Verify & Create Account'
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {step === 'success' && (
               <div className="px-6 py-10 text-center">
                 <div className="w-16 h-16 mx-auto rounded-full bg-emerald-50 flex items-center justify-center mb-4">
                   <i className="fas fa-check text-2xl text-emerald-500" />
