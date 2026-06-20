@@ -283,6 +283,14 @@ export default function AuthenticatedApp() {
   const setAAFetchComplete = useWealthStore((s) => s.setAAFetchComplete);
   const onboardingComplete = useWealthStore((s) => s.onboardingComplete);
   const setOnboardingComplete = useWealthStore((s) => s.setOnboardingComplete);
+
+  // Migration: users who already completed AA fetch before the onboarding wizard existed
+  // should not see the wizard again.
+  useEffect(() => {
+    if (aaFetchComplete && !onboardingComplete) {
+      setOnboardingComplete(true);
+    }
+  }, [aaFetchComplete, onboardingComplete, setOnboardingComplete]);
   const setLoginAt = useWealthStore((s) => s.setLoginAt);
   /* familyMode unused after removing AnimatePresence key */
   const language = useWealthStore((s) => s.language);
