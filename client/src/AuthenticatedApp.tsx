@@ -450,8 +450,8 @@ export default function AuthenticatedApp() {
         </div>
       )}
 
-      {/* Language Banner */}
-      {language !== 'en' && (
+      {/* Language Banner for unsupported locales only */}
+      {language !== 'en' && language !== 'hi' && (
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center py-1.5 px-4 text-xs relative z-50 animate-fade-in">
           <div className="flex items-center justify-center gap-2">
             <i className="fas fa-language" />
