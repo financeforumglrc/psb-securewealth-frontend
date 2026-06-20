@@ -640,7 +640,7 @@ function MicrochipIcon(props: any) {
    ═══════════════════════════════════════════════════════════════ */
 function LoginScreen({ onLogin, loading, error }: { onLogin: (id: string, pw: string) => void; loading: boolean; error: string }) {
   const [id, setId] = useState('TEAM EXCELLENT MINDS');
-  const [pw, setPw] = useState('123456');
+  const [pw, setPw] = useState('');
 
   return (
     <div className="min-h-screen flex">
