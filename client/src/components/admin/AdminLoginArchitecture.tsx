@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield,
@@ -27,6 +27,10 @@ import {
   ScanFace,
   BadgeCheck,
   ChevronRight,
+  Maximize2,
+  Minimize2,
+  Expand,
+  Shrink,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -88,8 +92,8 @@ const SCHEMA_TABLES: SchemaTable[] = [
     id: 'roles',
     name: 'roles',
     purpose: 'RBAC roles',
-    x: 50,
-    y: 60,
+    x: 60,
+    y: 80,
     w: 220,
     h: 150,
     color: '#10b981',
@@ -105,7 +109,7 @@ const SCHEMA_TABLES: SchemaTable[] = [
     name: 'admins',
     purpose: 'Control-center operators',
     x: 340,
-    y: 60,
+    y: 80,
     w: 270,
     h: 190,
     color: '#0ea5e9',
@@ -126,7 +130,7 @@ const SCHEMA_TABLES: SchemaTable[] = [
     name: 'admin_sessions',
     purpose: 'JWT sessions',
     x: 340,
-    y: 330,
+    y: 360,
     w: 270,
     h: 160,
     color: '#8b5cf6',
@@ -145,8 +149,8 @@ const SCHEMA_TABLES: SchemaTable[] = [
     id: 'admin_audit_logs',
     name: 'admin_audit_logs',
     purpose: 'Audit trail',
-    x: 50,
-    y: 330,
+    x: 60,
+    y: 360,
     w: 220,
     h: 150,
     color: '#f59e0b',
@@ -165,10 +169,10 @@ const SCHEMA_TABLES: SchemaTable[] = [
     id: 'admin_failed_attempts',
     name: 'admin_failed_attempts',
     purpose: 'Lockout tracker',
-    x: 660,
-    y: 180,
-    w: 210,
-    h: 130,
+    x: 650,
+    y: 80,
+    w: 220,
+    h: 150,
     color: '#ef4444',
     columns: [
       { name: 'id', type: 'INTEGER', constraints: 'PK, AUTO' },
@@ -184,7 +188,7 @@ const SCHEMA_TABLES: SchemaTable[] = [
 const RELATIONSHIPS = [
   { from: 'roles', to: 'admins', label: 'role_id', fromPoint: 'right', toPoint: 'left', cardinality: '1:N' },
   { from: 'admins', to: 'admin_sessions', label: 'admin_id', fromPoint: 'bottom', toPoint: 'top', cardinality: '1:N' },
-  { from: 'admins', to: 'admin_audit_logs', label: 'admin_id', fromPoint: 'bottom', toPoint: 'top', cardinality: '1:N' },
+  { from: 'admins', to: 'admin_audit_logs', label: 'admin_id', fromPoint: 'bottom-left', toPoint: 'top-right', cardinality: '1:N' },
   { from: 'admins', to: 'admin_failed_attempts', label: 'admin_id', fromPoint: 'right', toPoint: 'left', cardinality: '1:N' },
 ];
 
@@ -286,6 +290,86 @@ const METRICS = [
 /* ═══════════════════════════════════════════════════════════════
    SUB-COMPONENTS
    ═══════════════════════════════════════════════════════════════ */
+
+function FullscreenWrapper({ children, title }: { children: (props: { isFullscreen: boolean; fit: boolean }) => React.ReactNode; title: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fit, setFit] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  const toggle = async () => {
+    if (!ref.current) return;
+    try {
+      if (!document.fullscreenElement) {
+        await ref.current.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  return (
+    <div ref={ref} className={`relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col ${isFullscreen ? 'p-6 h-screen w-screen overflow-hidden' : 'p-6'}`}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            {title === 'SRS' ? <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> : <Database className="w-5 h-5 text-sky-600 dark:text-sky-400" />}
+            {title === 'SRS' ? 'SRS Activity Diagram' : 'Relational Entity-Relationship Schema'}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {title === 'SRS'
+              ? 'UML-style swimlane diagram showing the complete admin login use-case flow including success and failure paths.'
+              : 'Normalized 3NF ER diagram for RBAC, sessions, audit logging, and brute-force protection.'}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {title === 'SRS' && (
+            <div className="flex items-center gap-3 text-[10px] font-bold">
+              <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" /> Success Path
+              </span>
+              <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
+                <span className="w-2 h-2 rounded-full bg-red-500" /> Failure Path
+              </span>
+            </div>
+          )}
+          {title === 'Schema' && (
+            <div className="flex flex-wrap gap-2 text-[10px] font-bold">
+              <span className="px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">PK Primary Key</span>
+              <span className="px-2 py-1 rounded-md bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300">FK Foreign Key</span>
+              <span className="px-2 py-1 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">IDX Index</span>
+            </div>
+          )}
+          <button
+            onClick={() => setFit((f) => !f)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${fit ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'}`}
+            title={fit ? 'Show diagram at natural size (scrollable)' : 'Scale diagram to fit the entire page'}
+          >
+            {fit ? <Shrink className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
+            {fit ? 'Fit On' : 'Fit Page'}
+          </button>
+          <button
+            onClick={toggle}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+          </button>
+        </div>
+      </div>
+      <div className={`flex-1 min-h-0 ${fit ? 'overflow-hidden' : 'overflow-auto'}`}>
+        {children({ isFullscreen, fit })}
+      </div>
+    </div>
+  );
+}
 
 function RequirementsTab() {
   return (
@@ -485,31 +569,15 @@ function SRSDiagram() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm"
-    >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            SRS Activity Diagram
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">UML-style swimlane diagram showing the complete admin login use-case flow including success and failure paths.</p>
-        </div>
-        <div className="flex items-center gap-3 text-[10px] font-bold">
-          <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" /> Success Path
-          </span>
-          <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-            <span className="w-2 h-2 rounded-full bg-red-500" /> Failure Path
-          </span>
-        </div>
-      </div>
-
-      <div className="overflow-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 h-[calc(100vh-320px)]">
-        <svg viewBox="0 0 1260 1140" className="min-w-[1260px] min-h-[1140px]" style={{ fontFamily: 'inherit' }}>
+    <FullscreenWrapper title="SRS">
+      {({ isFullscreen, fit }) => (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`flex flex-col ${isFullscreen ? 'h-full' : ''}`}
+        >
+          <div className={`${fit ? 'overflow-hidden' : 'overflow-auto'} rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 ${isFullscreen ? 'flex-1 min-h-0' : 'h-[calc(100vh-320px)]'}`}>
+        <svg viewBox="0 0 1260 1140" className={fit ? 'w-full h-full' : 'min-w-[1260px] min-h-[1140px]'} style={{ fontFamily: 'inherit' }}>
           <defs>
             <marker id="arrow-success" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
               <path d="M0,0 L0,6 L9,3 z" fill="#10b981" />
@@ -630,6 +698,8 @@ function SRSDiagram() {
         ))}
       </div>
     </motion.div>
+  )}
+</FullscreenWrapper>
   );
 }
 
@@ -655,28 +725,15 @@ function SchemaDiagram() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm"
-    >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Database className="w-5 h-5 text-sky-600 dark:text-sky-400" />
-            Relational Entity-Relationship Schema
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Normalized 3NF ER diagram for RBAC, sessions, audit logging, and brute-force protection.</p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-[10px] font-bold">
-          <span className="px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">PK Primary Key</span>
-          <span className="px-2 py-1 rounded-md bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300">FK Foreign Key</span>
-          <span className="px-2 py-1 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">IDX Index</span>
-        </div>
-      </div>
-
-      <div className="overflow-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 h-[calc(100vh-320px)]">
-        <svg viewBox="0 0 920 520" className="min-w-[920px] min-h-[520px]" style={{ fontFamily: 'inherit' }}>
+    <FullscreenWrapper title="Schema">
+      {({ isFullscreen, fit }) => (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`flex flex-col ${isFullscreen ? 'h-full' : ''}`}
+        >
+          <div className={`${fit ? 'overflow-hidden' : 'overflow-auto'} rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 ${isFullscreen ? 'flex-1 min-h-0' : 'h-[calc(100vh-320px)]'}`}>
+        <svg viewBox="0 0 920 560" className={fit ? 'w-full h-full' : 'min-w-[920px] min-h-[560px]'} style={{ fontFamily: 'inherit' }}>
           <defs>
             <marker id="crow-left" markerWidth="14" markerHeight="10" refX="2" refY="5" orient="auto" markerUnits="strokeWidth">
               <path d="M0,0 L0,10 M4,2 L0,5 L4,8" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
@@ -818,6 +875,8 @@ function SchemaDiagram() {
         })}
       </div>
     </motion.div>
+  )}
+</FullscreenWrapper>
   );
 }
 
