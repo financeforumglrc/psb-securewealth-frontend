@@ -92,10 +92,10 @@ const SCHEMA_TABLES: SchemaTable[] = [
     id: 'roles',
     name: 'roles',
     purpose: 'RBAC roles',
-    x: 60,
-    y: 80,
-    w: 220,
-    h: 150,
+    x: 80,
+    y: 140,
+    w: 300,
+    h: 200,
     color: '#10b981',
     columns: [
       { name: 'id', type: 'INTEGER', constraints: 'PK, AUTO' },
@@ -108,10 +108,10 @@ const SCHEMA_TABLES: SchemaTable[] = [
     id: 'admins',
     name: 'admins',
     purpose: 'Control-center operators',
-    x: 340,
-    y: 80,
-    w: 270,
-    h: 190,
+    x: 560,
+    y: 60,
+    w: 380,
+    h: 360,
     color: '#0ea5e9',
     columns: [
       { name: 'id', type: 'INTEGER', constraints: 'PK, AUTO' },
@@ -126,33 +126,31 @@ const SCHEMA_TABLES: SchemaTable[] = [
     ],
   },
   {
-    id: 'admin_sessions',
-    name: 'admin_sessions',
-    purpose: 'JWT sessions',
-    x: 340,
-    y: 360,
-    w: 270,
-    h: 160,
-    color: '#8b5cf6',
+    id: 'admin_failed_attempts',
+    name: 'admin_failed_attempts',
+    purpose: 'Lockout tracker',
+    x: 1120,
+    y: 140,
+    w: 320,
+    h: 200,
+    color: '#ef4444',
     columns: [
       { name: 'id', type: 'INTEGER', constraints: 'PK, AUTO' },
       { name: 'admin_id', type: 'INTEGER', constraints: 'FK → admins.id, IDX' },
-      { name: 'token_jti', type: 'VARCHAR(64)', constraints: 'UNIQUE, NOT NULL, IDX' },
-      { name: 'ip_address', type: 'VARCHAR(45)' },
-      { name: 'user_agent', type: 'TEXT' },
-      { name: 'issued_at', type: 'TIMESTAMP', constraints: 'NOT NULL' },
-      { name: 'expires_at', type: 'TIMESTAMP', constraints: 'NOT NULL, IDX' },
-      { name: 'revoked_at', type: 'TIMESTAMP' },
+      { name: 'ip_address', type: 'VARCHAR(45)', constraints: 'IDX' },
+      { name: 'failure_count', type: 'INTEGER', constraints: 'DEFAULT 0' },
+      { name: 'last_attempt', type: 'TIMESTAMP' },
+      { name: 'locked_until', type: 'TIMESTAMP' },
     ],
   },
   {
     id: 'admin_audit_logs',
     name: 'admin_audit_logs',
     purpose: 'Audit trail',
-    x: 60,
-    y: 360,
-    w: 220,
-    h: 150,
+    x: 80,
+    y: 620,
+    w: 340,
+    h: 260,
     color: '#f59e0b',
     columns: [
       { name: 'id', type: 'INTEGER', constraints: 'PK, AUTO' },
@@ -166,30 +164,32 @@ const SCHEMA_TABLES: SchemaTable[] = [
     ],
   },
   {
-    id: 'admin_failed_attempts',
-    name: 'admin_failed_attempts',
-    purpose: 'Lockout tracker',
-    x: 650,
-    y: 80,
-    w: 220,
-    h: 150,
-    color: '#ef4444',
+    id: 'admin_sessions',
+    name: 'admin_sessions',
+    purpose: 'JWT sessions',
+    x: 580,
+    y: 620,
+    w: 340,
+    h: 260,
+    color: '#8b5cf6',
     columns: [
       { name: 'id', type: 'INTEGER', constraints: 'PK, AUTO' },
       { name: 'admin_id', type: 'INTEGER', constraints: 'FK → admins.id, IDX' },
-      { name: 'ip_address', type: 'VARCHAR(45)', constraints: 'IDX' },
-      { name: 'failure_count', type: 'INTEGER', constraints: 'DEFAULT 0' },
-      { name: 'last_attempt', type: 'TIMESTAMP' },
-      { name: 'locked_until', type: 'TIMESTAMP' },
+      { name: 'token_jti', type: 'VARCHAR(64)', constraints: 'UNIQUE, NOT NULL, IDX' },
+      { name: 'ip_address', type: 'VARCHAR(45)' },
+      { name: 'user_agent', type: 'TEXT' },
+      { name: 'issued_at', type: 'TIMESTAMP', constraints: 'NOT NULL' },
+      { name: 'expires_at', type: 'TIMESTAMP', constraints: 'NOT NULL, IDX' },
+      { name: 'revoked_at', type: 'TIMESTAMP' },
     ],
   },
 ];
 
 const RELATIONSHIPS = [
-  { from: 'roles', to: 'admins', label: 'role_id', fromPoint: 'right', toPoint: 'left', cardinality: '1:N' },
-  { from: 'admins', to: 'admin_sessions', label: 'admin_id', fromPoint: 'bottom', toPoint: 'top', cardinality: '1:N' },
-  { from: 'admins', to: 'admin_audit_logs', label: 'admin_id', fromPoint: 'bottom-left', toPoint: 'top-right', cardinality: '1:N' },
-  { from: 'admins', to: 'admin_failed_attempts', label: 'admin_id', fromPoint: 'right', toPoint: 'left', cardinality: '1:N' },
+  { from: 'roles', to: 'admins', label: 'role_id', cardinality: '1:N' },
+  { from: 'admins', to: 'admin_failed_attempts', label: 'admin_id', cardinality: '1:N' },
+  { from: 'admins', to: 'admin_sessions', label: 'admin_id', cardinality: '1:N' },
+  { from: 'admins', to: 'admin_audit_logs', label: 'admin_id', cardinality: '1:N' },
 ];
 
 /* ───────── SRS swimlane data ───────── */
@@ -206,8 +206,8 @@ interface SRSStep {
 }
 
 const LANES = ['Admin', 'React SPA', 'API Gateway', 'Auth Service', 'Database', 'Audit Logger', 'Error Response'];
-const LANE_CX = [105, 280, 455, 630, 805, 980, 1155];
-const ROW_Y = [75, 150, 225, 300, 375, 450, 525, 600, 675, 750, 825, 900, 975, 1050];
+const LANE_CX = [140, 360, 580, 800, 1020, 1240, 1460];
+const ROW_Y = [90, 180, 270, 360, 450, 540, 630, 720, 810, 900, 990, 1080, 1170, 1260];
 
 const SRS_STEPS: SRSStep[] = [
   { id: 's1', lane: 0, row: 0, type: 'action', text: 'Open Admin Panel', sub: 'Sidebar navigation' },
@@ -488,8 +488,8 @@ function SRSDiagram() {
   const stepById = (id: string) => SRS_STEPS.find((s) => s.id === id);
   const stepCenter = (s: SRSStep) => ({ x: LANE_CX[s.lane], y: ROW_Y[s.row] });
 
-  const boxHalfHeight = (type: StepType) => (type === 'decision' ? 29 : 24);
-  const boxHalfWidth = (type: StepType) => (type === 'decision' ? 29 : 65);
+  const boxHalfHeight = (type: StepType) => (type === 'decision' ? 32 : 26);
+  const boxHalfWidth = (type: StepType) => (type === 'decision' ? 32 : 85);
 
   const renderConnections = () => {
     const paths: React.ReactNode[] = [];
@@ -577,7 +577,7 @@ function SRSDiagram() {
           className={`flex flex-col ${isFullscreen ? 'h-full' : ''}`}
         >
           <div className={`${fit ? 'overflow-hidden' : 'overflow-auto'} rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 ${isFullscreen ? 'flex-1 min-h-0' : 'h-[calc(100vh-320px)]'}`}>
-        <svg viewBox="0 0 1260 1140" className={fit ? 'w-full h-full' : 'min-w-[1260px] min-h-[1140px]'} style={{ fontFamily: 'inherit' }}>
+        <svg viewBox="0 0 1600 1350" className={fit ? 'w-full h-full' : 'min-w-[1600px] min-h-[1350px]'} style={{ fontFamily: 'inherit' }}>
           <defs>
             <marker id="arrow-success" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
               <path d="M0,0 L0,6 L9,3 z" fill="#10b981" />
@@ -593,13 +593,13 @@ function SRSDiagram() {
 
           {/* Lanes background */}
           {LANES.map((lane, i) => {
-            const x = LANE_CX[i] - 82;
+            const x = LANE_CX[i] - 100;
             return (
               <g key={lane}>
-                <rect x={x} y={0} width={164} height={1140} fill="url(#laneGrad)" opacity={i % 2 === 0 ? 0.45 : 0.3} />
-                <rect x={x} y={0} width={164} height={40} fill="#0f172a" className="dark:fill-slate-950" />
-                <text x={LANE_CX[i]} y={25} textAnchor="middle" fill="#e2e8f0" fontSize={12} fontWeight={700}>{lane}</text>
-                <line x1={x + 164} y1={0} x2={x + 164} y2={1140} stroke="#e2e8f0" strokeWidth={1} className="dark:stroke-slate-700" />
+                <rect x={x} y={0} width={200} height={1350} fill="url(#laneGrad)" opacity={i % 2 === 0 ? 0.45 : 0.3} />
+                <rect x={x} y={0} width={200} height={48} fill="#0f172a" className="dark:fill-slate-950" />
+                <text x={LANE_CX[i]} y={30} textAnchor="middle" fill="#e2e8f0" fontSize={13} fontWeight={700}>{lane}</text>
+                <line x1={x + 200} y1={0} x2={x + 200} y2={1350} stroke="#e2e8f0" strokeWidth={1} className="dark:stroke-slate-700" />
               </g>
             );
           })}
@@ -608,9 +608,9 @@ function SRSDiagram() {
           {renderConnections()}
 
           {/* Success decision labels */}
-          <text x={LANE_CX[2] + 36} y={ROW_Y[5] + 8} fill="#10b981" fontSize={10} fontWeight={700} className="dark:fill-emerald-400">Yes</text>
-          <text x={LANE_CX[3] + 36} y={ROW_Y[7] + 8} fill="#10b981" fontSize={10} fontWeight={700} className="dark:fill-emerald-400">Yes</text>
-          <text x={LANE_CX[3] + 36} y={ROW_Y[10] + 8} fill="#10b981" fontSize={10} fontWeight={700} className="dark:fill-emerald-400">Yes</text>
+          <text x={LANE_CX[2] + 40} y={ROW_Y[5] + 10} fill="#10b981" fontSize={11} fontWeight={700} className="dark:fill-emerald-400">Yes</text>
+          <text x={LANE_CX[3] + 40} y={ROW_Y[7] + 10} fill="#10b981" fontSize={11} fontWeight={700} className="dark:fill-emerald-400">Yes</text>
+          <text x={LANE_CX[3] + 40} y={ROW_Y[10] + 10} fill="#10b981" fontSize={11} fontWeight={700} className="dark:fill-emerald-400">Yes</text>
 
           {/* Steps */}
           {SRS_STEPS.map((step, idx) => {
@@ -618,9 +618,9 @@ function SRSDiagram() {
             const isDecision = step.type === 'decision';
             const isFailure = step.type === 'failure';
             const isTerminal = step.type === 'terminal';
-            const w = isDecision ? 58 : 130;
-            const h = isDecision ? 58 : 48;
-            const rx = isTerminal ? 26 : 10;
+            const w = isDecision ? 64 : 170;
+            const h = isDecision ? 64 : 52;
+            const rx = isTerminal ? 28 : 12;
             return (
               <motion.g
                 key={step.id}
@@ -650,7 +650,7 @@ function SRSDiagram() {
                   />
                 )}
                 {isDecision ? (
-                  <text x={x} y={y + 4} textAnchor="middle" fill={isFailure ? '#b91c1c' : '#064e3b'} fontSize={14} fontWeight={900} className="dark:fill-slate-100">?</text>
+                  <text x={x} y={y + 5} textAnchor="middle" fill={isFailure ? '#b91c1c' : '#064e3b'} fontSize={16} fontWeight={900} className="dark:fill-slate-100">?</text>
                 ) : (
                   <>
                     <text
@@ -658,11 +658,11 @@ function SRSDiagram() {
                       y={y - 2}
                       textAnchor="middle"
                       fill={isFailure ? '#b91c1c' : isTerminal ? '#ffffff' : '#064e3b'}
-                      fontSize={10}
+                      fontSize={11}
                       fontWeight={800}
                       className="dark:fill-slate-100"
                     >
-                      {step.text.length > 22 ? step.text.slice(0, 20) + '…' : step.text}
+                      {step.text.length > 24 ? step.text.slice(0, 22) + '…' : step.text}
                     </text>
                     {step.sub && (
                       <text
@@ -670,7 +670,7 @@ function SRSDiagram() {
                         y={y + 14}
                         textAnchor="middle"
                         fill={isFailure ? '#991b1b' : isTerminal ? '#cbd5e1' : '#475569'}
-                        fontSize={9}
+                        fontSize={10}
                         fontWeight={600}
                         className="dark:fill-slate-400"
                       >
@@ -704,24 +704,90 @@ function SRSDiagram() {
 }
 
 function SchemaDiagram() {
-  const getTable = (id: string) => SCHEMA_TABLES.find((t) => t.id === id)!;
+  const rowHeight = 30;
+  const headerHeight = 58;
+  const paddingY = 14;
 
-  const connectionPath = (rel: typeof RELATIONSHIPS[0]) => {
-    const from = getTable(rel.from);
-    const to = getTable(rel.to);
-    let x1 = from.x + from.w / 2;
-    let y1 = from.y + from.h / 2;
-    let x2 = to.x + to.w / 2;
-    let y2 = to.y + to.h / 2;
+  const computedTables = SCHEMA_TABLES.map((t) => ({
+    ...t,
+    h: Math.max(t.h, headerHeight + paddingY * 2 + t.columns.length * rowHeight),
+  }));
+  const getComputed = (id: string) => computedTables.find((t) => t.id === id)!;
 
-    if (rel.fromPoint === 'right') { x1 = from.x + from.w; y1 = from.y + from.h / 2; }
-    if (rel.fromPoint === 'bottom') { x1 = from.x + from.w / 2; y1 = from.y + from.h; }
-    if (rel.fromPoint === 'bottom-left') { x1 = from.x; y1 = from.y + from.h; }
-    if (rel.toPoint === 'left') { x2 = to.x; y2 = to.y + to.h / 2; }
-    if (rel.toPoint === 'top') { x2 = to.x + to.w / 2; y2 = to.y; }
-    if (rel.toPoint === 'top-right') { x2 = to.x + to.w; y2 = to.y; }
+  type Edge = 'top' | 'right' | 'bottom' | 'left';
+  const edgePoint = (t: typeof computedTables[0], edge: Edge, offset = 0.5) => {
+    switch (edge) {
+      case 'top': return { x: t.x + t.w * offset, y: t.y };
+      case 'right': return { x: t.x + t.w, y: t.y + t.h * offset };
+      case 'bottom': return { x: t.x + t.w * offset, y: t.y + t.h };
+      case 'left': return { x: t.x, y: t.y + t.h * offset };
+    }
+  };
 
-    return { x1, y1, x2, y2 };
+  const manhattanRoute = (rel: typeof RELATIONSHIPS[0]) => {
+    const from = getComputed(rel.from);
+    const to = getComputed(rel.to);
+
+    const routes: Record<string, () => { path: string; labelPos: { x: number; y: number }; cardinalityPos: { x: number; y: number }; startEdge: Edge; endEdge: Edge }> = {
+      'roles-admins': () => {
+        const p1 = edgePoint(from, 'right', 0.42);
+        const p2 = edgePoint(to, 'left', 0.42);
+        const midX = (p1.x + p2.x) / 2;
+        return {
+          path: `M ${p1.x} ${p1.y} L ${midX} ${p1.y} L ${midX} ${p2.y} L ${p2.x} ${p2.y}`,
+          labelPos: { x: midX, y: p1.y - 8 },
+          cardinalityPos: { x: midX + 6, y: p1.y + 10 },
+          startEdge: 'right',
+          endEdge: 'left',
+        };
+      },
+      'admins-admin_failed_attempts': () => {
+        const p1 = edgePoint(from, 'right', 0.38);
+        const p2 = edgePoint(to, 'left', 0.38);
+        const midX = (p1.x + p2.x) / 2;
+        return {
+          path: `M ${p1.x} ${p1.y} L ${midX} ${p1.y} L ${midX} ${p2.y} L ${p2.x} ${p2.y}`,
+          labelPos: { x: midX, y: p1.y - 8 },
+          cardinalityPos: { x: midX + 6, y: p1.y + 10 },
+          startEdge: 'right',
+          endEdge: 'left',
+        };
+      },
+      'admins-admin_sessions': () => {
+        const p1 = edgePoint(from, 'bottom', 0.5);
+        const p2 = edgePoint(to, 'top', 0.5);
+        const midY = (p1.y + p2.y) / 2;
+        return {
+          path: `M ${p1.x} ${p1.y} L ${p1.x} ${midY} L ${p2.x} ${midY} L ${p2.x} ${p2.y}`,
+          labelPos: { x: p1.x + 8, y: midY - 8 },
+          cardinalityPos: { x: p1.x + 8, y: midY + 10 },
+          startEdge: 'bottom',
+          endEdge: 'top',
+        };
+      },
+      'admins-admin_audit_logs': () => {
+        const p1 = edgePoint(from, 'left', 0.65);
+        const p2 = edgePoint(to, 'top', 0.75);
+        const cornerX = from.x - 70;
+        return {
+          path: `M ${p1.x} ${p1.y} L ${cornerX} ${p1.y} L ${cornerX} ${p2.y} L ${p2.x} ${p2.y}`,
+          labelPos: { x: cornerX + 8, y: (p1.y + p2.y) / 2 },
+          cardinalityPos: { x: cornerX + 8, y: (p1.y + p2.y) / 2 + 14 },
+          startEdge: 'left',
+          endEdge: 'top',
+        };
+      },
+    };
+    return routes[`${rel.from}-${rel.to}`]();
+  };
+
+  const crowFoot = (edge: Edge) => {
+    switch (edge) {
+      case 'left': return 'url(#crow-left)';
+      case 'right': return 'url(#crow-right)';
+      case 'top': return 'url(#crow-top)';
+      case 'bottom': return 'url(#crow-bottom)';
+    }
   };
 
   return (
@@ -733,152 +799,174 @@ function SchemaDiagram() {
           className={`flex flex-col ${isFullscreen ? 'h-full' : ''}`}
         >
           <div className={`${fit ? 'overflow-hidden' : 'overflow-auto'} rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 ${isFullscreen ? 'flex-1 min-h-0' : 'h-[calc(100vh-320px)]'}`}>
-        <svg viewBox="0 0 920 560" className={fit ? 'w-full h-full' : 'min-w-[920px] min-h-[560px]'} style={{ fontFamily: 'inherit' }}>
-          <defs>
-            <marker id="crow-left" markerWidth="14" markerHeight="10" refX="2" refY="5" orient="auto" markerUnits="strokeWidth">
-              <path d="M0,0 L0,10 M4,2 L0,5 L4,8" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
-            </marker>
-            <marker id="crow-right" markerWidth="14" markerHeight="10" refX="12" refY="5" orient="auto" markerUnits="strokeWidth">
-              <path d="M14,0 L14,10 M10,2 L14,5 L10,8" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
-            </marker>
-            <marker id="crow-top" markerWidth="10" markerHeight="14" refX="5" refY="12" orient="auto" markerUnits="strokeWidth">
-              <path d="M0,14 L10,14 M2,10 L5,14 L8,10" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
-            </marker>
-            <marker id="crow-bottom-left" markerWidth="14" markerHeight="14" refX="2" refY="2" orient="auto" markerUnits="strokeWidth">
-              <path d="M0,0 L10,10 M2,6 L0,0 L6,2" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
-            </marker>
-          </defs>
+            <svg viewBox="0 0 1520 960" className={fit ? 'w-full h-full' : 'min-w-[1520px] min-h-[960px]'} style={{ fontFamily: 'inherit' }}>
+              <defs>
+                <marker id="crow-left" markerWidth="14" markerHeight="10" refX="2" refY="5" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L0,10 M4,2 L0,5 L4,8" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
+                </marker>
+                <marker id="crow-right" markerWidth="14" markerHeight="10" refX="12" refY="5" orient="auto" markerUnits="strokeWidth">
+                  <path d="M14,0 L14,10 M10,2 L14,5 L10,8" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
+                </marker>
+                <marker id="crow-top" markerWidth="10" markerHeight="14" refX="5" refY="12" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,14 L10,14 M2,10 L5,14 L8,10" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
+                </marker>
+                <marker id="crow-bottom" markerWidth="10" markerHeight="14" refX="5" refY="2" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L10,0 M2,4 L5,0 L8,4" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
+                </marker>
+              </defs>
 
-          {/* Relationship lines */}
-          {RELATIONSHIPS.map((rel) => {
-            const { x1, y1, x2, y2 } = connectionPath(rel);
-            const isOneSide = rel.fromPoint === 'right' || rel.fromPoint === 'left';
-            return (
-              <g key={`${rel.from}-${rel.to}`}>
-                <line
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke="#64748b"
-                  strokeWidth={1.5}
-                  className="dark:stroke-slate-500"
-                  markerStart={isOneSide ? 'url(#crow-left)' : rel.fromPoint === 'bottom' ? undefined : 'url(#crow-bottom-left)'}
-                  markerEnd={isOneSide ? 'url(#crow-right)' : 'url(#crow-top)'}
-                />
-                <text
-                  x={(x1 + x2) / 2}
-                  y={(y1 + y2) / 2 - 6}
-                  textAnchor="middle"
-                  fill="#64748b"
-                  fontSize={9}
-                  fontWeight={700}
-                  className="dark:fill-slate-400"
-                >
-                  {rel.label}
-                </text>
-                <text
-                  x={(x1 + x2) / 2 + (rel.fromPoint === 'right' ? -30 : rel.fromPoint === 'bottom' ? 14 : 14)}
-                  y={(y1 + y2) / 2 + (rel.fromPoint === 'bottom' ? 0 : 12)}
-                  fill="#10b981"
-                  fontSize={9}
-                  fontWeight={800}
-                  className="dark:fill-emerald-400"
-                >
-                  {rel.cardinality}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* Tables */}
-          {SCHEMA_TABLES.map((table, tIdx) => (
-            <motion.g
-              key={table.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: tIdx * 0.08 }}
-            >
-              <rect
-                x={table.x}
-                y={table.y}
-                width={table.w}
-                height={table.h}
-                rx={12}
-                fill="#ffffff"
-                stroke={table.color}
-                strokeWidth={2}
-                className="dark:fill-slate-800"
-              />
-              <rect x={table.x} y={table.y} width={table.w} height={46} rx={12} fill={table.color} />
-              <rect x={table.x} y={table.y + 22} width={table.w} height={26} fill={table.color} />
-              <text x={table.x + 14} y={table.y + 19} fill="#ffffff" fontSize={14} fontWeight={800}>
-                {table.name}
-              </text>
-              <text x={table.x + 14} y={table.y + 37} fill="#ffffff" fontSize={9} fontWeight={600} opacity={0.85}>
-                {table.purpose}
-              </text>
-
-              {/* Columns */}
-              {table.columns.map((col, cIdx) => {
-                const cy = table.y + 56 + cIdx * 22;
-                const isPk = col.constraints?.includes('PK');
-                const isFk = col.constraints?.includes('FK');
-                const isIdx = col.constraints?.includes('IDX');
-                const badgeCount = (isPk ? 1 : 0) + (isFk ? 1 : 0) + (isIdx ? 1 : 0);
-                const typeRightX = table.w - 78 - badgeCount * 20;
+              {/* Relationship lines */}
+              {RELATIONSHIPS.map((rel) => {
+                const route = manhattanRoute(rel);
                 return (
-                  <g key={col.name}>
-                    <line x1={table.x + 10} y1={cy - 8} x2={table.x + table.w - 10} y2={cy - 8} stroke="#f1f5f9" className="dark:stroke-slate-700" />
-                    <text x={table.x + 16} y={cy + 4} fill="#334155" fontSize={11} fontWeight={600} className="dark:fill-slate-200">
-                      {col.name}
+                  <g key={`${rel.from}-${rel.to}`}>
+                    <path
+                      d={route.path}
+                      fill="none"
+                      stroke="#64748b"
+                      strokeWidth={1.5}
+                      className="dark:stroke-slate-500"
+                      markerStart={crowFoot(route.startEdge)}
+                      markerEnd={crowFoot(route.endEdge)}
+                    />
+                    <rect
+                      x={route.labelPos.x - 34}
+                      y={route.labelPos.y - 10}
+                      width={68}
+                      height={18}
+                      rx={4}
+                      fill="#f8fafc"
+                      className="dark:fill-slate-900"
+                    />
+                    <text
+                      x={route.labelPos.x}
+                      y={route.labelPos.y}
+                      textAnchor="middle"
+                      fill="#475569"
+                      fontSize={10}
+                      fontWeight={700}
+                      className="dark:fill-slate-300"
+                    >
+                      {rel.label}
                     </text>
-                    <text x={table.x + typeRightX} y={cy + 4} textAnchor="end" fill="#64748b" fontSize={10} className="dark:fill-slate-400">
-                      {col.type}
+                    <text
+                      x={route.cardinalityPos.x}
+                      y={route.cardinalityPos.y}
+                      fill="#10b981"
+                      fontSize={10}
+                      fontWeight={800}
+                      className="dark:fill-emerald-400"
+                    >
+                      {rel.cardinality}
                     </text>
-                    <g transform={`translate(${table.x + table.w - 74}, ${cy - 8})`}>
-                      {isPk && <><rect x={0} y={0} width={18} height={14} rx={3} fill="#10b981" /><text x={9} y={10} textAnchor="middle" fill="#fff" fontSize={7} fontWeight={800}>PK</text></>}
-                      {isFk && <><rect x={isPk ? 20 : 0} y={0} width={18} height={14} rx={3} fill="#0ea5e9" /><text x={isPk ? 29 : 9} y={10} textAnchor="middle" fill="#fff" fontSize={7} fontWeight={800}>FK</text></>}
-                      {isIdx && <><rect x={(isPk ? 20 : 0) + (isFk ? 20 : 0)} y={0} width={18} height={14} rx={3} fill="#f59e0b" /><text x={(isPk ? 20 : 0) + (isFk ? 20 : 0) + 9} y={10} textAnchor="middle" fill="#fff" fontSize={7} fontWeight={800}>I</text></>}
-                    </g>
                   </g>
                 );
               })}
-            </motion.g>
-          ))}
-        </svg>
-      </div>
 
-      <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Normalization', value: '3NF compliant', icon: BadgeCheck, color: 'emerald' },
-          { label: 'Relationships', value: '4 FK constraints', icon: Network, color: 'sky' },
-          { label: 'Indexes', value: '10+ performance indexes', icon: Zap, color: 'amber' },
-          { label: 'Audit Trail', value: 'Immutable logs', icon: ShieldCheck, color: 'violet' },
-        ].map((item) => {
-          const Icon = item.icon;
-          const colorMap: Record<string, string> = {
-            emerald: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300',
-            sky: 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300',
-            amber: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300',
-            violet: 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300',
-          };
-          return (
-            <div key={item.label} className={`flex items-center gap-3 p-4 rounded-xl border ${colorMap[item.color]}`}>
-              <Icon className="w-5 h-5" />
-              <div>
-                <p className="text-[10px] font-bold uppercase opacity-70">{item.label}</p>
-                <p className="text-sm font-bold">{item.value}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </motion.div>
-  )}
-</FullscreenWrapper>
+              {/* Tables */}
+              {computedTables.map((table, tIdx) => (
+                <motion.g
+                  key={table.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: tIdx * 0.08 }}
+                >
+                  <rect
+                    x={table.x}
+                    y={table.y}
+                    width={table.w}
+                    height={table.h}
+                    rx={14}
+                    fill="#ffffff"
+                    stroke={table.color}
+                    strokeWidth={2}
+                    className="dark:fill-slate-800"
+                  />
+                  <rect x={table.x} y={table.y} width={table.w} height={headerHeight} rx={14} fill={table.color} />
+                  <rect x={table.x} y={table.y + headerHeight - 14} width={table.w} height={14} fill={table.color} />
+                  <text x={table.x + 18} y={table.y + 26} fill="#ffffff" fontSize={16} fontWeight={800}>
+                    {table.name}
+                  </text>
+                  <text x={table.x + 18} y={table.y + 46} fill="#ffffff" fontSize={11} fontWeight={600} opacity={0.9}>
+                    {table.purpose}
+                  </text>
+
+                  {/* Columns */}
+                  {table.columns.map((col, cIdx) => {
+                    const cy = table.y + headerHeight + paddingY + cIdx * rowHeight;
+                    const isPk = col.constraints?.includes('PK');
+                    const isFk = col.constraints?.includes('FK');
+                    const isIdx = col.constraints?.includes('IDX');
+                    const badgeCount = (isPk ? 1 : 0) + (isFk ? 1 : 0) + (isIdx ? 1 : 0);
+                    const badgeOffset = badgeCount * 22;
+                    return (
+                      <g key={col.name}>
+                        <line x1={table.x + 14} y1={cy - 10} x2={table.x + table.w - 14} y2={cy - 10} stroke="#f1f5f9" className="dark:stroke-slate-700" />
+                        <text x={table.x + 20} y={cy + 4} fill="#334155" fontSize={12} fontWeight={600} className="dark:fill-slate-200">
+                          {col.name}
+                        </text>
+                        <text x={table.x + table.w - 24 - badgeOffset} y={cy + 4} textAnchor="end" fill="#64748b" fontSize={11} className="dark:fill-slate-400">
+                          {col.type}
+                        </text>
+                        <g transform={`translate(${table.x + table.w - 20 - badgeOffset}, ${cy - 9})`}>
+                          {isPk && (
+                            <g>
+                              <rect x={0} y={0} width={20} height={16} rx={4} fill="#10b981" />
+                              <text x={10} y={11} textAnchor="middle" fill="#fff" fontSize={8} fontWeight={800}>PK</text>
+                            </g>
+                          )}
+                          {isFk && (
+                            <g transform={`translate(${isPk ? 22 : 0}, 0)`}>
+                              <rect x={0} y={0} width={20} height={16} rx={4} fill="#0ea5e9" />
+                              <text x={10} y={11} textAnchor="middle" fill="#fff" fontSize={8} fontWeight={800}>FK</text>
+                            </g>
+                          )}
+                          {isIdx && (
+                            <g transform={`translate(${(isPk ? 22 : 0) + (isFk ? 22 : 0)}, 0)`}>
+                              <rect x={0} y={0} width={20} height={16} rx={4} fill="#f59e0b" />
+                              <text x={10} y={11} textAnchor="middle" fill="#fff" fontSize={8} fontWeight={800}>IDX</text>
+                            </g>
+                          )}
+                        </g>
+                      </g>
+                    );
+                  })}
+                </motion.g>
+              ))}
+            </svg>
+          </div>
+
+          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Normalization', value: '3NF compliant', icon: BadgeCheck, color: 'emerald' },
+              { label: 'Relationships', value: '4 FK constraints', icon: Network, color: 'sky' },
+              { label: 'Indexes', value: '10+ performance indexes', icon: Zap, color: 'amber' },
+              { label: 'Audit Trail', value: 'Immutable logs', icon: ShieldCheck, color: 'violet' },
+            ].map((item) => {
+              const Icon = item.icon;
+              const colorMap: Record<string, string> = {
+                emerald: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300',
+                sky: 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300',
+                amber: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300',
+                violet: 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300',
+              };
+              return (
+                <div key={item.label} className={`flex items-center gap-3 p-4 rounded-xl border ${colorMap[item.color]}`}>
+                  <Icon className="w-5 h-5" />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase opacity-70">{item.label}</p>
+                    <p className="text-sm font-bold">{item.value}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+    </FullscreenWrapper>
   );
 }
+
 
 function FlowDiagram() {
   return (
