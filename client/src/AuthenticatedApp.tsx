@@ -31,6 +31,7 @@ import ManualAssetForm from './components/assets/ManualAssetForm';
 import LinkAccountModal from './components/assets/LinkAccountModal';
 import PhysicalAssetIntelligence from './components/assets/PhysicalAssetIntelligence';
 import AAFetchAnimation from './components/aa/AAFetchAnimation';
+import AACallbackHandler from './components/aa/AACallbackHandler';
 import OnboardingWizard from './components/onboarding/OnboardingWizard';
 
 const PaymentsPage = lazyWithRetry(() => import('./components/payments/PaymentsPage'));
@@ -401,6 +402,21 @@ export default function AuthenticatedApp() {
       else if (typeof (window as any).cancelIdleCallback === 'function') (window as any).cancelIdleCallback(id);
     };
   }, [authState.isAuthenticated]);
+
+  // SETU AA redirect callback handler
+  const isAaCallback = typeof window !== 'undefined' && window.location.pathname === '/aa/callback';
+  if (isAaCallback) {
+    return (
+      <AACallbackHandler
+        onComplete={() => {
+          setAAFetchComplete(true);
+          if (window.location.pathname === '/aa/callback') {
+            window.history.replaceState({}, '', '/');
+          }
+        }}
+      />
+    );
+  }
 
   // First-time onboarding wizard — shown once after login
   if (!onboardingComplete) {

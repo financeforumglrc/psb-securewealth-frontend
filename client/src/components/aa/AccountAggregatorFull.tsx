@@ -136,6 +136,7 @@ export default function AccountAggregatorFull() {
   const [showConsent, setShowConsent] = useState<typeof AA_BANKS[0] | null>(null);
   const [consentDuration, setConsentDuration] = useState(6);
   const [aaError, setAaError] = useState<string | null>(null);
+  const [pendingConsent, setPendingConsent] = useState<{ id: number; consentId: string; setuUrl?: string; bankName: string } | null>(null);
 
   // Sync backend AA consents on mount (best-effort)
   useEffect(() => {
@@ -151,12 +152,32 @@ export default function AccountAggregatorFull() {
     setLinkingBank(bank.id);
     setAaError(null);
 
+    const redirectUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/aa/callback`
+      : 'https://psb-securewealth-frontend.onrender.com/aa/callback';
+
     // Persist consent to backend first (best-effort; UI still works if offline)
     const consentRes = await backendApi.createAaConsent({
       bankName: bank.name,
       scopes: CONSENT_SCOPES,
+      redirectUrl,
     });
 
+    const consentData = consentRes.data?.data;
+    const setuUrl = consentData?.setuConsentUrl;
+    const consentId = consentData?.consentId;
+    const internalId = consentData?.id;
+
+    if (consentRes.ok && setuUrl && internalId) {
+      // Real SETU sandbox flow: open the approval page, then wait for callback.
+      setLinkingBank(null);
+      setShowConsent(null);
+      setPendingConsent({ id: internalId, consentId, setuUrl, bankName: bank.name });
+      window.open(setuUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // Local mock / SETU-fallback flow: create a synthetic asset immediately.
     setTimeout(() => {
       const meta = BANK_META[bank.id] || { mockBalance: 0, color: 'bg-slate-500', initial: bank.shortName[0], mockTxs: [] };
       const newAsset = {
@@ -168,7 +189,7 @@ export default function AccountAggregatorFull() {
         linkedViaAA: true,
       };
       const consent = {
-        consentId: consentRes.data?.data?.consentId || 'AA-' + Date.now().toString(36).toUpperCase(),
+        consentId: consentId || 'AA-' + Date.now().toString(36).toUpperCase(),
         dataScope: CONSENT_SCOPES,
         purpose: `Account aggregation from ${bank.name}`,
         validityDays: consentDuration * 30,
@@ -196,6 +217,49 @@ export default function AccountAggregatorFull() {
     }, 1500);
   };
 
+  const checkPendingConsent = async () => {
+    if (!pendingConsent) return;
+    setLinkingBank('pending');
+    setAaError(null);
+    try {
+      const statusRes = await backendApi.getAaConsentStatus(pendingConsent.id);
+      const statusData = statusRes.data?.data;
+      if (statusData?.status === 'active') {
+        const discoverRes = await backendApi.discoverAaAccounts(pendingConsent.id);
+        if (discoverRes.ok && Array.isArray(discoverRes.data?.data)) {
+          const accounts = discoverRes.data.data;
+          accounts.forEach((acc: any) => {
+            addAsset({
+              id: 'aa-acc-' + (acc.id || Math.random().toString(36).slice(2)),
+              name: `${acc.bankName} ${acc.accountType} ••${(acc.accountNumberMasked || '').slice(-4)}`,
+              type: 'bank',
+              value: acc.balance || 0,
+              liquidity: 'high',
+              linkedViaAA: true,
+            });
+          });
+          addConsent({
+            consentId: pendingConsent.consentId,
+            dataScope: CONSENT_SCOPES,
+            purpose: `Account aggregation from ${pendingConsent.bankName}`,
+            validityDays: consentDuration * 30,
+            status: 'ACTIVE',
+            grantedAt: new Date().toISOString(),
+          });
+          setPendingConsent(null);
+        } else {
+          setAaError(discoverRes.data?.error || 'Account discovery failed.');
+        }
+      } else {
+        setAaError(`Consent status is ${statusData?.status || 'unknown'}. Please approve it in the opened SETU tab and try again.`);
+      }
+    } catch (e: any) {
+      setAaError(e.message || 'Failed to check consent status.');
+    } finally {
+      setLinkingBank(null);
+    }
+  };
+
   const handleRevoke = async (assetId: string, consentId: string) => {
     await backendApi.revokeAaConsent(consentId).catch(() => {});
     removeAsset(assetId);
@@ -220,6 +284,25 @@ export default function AccountAggregatorFull() {
         {aaError && (
           <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-100 dark:border-rose-800 text-xs text-rose-600 dark:text-rose-400">
             <i className="fas fa-circle-exclamation mr-1" /> {aaError}
+          </div>
+        )}
+
+        {pendingConsent && (
+          <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+            <p className="text-xs text-amber-800 dark:text-amber-300 font-bold mb-1">
+              <i className="fas fa-clock mr-1" /> Waiting for SETU sandbox approval
+            </p>
+            <p className="text-[11px] text-amber-700 dark:text-amber-400 mb-3">
+              A consent approval tab was opened. After you approve it there, click the button below to discover your accounts.
+            </p>
+            <button
+              onClick={checkPendingConsent}
+              disabled={linkingBank === 'pending'}
+              className="text-xs px-4 py-2 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 disabled:opacity-50"
+            >
+              {linkingBank === 'pending' ? <i className="fas fa-spinner fa-spin mr-1" /> : <i className="fas fa-magnifying-glass mr-1" />}
+              Check Approval & Discover Accounts
+            </button>
           </div>
         )}
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Landmark, TrendingUp, PiggyBank, FileHeart, Loader2, CheckCircle2 } from 'lucide-react';
+import { backendApi } from '../../lib/backendApi';
 import { protectionApi, type AAFetchItem } from '../../lib/protectionApi';
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -16,6 +17,21 @@ const FALLBACK_STEPS: AAFetchItem[] = [
   { bank: 'Zerodha', type: 'Equity Portfolio', amount: '₹85,500', icon: '💹' },
   { bank: 'LIC of India', type: 'Endowment Policy', amount: '₹50,000', icon: '🛡️' },
 ];
+
+function formatINR(amount: number) {
+  return `₹${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
+function iconForType(type?: string) {
+  const t = (type || '').toLowerCase();
+  if (t.includes('saving')) return '🏦';
+  if (t.includes('current')) return '🏛️';
+  if (t.includes('fixed') || t.includes('recurring')) return '🔒';
+  if (t.includes('mutual')) return '📈';
+  if (t.includes('equity') || t.includes('stock')) return '💹';
+  if (t.includes('insurance') || t.includes('policy')) return '🛡️';
+  return '🏦';
+}
 
 interface Props {
   onComplete: () => void;
@@ -41,7 +57,10 @@ export default function AAFetchAnimation({ onComplete }: Props) {
 
     async function load() {
       try {
-        const res = await protectionApi.fetchAA();
+        // Try the real AA sync endpoint first (discovers accounts + transactions
+        // from active consents). Fall back to the legacy protection persona fetch
+        // and then to hardcoded demo data.
+        const res = await backendApi.aaSync();
         if (cancelled) return;
 
         let fetchedSteps = FALLBACK_STEPS;
@@ -49,12 +68,30 @@ export default function AAFetchAnimation({ onComplete }: Props) {
         let message =
           'Welcome back! Your SecureWealth Twin is now monitoring across all linked institutions.';
 
-        if (res.ok && res.data?.steps) {
-          fetchedSteps = res.data.steps;
-          netWorth = res.data.total_net_worth || netWorth;
-          message = res.data.message || message;
+        if (res.ok && Array.isArray(res.data?.data) && res.data.data.length > 0) {
+          const allAccounts = res.data.data.flatMap((group: any) => group.accounts || []);
+          if (allAccounts.length > 0) {
+            fetchedSteps = allAccounts.map((acc: any) => ({
+              bank: acc.bankName || 'Linked Institution',
+              type: acc.accountType || 'Account',
+              amount: formatINR(acc.balance || 0),
+              icon: iconForType(acc.accountType),
+            }));
+            const total = allAccounts.reduce((sum: number, acc: any) => sum + (acc.balance || 0), 0);
+            netWorth = formatINR(total);
+            message = `Synced ${allAccounts.length} account(s) via the RBI Account Aggregator network.`;
+          } else {
+            setError('No AA-linked accounts found yet — showing demo aggregation.');
+          }
         } else {
-          setError('AA service unreachable — showing demo aggregation.');
+          const fallback = await protectionApi.fetchAA();
+          if (!cancelled && fallback.ok && fallback.data?.steps) {
+            fetchedSteps = fallback.data.steps;
+            netWorth = fallback.data.total_net_worth || netWorth;
+            message = fallback.data.message || message;
+          } else {
+            setError('AA service unreachable — showing demo aggregation.');
+          }
         }
 
         setSteps(fetchedSteps);

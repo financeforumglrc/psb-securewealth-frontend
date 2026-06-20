@@ -4,18 +4,19 @@ import { useAuth } from '../../context/AuthContext';
 import { clearAuth } from '../../services/authService';
 import { useWealthStore } from '../../store/wealthStore';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
+import { useTranslation } from '../../hooks/useTranslation';
 import PSBLogo from './PSBLogo';
 import CommandPalette from '../ui/CommandPalette';
 import CreateAccountModal from '../auth/CreateAccountModal';
 
 const NAV_LINKS = [
-  { view: 'dashboard', label: 'Home' },
-  { view: 'payments', label: 'Payments' },
-  { view: 'goals', label: 'Goals' },
-  { view: 'portfolio', label: 'Portfolio' },
-  { view: 'subscriptions', label: 'Subscriptions' },
-  { view: 'security-beast', label: 'Security' },
-  { view: 'innovation-lab', label: 'Innovation' },
+  { view: 'dashboard', label: { en: 'Home', hi: 'होम' } },
+  { view: 'payments', label: { en: 'Payments', hi: 'भुगतान' } },
+  { view: 'goals', label: { en: 'Goals', hi: 'लक्ष्य' } },
+  { view: 'portfolio', label: { en: 'Portfolio', hi: 'पोर्टफोलियो' } },
+  { view: 'subscriptions', label: { en: 'Subscriptions', hi: 'सदस्यता' } },
+  { view: 'security-beast', label: { en: 'Security', hi: 'सुरक्षा' } },
+  { view: 'innovation-lab', label: { en: 'Innovation', hi: 'इनोवेशन' } },
 ];
 
 export default function BankHeader() {
@@ -26,6 +27,7 @@ export default function BankHeader() {
   const currentView = useWealthStore((s) => s.currentView);
   const darkMode = useWealthStore((s) => s.darkMode);
   const user = useWealthStore((s) => s.user);
+  const { language, setLanguage, isHindi } = useTranslation();
 
   const handleNav = (view: string) => {
     useWealthStore.getState().setView(view as any);
@@ -94,7 +96,7 @@ export default function BankHeader() {
                       : 'text-white/85 hover:bg-white/10 hover:text-white'
                   }`}
                 >
-                  {link.label}
+                  {link.label[language as 'en' | 'hi'] || link.label.en}
                 </button>
               ))}
             </nav>
@@ -146,7 +148,10 @@ export default function BankHeader() {
                             <i className="fas fa-child text-amber-500 w-4" /> Kids Mode
                           </button>
                           <button onClick={() => { useWealthStore.getState().toggleDarkMode(); setProfileOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-3">
-                            <i className={`fas fa-${darkMode ? 'sun' : 'moon'} text-gray-400 w-4`} /> {darkMode ? 'Light Mode' : 'Dark Mode'}
+                            <i className={`fas fa-${darkMode ? 'sun' : 'moon'} text-gray-400 w-4`} /> {darkMode ? (isHindi() ? 'लाइट मोड' : 'Light Mode') : (isHindi() ? 'डार्क मोड' : 'Dark Mode')}
+                          </button>
+                          <button onClick={() => { setLanguage(isHindi() ? 'en' : 'hi'); setProfileOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-3">
+                            <i className="fas fa-language text-primary w-4" /> {isHindi() ? 'Switch to English' : 'हिंदी में बदलें'}
                           </button>
                           <button onClick={() => { useWealthStore.getState().setView('family'); setProfileOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-3">
                             <i className="fas fa-people-group text-primary w-4" /> Family Dashboard
@@ -205,7 +210,7 @@ export default function BankHeader() {
                         : 'text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    {link.label}
+                    {link.label[language as 'en' | 'hi'] || link.label.en}
                   </button>
                 ))}
               </div>

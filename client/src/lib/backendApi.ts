@@ -399,10 +399,19 @@ export const backendApi = {
   async getAaConsents() {
     return fetchJson('/aa/consents');
   },
-  async createAaConsent(payload: { bankName: string; accountMask?: string; scopes?: string[] }) {
+  async createAaConsent(payload: { bankName: string; accountMask?: string; scopes?: string[]; phone?: string; redirectUrl?: string }) {
     return fetchJson('/aa/consents', { method: 'POST', body: JSON.stringify(payload) });
+  },
+  async getAaConsentStatus(consentId: number | string) {
+    return fetchJson(`/aa/consents/${consentId}/status`);
   },
   async revokeAaConsent(consentId: number | string) {
     return fetchJson(`/aa/consents/${consentId}`, { method: 'DELETE' });
+  },
+  async aaSync() {
+    return fetchJson('/aa/sync', { method: 'POST' });
+  },
+  async discoverAaAccounts(consentId: number | string) {
+    return fetchJson(`/aa/consents/${consentId}/discover`, { method: 'POST' });
   },
 };

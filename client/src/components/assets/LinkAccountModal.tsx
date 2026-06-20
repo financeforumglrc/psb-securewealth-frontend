@@ -12,8 +12,9 @@ interface Props {
 }
 
 export default function LinkAccountModal({ show, onClose }: Props) {
-  const [step, setStep] = useState<'bank' | 'consent' | 'loading' | 'success'>('bank');
+  const [step, setStep] = useState<'bank' | 'consent' | 'loading' | 'setu' | 'success'>('bank');
   const [selectedBank, setSelectedBank] = useState<typeof AA_BANKS[0] | null>(null);
+  const [pendingConsent, setPendingConsent] = useState<{ id: number; consentId: string } | null>(null);
   const addAsset = useWealthStore((s) => s.addAsset);
   const addConsent = useWealthStore((s) => s.addConsent);
 
@@ -24,10 +25,25 @@ export default function LinkAccountModal({ show, onClose }: Props) {
 
   async function approveConsent() {
     setStep('loading');
+    const redirectUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/aa/callback`
+      : 'https://psb-securewealth-frontend.onrender.com/aa/callback';
     const consentRes = await backendApi.createAaConsent({
       bankName: selectedBank!.name,
       scopes: CONSENT_SCOPES,
+      redirectUrl,
     });
+
+    const consentData = consentRes.data?.data;
+    const setuUrl = consentData?.setuConsentUrl;
+    const internalId = consentData?.id;
+
+    if (consentRes.ok && setuUrl && internalId) {
+      setPendingConsent({ id: internalId, consentId: consentData.consentId });
+      setStep('setu');
+      window.open(setuUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
 
     setTimeout(() => {
       const newAsset: Asset = {
@@ -39,7 +55,7 @@ export default function LinkAccountModal({ show, onClose }: Props) {
         linkedViaAA: true,
       };
       const consent: ConsentRecord = {
-        consentId: consentRes.data?.data?.consentId || 'AA-' + Date.now().toString(36).toUpperCase(),
+        consentId: consentData?.consentId || 'AA-' + Date.now().toString(36).toUpperCase(),
         dataScope: CONSENT_SCOPES,
         purpose: `Account aggregation from ${selectedBank!.name}`,
         validityDays: 30,
@@ -50,6 +66,43 @@ export default function LinkAccountModal({ show, onClose }: Props) {
       addConsent(consent);
       setStep('success');
     }, 1500);
+  }
+
+  async function checkSetuApproval() {
+    if (!pendingConsent || !selectedBank) return;
+    setStep('loading');
+    try {
+      const statusRes = await backendApi.getAaConsentStatus(pendingConsent.id);
+      const statusData = statusRes.data?.data;
+      if (statusData?.status === 'active') {
+        const discoverRes = await backendApi.discoverAaAccounts(pendingConsent.id);
+        if (discoverRes.ok && Array.isArray(discoverRes.data?.data)) {
+          discoverRes.data.data.forEach((acc: any) => {
+            addAsset({
+              id: 'aa-acc-' + (acc.id || Math.random().toString(36).slice(2)),
+              name: `${acc.bankName} ${acc.accountType} ••${(acc.accountNumberMasked || '').slice(-4)}`,
+              type: 'bank',
+              value: acc.balance || 0,
+              liquidity: 'high',
+              linkedViaAA: true,
+            });
+          });
+          addConsent({
+            consentId: pendingConsent.consentId,
+            dataScope: CONSENT_SCOPES,
+            purpose: `Account aggregation from ${selectedBank.name}`,
+            validityDays: 30,
+            status: 'ACTIVE',
+            grantedAt: new Date().toISOString(),
+          });
+          setStep('success');
+          return;
+        }
+      }
+      setStep('setu');
+    } catch {
+      setStep('setu');
+    }
   }
 
   function denyConsent() {
@@ -179,6 +232,25 @@ export default function LinkAccountModal({ show, onClose }: Props) {
               <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
               <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Connecting to {selectedBank?.name}...</p>
               <p className="text-xs text-slate-400 mt-1">Fetching account balance and transactions via RBI AA</p>
+            </div>
+          )}
+
+          {/* SETU pending */}
+          {step === 'setu' && selectedBank && (
+            <div className="flex flex-col items-center py-6">
+              <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-4">
+                <i className="fas fa-clock text-3xl text-amber-500" />
+              </div>
+              <p className="text-lg font-bold text-slate-800 dark:text-white">Approve in SETU Sandbox</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-1">
+                A secure consent approval tab was opened. After approving, click below to finish linking {selectedBank.name}.
+              </p>
+              <button
+                onClick={checkSetuApproval}
+                className="mt-6 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <i className="fas fa-magnifying-glass mr-1" /> Check & Finish
+              </button>
             </div>
           )}
 
