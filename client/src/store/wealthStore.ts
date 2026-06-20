@@ -55,6 +55,7 @@ interface WealthState {
   demoPhase: number;
   demoPaused: boolean;
   aaFetchComplete: boolean;
+  onboardingComplete: boolean;
   behavioralDeviation: number;
   loginAt: number;
 
@@ -118,6 +119,7 @@ interface WealthState {
   setDemoPhase: (phase: number) => void;
   toggleDemoPaused: () => void;
   setAAFetchComplete: (val: boolean) => void;
+  setOnboardingComplete: (val: boolean) => void;
   setBehavioralDeviation: (val: number) => void;
   setLoginAt: (val: number) => void;
 }
@@ -241,6 +243,7 @@ export const useWealthStore = create<WealthState>()(
       demoPhase: 0,
       demoPaused: false,
       aaFetchComplete: false,
+      onboardingComplete: false,
       behavioralDeviation: 0,
       loginAt: Date.now(),
 
@@ -355,6 +358,7 @@ export const useWealthStore = create<WealthState>()(
       setDemoPhase: (phase) => set({ demoPhase: phase }),
       toggleDemoPaused: () => set((s) => ({ demoPaused: !s.demoPaused })),
       setAAFetchComplete: (val) => set({ aaFetchComplete: val }),
+      setOnboardingComplete: (val) => set({ onboardingComplete: val }),
       setBehavioralDeviation: (val) => set({ behavioralDeviation: val }),
       setLoginAt: (val) => set({ loginAt: val }),
       // Seed realistic data for judges

@@ -31,6 +31,7 @@ import ManualAssetForm from './components/assets/ManualAssetForm';
 import LinkAccountModal from './components/assets/LinkAccountModal';
 import PhysicalAssetIntelligence from './components/assets/PhysicalAssetIntelligence';
 import AAFetchAnimation from './components/aa/AAFetchAnimation';
+import OnboardingWizard from './components/onboarding/OnboardingWizard';
 
 const PaymentsPage = lazyWithRetry(() => import('./components/payments/PaymentsPage'));
 const ProfileSettings = lazyWithRetry(() => import('./components/profile/ProfileSettings'));
@@ -280,6 +281,8 @@ export default function AuthenticatedApp() {
   const pitchModeActive = useWealthStore((s) => s.pitchModeActive);
   const aaFetchComplete = useWealthStore((s) => s.aaFetchComplete);
   const setAAFetchComplete = useWealthStore((s) => s.setAAFetchComplete);
+  const onboardingComplete = useWealthStore((s) => s.onboardingComplete);
+  const setOnboardingComplete = useWealthStore((s) => s.setOnboardingComplete);
   const setLoginAt = useWealthStore((s) => s.setLoginAt);
   /* familyMode unused after removing AnimatePresence key */
   const language = useWealthStore((s) => s.language);
@@ -390,6 +393,11 @@ export default function AuthenticatedApp() {
       else if (typeof (window as any).cancelIdleCallback === 'function') (window as any).cancelIdleCallback(id);
     };
   }, [authState.isAuthenticated]);
+
+  // First-time onboarding wizard — shown once after login
+  if (!onboardingComplete) {
+    return <OnboardingWizard onComplete={() => setOnboardingComplete(true)} />;
+  }
 
   // Account Aggregator onboarding animation — shown once after login
   if (!aaFetchComplete) {
@@ -929,6 +937,17 @@ export default function AuthenticatedApp() {
                 </motion.div>
               </AnimatePresence>
             </div>
+
+            {/* Regulatory / simulation disclaimer */}
+            <div className="mt-8 mx-4 lg:mx-8 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-center">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                <strong className="text-slate-700 dark:text-slate-300">Simulation / Demo Only.</strong>{' '}
+                SecureWealth Twin is a hackathon prototype. It is not a licensed bank, SEBI-registered investment advisor, or insurance provider.
+                All projections, recommendations, and market data are for demonstration purposes and do not constitute financial advice.
+                Past performance is not indicative of future returns. Always consult a SEBI-registered advisor before investing.
+              </p>
+            </div>
+
             <AccessibleFooter />
         </main>
       </div>

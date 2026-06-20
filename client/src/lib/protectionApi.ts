@@ -3,7 +3,7 @@
  * Talks to the FastAPI microservice (local dev proxy or deployed service).
  */
 
-const API_BASE = import.meta.env.VITE_PROTECTION_API_URL || '/protection';
+const API_BASE = import.meta.env.VITE_PROTECTION_API_URL || import.meta.env.VITE_BACKEND_URL || 'https://psb-securewealth-backend.onrender.com/api/v1';
 
 async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: number }): Promise<{ ok: boolean; status: number; data: any }> {
   try {
@@ -50,6 +50,7 @@ export interface ProtectionRequest {
   visitor_id?: string;
   fingerprint_hash?: string;
   device_fingerprint?: FingerprintPayload;
+  demo_scenario?: 'low' | 'medium' | 'high';
 }
 
 export interface ProtectionResponse {

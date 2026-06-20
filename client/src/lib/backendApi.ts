@@ -291,6 +291,9 @@ export const backendApi = {
   async deleteRecurring(id: number) {
     return fetchJson(`/banking/recurring/${id}`, { method: 'DELETE' });
   },
+  async executeRecurring(id: number) {
+    return fetchJson(`/banking/recurring/${id}/execute`, { method: 'POST' });
+  },
 
   // Statements
   async getStatement(accountId: number, startDate?: string, endDate?: string) {

@@ -105,6 +105,20 @@ export default function RecurringPayments() {
     }
   }
 
+  async function handleExecute(id: number, name: string) {
+    try {
+      const res = await backendApi.executeRecurring(id);
+      if (res.ok && res.data?.success) {
+        showToast(`SIP executed: ₹${res.data.data.amount.toLocaleString()} invested in ${name}`, 'success');
+      } else {
+        showToast(res.data?.error || 'Execution failed', 'error');
+      }
+      loadItems();
+    } catch (e: any) {
+      showToast(e.message || 'Execution failed', 'error');
+    }
+  }
+
   const totalMonthly = items.filter(i => i.status === 'active' && i.frequency === 'monthly').reduce((sum, i) => sum + i.amount, 0);
   const activeCount = items.filter(i => i.status === 'active').length;
 
@@ -226,6 +240,13 @@ export default function RecurringPayments() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {isActive && (
+                    <button onClick={() => handleExecute(item.id, item.name)}
+                      className="px-3 h-8 rounded-lg flex items-center gap-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors text-xs font-semibold"
+                      title="Execute this SIP now">
+                      <i className="fas fa-bolt" /> Execute
+                    </button>
+                  )}
                   <button onClick={() => handleToggleStatus(item)}
                     className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isActive ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}
                     title={isActive ? 'Pause' : 'Activate'}>
