@@ -1,129 +1,27 @@
 import { useWealthStore } from '../store/wealthStore';
-
-const TRANSLATIONS: Record<string, Record<string, string>> = {
-  en: {
-    netWorth: 'Net Worth',
-    monthlySavings: 'Monthly Savings',
-    monthlyExpenses: 'Monthly Expenses',
-    healthScore: 'Health Score',
-    aiRecommendations: 'AI Recommendations',
-    protectionScore: 'Protection Score',
-    financialGoals: 'Financial Goals',
-    emergencyFund: 'Emergency Fund',
-    dashboard: 'Dashboard',
-    protection: 'Protection',
-    fraudSimulator: 'Fraud Simulator',
-    otpSimulation: 'OTP Simulation',
-    secureCheckout: 'Secure Checkout',
-    stressTest: 'Stress Test Simulator',
-    scamCaller: 'Scam Caller ID',
-    behavioralBiometrics: 'Behavioral Biometrics',
-    threatIntel: 'Threat Intelligence',
-    panicButton: 'Panic Button',
-    duressMode: 'Duress Mode',
-    securityLog: 'Security Log',
-    netWorthLabel: 'Net Worth',
-    goalTracker: 'Goal Tracker',
-    wealthDNA: 'Wealth DNA',
-    wealthBenchmark: 'Wealth Benchmark',
-    badges: 'Badges & Streaks',
-    financialLiteracy: 'Financial Literacy',
-    compliance: 'Compliance',
-    shortcuts: 'Shortcuts',
-    balance: 'Balance',
-    send: 'Send',
-    portfolio: 'Portfolio',
-    fraud: 'Fraud',
-    moreLanguages: 'More languages coming soon — we are building for Bharat.',
-    aiAnalysis: 'AI Analysis',
-    demoTransaction: 'Demo transaction verification',
-    simulatesOTP: 'Simulates 6-digit OTP flow with auto-fill for demo speed.',
-    runSecureCheckout: 'Run Secure Checkout Demo',
-    seeSecurityFlow: 'See the 4-step transaction security flow',
-    reducesImpulse: 'Reduces impulse fraud by 67%',
-    coolingOff: 'Cooling-Off',
-    highValueDelay: '30s delay for high-value',
-    blocked: 'Blocked',
-    delayed: 'Delayed',
-    allowed: 'Allowed',
-    totalTransactions: 'Total Transactions',
-    riskLevel: 'Risk',
-    status: 'Status',
-    category: 'Category',
-    description: 'Description',
-    date: 'Date',
-    amount: 'Amount',
-    namaste: 'Hello',
-    jaiHind: 'Congratulations',
-  },
-  hi: {
-    netWorth: 'कुल संपत्ति',
-    monthlySavings: 'मासिक बचत',
-    monthlyExpenses: 'मासिक खर्च',
-    healthScore: 'स्वास्थ्य स्कोर',
-    aiRecommendations: 'एआई सिफारिशें',
-    protectionScore: 'सुरक्षा स्कोर',
-    financialGoals: 'वित्तीय लक्ष्य',
-    emergencyFund: 'आपातकालीन निधि',
-    dashboard: 'डैशबोर्ड',
-    protection: 'सुरक्षा',
-    fraudSimulator: 'धोखाधड़ी सिमुलेटर',
-    otpSimulation: 'ओटीपी सिमुलेशन',
-    secureCheckout: 'सुरक्षित चेकआउट',
-    stressTest: 'स्ट्रेस टेस्ट सिमुलेटर',
-    scamCaller: 'स्कैम कॉलर आईडी',
-    behavioralBiometrics: 'व्यवहारिक बायोमेट्रिक्स',
-    threatIntel: 'धमकी खुफिया',
-    panicButton: 'आपातकालीन बटन',
-    duressMode: 'जबरन मोड',
-    securityLog: 'सुरक्षा लॉग',
-    netWorthLabel: 'कुल संपत्ति',
-    goalTracker: 'लक्ष्य ट्रैकर',
-    wealthDNA: 'धन डीएनए',
-    wealthBenchmark: 'धन बेंचमार्क',
-    badges: 'बैज और स्ट्रीक',
-    financialLiteracy: 'वित्तीय साक्षरता',
-    compliance: 'अनुपालन',
-    shortcuts: 'शॉर्टकट',
-    balance: 'बैलेंस',
-    send: 'भेजें',
-    portfolio: 'पोर्टफोलियो',
-    fraud: 'धोखाधड़ी',
-    moreLanguages: 'और भाषाएँ जल्द ही आ रही हैं — हम भारत के लिए निर्माण कर रहे हैं।',
-    aiAnalysis: 'एआई विश्लेषण',
-    demoTransaction: 'डेमो लेनदेन सत्यापन',
-    simulatesOTP: 'डेमो गति के लिए ऑटो-फिल के साथ 6-अंकीय ओटीपी प्रवाह का अनुकरण करता है।',
-    runSecureCheckout: 'सुरक्षित चेकआउट डेमो चलाएं',
-    seeSecurityFlow: '4-चरणीय लेनदेन सुरक्षा प्रवाह देखें',
-    reducesImpulse: 'आवेग धोखाधड़ी को 67% कम करता है',
-    coolingOff: 'ठंडा अवधि',
-    highValueDelay: 'उच्च मूल्य के लिए 30 सेकंड की देरी',
-    blocked: 'अवरुद्ध',
-    delayed: 'विलंबित',
-    allowed: 'अनुमत',
-    totalTransactions: 'कुल लेनदेन',
-    riskLevel: 'जोखिम',
-    status: 'स्थिति',
-    category: 'श्रेणी',
-    description: 'विवरण',
-    date: 'तारीख',
-    amount: 'राशि',
-    namaste: 'नमस्ते',
-    jaiHind: 'जय हिंद',
-  },
-};
+import { translations, type TranslationKey, type Language } from '../i18n/translations';
 
 export function useTranslation() {
   const language = useWealthStore((s) => s.language);
+  const setLanguage = useWealthStore((s) => s.setLanguage);
 
-  function t(key: string): string {
-    const dict = TRANSLATIONS[language] || TRANSLATIONS.en;
-    return dict[key] || TRANSLATIONS.en[key] || key;
-  }
+  const t = (key: string, fallback?: string): string => {
+    const dict = (translations as any)[language] || translations.en;
+    return dict[key] || translations.en[key as TranslationKey] || fallback || key;
+  };
 
-  function isHindi(): boolean {
-    return language === 'hi';
-  }
+  const isHindi = (): boolean => language === 'hi';
 
-  return { t, language, isHindi };
+  return {
+    t,
+    language,
+    isHindi,
+    setLanguage,
+    languages: [
+      { code: 'en' as Language, label: 'English' },
+      { code: 'hi' as Language, label: 'हिंदी' },
+    ] as { code: Language; label: string }[],
+  };
 }
+
+export { translations, type TranslationKey, type Language };

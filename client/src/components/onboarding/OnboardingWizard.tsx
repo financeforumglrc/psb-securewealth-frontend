@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, TrendingUp, Target, Landmark, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
 import { useWealthStore } from '../../store/wealthStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import AAFetchAnimation from '../aa/AAFetchAnimation';
 
 interface Props {
@@ -43,6 +44,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
   const [linkedBanks, setLinkedBanks] = useState<string[]>(['SBI', 'HDFC Bank']);
   const updateUser = useWealthStore((s) => s.updateUser);
   const addGoal = useWealthStore((s) => s.addGoal);
+  const { t, language, setLanguage } = useTranslation();
+  const isHindi = language === 'hi';
 
   const handleRiskSelect = (key: 'Conservative' | 'Moderate' | 'Aggressive') => {
     setRiskProfile(key);
@@ -107,17 +110,25 @@ export default function OnboardingWizard({ onComplete }: Props) {
                 />
                 <Sparkles className="w-12 h-12 text-white" />
               </div>
+              <div className="flex justify-center mb-6">
+                <div className="flex items-center bg-white/50 dark:bg-slate-900/50 border border-psb-border dark:border-slate-700 rounded-xl p-1">
+                  <button onClick={() => setLanguage('en')} className={`px-3 py-1 text-xs font-bold rounded-lg ${language === 'en' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}>EN</button>
+                  <button onClick={() => setLanguage('hi')} className={`px-3 py-1 text-xs font-bold rounded-lg ${language === 'hi' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}>हिं</button>
+                </div>
+              </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold mb-4">
-                Welcome to <span className="text-primary">SecureWealth Twin</span>
+                {isHindi ? <>स्वागत है <span className="text-primary">सिक्योरवेल्थ ट्विन</span> में</> : <>Welcome to <span className="text-primary">SecureWealth Twin</span></>}
               </h1>
               <p className="text-base text-psb-muted dark:text-slate-400 mb-8 max-w-md mx-auto leading-relaxed">
-                Your AI-powered financial twin that grows your wealth and protects every critical action with built-in cyber-security.
+                {isHindi
+                  ? 'आपका AI-संचालित वित्तीय जुड़वां जो आपकी संपत्ति बढ़ाता है और हर महत्वपूर्ण कार्रवाई को इनबिल्ट साइबर-सुरक्षा से सुरक्षित रखता है।'
+                  : 'Your AI-powered financial twin that grows your wealth and protects every critical action with built-in cyber-security.'}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
                 {[
-                  { icon: TrendingUp, label: 'Smart Investing', color: 'text-emerald-500' },
-                  { icon: Shield, label: 'Fraud Protection', color: 'text-rose-500' },
-                  { icon: Target, label: 'Goal Planning', color: 'text-violet-500' },
+                  { icon: TrendingUp, label: isHindi ? 'स्मार्ट निवेश' : 'Smart Investing', color: 'text-emerald-500' },
+                  { icon: Shield, label: isHindi ? 'धोखाधड़ी सुरक्षा' : 'Fraud Protection', color: 'text-rose-500' },
+                  { icon: Target, label: isHindi ? 'लक्ष्य योजना' : 'Goal Planning', color: 'text-violet-500' },
                 ].map((item) => (
                   <div key={item.label} className="bg-white dark:bg-slate-900/80 border border-psb-border dark:border-slate-700 rounded-2xl p-4 flex flex-col items-center gap-2">
                     <item.icon className={`w-6 h-6 ${item.color}`} />
@@ -129,10 +140,10 @@ export default function OnboardingWizard({ onComplete }: Props) {
                 onClick={() => setStep('risk')}
                 className="px-8 py-3 bg-primary text-white rounded-xl font-bold text-base hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
               >
-                Build My Twin <ChevronRight className="w-5 h-5" />
+                {t('buildMyTwin')} <ChevronRight className="w-5 h-5" />
               </button>
               <p className="text-[10px] text-slate-400 mt-4">
-                Demo only. Not financial advice. Read disclaimers before investing.
+                {t('demoDisclaimer')}
               </p>
             </motion.div>
           )}
@@ -144,9 +155,9 @@ export default function OnboardingWizard({ onComplete }: Props) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -40 }}
             >
-              <h2 className="text-2xl font-bold text-center mb-2">What is your risk appetite?</h2>
+              <h2 className="text-2xl font-bold text-center mb-2">{t('riskAppetite')}</h2>
               <p className="text-sm text-psb-muted dark:text-slate-400 text-center mb-8">
-                This helps us personalize your portfolio mix and recommendations.
+                {isHindi ? 'यह हमें आपके पोर्टफोलियो मिक्स और सिफारिशों को व्यक्तिगत बनाने में मदद करता है।' : 'This helps us personalize your portfolio mix and recommendations.'}
               </p>
               <div className="space-y-4">
                 {RISK_OPTIONS.map((option) => (

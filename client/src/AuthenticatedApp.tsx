@@ -949,10 +949,10 @@ export default function AuthenticatedApp() {
             {/* Regulatory / simulation disclaimer */}
             <div className="mt-8 mx-4 lg:mx-8 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-center">
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                <strong className="text-slate-700 dark:text-slate-300">Simulation / Demo Only.</strong>{' '}
-                SecureWealth Twin is a hackathon prototype. It is not a licensed bank, SEBI-registered investment advisor, or insurance provider.
-                All projections, recommendations, and market data are for demonstration purposes and do not constitute financial advice.
-                Past performance is not indicative of future returns. Always consult a SEBI-registered advisor before investing.
+                <strong className="text-slate-700 dark:text-slate-300">{language === 'hi' ? 'सिमुलेशन / डेमो केवल।' : 'Simulation / Demo Only.'}</strong>{' '}
+                {language === 'hi'
+                  ? 'सिक्योरवेल्थ ट्विन एक हैकथॉन प्रोटोटाइप है। यह कोई लाइसेंस प्राप्त बैंक, SEBI-पंजीकृत निवेश सलाहकार या बीमा प्रदाता नहीं है। सभी अनुमान, सिफारिशें और बाजार डेटा केवल प्रदर्शन उद्देश्यों के लिए हैं और वित्तीय सलाह नहीं constitute करते। पिछला प्रदर्शन भविष्य के रिटर्न का संकेतक नहीं है। निवेश से पहले हमेशा SEBI-पंजीकृत सलाहकार से परामर्श करें।'
+                  : 'SecureWealth Twin is a hackathon prototype. It is not a licensed bank, SEBI-registered investment advisor, or insurance provider. All projections, recommendations, and market data are for demonstration purposes and do not constitute financial advice. Past performance is not indicative of future returns. Always consult a SEBI-registered advisor before investing.'}
               </p>
             </div>
 
