@@ -48,7 +48,7 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
 
 /* ───────── Functional / Non-functional requirements ───────── */
 const FUNCTIONAL_REQS = [
-  { id: 'F-001', title: 'Pre-filled Credentials', desc: 'Admin ID and password are pre-populated in the login form to eliminate repeated entry during demos.', impl: 'AdminDashboard.tsx LoginScreen', schema: '-' },
+  { id: 'F-001', title: 'Admin ID Pre-fill', desc: 'Admin ID is pre-populated in the login form for convenience; password must be entered manually.', impl: 'AdminDashboard.tsx LoginScreen', schema: '-' },
   { id: 'F-002', title: 'Credential Validation', desc: 'System verifies non-empty Admin ID/Password and rejects malformed requests with actionable error messages.', impl: 'backendApi.adminLogin + backend route', schema: '-' },
   { id: 'F-003', title: 'Backend Authentication', desc: 'Server compares credentials against configured ADMIN_ID and ADMIN_PASSWORD using constant-time comparison.', impl: 'Node.js /admin/login controller', schema: 'admins.admin_id' },
   { id: 'F-004', title: 'JWT Session Issuance', desc: 'On success, a signed JWT (role=admin, 24h expiry) is issued and stored in an httpOnly cookie.', impl: 'jsonwebtoken + cookie-parser', schema: 'admin_sessions.token_jti' },
@@ -508,8 +508,8 @@ function SRSDiagram() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-        <svg viewBox="0 0 1260 1140" className="min-w-[1100px] h-auto" style={{ fontFamily: 'inherit' }}>
+      <div className="overflow-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 h-[calc(100vh-320px)]">
+        <svg viewBox="0 0 1260 1140" className="min-w-[1260px] min-h-[1140px]" style={{ fontFamily: 'inherit' }}>
           <defs>
             <marker id="arrow-success" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
               <path d="M0,0 L0,6 L9,3 z" fill="#10b981" />
@@ -675,8 +675,8 @@ function SchemaDiagram() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-        <svg viewBox="0 0 920 520" className="min-w-[880px] h-auto" style={{ fontFamily: 'inherit' }}>
+      <div className="overflow-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 h-[calc(100vh-320px)]">
+        <svg viewBox="0 0 920 520" className="min-w-[920px] min-h-[520px]" style={{ fontFamily: 'inherit' }}>
           <defs>
             <marker id="crow-left" markerWidth="14" markerHeight="10" refX="2" refY="5" orient="auto" markerUnits="strokeWidth">
               <path d="M0,0 L0,10 M4,2 L0,5 L4,8" fill="none" stroke="#64748b" strokeWidth={1.5} className="dark:stroke-slate-400" />
