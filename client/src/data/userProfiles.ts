@@ -14,6 +14,431 @@ export interface DemoAccount {
   avatar: string;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Deterministic demo-data generator
+   ═══════════════════════════════════════════════════════════════ */
+
+function formatNetWorth(value: number): string {
+  if (value >= 1_00_00_000) {
+    const cr = value / 1_00_00_000;
+    return `₹${cr.toFixed(2).replace(/\.00$/, '')} Cr`;
+  }
+  const lakhs = value / 1_00_000;
+  return `₹${lakhs.toFixed(1).replace(/\.0$/, '')}L`;
+}
+
+function hashString(str: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+  }
+  return h >>> 0;
+}
+
+function rand(seed: string, idx = 0): number {
+  const x = Math.sin(hashString(seed) + idx * 0.573) * 10000;
+  return x - Math.floor(x);
+}
+
+function pick<T>(seed: string, idx: number, arr: T[]): T {
+  return arr[Math.floor(rand(seed, idx) * arr.length)];
+}
+
+function initials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+const BANKS = [
+  'HDFC Savings Pro',
+  'SBI Salary Advantage',
+  'ICICI Pockets',
+  'Axis Priority',
+  'Kotak 811',
+  'PNB Savings',
+  'Canara Bank',
+  'Bank of Baroda',
+  'IndusInd Select',
+  'Federal Bank',
+];
+
+const MUTUAL_FUNDS = [
+  'Nifty 50 Index Fund',
+  'SBI Bluechip Direct',
+  'Axis Midcap Fund',
+  'HDFC Small Cap',
+  'UTI Nifty 50',
+  'Mirae Asset Large Cap',
+  'DSP Flexi Cap',
+  'Nippon India Growth',
+  'Tata Digital India',
+];
+
+const STOCKS = [
+  'Reliance Industries',
+  'TCS',
+  'HDFC Bank',
+  'Infosys',
+  'Bharti Airtel',
+  'ITC',
+  'LIC India',
+  'SBI Cards',
+  'Kotak Mahindra',
+  'Asian Paints',
+  'HUL',
+];
+
+const GOLD_ASSETS = [
+  'Physical Gold Jewellery',
+  'Sovereign Gold Bonds',
+  'Digital Gold',
+  'Gold ETF',
+];
+
+const PROPERTIES = [
+  'Mumbai 2BHK',
+  'Delhi Apartment',
+  'Bangalore Villa',
+  'Hyderabad Flat',
+  'Pune Studio',
+  'Chennai Home',
+  'Kolkata Flat',
+  'Gurgaon Condo',
+  'Jaipur Family Home',
+  'Kochi Apartment',
+];
+
+const VEHICLES = [
+  'Honda City',
+  'Hyundai Creta',
+  'Maruti Brezza',
+  'Tata Nexon',
+  'Mahindra XUV700',
+  'Toyota Innova',
+  'BMW 3 Series',
+  'Mercedes A-Class',
+  'Audi Q3',
+  'Tata Punch',
+];
+
+const OTHER_ASSETS = [
+  'Crypto Portfolio',
+  'ESOPs',
+  'Peer-to-Peer Lending',
+  'Private Equity',
+  'NFT Collection',
+  'Angel Investment',
+];
+
+const COMPANIES = [
+  'Google India',
+  'Microsoft India',
+  'Amazon India',
+  'Deloitte Consulting',
+  'KPMG India',
+  'TCS',
+  'Infosys',
+  'Wipro',
+  'HCLTech',
+  'Accenture',
+  'HDFC Bank',
+  'ICICI Bank',
+  'Axis Bank',
+  'Kotak Mahindra',
+  'L&T Infotech',
+  'Cognizant',
+];
+
+const GOAL_POOL: [string, Goal['type']][] = [
+  ['Own Home', 'home'],
+  ['Child Education Fund', 'education'],
+  ['Retirement Corpus', 'retirement'],
+  ['Emergency Fund', 'emergency'],
+  ['Dream Car', 'car'],
+  ['Europe Trip', 'travel'],
+  ['Wedding Fund', 'wedding'],
+  ['Second Property', 'home'],
+  ['Startup Seed Fund', 'other'],
+  ['FIRE Corpus', 'retirement'],
+  ['Parents Medical Corpus', 'emergency'],
+  ['Home Renovation', 'home'],
+  ['World Tour', 'travel'],
+  ['Daughter Wedding', 'wedding'],
+  ['Higher Education — MBA', 'education'],
+];
+
+function generateAssets(seed: string, netWorth: number, riskProfile: string): Asset[] {
+  const assets: Asset[] = [];
+
+  // Liquid bank balance (5–15% of net worth), split across two accounts
+  const bankTotal = Math.round(netWorth * (0.05 + rand(seed, 100) * 0.1));
+  const bank1Value = Math.round(bankTotal * (0.5 + rand(seed, 101) * 0.3));
+  assets.push({
+    id: `${seed}-b1`,
+    name: pick(seed, 102, BANKS),
+    type: 'bank',
+    value: bank1Value,
+    liquidity: 'high',
+  });
+  assets.push({
+    id: `${seed}-b2`,
+    name: pick(seed, 103, BANKS),
+    type: 'bank',
+    value: bankTotal - bank1Value,
+    liquidity: 'high',
+  });
+
+  // Property for HNIs
+  if (netWorth > 60_00_000) {
+    const propertyValue = Math.round(netWorth * (0.25 + rand(seed, 200) * 0.25));
+    assets.push({
+      id: `${seed}-p1`,
+      name: pick(seed, 201, PROPERTIES),
+      type: 'property',
+      value: propertyValue,
+      liquidity: 'low',
+    });
+  }
+
+  // Vehicle for affluent users
+  if (netWorth > 40_00_000) {
+    const vehicleValue = Math.min(
+      Math.round(netWorth * (0.05 + rand(seed, 300) * 0.1)),
+      45_00_000
+    );
+    assets.push({
+      id: `${seed}-v1`,
+      name: pick(seed, 301, VEHICLES),
+      type: 'vehicle',
+      value: vehicleValue,
+      liquidity: 'low',
+    });
+  }
+
+  // Mutual funds
+  const mfPct =
+    riskProfile === 'Aggressive'
+      ? 0.18 + rand(seed, 400) * 0.17
+      : riskProfile === 'Moderate'
+        ? 0.12 + rand(seed, 400) * 0.13
+        : 0.08 + rand(seed, 400) * 0.1;
+  assets.push({
+    id: `${seed}-m1`,
+    name: pick(seed, 401, MUTUAL_FUNDS),
+    type: 'mutualFund',
+    value: Math.round(netWorth * mfPct),
+    liquidity: 'medium',
+    returns: parseFloat((7 + rand(seed, 402) * 15).toFixed(1)),
+  });
+
+  // Direct stocks
+  const stockPct =
+    riskProfile === 'Aggressive'
+      ? 0.15 + rand(seed, 500) * 0.2
+      : riskProfile === 'Moderate'
+        ? 0.08 + rand(seed, 500) * 0.12
+        : 0.03 + rand(seed, 500) * 0.07;
+  assets.push({
+    id: `${seed}-s1`,
+    name: pick(seed, 501, STOCKS),
+    type: 'stock',
+    value: Math.round(netWorth * stockPct),
+    liquidity: 'high',
+    returns: parseFloat((8 + rand(seed, 502) * 18).toFixed(1)),
+  });
+
+  // Gold
+  assets.push({
+    id: `${seed}-g1`,
+    name: pick(seed, 601, GOLD_ASSETS),
+    type: 'gold',
+    value: Math.round(netWorth * (0.03 + rand(seed, 602) * 0.07)),
+    liquidity: 'medium',
+  });
+
+  // Alternative assets for aggressive/risk-takers
+  if (riskProfile === 'Aggressive' && rand(seed, 700) > 0.35) {
+    assets.push({
+      id: `${seed}-o1`,
+      name: pick(seed, 701, OTHER_ASSETS),
+      type: 'other',
+      value: Math.round(netWorth * (0.03 + rand(seed, 702) * 0.07)),
+      liquidity: 'high',
+    });
+  }
+
+  // Scale generated asset values so they sum to the stated net worth
+  const currentSum = assets.reduce((sum, a) => sum + a.value, 0);
+  const scale = netWorth / currentSum;
+  assets.forEach((a) => (a.value = Math.round(a.value * scale)));
+
+  return assets;
+}
+
+function generateGoals(seed: string, netWorth: number): Goal[] {
+  const goals: Goal[] = [];
+  const count = 3 + Math.floor(rand(seed, 900) * 2); // 3–4 goals
+  for (let i = 0; i < count; i++) {
+    const [name, type] = pick(seed, 901 + i, GOAL_POOL);
+    const targetAmount = Math.round(netWorth * (0.2 + rand(seed, 910 + i) * 0.6));
+    const currentAmount = Math.round(targetAmount * (0.15 + rand(seed, 920 + i) * 0.5));
+    const year = 2027 + Math.floor(rand(seed, 930 + i) * 9);
+    const month = 1 + Math.floor(rand(seed, 940 + i) * 12);
+    const day = 1 + Math.floor(rand(seed, 950 + i) * 28);
+    goals.push({
+      id: `${seed}-g${i}`,
+      name,
+      type,
+      targetAmount,
+      currentAmount,
+      deadline: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    });
+  }
+  return goals;
+}
+
+function generateTransactions(
+  seed: string,
+  monthlyIncome: number
+): Transaction[] {
+  const txns: Transaction[] = [];
+
+  txns.push({
+    id: `${seed}-tx1`,
+    date: '2026-06-01',
+    description: `Salary Credit — ${pick(seed, 800, COMPANIES)}`,
+    category: 'Income',
+    amount: monthlyIncome,
+    type: 'credit',
+    status: 'ALLOWED',
+    riskLevel: 'LOW',
+  });
+
+  txns.push({
+    id: `${seed}-tx2`,
+    date: '2026-06-02',
+    description: 'Mutual Fund SIP',
+    category: 'Investment',
+    amount: Math.round(monthlyIncome * (0.1 + rand(seed, 801) * 0.2)),
+    type: 'debit',
+    status: 'ALLOWED',
+    riskLevel: 'LOW',
+  });
+
+  txns.push({
+    id: `${seed}-tx3`,
+    date: '2026-06-03',
+    description: rand(seed, 802) > 0.5 ? 'Amazon — Electronics & Home' : 'Flipkart — Lifestyle',
+    category: 'Shopping',
+    amount: Math.round(monthlyIncome * (0.02 + rand(seed, 803) * 0.08)),
+    type: 'debit',
+    status: 'ALLOWED',
+    riskLevel: 'LOW',
+  });
+
+  txns.push({
+    id: `${seed}-tx4`,
+    date: '2026-06-04',
+    description: rand(seed, 804) > 0.5 ? 'Zomato — Dining' : 'Swiggy — Food Order',
+    category: 'Food',
+    amount: Math.round(500 + rand(seed, 805) * 5000),
+    type: 'debit',
+    status: 'ALLOWED',
+    riskLevel: 'LOW',
+  });
+
+  txns.push({
+    id: `${seed}-tx5`,
+    date: '2026-06-05',
+    description: rand(seed, 806) > 0.5 ? 'CRED Rent Payment' : 'Home Loan EMI',
+    category: 'Housing',
+    amount: Math.round(monthlyIncome * (0.15 + rand(seed, 807) * 0.25)),
+    type: 'debit',
+    status: 'ALLOWED',
+    riskLevel: 'LOW',
+  });
+
+  // Occasional blocked high-value transaction
+  if (rand(seed, 808) > 0.75) {
+    const refId = `AUD-${seed.slice(0, 4).toUpperCase()}${Math.floor(rand(seed, 811) * 9999)}`;
+    txns.push({
+      id: `${seed}-tx6`,
+      date: '2026-06-05',
+      description: 'Blocked: High-value UPI to unknown payee',
+      category: 'Transfer',
+      amount: Math.round(monthlyIncome * (1 + rand(seed, 809) * 2)),
+      type: 'debit',
+      status: 'BLOCKED',
+      riskLevel: 'HIGH',
+      score: 85 + Math.floor(rand(seed, 810) * 15),
+      signals: {
+        newDevice: true,
+        rushedAction: true,
+        unusualAmount: true,
+        otpRetries: false,
+        firstTimeInvest: false,
+        abnormalBehavior: true,
+      },
+      decision: {
+        level: 'HIGH',
+        action: 'BLOCK',
+        delay: 300,
+        message: 'High-value UPI to unverified payee blocked for your safety.',
+        referenceId: refId,
+      },
+    });
+  }
+
+  return txns;
+}
+
+interface AccountSpec {
+  id: string;
+  name: string;
+  occupation: string;
+  location: string;
+  riskProfile: UserProfile['riskProfile'];
+  taxBracket: UserProfile['taxBracket'];
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  netWorth: number;
+}
+
+function buildDemoAccount(spec: AccountSpec): DemoAccount {
+  const email = `${spec.id.replace(/-/g, '.')}@psbsecurewealth.com`;
+  const password = `${spec.name.split(' ')[0]}@123`;
+  const monthlySavings = spec.monthlyIncome - spec.monthlyExpenses;
+
+  return {
+    id: spec.id,
+    email,
+    password,
+    avatar: initials(spec.name),
+    tagline: `${spec.occupation} · Portfolio: ${formatNetWorth(spec.netWorth)}`,
+    netWorth: spec.netWorth,
+    profile: {
+      name: spec.name,
+      riskProfile: spec.riskProfile,
+      taxBracket: spec.taxBracket,
+      monthlyIncome: spec.monthlyIncome,
+      monthlyExpenses: spec.monthlyExpenses,
+      monthlySavings,
+    },
+    assets: generateAssets(spec.id, spec.netWorth, spec.riskProfile),
+    goals: generateGoals(spec.id, spec.netWorth),
+    transactions: generateTransactions(spec.id, spec.monthlyIncome),
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Curated realistic accounts
+   ═══════════════════════════════════════════════════════════════ */
+
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   {
     id: 'deepanshu-sharma',
@@ -246,6 +671,22 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
       { id: 'ks-tx5', date: '2026-06-05', description: 'IPO Allotment — Ola Electric', category: 'Income', amount: 8500, type: 'credit', status: 'ALLOWED', riskLevel: 'LOW' },
     ],
   },
+
+  // Generated realistic accounts
+  ...[
+    { id: 'arjun-nair', name: 'Arjun Nair', occupation: 'Senior Consultant', location: 'Kochi', riskProfile: 'Moderate' as const, taxBracket: 30 as const, monthlyIncome: 220000, monthlyExpenses: 95000, netWorth: 15500000 },
+    { id: 'priya-desai', name: 'Priya Desai', occupation: 'UX Design Lead', location: 'Mumbai', riskProfile: 'Moderate' as const, taxBracket: 30 as const, monthlyIncome: 145000, monthlyExpenses: 78000, netWorth: 9200000 },
+    { id: 'rohan-mehta', name: 'Rohan Mehta', occupation: 'Chartered Accountant', location: 'Delhi', riskProfile: 'Conservative' as const, taxBracket: 30 as const, monthlyIncome: 260000, monthlyExpenses: 110000, netWorth: 21000000 },
+    { id: 'sneha-iyer', name: 'Sneha Iyer', occupation: 'Product Manager', location: 'Bangalore', riskProfile: 'Aggressive' as const, taxBracket: 30 as const, monthlyIncome: 190000, monthlyExpenses: 85000, netWorth: 13500000 },
+    { id: 'vikram-singh', name: 'Vikram Singh', occupation: 'Army Officer', location: 'Jaipur', riskProfile: 'Conservative' as const, taxBracket: 20 as const, monthlyIncome: 110000, monthlyExpenses: 52000, netWorth: 8800000 },
+    { id: 'ananya-bose', name: 'Ananya Bose', occupation: 'Content Creator', location: 'Kolkata', riskProfile: 'Aggressive' as const, taxBracket: 20 as const, monthlyIncome: 85000, monthlyExpenses: 58000, netWorth: 4800000 },
+    { id: 'karthik-reddy', name: 'Karthik Reddy', occupation: 'Data Scientist', location: 'Hyderabad', riskProfile: 'Moderate' as const, taxBracket: 30 as const, monthlyIncome: 240000, monthlyExpenses: 105000, netWorth: 17500000 },
+    { id: 'neha-gupta', name: 'Dr. Neha Gupta', occupation: 'Dermatologist', location: 'Pune', riskProfile: 'Conservative' as const, taxBracket: 30 as const, monthlyIncome: 380000, monthlyExpenses: 145000, netWorth: 32000000 },
+    { id: 'siddharth-verma', name: 'Siddharth Verma', occupation: 'Corporate Lawyer', location: 'Lucknow', riskProfile: 'Moderate' as const, taxBracket: 30 as const, monthlyIncome: 175000, monthlyExpenses: 80000, netWorth: 10800000 },
+    { id: 'meera-krishnan', name: 'Meera Krishnan', occupation: 'Architect', location: 'Chennai', riskProfile: 'Aggressive' as const, taxBracket: 30 as const, monthlyIncome: 290000, monthlyExpenses: 120000, netWorth: 26000000 },
+    { id: 'rahul-pillai', name: 'Rahul Pillai', occupation: 'Sales Director', location: 'Coimbatore', riskProfile: 'Moderate' as const, taxBracket: 30 as const, monthlyIncome: 210000, monthlyExpenses: 98000, netWorth: 14200000 },
+    { id: 'divya-chauhan', name: 'Divya Chauhan', occupation: 'HR Head', location: 'Indore', riskProfile: 'Conservative' as const, taxBracket: 30 as const, monthlyIncome: 155000, monthlyExpenses: 72000, netWorth: 11500000 },
+  ].map((spec) => buildDemoAccount(spec)),
 ];
 
 export function loadDemoAccount(accountId: string) {

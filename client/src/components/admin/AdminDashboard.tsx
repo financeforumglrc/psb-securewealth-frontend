@@ -775,32 +775,72 @@ export default function AdminDashboard() {
 
   // Convert demo accounts to UserRecord format
   const demoUsers: UserRecord[] = useMemo(() => {
-    const mockKyc: Record<string, { phone: string; pan: string; aadhar: string; tier: string }> = {
-      'deepanshu-sharma': { phone: '+91-98765-43210', pan: 'ABCDE1234F', aadhar: '1234-5678-9012', tier: 'premium' },
-      'mrigesh-mohanty': { phone: '+91-98765-43211', pan: 'FGHIJ5678K', aadhar: '2345-6789-0123', tier: 'premium' },
-      'rikshita-barua': { phone: '+91-98765-43212', pan: 'KLMNO9012P', aadhar: '3456-7890-1234', tier: 'free' },
-      'ishita-anand': { phone: '+91-98765-43213', pan: 'PQRST3456U', aadhar: '4567-8901-2345', tier: 'enterprise' },
-      'tripti-jain': { phone: '+91-98765-43214', pan: 'UVWXY7890Z', aadhar: '5678-9012-3456', tier: 'premium' },
-      'kunal-saxena': { phone: '+91-98765-43215', pan: 'BCDEA1234G', aadhar: '6789-0123-4567', tier: 'free' },
+    // Keep the first 6 tiers exactly as designed; derive KYC for generated accounts.
+    const tierOverrides: Record<string, string> = {
+      'deepanshu-sharma': 'premium',
+      'mrigesh-mohanty': 'premium',
+      'rikshita-barua': 'free',
+      'ishita-anand': 'enterprise',
+      'tripti-jain': 'premium',
+      'kunal-saxena': 'free',
     };
-    return DEMO_ACCOUNTS.map((demo, idx) => {
-      const kyc = mockKyc[demo.id];
-      return {
-        id: demo.id,
-        email: demo.email,
-        name: demo.profile.name,
-        phone: kyc?.phone || null,
-        role: 'user',
-        tier: kyc?.tier || 'free',
-        pan_number: kyc?.pan || null,
-        aadhar: kyc?.aadhar || null,
-        created_at: new Date(Date.now() - (idx + 1) * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        last_login: new Date(Date.now() - idx * 2 * 24 * 60 * 60 * 1000).toISOString(),
-        face_registered: idx < 4 ? 1 : 0,
-        api_usage_total: Math.floor(Math.random() * 500),
-        is_active: 1,
-      };
-    });
+
+    function hash(str: string): number {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+      }
+      return h >>> 0;
+    }
+
+    function rnd(seed: string, idx = 0): number {
+      const x = Math.sin(hash(seed) + idx * 0.573) * 10000;
+      return x - Math.floor(x);
+    }
+
+    function generatePhone(idx: number): string {
+      const num = 9876543210 + idx;
+      const s = String(num);
+      return `+91-${s.slice(0, 5)}-${s.slice(5)}`;
+    }
+
+    function generatePan(seed: string): string {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let pan = '';
+      for (let i = 0; i < 5; i++) pan += letters[Math.floor(rnd(seed, i) * 26)];
+      for (let i = 5; i < 9; i++) pan += Math.floor(rnd(seed, i) * 10);
+      pan += letters[Math.floor(rnd(seed, 9) * 26)];
+      return pan;
+    }
+
+    function generateAadhaar(seed: string): string {
+      const d = Array.from({ length: 12 }, (_, i) => Math.floor(rnd(seed, 10 + i) * 10));
+      return `${d.slice(0, 4).join('')}-${d.slice(4, 8).join('')}-${d.slice(8, 12).join('')}`;
+    }
+
+    function deriveTier(demo: (typeof DEMO_ACCOUNTS)[number]): string {
+      if (tierOverrides[demo.id]) return tierOverrides[demo.id];
+      if (demo.netWorth >= 3_00_00_000) return 'enterprise';
+      if (demo.netWorth >= 1_00_00_000) return 'premium';
+      return 'free';
+    }
+
+    return DEMO_ACCOUNTS.map((demo, idx) => ({
+      id: demo.id,
+      email: demo.email,
+      name: demo.profile.name,
+      phone: generatePhone(idx),
+      role: 'user',
+      tier: deriveTier(demo),
+      pan_number: generatePan(demo.id),
+      aadhar: generateAadhaar(demo.id),
+      created_at: new Date(Date.now() - (idx + 1) * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      last_login: new Date(Date.now() - idx * 2 * 24 * 60 * 60 * 1000).toISOString(),
+      face_registered: idx < Math.ceil(DEMO_ACCOUNTS.length * 0.65) ? 1 : 0,
+      api_usage_total: Math.floor(rnd(demo.id, 1000) * 500),
+      is_active: 1,
+    }));
   }, []);
 
   const loadData = async () => {
