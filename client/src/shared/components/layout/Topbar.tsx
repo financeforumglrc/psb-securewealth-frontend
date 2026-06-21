@@ -77,8 +77,6 @@ function MegaMenuPanel({
   onNavigate: (view: string) => void;
   onClose: () => void;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -87,92 +85,105 @@ function MegaMenuPanel({
     return () => window.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
+  const allItems = category.groups.flatMap((g: NavGroup) => g.items);
+
   return (
     <motion.div
-      ref={panelRef}
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 4 }}
-      transition={{ duration: 0.18 }}
-      className="absolute left-0 right-0 top-full z-40 px-4 sm:px-6 lg:px-8 pt-2"
+      transition={{ duration: 0.15 }}
+      className="absolute left-0 right-0 top-full z-40 pt-1 px-4 sm:px-6 lg:px-8"
       onMouseLeave={onClose}
     >
-      <div className="max-w-[1440px] mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-12">
-          {/* Feature highlight */}
-          <div className="hidden lg:flex lg:col-span-3 flex-col justify-between p-6 bg-gradient-to-br from-primary to-primary-dark text-white">
+      <div className="max-w-[1100px] mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center bg-white shadow-sm border border-slate-100 ${category.colorClass}`}>
+              <i className={`fas ${category.icon}`} />
+            </div>
             <div>
-              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-4">
-                <i className={`fas ${category.icon} text-xl text-secondary`} />
-              </div>
-              <h3 className="text-lg font-bold mb-2">{category.label}</h3>
-              <p className="text-sm text-white/80 leading-relaxed">{category.description}</p>
+              <h3 className="text-sm font-bold text-slate-800">{category.label}</h3>
+              <p className="text-[11px] text-slate-500">{category.description}</p>
             </div>
-            <button
-              onClick={() => {
-                onNavigate(category.groups[0]?.items[0]?.view || 'dashboard');
-                onClose();
-              }}
-              className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-primary-dark text-xs font-bold hover:bg-secondary-light transition-colors"
-            >
-              Open {category.groups[0]?.items[0]?.label || 'Dashboard'} <i className="fas fa-arrow-right" />
-            </button>
           </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors"
+            aria-label="Close menu"
+          >
+            <i className="fas fa-times" />
+          </button>
+        </div>
 
-          {/* Menu tree */}
-          <div className="col-span-1 lg:col-span-9 p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {category.groups.map((group: NavGroup) => (
-                <div key={group.id}>
-                  <div className={`flex items-center gap-2 mb-3 pb-2 border-b border-slate-100`}>
-                    <i className={`fas fa-folder-open ${group.colorClass} text-xs`} />
-                    <p className={`text-[11px] font-extrabold uppercase tracking-widest ${group.colorClass}`}>
-                      {group.title}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    {group.items.map((item: NavItem) => {
-                      const active = currentView === item.view;
-                      return (
-                        <button
-                          key={item.view}
-                          onClick={() => {
-                            onNavigate(item.view);
-                            onClose();
-                          }}
-                          className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
-                            active
-                              ? 'bg-primary/10 text-primary-dark'
-                              : 'hover:bg-slate-50 text-slate-700'
-                          }`}
-                        >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${active ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500'}`}>
-                            <i className={`fas ${item.icon} text-xs`} />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold">{item.label}</span>
-                              {item.badge && (
-                                <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700">
-                                  {item.badge}
-                                </span>
-                              )}
-                              {item.alert && !active && (
-                                <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-                              )}
-                            </div>
-                            {item.description && (
-                              <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{item.description}</p>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+        {/* Items grid */}
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {allItems.map((item: NavItem) => {
+            const active = currentView === item.view;
+            return (
+              <button
+                key={item.view}
+                onClick={() => {
+                  onNavigate(item.view);
+                  onClose();
+                }}
+                className={`group flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
+                  active
+                    ? 'border-primary/40 bg-primary/5'
+                    : 'border-slate-100 hover:border-primary/30 hover:bg-slate-50 hover:shadow-md'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                  active ? 'bg-primary text-white' : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'
+                }`}>
+                  <i className={`fas ${item.icon} text-sm`} />
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-bold truncate ${active ? 'text-primary-dark' : 'text-slate-800'}`}>
+                      {item.label}
+                    </span>
+                    {item.badge && (
+                      <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 shrink-0">
+                        {item.badge}
+                      </span>
+                    )}
+                    {item.alert && !active && (
+                      <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse shrink-0" />
+                    )}
+                  </div>
+                  {item.description && (
+                    <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{item.description}</p>
+                  )}
+                </div>
+                <i className="fas fa-chevron-right text-[10px] text-slate-300 self-center opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer quick actions */}
+        <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center gap-3 overflow-x-auto">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider shrink-0">Quick</span>
+          <button
+            onClick={() => { onNavigate('payments'); onClose(); }}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-slate-700 hover:border-primary hover:text-primary transition-colors"
+          >
+            <i className="fas fa-paper-plane text-primary" /> Send Money
+          </button>
+          <button
+            onClick={() => { onNavigate('transactions'); onClose(); }}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-slate-700 hover:border-primary hover:text-primary transition-colors"
+          >
+            <i className="fas fa-list text-primary" /> History
+          </button>
+          <button
+            onClick={() => { onNavigate('dashboard'); onClose(); }}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-slate-700 hover:border-primary hover:text-primary transition-colors"
+          >
+            <i className="fas fa-chart-pie text-primary" /> Dashboard
+          </button>
         </div>
       </div>
     </motion.div>
@@ -374,33 +385,33 @@ export default function Topbar({ currentView, onNavigate, onOpenMobileSidebar, q
       </header>
 
       {/* Category navigation bar with mega menus */}
-      <nav className="hidden lg:block bg-primary-dark border-t border-white/10 sticky top-[64px] z-40">
+      <nav className="hidden lg:block bg-primary-dark sticky top-[64px] z-40">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6">
-          <div className="flex items-center gap-1 h-[44px]">
+          <div className="flex items-center gap-2 h-[44px]">
             {MEGA_MENU.map((cat) => {
               const isActive = activeCategoryId === cat.id || activeMenu === cat.id;
               return (
                 <div
                   key={cat.id}
-                  className="relative h-full"
+                  className="relative h-full flex items-center"
                   onMouseEnter={() => openMenu(cat.id)}
                   onMouseLeave={closeMenuSoon}
                 >
                   <button
                     onClick={() => openMenu(activeMenu === cat.id ? '' : cat.id)}
-                    className={`flex items-center gap-2 px-4 h-full text-[12px] font-bold tracking-tight transition-colors border-b-2 ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-bold tracking-tight transition-all ${
                       isActive
-                        ? 'text-white border-secondary bg-white/10'
-                        : 'text-white/80 border-transparent hover:text-white hover:bg-white/5'
+                        ? 'text-primary-dark bg-secondary shadow-sm'
+                        : 'text-white/90 hover:text-white hover:bg-white/10'
                     }`}
                   >
-                    <i className={`fas ${cat.icon} ${isActive ? 'text-secondary' : 'text-white/60'}`} />
+                    <i className={`fas ${cat.icon}`} />
                     {cat.label}
                     <i className={`fas fa-chevron-down text-[9px] transition-transform ${isActive ? 'rotate-180' : ''}`} />
                   </button>
                 </div>
               );
-            })}
+            })}  
 
             <div className="ml-auto flex items-center gap-3">
               <button

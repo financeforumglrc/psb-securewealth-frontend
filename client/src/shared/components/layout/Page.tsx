@@ -23,10 +23,10 @@ export default function Page({ view, children }: PageProps) {
   return (
     <main className="flex-1 min-w-0 overflow-y-auto bg-psb-bg dark:bg-slate-950">
       {/* Sticky page header */}
-      <div className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3">
+      <div className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mb-1">
+          <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
             <button
               onClick={() => useWealthStore.getState().setView('dashboard')}
               className="hover:text-primary transition-colors"
@@ -76,7 +76,7 @@ export default function Page({ view, children }: PageProps) {
       </div>
 
       {/* View content */}
-      <div className="p-3 sm:p-5 lg:p-6 max-w-7xl mx-auto">
+      <div className="px-3 sm:px-5 lg:px-6 pt-3 sm:pt-4 pb-5 sm:pb-6 max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={view}

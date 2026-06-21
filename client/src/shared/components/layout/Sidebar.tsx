@@ -193,8 +193,8 @@ function SidebarContent({ currentView, onNavigate }: Pick<SidebarProps, 'current
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-slate-100">
-        <div className="flex items-center gap-3 mb-3">
+      <div className="p-3 border-b border-slate-100">
+        <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold border-2 border-white shadow-sm">
             {user?.name
               ? user.name
