@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertCircle,
@@ -13,6 +13,7 @@ import {
   Lock,
   Mail,
   ScanFace,
+  Search,
   Shield,
   ShieldCheck,
   Smartphone,
@@ -33,6 +34,52 @@ import {
 } from '../../services/passkeyService';
 import FaceLoginModal from './FaceLoginModal';
 import CreateAccountModal from './CreateAccountModal';
+
+const GRADIENTS = [
+  'from-amber-400 to-amber-600',
+  'from-blue-400 to-blue-600',
+  'from-pink-400 to-pink-600',
+  'from-emerald-400 to-emerald-600',
+  'from-violet-400 to-violet-600',
+  'from-orange-400 to-orange-600',
+  'from-cyan-400 to-cyan-600',
+  'from-rose-400 to-rose-600',
+  'from-lime-400 to-lime-600',
+  'from-indigo-400 to-indigo-600',
+  'from-teal-400 to-teal-600',
+  'from-fuchsia-400 to-fuchsia-600',
+  'from-sky-400 to-sky-600',
+  'from-yellow-400 to-yellow-600',
+  'from-red-400 to-red-600',
+  'from-green-400 to-green-600',
+  'from-purple-400 to-purple-600',
+  'from-stone-400 to-stone-600',
+];
+
+function hashStr(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h << 5) - h + str.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+
+function avatarGradient(id: string): string {
+  return GRADIENTS[hashStr(id) % GRADIENTS.length];
+}
+
+function deriveTier(netWorth: number): 'enterprise' | 'premium' | 'free' {
+  if (netWorth >= 3_00_00_000) return 'enterprise';
+  if (netWorth >= 1_00_00_000) return 'premium';
+  return 'free';
+}
+
+const tierStyle: Record<string, string> = {
+  enterprise: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  premium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  free: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+};
 
 const FEATURES = [
   {
@@ -63,6 +110,22 @@ export default function LoginPortal() {
   const [error, setError] = useState<string | null>(null);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
   const [faceLoginOpen, setFaceLoginOpen] = useState(false);
+  const [demoSearch, setDemoSearch] = useState('');
+
+  const sortedDemoAccounts = useMemo(() => {
+    return [...DEMO_ACCOUNTS].sort((a, b) => b.netWorth - a.netWorth);
+  }, []);
+
+  const filteredDemoAccounts = useMemo(() => {
+    const q = demoSearch.trim().toLowerCase();
+    if (!q) return sortedDemoAccounts;
+    return sortedDemoAccounts.filter(
+      (a) =>
+        a.profile.name.toLowerCase().includes(q) ||
+        a.tagline.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q)
+    );
+  }, [sortedDemoAccounts, demoSearch]);
   const [createAccountOpen, setCreateAccountOpen] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
@@ -510,50 +573,57 @@ export default function LoginPortal() {
                 <Users className="mr-1 inline h-3.5 w-3.5" />
                 Quick Login — Select Demo Profile
               </p>
-              <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
-                {DEMO_ACCOUNTS.map((account) => (
-                  <motion.button
-                    key={account.id}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => handleDemoLogin(account)}
-                    disabled={state.loading}
-                    className="flex w-full items-center gap-3 rounded-xl border border-slate-800/50 bg-slate-950/40 p-3 text-left transition-colors hover:border-slate-700 hover:bg-slate-800/40 disabled:opacity-50"
-                  >
-                    <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
-                        account.id === 'deepanshu-sharma'
-                          ? 'bg-gradient-to-br from-amber-400 to-amber-600'
-                          : account.id === 'mrigesh-mohanty'
-                            ? 'bg-gradient-to-br from-blue-400 to-blue-600'
-                            : account.id === 'rikshita-barua'
-                              ? 'bg-gradient-to-br from-pink-400 to-pink-600'
-                              : account.id === 'ishita-anand'
-                                ? 'bg-gradient-to-br from-emerald-400 to-emerald-600'
-                                : account.id === 'tripti-jain'
-                                  ? 'bg-gradient-to-br from-violet-400 to-violet-600'
-                                  : 'bg-gradient-to-br from-orange-400 to-orange-600'
-                      }`}
+              <div className="relative mb-3">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  value={demoSearch}
+                  onChange={(e) => setDemoSearch(e.target.value)}
+                  placeholder="Search profiles..."
+                  className="w-full rounded-xl border border-slate-800/60 bg-slate-950/40 py-2 pl-8 pr-3 text-xs text-slate-200 placeholder:text-slate-600 focus:border-cyan-500/50 focus:outline-none"
+                />
+              </div>
+              <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                {filteredDemoAccounts.map((account) => {
+                  const tier = deriveTier(account.netWorth);
+                  const topAccount = sortedDemoAccounts[0];
+                  return (
+                    <motion.button
+                      key={account.id}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => handleDemoLogin(account)}
+                      disabled={state.loading}
+                      className="flex w-full items-center gap-3 rounded-xl border border-slate-800/50 bg-slate-950/40 p-3 text-left transition-colors hover:border-slate-700 hover:bg-slate-800/40 disabled:opacity-50"
                     >
-                      {account.avatar}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-slate-200 truncate">
-                        {account.profile.name}
-                        {account.id === 'deepanshu-sharma' && (
-                          <span className="ml-2 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
-                            Richest
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white bg-gradient-to-br ${avatarGradient(account.id)}`}
+                      >
+                        {account.avatar}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-200 truncate">
+                          {account.profile.name}
+                          {account.id === topAccount?.id && (
+                            <span className="ml-2 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+                              Richest
+                            </span>
+                          )}
+                          <span
+                            className={`ml-2 inline-block rounded-full border px-1.5 py-0.5 text-[10px] font-medium capitalize ${tierStyle[tier]}`}
+                          >
+                            {tier}
                           </span>
-                        )}
-                      </p>
-                      <p className="truncate text-[11px] text-slate-500">{account.tagline}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs font-bold text-slate-300">₹{(account.netWorth / 1e7).toFixed(2)}Cr</p>
-                      <p className="text-[9px] text-slate-600">Net Worth</p>
-                    </div>
-                  </motion.button>
-                ))}
+                        </p>
+                        <p className="truncate text-[11px] text-slate-500">{account.tagline}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-slate-300">₹{(account.netWorth / 1e7).toFixed(2)}Cr</p>
+                        <p className="text-[9px] text-slate-600">Net Worth</p>
+                      </div>
+                    </motion.button>
+                  );
+                })}
               </div>
               <p className="mt-3 text-center text-[10px] text-slate-600">
                 Password for all demo accounts:{' '}

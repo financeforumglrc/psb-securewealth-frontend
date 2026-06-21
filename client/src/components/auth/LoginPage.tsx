@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Fingerprint, KeyRound, Shield, ShieldCheck, ShieldX, Smartphone } from 'lucide-react';
+import { Fingerprint, KeyRound, Search, Shield, ShieldCheck, ShieldX, Smartphone, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import {
@@ -15,6 +15,52 @@ import { useWealthStore } from '../../store/wealthStore';
 import { backendApi } from '../../lib/backendApi';
 import { DEMO_ACCOUNTS } from '../../data/userProfiles';
 import FaceLoginModal from './FaceLoginModal';
+
+const GRADIENTS = [
+  'from-amber-400 to-amber-600',
+  'from-blue-400 to-blue-600',
+  'from-pink-400 to-pink-600',
+  'from-emerald-400 to-emerald-600',
+  'from-violet-400 to-violet-600',
+  'from-orange-400 to-orange-600',
+  'from-cyan-400 to-cyan-600',
+  'from-rose-400 to-rose-600',
+  'from-lime-400 to-lime-600',
+  'from-indigo-400 to-indigo-600',
+  'from-teal-400 to-teal-600',
+  'from-fuchsia-400 to-fuchsia-600',
+  'from-sky-400 to-sky-600',
+  'from-yellow-400 to-yellow-600',
+  'from-red-400 to-red-600',
+  'from-green-400 to-green-600',
+  'from-purple-400 to-purple-600',
+  'from-stone-400 to-stone-600',
+];
+
+function hashStr(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h << 5) - h + str.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+
+function avatarGradient(id: string): string {
+  return GRADIENTS[hashStr(id) % GRADIENTS.length];
+}
+
+function deriveTier(netWorth: number): 'enterprise' | 'premium' | 'free' {
+  if (netWorth >= 3_00_00_000) return 'enterprise';
+  if (netWorth >= 1_00_00_000) return 'premium';
+  return 'free';
+}
+
+const tierStyle: Record<string, string> = {
+  enterprise: 'bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400',
+  premium: 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+  free: 'bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400',
+};
 
 export default function LoginPage() {
   const { state, dispatch } = useAuth();
@@ -37,9 +83,25 @@ export default function LoginPage() {
   const [passkeySuccess, setPasskeySuccess] = useState('');
   const [webAuthnSupported] = useState(() => isWebAuthnSupported());
   const [password, setPassword] = useState('');
+  const [demoSearch, setDemoSearch] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const passwordStrength = useMemo(() => checkPasswordStrength(password), [password]);
+
+  const sortedDemoAccounts = useMemo(() => {
+    return [...DEMO_ACCOUNTS].sort((a, b) => b.netWorth - a.netWorth);
+  }, []);
+
+  const filteredDemoAccounts = useMemo(() => {
+    const q = demoSearch.trim().toLowerCase();
+    if (!q) return sortedDemoAccounts;
+    return sortedDemoAccounts.filter(
+      (a) =>
+        a.profile.name.toLowerCase().includes(q) ||
+        a.tagline.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q)
+    );
+  }, [sortedDemoAccounts, demoSearch]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -507,54 +569,64 @@ export default function LoginPage() {
         {/* Demo Account Switcher */}
         <div className="mt-5">
           <p className="text-xs text-slate-400 text-center mb-3 font-medium">
-            <i className="fas fa-users mr-1" /> Quick Login — Select Account
+            <Users className="inline h-3.5 w-3.5 mr-1" /> Quick Login — Select Account
           </p>
-          <div className="space-y-2">
-            {DEMO_ACCOUNTS.map((account) => (
-              <motion.button
-                key={account.id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={async () => {
-                  const res = await backendApi.demoLogin({ email: account.email, name: account.profile.name });
-                  if (!res.ok) {
-                    setError(res.data?.error || 'Demo login failed');
-                    return;
-                  }
-                  const store = useWealthStore.getState();
-                  store.updateUser({ name: account.profile.name, monthlyIncome: account.profile.monthlyIncome, monthlyExpenses: account.profile.monthlyExpenses, monthlySavings: account.profile.monthlySavings, riskProfile: account.profile.riskProfile, taxBracket: account.profile.taxBracket });
-                  if (store.assets.length === 0) store.seedRealData();
-                  dispatch({ type: 'LOGIN', userId: account.id, userEmail: account.email });
-                }}
-                className="w-full flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-primary/30 transition-all text-left"
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                  account.id === 'deepanshu-sharma' ? 'bg-gradient-to-br from-amber-400 to-amber-600' :
-                  account.id === 'mrigesh-mohanty' ? 'bg-gradient-to-br from-blue-400 to-blue-600' :
-                  account.id === 'rikshita-barua' ? 'bg-gradient-to-br from-pink-400 to-pink-600' :
-                  account.id === 'ishita-anand' ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' :
-                  account.id === 'tripti-jain' ? 'bg-gradient-to-br from-violet-400 to-violet-600' :
-                  'bg-gradient-to-br from-orange-400 to-orange-600'
-                }`}>
-                  {account.avatar}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
-                    {account.profile.name}
-                    {account.id === 'deepanshu-sharma' && (
-                      <span className="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Richest</span>
-                    )}
-                  </p>
-                  <p className="text-[11px] text-slate-500 truncate">{account.tagline}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                    ₹{(account.netWorth / 1e7).toFixed(2)}Cr
-                  </p>
-                  <p className="text-[9px] text-slate-400">Net Worth</p>
-                </div>
-              </motion.button>
-            ))}
+          <div className="relative mb-3">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={demoSearch}
+              onChange={(e) => setDemoSearch(e.target.value)}
+              placeholder="Search profiles..."
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-2 pl-8 pr-3 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:border-primary/50 focus:outline-none"
+            />
+          </div>
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+            {filteredDemoAccounts.map((account) => {
+              const tier = deriveTier(account.netWorth);
+              const topAccount = sortedDemoAccounts[0];
+              return (
+                <motion.button
+                  key={account.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={async () => {
+                    const res = await backendApi.demoLogin({ email: account.email, name: account.profile.name });
+                    if (!res.ok) {
+                      setError(res.data?.error || 'Demo login failed');
+                      return;
+                    }
+                    const store = useWealthStore.getState();
+                    store.updateUser({ name: account.profile.name, monthlyIncome: account.profile.monthlyIncome, monthlyExpenses: account.profile.monthlyExpenses, monthlySavings: account.profile.monthlySavings, riskProfile: account.profile.riskProfile, taxBracket: account.profile.taxBracket });
+                    if (store.assets.length === 0) store.seedRealData();
+                    dispatch({ type: 'LOGIN', userId: account.id, userEmail: account.email });
+                  }}
+                  className="w-full flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-primary/30 transition-all text-left"
+                >
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br ${avatarGradient(account.id)}`}>
+                    {account.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
+                      {account.profile.name}
+                      {account.id === topAccount?.id && (
+                        <span className="ml-2 text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 px-1.5 py-0.5 rounded-full">Richest</span>
+                      )}
+                      <span className={`ml-2 inline-block text-[10px] px-1.5 py-0.5 rounded-full capitalize ${tierStyle[tier]}`}>
+                        {tier}
+                      </span>
+                    </p>
+                    <p className="text-[11px] text-slate-500 truncate">{account.tagline}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                      ₹{(account.netWorth / 1e7).toFixed(2)}Cr
+                    </p>
+                    <p className="text-[9px] text-slate-400">Net Worth</p>
+                  </div>
+                </motion.button>
+              );
+            })}
           </div>
           <p className="text-[10px] text-slate-400 text-center mt-3">
             Password for all demo accounts: <strong className="text-slate-600 dark:text-slate-300">Firstname@123</strong>
