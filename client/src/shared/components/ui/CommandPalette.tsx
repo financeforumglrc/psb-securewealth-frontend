@@ -11,8 +11,13 @@ interface Command {
   category: string;
 }
 
-export default function CommandPalette() {
-  const [open, setOpen] = useState(false);
+interface CommandPaletteProps {
+  defaultOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function CommandPalette({ defaultOpen = false, onClose }: CommandPaletteProps) {
+  const [open, setOpen] = useState(defaultOpen);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -60,8 +65,9 @@ export default function CommandPalette() {
       cmd.action();
       setOpen(false);
       setQuery('');
+      onClose?.();
     },
-    []
+    [onClose]
   );
 
   useEffect(() => {
@@ -72,11 +78,17 @@ export default function CommandPalette() {
       }
       if (e.key === 'Escape') {
         setOpen(false);
+        onClose?.();
       }
     };
+    const onOpen = () => setOpen(true);
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+    window.addEventListener('sw-open-command-palette', onOpen);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('sw-open-command-palette', onOpen);
+    };
+  }, [onClose]);
 
   useEffect(() => {
     if (open) {
@@ -113,7 +125,7 @@ export default function CommandPalette() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4"
-          onClick={() => setOpen(false)}
+          onClick={() => { setOpen(false); onClose?.(); }}
         >
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
           <motion.div
