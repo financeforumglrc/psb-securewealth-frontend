@@ -1,6 +1,5 @@
 import { useEffect, useState, Suspense, useTransition } from 'react';
 import PitchMode from '@/features/pitch/components/PitchMode';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { isJudgeMode } from '@/shared/utils/demoMode';
 import { usePanicMode } from '@/shared/hooks/usePanicMode';
@@ -51,14 +50,9 @@ const BiometricAuth = lazyWithRetry(() => import('@/features/auth/components/Bio
 
 import { isDuressLocked } from '@/shared/services/duressService';
 
-import BankHeader from '@/features/psb/components/BankHeader';
-import TrustBanner from '@/features/psb/components/TrustBanner';
-import AccessibleFooter from '@/features/psb/components/AccessibleFooter';
 import { ToastProvider } from '@/shared/components/ui/ToastProvider';
-
-import PaymentHub from '@/features/payments/components/PaymentHub';
+import AppShell from '@/shared/components/layout/AppShell';
 import JudgeTour from '@/features/demo/components/JudgeTour';
-import CommandPalette from '@/shared/components/ui/CommandPalette';
 import LiveActivityPill from '@/shared/components/ui/LiveActivityPill';
 
 // Lazy load heavy view components for code splitting
@@ -277,9 +271,6 @@ export default function AuthenticatedApp() {
   const currentView = useWealthStore((s) => s.currentView);
   const darkMode = useWealthStore((s) => s.darkMode);
   const initJudgeMode = useWealthStore((s) => s.initJudgeMode);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-
-  const pitchModeActive = useWealthStore((s) => s.pitchModeActive);
   const aaFetchComplete = useWealthStore((s) => s.aaFetchComplete);
   const setAAFetchComplete = useWealthStore((s) => s.setAAFetchComplete);
   const onboardingComplete = useWealthStore((s) => s.onboardingComplete);
@@ -293,9 +284,6 @@ export default function AuthenticatedApp() {
     }
   }, [aaFetchComplete, onboardingComplete, setOnboardingComplete]);
   const setLoginAt = useWealthStore((s) => s.setLoginAt);
-  /* familyMode unused after removing AnimatePresence key */
-  const language = useWealthStore((s) => s.language);
-  const setLanguage = useWealthStore((s) => s.setLanguage);
   const accessibilityMode = useWealthStore((s) => s.accessibilityMode);
   const seniorMode = useWealthStore((s) => s.seniorMode);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -439,542 +427,66 @@ export default function AuthenticatedApp() {
     );
   }
 
+
   return (
     <ToastProvider>
     <SecurityProvider>
     <NBAProvider>
     <RewardsProvider>
-    <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-dark text-white' : 'bg-psb-bg text-psb-text'} ${accessibilityMode ? 'a11y-mode' : ''} ${seniorMode ? 'senior-mode' : ''}`}>
-      {/* PSB Info Bar */}
-      <div className="bg-primary-dark text-white text-center py-1 px-4 text-[10px]">
-        <div className="flex items-center justify-center gap-2">
-          <i className="fas fa-shield-halved text-secondary" />
-          <span><strong>DICGC Insured</strong> — Deposits up to ₹5 Lakhs secured · <strong>RBI Licensed</strong> — Regulated by Reserve Bank of India · <strong>256-bit SSL</strong> Encryption</span>
-        </div>
-      </div>
-
-      {/* Offline Queue Badge */}
-      {queuedCount > 0 && (
-        <div className="bg-amber-500 text-white text-center py-1.5 px-4 text-xs relative z-50 animate-fade-in">
-          <div className="flex items-center justify-center gap-2">
-            <i className="fas fa-clock-rotate-left" />
-            <span>
-              <strong>Offline Queue:</strong> {queuedCount} action{queuedCount > 1 ? 's' : ''} pending
-              {online ? ' — syncing now…' : ' — will sync when online'}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Language Banner for unsupported locales only */}
-      {language !== 'en' && language !== 'hi' && (
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center py-1.5 px-4 text-xs relative z-50 animate-fade-in">
-          <div className="flex items-center justify-center gap-2">
-            <i className="fas fa-language" />
-            <span>More languages coming soon — we are building for Bharat. 🇮🇳</span>
-            <button onClick={() => setLanguage('en')} className="underline hover:no-underline ml-2">Switch to English</button>
-          </div>
-        </div>
-      )}
-
-      {/* PSB Header */}
-      <BankHeader />
-      <TrustBanner />
-      {/* Payment Hub Bar */}
-      <PaymentHub />
-
-      {/* Mobile Header with Hamburger */}
-      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 safe-area-left safe-area-right">
-        <button
-          onClick={() => setMobileSidebarOpen(true)}
-          className="flex items-center gap-2 text-gray-700"
-          aria-label="Open menu"
-        >
-          <i className="fas fa-bars text-lg" />
-          <span className="text-sm font-semibold">Menu</span>
-        </button>
-        <span className="text-xs text-gray-500 font-medium">
-          {[
-            { view: 'dashboard', label: 'Dashboard' },
-            { view: 'bhavishya', label: 'BHAVISHYA AI' },
-            { view: 'wealth-twin', label: 'Wealth Twin' },
-            { view: 'goals', label: 'Goals' },
-            { view: 'portfolio', label: 'Portfolio' },
-            { view: 'assets', label: 'Assets' },
-            { view: 'market', label: 'Market' },
-            { view: 'forecast', label: 'Forecast' },
-            { view: 'payments', label: 'Payments' },
-            { view: 'transactions', label: 'Transactions' },
-            { view: 'protection', label: 'Protection' },
-            { view: 'security-beast', label: 'Security Beast' },
-            { view: 'privacy', label: 'Privacy' },
-            { view: 'tax', label: 'Tax' },
-            { view: 'calculators', label: 'Calculators' },
-            { view: 'bills', label: 'Bill Calendar' },
-            { view: 'credit-health', label: 'Credit Health' },
-            { view: 'loan-center', label: 'Loan Center' },
-            { view: 'recurring-payments', label: 'Recurring' },
-            { view: 'account-statement', label: 'Statement' },
-            { view: 'audit-log', label: 'Audit Log' },
-            { view: 'family', label: 'Family' },
-            { view: 'digital-gold', label: 'Digital Gold' },
-            { view: 'subscriptions', label: 'Subscriptions' },
-            { view: 'challenges', label: 'Challenges' },
-            { view: 'innovation-lab', label: 'Innovation Lab' },
-            { view: 'nri-mode', label: 'NRI Center' },
-            { view: 'business-mode', label: 'Business' },
-            { view: 'kids-mode', label: 'Kids Mode' },
-            { view: 'notification-demo', label: 'Notifications' },
-          ].find(i => i.view === currentView)?.label || 'Dashboard'}
-        </span>
-      </div>
-
-      {/* Mobile Sidebar Drawer */}
-      {mobileSidebarOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-[60] md:hidden"
-            onClick={() => setMobileSidebarOpen(false)}
-          />
-          <div className="fixed top-0 left-0 h-full w-[280px] bg-white z-[70] flex flex-col shadow-2xl md:hidden safe-area-top safe-area-bottom animate-slide-in-left">
-            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <i className="fas fa-landmark text-white text-sm" />
-                </div>
-                <span className="font-bold text-sm text-gray-800">PSB Banking</span>
-              </div>
-              <button
-                onClick={() => setMobileSidebarOpen(false)}
-                className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-800"
-                aria-label="Close menu"
-              >
-                <i className="fas fa-times" />
-              </button>
-            </div>
-            <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
-              {/* WEALTH INTELLIGENCE */}
-              <div className="px-3 py-2">
-                <p className="text-[9px] font-extrabold text-primary uppercase tracking-widest">Wealth Intelligence</p>
-              </div>
-              {[
-                { view: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie' },
-                { view: 'bhavishya', label: 'BHAVISHYA AI', icon: 'fa-infinity', badge: 'FLAGSHIP', alert: true },
-                { view: 'wealth-twin', label: 'Wealth Twin', icon: 'fa-brain' },
-                { view: 'goals', label: 'Goals', icon: 'fa-bullseye' },
-                { view: 'portfolio', label: 'Portfolio', icon: 'fa-layer-group' },
-                { view: 'assets', label: 'Assets', icon: 'fa-gem' },
-                { view: 'market', label: 'Market', icon: 'fa-globe' },
-                { view: 'forecast', label: 'Forecast', icon: 'fa-chart-line' },
-              ].map((item: any) => (
-                <button
-                  key={item.view}
-                  onClick={() => {
-                    navigateToView(item.view);
-                    setMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-3 rounded-md text-sm font-semibold transition-all duration-150 text-left relative min-h-[44px] ${
-                    currentView === item.view
-                      ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
-                  }`}
-                >
-                  <i className={`fas ${item.icon} w-4 text-center ${currentView === item.view ? 'text-white' : 'text-gray-400'}`} />
-                  <span className="flex-1">{item.label}</span>
-                  {item.badge && (
-                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
-                      currentView === item.view ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.alert && currentView !== item.view && (
-                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-                  )}
-                </button>
-              ))}
-
-              {/* FRAUD PROTECTION & SECURITY */}
-              <div className="px-3 py-2 mt-2 border-t border-gray-100">
-                <p className="text-[9px] font-extrabold text-rose-600 uppercase tracking-widest">Fraud Protection</p>
-              </div>
-              {[
-                { view: 'payments', label: 'Payments', icon: 'fa-bolt' },
-                { view: 'transactions', label: 'Transactions', icon: 'fa-list' },
-                { view: 'protection', label: 'Protection', icon: 'fa-shield-halved' },
-                { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon' },
-                { view: 'privacy', label: 'Privacy', icon: 'fa-lock' },
-              ].map((item: any) => (
-                <button
-                  key={item.view}
-                  onClick={() => {
-                    navigateToView(item.view);
-                    setMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-3 rounded-md text-sm font-semibold transition-all duration-150 text-left relative min-h-[44px] ${
-                    currentView === item.view
-                      ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
-                  }`}
-                >
-                  <i className={`fas ${item.icon} w-4 text-center ${currentView === item.view ? 'text-white' : 'text-gray-400'}`} />
-                  <span className="flex-1">{item.label}</span>
-                  {item.badge && (
-                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
-                      currentView === item.view ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.alert && currentView !== item.view && (
-                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-                  )}
-                </button>
-              ))}
-
-              {/* FINANCIAL TOOLS */}
-              <div className="px-3 py-2 mt-2 border-t border-gray-100">
-                <p className="text-[9px] font-extrabold text-blue-600 uppercase tracking-widest">Financial Tools</p>
-              </div>
-              {[
-                { view: 'tax', label: 'Tax', icon: 'fa-file-invoice-dollar' },
-                { view: 'calculators', label: 'Calculators', icon: 'fa-calculator' },
-                { view: 'bills', label: 'Bill Calendar', icon: 'fa-calendar-check' },
-                { view: 'credit-health', label: 'Credit Health', icon: 'fa-file-invoice' },
-                { view: 'loan-center', label: 'Loan Center', icon: 'fa-file-contract' },
-                { view: 'recurring-payments', label: 'Recurring', icon: 'fa-rotate' },
-                { view: 'account-statement', label: 'Statement', icon: 'fa-file-invoice' },
-                { view: 'audit-log', label: 'Audit Log', icon: 'fa-shield-halved' },
-                { view: 'admin', label: 'Admin Panel', icon: 'fa-user-shield' },
-              ].map((item: any) => (
-                <button
-                  key={item.view}
-                  onClick={() => {
-                    navigateToView(item.view);
-                    setMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-3 rounded-md text-sm font-semibold transition-all duration-150 text-left relative min-h-[44px] ${
-                    currentView === item.view
-                      ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
-                  }`}
-                >
-                  <i className={`fas ${item.icon} w-4 text-center ${currentView === item.view ? 'text-white' : 'text-gray-400'}`} />
-                  <span className="flex-1">{item.label}</span>
-                  {item.badge && (
-                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
-                      currentView === item.view ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.alert && currentView !== item.view && (
-                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-                  )}
-                </button>
-              ))}
-
-              {/* OTHER FEATURES */}
-              <div className="px-3 py-2 mt-2 border-t border-gray-100">
-                <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Other Features</p>
-              </div>
-              {[
-                { view: 'family', label: 'Family', icon: 'fa-people-group' },
-                { view: 'digital-gold', label: 'Digital Gold', icon: 'fa-coins' },
-                { view: 'subscriptions', label: 'Subscriptions', icon: 'fa-calendar-xmark' },
-                { view: 'challenges', label: 'Challenges', icon: 'fa-fire' },
-                { view: 'innovation-lab', label: 'Innovation Lab', icon: 'fa-flask' },
-                { view: 'nri-mode', label: 'NRI Center', icon: 'fa-globe' },
-                { view: 'business-mode', label: 'Business', icon: 'fa-building' },
-                { view: 'kids-mode', label: 'Kids Mode', icon: 'fa-child' },
-                { view: 'notification-demo', label: 'Notifications', icon: 'fa-bell' },
-              { view: 'admin', label: 'Admin Panel', icon: 'fa-user-shield' },
-              ].map((item: any) => (
-                <button
-                  key={item.view}
-                  onClick={() => {
-                    navigateToView(item.view);
-                    setMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-3 rounded-md text-sm font-semibold transition-all duration-150 text-left relative min-h-[44px] ${
-                    currentView === item.view
-                      ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
-                  }`}
-                >
-                  <i className={`fas ${item.icon} w-4 text-center ${currentView === item.view ? 'text-white' : 'text-gray-400'}`} />
-                  <span className="flex-1">{item.label}</span>
-                  {item.badge && (
-                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
-                      currentView === item.view ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.alert && currentView !== item.view && (
-                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-                  )}
-                </button>
-              ))}
-            </nav>
-            <div className="p-3 border-t border-gray-100">
-              <div className="p-3 bg-primary-light/60 rounded-lg border border-primary/10">
-                <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-1">Need Help?</p>
-                <p className="text-[11px] text-gray-600">Call 1800-11-2211</p>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Main Layout: Sidebar + Content */}
-      <div className="flex flex-1">
-        {/* Sidebar — Grouped by Problem Statement */}
-        <aside className="w-[240px] flex-shrink-0 hidden md:flex flex-col bg-white border-r border-gray-200/80 sticky top-[52px] h-[calc(100vh-52px)] overflow-y-auto">
-          {/* WEALTH INTELLIGENCE */}
-          <div className="px-4 py-2 bg-primary/5 border-b border-primary/10">
-            <p className="text-[9px] font-extrabold text-primary uppercase tracking-widest">Wealth Intelligence</p>
-          </div>
-          <nav className="py-1 px-2 space-y-0.5">
-            {[
-              { view: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie' },
-              { view: 'bhavishya', label: 'BHAVISHYA AI', icon: 'fa-infinity', badge: 'FLAGSHIP', alert: true },
-              { view: 'wealth-twin', label: 'Wealth Twin', icon: 'fa-brain' },
-              { view: 'goals', label: 'Goals', icon: 'fa-bullseye' },
-              { view: 'portfolio', label: 'Portfolio', icon: 'fa-layer-group' },
-              { view: 'assets', label: 'Assets', icon: 'fa-gem' },
-              { view: 'market', label: 'Market', icon: 'fa-globe' },
-              { view: 'forecast', label: 'Forecast', icon: 'fa-chart-line' },
-            ].map((item: any) => (
-              <button
-                key={item.view}
-                onClick={() => navigateToView(item.view)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] font-semibold transition-all duration-150 text-left relative ${
-                  currentView === item.view
-                    ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
-                }`}
-              >
-                <i className={`fas ${item.icon} w-4 text-center ${currentView === item.view ? 'text-white' : 'text-gray-400'}`} />
-                <span className="flex-1">{item.label}</span>
-                {item.badge && (
-                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
-                    currentView === item.view ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-                {item.alert && currentView !== item.view && (
-                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-                )}
-              </button>
-            ))}
-          </nav>
-
-          {/* FRAUD PROTECTION & SECURITY */}
-          <div className="px-4 py-2 bg-rose-50 border-y border-rose-100">
-            <p className="text-[9px] font-extrabold text-rose-600 uppercase tracking-widest">Fraud Protection</p>
-          </div>
-          <nav className="py-1 px-2 space-y-0.5">
-            {[
-              { view: 'payments', label: 'Payments', icon: 'fa-bolt' },
-              { view: 'transactions', label: 'Transactions', icon: 'fa-list' },
-              { view: 'protection', label: 'Protection', icon: 'fa-shield-halved' },
-              { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon' },
-              { view: 'privacy', label: 'Privacy', icon: 'fa-lock' },
-            ].map((item: any) => (
-              <button
-                key={item.view}
-                onClick={() => navigateToView(item.view)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] font-semibold transition-all duration-150 text-left relative ${
-                  currentView === item.view
-                    ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
-                }`}
-              >
-                <i className={`fas ${item.icon} w-4 text-center ${currentView === item.view ? 'text-white' : 'text-gray-400'}`} />
-                <span className="flex-1">{item.label}</span>
-                {item.badge && (
-                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
-                    currentView === item.view ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-                {item.alert && currentView !== item.view && (
-                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-                )}
-              </button>
-            ))}
-          </nav>
-
-          {/* FINANCIAL TOOLS */}
-          <div className="px-4 py-2 bg-blue-50 border-y border-blue-100">
-            <p className="text-[9px] font-extrabold text-blue-600 uppercase tracking-widest">Financial Tools</p>
-          </div>
-          <nav className="py-1 px-2 space-y-0.5">
-            {[
-              { view: 'tax', label: 'Tax', icon: 'fa-file-invoice-dollar' },
-              { view: 'calculators', label: 'Calculators', icon: 'fa-calculator' },
-              { view: 'bills', label: 'Bill Calendar', icon: 'fa-calendar-check' },
-              { view: 'credit-health', label: 'Credit Health', icon: 'fa-file-invoice' },
-              { view: 'loan-center', label: 'Loan Center', icon: 'fa-file-contract' },
-              { view: 'recurring-payments', label: 'Recurring', icon: 'fa-rotate' },
-              { view: 'account-statement', label: 'Statement', icon: 'fa-file-invoice' },
-              { view: 'audit-log', label: 'Audit Log', icon: 'fa-shield-halved' },
-            ].map((item: any) => (
-              <button
-                key={item.view}
-                onClick={() => navigateToView(item.view)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] font-semibold transition-all duration-150 text-left relative ${
-                  currentView === item.view
-                    ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
-                }`}
-              >
-                <i className={`fas ${item.icon} w-4 text-center ${currentView === item.view ? 'text-white' : 'text-gray-400'}`} />
-                <span className="flex-1">{item.label}</span>
-                {item.badge && (
-                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
-                    currentView === item.view ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-                {item.alert && currentView !== item.view && (
-                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-                )}
-              </button>
-            ))}
-          </nav>
-
-          {/* OTHER FEATURES */}
-          <div className="px-4 py-2 bg-gray-50 border-y border-gray-100">
-            <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Other Features</p>
-          </div>
-          <nav className="py-1 px-2 space-y-0.5">
-            {[
-              { view: 'family', label: 'Family', icon: 'fa-people-group' },
-              { view: 'digital-gold', label: 'Digital Gold', icon: 'fa-coins' },
-              { view: 'subscriptions', label: 'Subscriptions', icon: 'fa-calendar-xmark' },
-              { view: 'challenges', label: 'Challenges', icon: 'fa-fire' },
-              { view: 'innovation-lab', label: 'Innovation Lab', icon: 'fa-flask' },
-              { view: 'nri-mode', label: 'NRI Center', icon: 'fa-globe' },
-              { view: 'business-mode', label: 'Business', icon: 'fa-building' },
-              { view: 'kids-mode', label: 'Kids Mode', icon: 'fa-child' },
-              { view: 'notification-demo', label: 'Notifications', icon: 'fa-bell' },
-              { view: 'admin', label: 'Admin Panel', icon: 'fa-user-shield' },
-            ].map((item: any) => (
-              <button
-                key={item.view}
-                onClick={() => navigateToView(item.view)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] font-semibold transition-all duration-150 text-left relative ${
-                  currentView === item.view
-                    ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
-                }`}
-              >
-                <i className={`fas ${item.icon} w-4 text-center ${currentView === item.view ? 'text-white' : 'text-gray-400'}`} />
-                <span className="flex-1">{item.label}</span>
-                {item.badge && (
-                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
-                    currentView === item.view ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-                {item.alert && currentView !== item.view && (
-                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-                )}
-              </button>
-            ))}
-          </nav>
-
-          <div className="mt-auto p-3 border-t border-gray-100">
-            <div className="p-3 bg-primary-light/60 rounded-lg border border-primary/10">
-              <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-1">Need Help?</p>
-              <p className="text-[11px] text-gray-600">Call 1800-11-2211</p>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 min-w-0 bg-psb-bg">
-          {/* View Content with Page Transitions */}
-          <div className={`p-3 sm:p-5 lg:p-6 max-w-7xl mx-auto ${pitchModeActive ? 'ring-4 ring-primary/40 ring-inset rounded-xl' : ''}`}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${currentView}-${seniorMode ? 'senior' : 'normal'}-${duressLocked ? 'duress' : 'safe'}`}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-              >
-                <Suspense fallback={<ViewLoader />}>
-                  {duressLocked ? (
-                    <DecoyAccountView />
-                  ) : seniorMode ? (
-                    <SeniorMode />
-                  ) : (
-                    <>
-                      {currentView === 'dashboard' && <DashboardView />}
-                        {currentView === 'wealth-twin' && <WealthTwinView />}
-                        {currentView === 'ai-recommendations' && <AIRecommendationsView />}
-                        {currentView === 'goals' && <GoalTracker />}
-                        {currentView === 'portfolio' && <PortfolioView />}
-                        {currentView === 'family' && <FamilyDashboard />}
-                        {currentView === 'assets' && <AssetsView />}
-                        {currentView === 'market' && <MarketView />}
-                        {currentView === 'forecast' && <ForecastView />}
-                        {currentView === 'protection' && <ProtectionView />}
-                        {currentView === 'privacy' && <PrivacyView />}
-                        {currentView === 'tax' && <TaxView />}
-                        {currentView === 'calculators' && <CalculatorsView />}
-                        {currentView === 'transactions' && <TransactionsView />}
-                        {currentView === 'features' && <FeaturesUniverse />}
-                        {currentView === 'architecture' && <SystemArchitecture />}
-                        {currentView === 'bills' && <BillCalendar />}
-                        {currentView === 'credit-health' && <CreditHealth />}
-                        {currentView === 'notification-demo' && <NotificationDemo />}
-                        {currentView === 'digital-gold' && <DigitalGold />}
-                        {currentView === 'challenges' && <ChallengesView />}
-                        {currentView === 'kids-mode' && <KidsMode />}
-                        {currentView === 'subscriptions' && <SubscriptionTracker />}
-                        {currentView === 'accessibility' && <AccessibilitySettings />}
-                        {currentView === 'nri-mode' && <NRIMode />}
-                        {currentView === 'business-mode' && <BusinessMode />}
-                        {currentView === 'values-alignment' && <ValuesAlignment />}
-                        {currentView === 'fantasy-league' && <FantasyLeague />}
-                        {currentView === 'boosts' && <BoostsManager />}
-                        {currentView === 'security-beast' && <SecurityBeastView />}
-                        {currentView === 'bhavishya' && <BhavishyaEngine />}
-                        {currentView === 'innovation-lab' && <InnovationLabView />}
-                        {currentView === 'payments' && <PaymentsPage />}
-                        {currentView === 'loan-center' && <LoanCenter />}
-                        {currentView === 'recurring-payments' && <RecurringPayments />}
-                        {currentView === 'account-statement' && <AccountStatement />}
-                        {currentView === 'audit-log' && <AuditLog />}
-                        {currentView === 'profile' && <ProfileSettings />}
-                      </>
-                    )}
-                  </Suspense>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Regulatory / simulation disclaimer */}
-            <div className="mt-8 mx-4 lg:mx-8 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-center">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                <strong className="text-slate-700 dark:text-slate-300">{language === 'hi' ? 'सिमुलेशन / डेमो केवल।' : 'Simulation / Demo Only.'}</strong>{' '}
-                {language === 'hi'
-                  ? 'सिक्योरवेल्थ ट्विन एक हैकथॉन प्रोटोटाइप है। यह कोई लाइसेंस प्राप्त बैंक, SEBI-पंजीकृत निवेश सलाहकार या बीमा प्रदाता नहीं है। सभी अनुमान, सिफारिशें और बाजार डेटा केवल प्रदर्शन उद्देश्यों के लिए हैं और वित्तीय सलाह नहीं constitute करते। पिछला प्रदर्शन भविष्य के रिटर्न का संकेतक नहीं है। निवेश से पहले हमेशा SEBI-पंजीकृत सलाहकार से परामर्श करें।'
-                  : 'SecureWealth Twin is a hackathon prototype. It is not a licensed bank, SEBI-registered investment advisor, or insurance provider. All projections, recommendations, and market data are for demonstration purposes and do not constitute financial advice. Past performance is not indicative of future returns. Always consult a SEBI-registered advisor before investing.'}
-              </p>
-            </div>
-
-            <AccessibleFooter />
-        </main>
-      </div>
+      <AppShell
+        currentView={currentView}
+        onNavigate={navigateToView}
+        queuedCount={queuedCount}
+      >
+        <Suspense fallback={<ViewLoader />}>
+          {duressLocked ? (
+            <DecoyAccountView />
+          ) : seniorMode ? (
+            <SeniorMode />
+          ) : (
+            <>
+              {currentView === 'dashboard' && <DashboardView />}
+              {currentView === 'wealth-twin' && <WealthTwinView />}
+              {currentView === 'ai-recommendations' && <AIRecommendationsView />}
+              {currentView === 'goals' && <GoalTracker />}
+              {currentView === 'portfolio' && <PortfolioView />}
+              {currentView === 'family' && <FamilyDashboard />}
+              {currentView === 'assets' && <AssetsView />}
+              {currentView === 'market' && <MarketView />}
+              {currentView === 'forecast' && <ForecastView />}
+              {currentView === 'protection' && <ProtectionView />}
+              {currentView === 'privacy' && <PrivacyView />}
+              {currentView === 'tax' && <TaxView />}
+              {currentView === 'calculators' && <CalculatorsView />}
+              {currentView === 'transactions' && <TransactionsView />}
+              {currentView === 'features' && <FeaturesUniverse />}
+              {currentView === 'architecture' && <SystemArchitecture />}
+              {currentView === 'bills' && <BillCalendar />}
+              {currentView === 'credit-health' && <CreditHealth />}
+              {currentView === 'notification-demo' && <NotificationDemo />}
+              {currentView === 'digital-gold' && <DigitalGold />}
+              {currentView === 'challenges' && <ChallengesView />}
+              {currentView === 'kids-mode' && <KidsMode />}
+              {currentView === 'subscriptions' && <SubscriptionTracker />}
+              {currentView === 'accessibility' && <AccessibilitySettings />}
+              {currentView === 'nri-mode' && <NRIMode />}
+              {currentView === 'business-mode' && <BusinessMode />}
+              {currentView === 'values-alignment' && <ValuesAlignment />}
+              {currentView === 'fantasy-league' && <FantasyLeague />}
+              {currentView === 'boosts' && <BoostsManager />}
+              {currentView === 'security-beast' && <SecurityBeastView />}
+              {currentView === 'bhavishya' && <BhavishyaEngine />}
+              {currentView === 'innovation-lab' && <InnovationLabView />}
+              {currentView === 'payments' && <PaymentsPage />}
+              {currentView === 'loan-center' && <LoanCenter />}
+              {currentView === 'recurring-payments' && <RecurringPayments />}
+              {currentView === 'account-statement' && <AccountStatement />}
+              {currentView === 'audit-log' && <AuditLog />}
+              {currentView === 'profile' && <ProfileSettings />}
+            </>
+          )}
+        </Suspense>
+      </AppShell>
 
       <ConsentModal />
 
@@ -995,9 +507,7 @@ export default function AuthenticatedApp() {
         <DemoMode />
       </Suspense>
       <JudgeTour />
-      <CommandPalette />
       <LiveActivityPill />
-    </div>
     </RewardsProvider>
     </NBAProvider>
     </SecurityProvider>
