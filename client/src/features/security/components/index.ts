@@ -1,0 +1,13 @@
+export { default as SecurityBeastView } from '@/features/security/components/SecurityBeastView';
+export { default as SecurityScoreDashboard } from '@/features/security/components/SecurityScoreDashboard';
+export { default as TpmAttestation } from '@/features/security/components/TpmAttestation';
+export { default as EbpfMonitor } from '@/features/security/components/EbpfMonitor';
+export { default as HoneytokenManager } from '@/features/security/components/HoneytokenManager';
+export { default as PasskeyAuth } from '@/features/security/components/PasskeyAuth';
+export { default as PostQuantumCrypto } from '@/features/security/components/PostQuantumCrypto';
+export { default as SecureEnclaveCheck } from '@/features/security/components/SecureEnclaveCheck';
+export { default as DecentralizedId } from '@/features/security/components/DecentralizedId';
+export { default as TransactionTrap } from '@/features/security/components/TransactionTrap';
+export { default as BlockchainAudit } from '@/features/security/components/BlockchainAudit';
+export { default as GhostMode } from '@/features/security/components/GhostMode';
+export { default as DeadMansSwitch } from '@/features/security/components/DeadMansSwitch';

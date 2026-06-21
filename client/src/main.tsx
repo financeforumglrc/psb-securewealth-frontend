@@ -1,11 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { AuthProvider } from './context/AuthContext'
-import ErrorBoundary from './components/ui/ErrorBoundary'
-import { isChunkError } from './utils/lazyWithRetry'
-import { seedDefaultAIKeys } from './services/aiConfig'
+import '@/styles/index.css'
+import App from '@/app/App.tsx'
+import { AuthProvider } from '@/shared/context/AuthContext'
+import ErrorBoundary from '@/shared/components/ui/ErrorBoundary'
+import { isChunkError } from '@/shared/utils/lazyWithRetry'
+import { seedDefaultAIKeys } from '@/shared/services/aiConfig'
 
 // Seed default AI provider keys from build-time env vars (demo builds)
 seedDefaultAIKeys();

@@ -1,0 +1,454 @@
+import { useEffect, useState } from 'react';
+import { useWealthStore } from '@/shared/store/wealthStore';
+import { AA_BANKS } from '@/shared/data/aaBanks';
+import { backendApi } from '@/shared/lib/backendApi';
+
+const BANK_META: Record<string, { mockBalance: number; color: string; initial: string; mockTxs: { desc: string; amount: number; date: string; type?: 'credit' }[] }> = {
+  sbi: { mockBalance: 245000, color: 'bg-blue-600', initial: 'S', mockTxs: [
+    { desc: 'UPI Transfer', amount: 2500, date: '2026-05-18' },
+    { desc: 'Interest Credit', amount: 420, date: '2026-05-15', type: 'credit' },
+    { desc: 'ATM Withdrawal', amount: 10000, date: '2026-05-12' },
+  ]},
+  hdfc: { mockBalance: 380000, color: 'bg-indigo-700', initial: 'H', mockTxs: [
+    { desc: 'Salary Credit', amount: 125000, date: '2026-05-22', type: 'credit' },
+    { desc: 'Amazon Purchase', amount: 3499, date: '2026-05-20' },
+    { desc: 'SIP Auto-debit', amount: 15000, date: '2026-05-05' },
+  ]},
+  icici: { mockBalance: 120000, color: 'bg-rose-700', initial: 'I', mockTxs: [
+    { desc: 'Electricity Bill', amount: 3200, date: '2026-05-18' },
+    { desc: 'Cash Deposit', amount: 20000, date: '2026-05-10', type: 'credit' },
+  ]},
+  axis: { mockBalance: 195000, color: 'bg-emerald-600', initial: 'A', mockTxs: [
+    { desc: 'BigBasket Grocery', amount: 2400, date: '2026-05-21' },
+    { desc: 'FD Interest', amount: 1800, date: '2026-05-01', type: 'credit' },
+  ]},
+  kotak: { mockBalance: 90000, color: 'bg-red-600', initial: 'K', mockTxs: [
+    { desc: 'PhonePe UPI', amount: 1200, date: '2026-05-19' },
+  ]},
+  pnb: { mockBalance: 65000, color: 'bg-red-800', initial: 'P', mockTxs: [
+    { desc: 'Cash Withdrawal', amount: 5000, date: '2026-05-17' },
+  ]},
+};
+
+const CONSENT_SCOPES = ['Account Balance', 'Transaction History', 'Fixed Deposits'];
+
+function CrossBankFraudPanel({ transactions, linkedAssets }: { transactions: any[]; linkedAssets: any[] }) {
+  const aaTxs = transactions.filter((t) =>
+    linkedAssets.some((a) => t.description && t.description.toLowerCase().includes(a.name.split(' ')[0].toLowerCase()))
+  );
+
+  const alerts: { type: string; severity: 'low' | 'medium' | 'high'; message: string; detail: string }[] = [];
+
+  const byDateAmount: Record<string, any[]> = {};
+  aaTxs.filter((t) => t.type === 'debit').forEach((t) => {
+    const key = `${t.date}-${t.amount}`;
+    if (!byDateAmount[key]) byDateAmount[key] = [];
+    byDateAmount[key].push(t);
+  });
+  Object.values(byDateAmount).forEach((group) => {
+    if (group.length > 1) {
+      alerts.push({
+        type: 'Duplicate Debit Pattern',
+        severity: 'high',
+        message: `₹${group[0].amount.toLocaleString()} debited ${group.length} times on ${group[0].date}`,
+        detail: group.map((t) => t.description).join(' • '),
+      });
+    }
+  });
+
+  aaTxs.filter((t) => t.type === 'debit' && t.amount >= 50000 && t.amount % 10000 === 0).forEach((t) => {
+    alerts.push({
+      type: 'Round-Number High Debit',
+      severity: 'medium',
+      message: `₹${t.amount.toLocaleString()} from ${t.description}`,
+      detail: 'Round-figure high-value outflow detected across linked accounts.',
+    });
+  });
+
+  const txDates: Record<string, number> = {};
+  aaTxs.filter((t) => t.type === 'debit').forEach((t) => {
+    txDates[t.date] = (txDates[t.date] || 0) + t.amount;
+  });
+  Object.entries(txDates).forEach(([date, total]) => {
+    if (total >= 100000) {
+      alerts.push({
+        type: 'High Velocity Day',
+        severity: 'medium',
+        message: `₹${total.toLocaleString()} outflow on ${date}`,
+        detail: 'Aggregate debits across linked banks crossed ₹1 lakh in a single day.',
+      });
+    }
+  });
+
+  if (alerts.length === 0) {
+    return (
+      <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+        <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+          <i className="fas fa-check-circle mr-1" /> No cross-bank anomalies detected
+        </p>
+        <p className="text-[10px] text-emerald-600/80 mt-0.5">
+          Comparing {aaTxs.length} AA-synced transactions across {linkedAssets.length} linked banks.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {alerts.slice(0, 4).map((alert, i) => (
+        <div
+          key={i}
+          className={`p-3 rounded-xl border text-xs ${
+            alert.severity === 'high'
+              ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800'
+              : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`font-bold ${alert.severity === 'high' ? 'text-rose-700' : 'text-amber-700'}`}>{alert.type}</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                alert.severity === 'high' ? 'bg-rose-200 text-rose-700' : 'bg-amber-200 text-amber-700'
+              }`}
+            >
+              {alert.severity.toUpperCase()}
+            </span>
+          </div>
+          <p className="text-slate-700 dark:text-slate-200 mt-1 font-medium">{alert.message}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">{alert.detail}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function AccountAggregatorFull() {
+  const assets = useWealthStore((s) => s.assets);
+  const consents = useWealthStore((s) => s.consents);
+  const transactions = useWealthStore((s) => s.transactions);
+  const addAsset = useWealthStore((s) => s.addAsset);
+  const addConsent = useWealthStore((s) => s.addConsent);
+  const removeAsset = useWealthStore((s) => s.removeAsset);
+  const revokeConsent = useWealthStore((s) => s.revokeConsent);
+  const addTransaction = useWealthStore((s) => s.addTransaction);
+
+  const [linkingBank, setLinkingBank] = useState<string | null>(null);
+  const [showConsent, setShowConsent] = useState<typeof AA_BANKS[0] | null>(null);
+  const [consentDuration, setConsentDuration] = useState(6);
+  const [aaError, setAaError] = useState<string | null>(null);
+  const [pendingConsent, setPendingConsent] = useState<{ id: number; consentId: string; setuUrl?: string; bankName: string } | null>(null);
+
+  // Sync backend AA consents on mount (best-effort)
+  useEffect(() => {
+    backendApi.getAaConsents().catch(() => {});
+  }, []);
+
+  const linkedAssets = assets.filter((a) => a.linkedViaAA);
+  const activeConsents = consents.filter((c) => c.status === 'ACTIVE');
+
+  const isLinked = (bankName: string) => linkedAssets.some((a) => a.name.includes(bankName));
+
+  const handleLink = async (bank: typeof AA_BANKS[0]) => {
+    setLinkingBank(bank.id);
+    setAaError(null);
+
+    const redirectUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/aa/callback`
+      : 'https://psb-securewealth-frontend.onrender.com/aa/callback';
+
+    // Persist consent to backend first (best-effort; UI still works if offline)
+    const consentRes = await backendApi.createAaConsent({
+      bankName: bank.name,
+      scopes: CONSENT_SCOPES,
+      redirectUrl,
+    });
+
+    const consentData = consentRes.data?.data;
+    const setuUrl = consentData?.setuConsentUrl;
+    const consentId = consentData?.consentId;
+    const internalId = consentData?.id;
+
+    if (consentRes.ok && setuUrl && internalId) {
+      // Real SETU sandbox flow: open the approval page, then wait for callback.
+      setLinkingBank(null);
+      setShowConsent(null);
+      setPendingConsent({ id: internalId, consentId, setuUrl, bankName: bank.name });
+      window.open(setuUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // Local mock / SETU-fallback flow: create a synthetic asset immediately.
+    setTimeout(() => {
+      const meta = BANK_META[bank.id] || { mockBalance: 0, color: 'bg-slate-500', initial: bank.shortName[0], mockTxs: [] };
+      const newAsset = {
+        id: 'aa-' + Date.now(),
+        name: bank.name + ' (Linked)',
+        type: 'bank' as const,
+        value: meta.mockBalance,
+        liquidity: 'high' as const,
+        linkedViaAA: true,
+      };
+      const consent = {
+        consentId: consentId || 'AA-' + Date.now().toString(36).toUpperCase(),
+        dataScope: CONSENT_SCOPES,
+        purpose: `Account aggregation from ${bank.name}`,
+        validityDays: consentDuration * 30,
+        status: 'ACTIVE' as const,
+        grantedAt: new Date().toISOString(),
+      };
+      addAsset(newAsset);
+      addConsent(consent);
+
+      meta.mockTxs.forEach((tx) => {
+        addTransaction({
+          id: 'aa-tx-' + Math.random().toString(36).slice(2),
+          date: tx.date,
+          description: `${bank.shortName} - ${tx.desc}`,
+          category: tx.desc.includes('Salary') ? 'Income' : tx.desc.includes('Interest') ? 'Investment' : 'Utilities',
+          amount: tx.amount,
+          type: tx.type || 'debit',
+          status: 'ALLOWED',
+          riskLevel: 'LOW',
+        });
+      });
+
+      setLinkingBank(null);
+      setShowConsent(null);
+    }, 1500);
+  };
+
+  const checkPendingConsent = async () => {
+    if (!pendingConsent) return;
+    setLinkingBank('pending');
+    setAaError(null);
+    try {
+      const statusRes = await backendApi.getAaConsentStatus(pendingConsent.id);
+      const statusData = statusRes.data?.data;
+      if (statusData?.status === 'active') {
+        const discoverRes = await backendApi.discoverAaAccounts(pendingConsent.id);
+        if (discoverRes.ok && Array.isArray(discoverRes.data?.data)) {
+          const accounts = discoverRes.data.data;
+          accounts.forEach((acc: any) => {
+            addAsset({
+              id: 'aa-acc-' + (acc.id || Math.random().toString(36).slice(2)),
+              name: `${acc.bankName} ${acc.accountType} ••${(acc.accountNumberMasked || '').slice(-4)}`,
+              type: 'bank',
+              value: acc.balance || 0,
+              liquidity: 'high',
+              linkedViaAA: true,
+            });
+          });
+          addConsent({
+            consentId: pendingConsent.consentId,
+            dataScope: CONSENT_SCOPES,
+            purpose: `Account aggregation from ${pendingConsent.bankName}`,
+            validityDays: consentDuration * 30,
+            status: 'ACTIVE',
+            grantedAt: new Date().toISOString(),
+          });
+          setPendingConsent(null);
+        } else {
+          setAaError(discoverRes.data?.error || 'Account discovery failed.');
+        }
+      } else {
+        setAaError(`Consent status is ${statusData?.status || 'unknown'}. Please approve it in the opened SETU tab and try again.`);
+      }
+    } catch (e: any) {
+      setAaError(e.message || 'Failed to check consent status.');
+    } finally {
+      setLinkingBank(null);
+    }
+  };
+
+  const handleRevoke = async (assetId: string, consentId: string) => {
+    await backendApi.revokeAaConsent(consentId).catch(() => {});
+    removeAsset(assetId);
+    revokeConsent(consentId);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="card">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <i className="fas fa-link text-primary" /> Account Aggregator
+            </h2>
+            <p className="text-xs text-slate-400">RBI regulated consent-based framework</p>
+          </div>
+          <span className="text-[10px] px-2 py-1 bg-emerald-500/10 text-emerald-600 rounded-full font-medium">
+            {linkedAssets.length} Linked
+          </span>
+        </div>
+
+        {aaError && (
+          <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-100 dark:border-rose-800 text-xs text-rose-600 dark:text-rose-400">
+            <i className="fas fa-circle-exclamation mr-1" /> {aaError}
+          </div>
+        )}
+
+        {pendingConsent && (
+          <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+            <p className="text-xs text-amber-800 dark:text-amber-300 font-bold mb-1">
+              <i className="fas fa-clock mr-1" /> Waiting for SETU sandbox approval
+            </p>
+            <p className="text-[11px] text-amber-700 dark:text-amber-400 mb-3">
+              A consent approval tab was opened. After you approve it there, click the button below to discover your accounts.
+            </p>
+            <button
+              onClick={checkPendingConsent}
+              disabled={linkingBank === 'pending'}
+              className="text-xs px-4 py-2 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 disabled:opacity-50"
+            >
+              {linkingBank === 'pending' ? <i className="fas fa-spinner fa-spin mr-1" /> : <i className="fas fa-magnifying-glass mr-1" />}
+              Check Approval & Discover Accounts
+            </button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {AA_BANKS.map((bank) => {
+            const meta = BANK_META[bank.id] || { mockBalance: 0, color: 'bg-slate-500', initial: bank.shortName[0], mockTxs: [] };
+            const linked = isLinked(bank.name);
+            const asset = linkedAssets.find((a) => a.name.includes(bank.name));
+            const consent = activeConsents.find((c) => c.purpose.includes(bank.name));
+            return (
+              <div
+                key={bank.id}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  linked
+                    ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/5'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 ${meta.color} rounded-lg flex items-center justify-center text-white font-bold`}>
+                    {meta.initial}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-slate-800 dark:text-white">{bank.name}</p>
+                    <p className="text-[10px] text-slate-400">
+                      {linked ? `Balance: ₹${asset?.value.toLocaleString()}` : 'Not linked'}
+                    </p>
+                  </div>
+                  {linked ? (
+                    <span className="text-[10px] px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full font-bold">
+                      <i className="fas fa-check mr-1" /> Active
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setShowConsent(bank)}
+                      disabled={linkingBank === bank.id}
+                      className="text-xs px-3 py-1.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {linkingBank === bank.id ? <i className="fas fa-spinner fa-spin" /> : <i className="fas fa-link mr-1" />}
+                      Link
+                    </button>
+                  )}
+                </div>
+
+                {linked && asset && consent && (
+                  <div className="space-y-2">
+                    <div className="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-700">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold">Latest Transactions</p>
+                      {meta.mockTxs.slice(0, 2).map((tx, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs mt-1">
+                          <span className="text-slate-600 dark:text-slate-300">{tx.desc}</span>
+                          <span className={tx.type === 'credit' ? 'text-emerald-600' : 'text-slate-700 dark:text-slate-200'}>
+                            {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleRevoke(asset.id, consent.consentId)}
+                      className="w-full py-1.5 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-lg border border-rose-200 hover:bg-rose-100 transition-colors"
+                    >
+                      <i className="fas fa-unlink mr-1" /> Revoke Access
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {activeConsents.length > 0 && (
+          <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
+            <p className="text-xs text-primary font-medium">
+              <i className="fas fa-shield-halved mr-1" /> Sahamati AA Network
+            </p>
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              {activeConsents.length} active consent{activeConsents.length > 1 ? 's' : ''}. Data is fetched securely via RBI regulated Account Aggregator framework. You can revoke access anytime.
+            </p>
+          </div>
+        )}
+
+        {linkedAssets.length > 1 && (
+          <div className="mt-5">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                <i className="fas fa-network-wired text-rose-500 mr-1" /> Cross-Bank Fraud Radar
+              </h4>
+              <span className="text-[10px] bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full font-bold">AA-POWERED</span>
+            </div>
+            <CrossBankFraudPanel transactions={transactions} linkedAssets={linkedAssets} />
+          </div>
+        )}
+      </div>
+
+      {showConsent && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4" onClick={() => setShowConsent(null)}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-primary to-secondary p-5 text-white rounded-xl mb-4">
+              <h3 className="text-lg font-bold">RBI Account Aggregator Consent</h3>
+              <p className="text-xs text-white/80">{showConsent.name}</p>
+            </div>
+
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="text-xs text-slate-500 font-medium mb-1 block">Consent Duration</label>
+                <div className="flex gap-2">
+                  {[6, 12].map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setConsentDuration(m)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
+                        consentDuration === m ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'
+                      }`}
+                    >
+                      {m} Months
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 font-medium mb-1 block">Data Types</label>
+                {CONSENT_SCOPES.map((scope) => (
+                  <div key={scope} className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg mb-1">
+                    <i className="fas fa-check-circle text-emerald-500 text-xs" />
+                    <span className="text-xs text-slate-700 dark:text-slate-200">{scope}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setShowConsent(null)} className="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold">
+                Cancel
+              </button>
+              <button
+                onClick={() => handleLink(showConsent)}
+                disabled={linkingBank === showConsent.id}
+                className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 disabled:opacity-50"
+              >
+                {linkingBank === showConsent.id ? <i className="fas fa-spinner fa-spin mr-1" /> : <i className="fas fa-check mr-1" />}
+                Approve & Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

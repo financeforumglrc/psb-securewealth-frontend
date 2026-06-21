@@ -1,0 +1,241 @@
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { logSecurityEvent } from '@/shared/utils/securityLogger';
+import { useWealthStore } from '@/shared/store/wealthStore';
+
+declare global {
+  interface Window {
+    webkitSpeechRecognition: any;
+    SpeechRecognition: any;
+  }
+}
+
+const COMMANDS = [
+  { phrase: 'show balance', action: 'Dashboard', view: 'dashboard' },
+  { phrase: 'send money to', action: 'Payments', view: 'payments' },
+  { phrase: 'pay bill', action: 'Bills', view: 'bills' },
+  { phrase: 'what is my net worth', action: 'Wealth Twin', view: 'wealth-twin' },
+  { phrase: 'show transactions', action: 'Transactions', view: 'transactions' },
+  { phrase: 'help', action: 'Voice commands', view: null as string | null },
+  { phrase: 'lock app', action: 'Lock app', view: null as string | null },
+  { phrase: 'duress', action: 'Silent duress alert', view: null as string | null },
+];
+
+export default function VoiceCommandBar() {
+  const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [matchedCommand, setMatchedCommand] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const waveRef = useRef<HTMLDivElement>(null);
+  const setView = useWealthStore((s) => s.setView);
+  const matchedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const executeCommand = (phrase: string) => {
+    const cmd = COMMANDS.find((c) => c.phrase === phrase);
+    if (!cmd) return;
+
+    if (cmd.view) {
+      setView(cmd.view as any);
+      setToast(`Opened ${cmd.action}`);
+    } else if (phrase === 'help') {
+      setShowHelp(true);
+      setToast('Showing voice commands');
+    } else if (phrase === 'lock app') {
+       
+      alert('App locked for security. Re-authenticate to continue.');
+      logSecurityEvent('Voice', 'App locked via voice command', 'info', 'Voice navigation');
+    } else if (phrase === 'duress') {
+      localStorage.setItem('sw_duress', 'active');
+      window.dispatchEvent(new StorageEvent('storage', { key: 'sw_duress', newValue: 'active' }));
+       
+      alert('Duress mode activated. Balances sanitized.');
+      logSecurityEvent('Voice', 'Duress mode activated via voice', 'critical', 'Voice navigation');
+    }
+
+    setMatchedCommand(phrase);
+    logSecurityEvent('Voice', `Command executed: "${phrase}"`, 'info', 'Voice navigation');
+
+    if (matchedTimerRef.current) clearTimeout(matchedTimerRef.current);
+    matchedTimerRef.current = setTimeout(() => {
+      setMatchedCommand(null);
+      setTranscript('');
+      setToast(null);
+    }, 3000);
+  };
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition: any = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN';
+
+    recognition.onresult = (event: any) => {
+      const interim = Array.from(event.results as any)
+        .map((r: any) => r[0].transcript)
+        .join('');
+      setTranscript(interim);
+
+      for (const cmd of COMMANDS) {
+        if (interim.toLowerCase().includes(cmd.phrase)) {
+          executeCommand(cmd.phrase);
+          break;
+        }
+      }
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+    };
+
+    recognition.onerror = () => {
+      setListening(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      try {
+        recognition.stop();
+      } catch {
+        // ignore cleanup errors
+      }
+      if (matchedTimerRef.current) clearTimeout(matchedTimerRef.current);
+    };
+  }, []);
+
+  function toggleListening() {
+    if (!recognitionRef.current) {
+       
+      alert('Speech recognition not supported in this browser.');
+      return;
+    }
+    if (listening) {
+      recognitionRef.current.stop();
+      setListening(false);
+    } else {
+      setTranscript('');
+      setMatchedCommand(null);
+      setToast(null);
+      recognitionRef.current.start();
+      setListening(true);
+      logSecurityEvent('Voice', 'Listening started', 'info', 'Voice navigation');
+    }
+  }
+
+  return (
+    <>
+      {/* Floating Mic Button */}
+      <div className="fixed bottom-24 right-4 z-50">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleListening}
+          className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl transition-colors ${
+            listening ? 'bg-rose-500 text-white animate-pulse' : 'bg-primary text-white'
+          }`}
+        >
+          <i className={`fas ${listening ? 'fa-microphone-lines' : 'fa-microphone'}`} />
+        </motion.button>
+        {listening && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full"
+          >
+            Listening...
+          </motion.div>
+        )}
+      </div>
+
+      {/* Voice Panel */}
+      <AnimatePresence>
+        {(listening || transcript || toast) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-40 right-4 z-50 w-72 card shadow-2xl"
+          >
+            {/* Waveform */}
+            <div ref={waveRef} className="flex items-center justify-center gap-1 h-10 mb-3">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  animate={
+                    listening
+                      ? { height: [8, 24 + Math.random() * 16, 8] }
+                      : { height: 8 }
+                  }
+                  transition={{
+                    duration: 0.4,
+                    repeat: listening ? Infinity : 0,
+                    delay: i * 0.05,
+                  }}
+                  className="w-1 bg-primary rounded-full"
+                />
+              ))}
+            </div>
+
+            {/* Transcript */}
+            {transcript && (
+              <p className="text-xs text-slate-600 dark:text-slate-300 text-center mb-2 italic">
+                "{transcript}"
+              </p>
+            )}
+
+            {/* Matched Command */}
+            {matchedCommand && (
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-center"
+              >
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                  <i className="fas fa-check mr-1" />
+                  Command: "{matchedCommand}"
+                </p>
+              </motion.div>
+            )}
+
+            {/* Action toast */}
+            {toast && !matchedCommand && (
+              <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-center">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{toast}</p>
+              </div>
+            )}
+
+            {/* Help Button */}
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              className="mt-2 w-full py-1 text-[10px] text-slate-400 hover:text-primary transition-colors"
+            >
+              {showHelp ? 'Hide' : 'Show'} Voice Commands
+            </button>
+
+            {showHelp && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-2 space-y-1 max-h-40 overflow-y-auto"
+              >
+                {COMMANDS.map((cmd) => (
+                  <div
+                    key={cmd.phrase}
+                    className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800"
+                  >
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">"{cmd.phrase}"</span>
+                    <span className="text-[10px] text-slate-400">{cmd.action}</span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}

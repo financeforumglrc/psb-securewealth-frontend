@@ -1,0 +1,16 @@
+export { default as ProtectionView } from '@/features/protection/components/ProtectionView';
+export { default as RiskMeter } from '@/features/protection/components/RiskMeter';
+export { default as FraudDetectionEngine } from '@/features/protection/components/FraudDetectionEngine';
+export { default as PanicButton } from '@/features/protection/components/PanicButton';
+export { default as DuressModeToggle } from '@/features/protection/components/DuressMode';
+export { default as ThreatIntel } from '@/features/protection/components/ThreatIntel';
+export { default as StressTestSimulator } from '@/features/protection/components/StressTestSimulator';
+export { default as ScamCallerID } from '@/features/protection/components/ScamCallerID';
+export { default as BehavioralBiometrics } from '@/features/protection/components/BehavioralBiometrics';
+export { default as DuressPinSetup } from '@/features/protection/components/DuressPinSetup';
+export { default as PaymentGuard } from '@/features/protection/components/PaymentGuard';
+export { default as SecurityLog } from '@/features/protection/components/SecurityLog';
+export { default as OTPSimulation } from '@/features/protection/components/OTPSimulation';
+export { default as SecureCheckout } from '@/features/protection/components/SecureCheckout';
+export { default as LockdownOverlay } from '@/features/protection/components/LockdownOverlay';
+export { default as CoercedModeBanner } from '@/features/protection/components/CoercedModeBanner';
