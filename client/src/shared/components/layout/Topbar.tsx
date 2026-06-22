@@ -7,6 +7,7 @@ import { useSecurity } from '@/shared/context/SecurityContext';
 import { clearAuth } from '@/shared/services/authService';
 import { useAuth } from '@/shared/context/AuthContext';
 import PSBLogo from '@/features/psb/components/PSBLogo';
+import ProtectionStatusBar from './ProtectionStatusBar';
 import { MEGA_MENU } from '@/shared/config/navigation';
 import type { NavGroup, NavItem } from '@/shared/config/navigation';
 
@@ -436,6 +437,8 @@ export default function Topbar({ currentView, onNavigate, onOpenMobileSidebar, q
           )}
         </AnimatePresence>
       </nav>
+
+      <ProtectionStatusBar />
     </>
   );
 }

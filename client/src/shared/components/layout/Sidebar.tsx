@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { useSecurity } from '@/shared/context/SecurityContext';
+import ProtectionSignalsCard from './ProtectionSignalsCard';
 import { SIDEBAR_GROUPS, findGroupForView, VIEW_DESCRIPTIONS } from '@/shared/config/navigation';
 import type { NavGroup, NavItem } from '@/shared/config/navigation';
 
@@ -226,6 +227,8 @@ function SidebarContent({ currentView, onNavigate }: Pick<SidebarProps, 'current
         ))}
       </div>
 
+      <ProtectionSignalsCard />
+
       <div className="p-3 border-t border-slate-100">
         <div className="p-3 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border border-primary/10">
           <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-1">Need Help?</p>
@@ -242,7 +245,7 @@ export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMo
   return (
     <>
       {/* Desktop tree sidebar */}
-      <aside className="w-[280px] flex-shrink-0 hidden lg:flex flex-col bg-white border-r border-slate-200/80 h-[calc(100vh-108px)] sticky top-[108px] overflow-hidden shadow-sm">
+      <aside className="w-[280px] flex-shrink-0 hidden lg:flex flex-col bg-white border-r border-slate-200/80 h-[calc(100vh-144px)] sticky top-[144px] overflow-hidden shadow-sm">
         <SidebarContent currentView={currentView} onNavigate={onNavigate} />
       </aside>
 

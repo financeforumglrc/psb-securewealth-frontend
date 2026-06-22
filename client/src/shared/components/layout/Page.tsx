@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { findGroupForView, findItemForView, VIEW_TITLES } from '@/shared/config/navigation';
+import DecisionFlowStrip from './DecisionFlowStrip';
 import AccessibleFooter from '@/features/psb/components/AccessibleFooter';
 
 interface PageProps {
@@ -74,6 +75,8 @@ export default function Page({ view, children }: PageProps) {
           </div>
         </div>
       </div>
+
+      <DecisionFlowStrip currentView={view} />
 
       {/* View content */}
       <div className="px-3 sm:px-5 lg:px-6 pt-3 sm:pt-4 pb-5 sm:pb-6 max-w-7xl mx-auto">

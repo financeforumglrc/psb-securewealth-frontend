@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import CommandPalette from '@/shared/components/ui/CommandPalette';
+import WealthTwinAssistant from './WealthTwinAssistant';
 import Topbar from './Topbar';
 import Sidebar from './Sidebar';
 import Page from './Page';
@@ -43,6 +44,7 @@ export default function AppShell({ children, currentView, onNavigate, queuedCoun
       </div>
 
       <CommandPalette />
+      <WealthTwinAssistant />
     </div>
   );
 }
