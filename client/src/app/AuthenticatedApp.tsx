@@ -25,7 +25,7 @@ import FeaturesUniverse from '@/features/architecture/components/FeaturesUnivers
 import ReportGeneratorModal from '@/features/report/components/ReportGeneratorModal';
 import FinancialReport from '@/features/report/components/FinancialReport';
 import ConsentModal from '@/features/compliance/components/ConsentModal';
-import ScenarioSimulator from '@/features/forecast/components/ScenarioSimulator';
+import ForecastView from '@/features/forecast/components/ForecastView';
 import ManualAssetForm from '@/features/assets/components/ManualAssetForm';
 import LinkAccountModal from '@/features/assets/components/LinkAccountModal';
 import PhysicalAssetIntelligence from '@/features/assets/components/PhysicalAssetIntelligence';
@@ -253,14 +253,6 @@ function AssetsView() {
       </div>
       <LinkAccountModal show={showLinkModal} onClose={() => setShowLinkModal(false)} />
       <PhysicalAssetIntelligence />
-    </div>
-  );
-}
-
-function ForecastView() {
-  return (
-    <div className="space-y-6">
-      <ScenarioSimulator />
     </div>
   );
 }

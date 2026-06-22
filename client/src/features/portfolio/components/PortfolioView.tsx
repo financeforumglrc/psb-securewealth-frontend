@@ -2,10 +2,25 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import CosmosCard, { CosmosBadge } from '@/shared/components/ui/CosmosCard';
+import DashboardWidget from '@/features/dashboard/components/DashboardWidget';
+import CosmosCard from '@/shared/components/ui/CosmosCard';
 import ESGScore from '@/features/portfolio/components/ESGScore';
 
 const COLORS = ['#0f766e', '#14b8a6', '#f59e0b', '#8b5cf6', '#64748b'];
+
+const sips = [
+  { name: 'Axis Bluechip SIP', amount: 15000, frequency: 'Monthly', status: 'Active', startDate: '2024-01-15', nextDate: '2024-12-15' },
+  { name: 'Nifty 50 Index SIP', amount: 10000, frequency: 'Monthly', status: 'Active', startDate: '2024-03-01', nextDate: '2024-12-01' },
+  { name: 'PPF Contribution', amount: 12500, frequency: 'Monthly', status: 'Active', startDate: '2023-04-01', nextDate: '2024-12-05' },
+];
+
+const holdings = [
+  { name: 'Axis Bluechip Fund', type: 'equity', value: 280000, returns: 14.2, benchmark: 12.5 },
+  { name: 'Nifty 50 ETF', type: 'equity', value: 150000, returns: 12.8, benchmark: 12.5 },
+  { name: 'SBI Savings', type: 'debt', value: 450000, returns: 3.5, benchmark: 3.2 },
+  { name: 'HDFC Savings', type: 'debt', value: 320000, returns: 3.5, benchmark: 3.2 },
+  { name: 'Physical Gold', type: 'gold', value: 200000, returns: 8.1, benchmark: 7.8 },
+];
 
 export default function PortfolioView() {
   const assets = useWealthStore((s) => s.assets);
@@ -13,29 +28,21 @@ export default function PortfolioView() {
 
   const totalValue = assets.reduce((s, a) => s + a.value, 0);
 
-  const allocation = useMemo(() => [
-    { name: 'Equity', value: assets.filter((a) => a.type === 'stock' || a.type === 'mutualFund').reduce((s, a) => s + a.value, 0), ideal: 50 },
-    { name: 'Debt', value: assets.filter((a) => a.type === 'bank').reduce((s, a) => s + a.value, 0), ideal: 25 },
-    { name: 'Gold', value: assets.filter((a) => a.type === 'gold').reduce((s, a) => s + a.value, 0), ideal: 10 },
-    { name: 'Real Estate', value: assets.filter((a) => a.type === 'property').reduce((s, a) => s + a.value, 0), ideal: 10 },
-    { name: 'Other', value: assets.filter((a) => a.type === 'vehicle' || a.type === 'other').reduce((s, a) => s + a.value, 0), ideal: 5 },
-  ].filter((d) => d.value > 0).map(d => ({ ...d, pct: totalValue > 0 ? Math.round((d.value / totalValue) * 100) : 0 })), [assets, totalValue]);
+  const allocation = useMemo(
+    () =>
+      [
+        { name: 'Equity', value: assets.filter((a) => a.type === 'stock' || a.type === 'mutualFund').reduce((s, a) => s + a.value, 0), ideal: 50 },
+        { name: 'Debt', value: assets.filter((a) => a.type === 'bank').reduce((s, a) => s + a.value, 0), ideal: 25 },
+        { name: 'Gold', value: assets.filter((a) => a.type === 'gold').reduce((s, a) => s + a.value, 0), ideal: 10 },
+        { name: 'Real Estate', value: assets.filter((a) => a.type === 'property').reduce((s, a) => s + a.value, 0), ideal: 10 },
+        { name: 'Other', value: assets.filter((a) => a.type === 'vehicle' || a.type === 'other').reduce((s, a) => s + a.value, 0), ideal: 5 },
+      ]
+        .filter((d) => d.value > 0)
+        .map((d) => ({ ...d, pct: totalValue > 0 ? Math.round((d.value / totalValue) * 100) : 0 })),
+    [assets, totalValue]
+  );
 
-  const sips = [
-    { name: 'Axis Bluechip SIP', amount: 15000, frequency: 'Monthly', status: 'Active', startDate: '2024-01-15', nextDate: '2024-12-15' },
-    { name: 'Nifty 50 Index SIP', amount: 10000, frequency: 'Monthly', status: 'Active', startDate: '2024-03-01', nextDate: '2024-12-01' },
-    { name: 'PPF Contribution', amount: 12500, frequency: 'Monthly', status: 'Active', startDate: '2023-04-01', nextDate: '2024-12-05' },
-  ];
-
-  const holdings = [
-    { name: 'Axis Bluechip Fund', type: 'equity', value: 280000, returns: 14.2, benchmark: 12.5 },
-    { name: 'Nifty 50 ETF', type: 'equity', value: 150000, returns: 12.8, benchmark: 12.5 },
-    { name: 'SBI Savings', type: 'debt', value: 450000, returns: 3.5, benchmark: 3.2 },
-    { name: 'HDFC Savings', type: 'debt', value: 320000, returns: 3.5, benchmark: 3.2 },
-    { name: 'Physical Gold', type: 'gold', value: 200000, returns: 8.1, benchmark: 7.8 },
-  ];
-
-  const benchmarkData = holdings.map(h => ({
+  const benchmarkData = holdings.map((h) => ({
     name: h.name.split(' ').slice(0, 2).join(' '),
     portfolio: h.returns,
     benchmark: h.benchmark,
@@ -43,6 +50,24 @@ export default function PortfolioView() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <i className="fas fa-chart-pie text-primary" />
+              Portfolio
+            </h1>
+            <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-extrabold border border-primary/20">
+              LIVE HOLDINGS
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Track allocation, SIPs, performance vs benchmark, and ESG alignment.
+          </p>
+        </div>
+      </div>
+
       {/* Hero Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
@@ -65,7 +90,7 @@ export default function PortfolioView() {
 
       {/* Allocation + Benchmark */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <CosmosCard variant="default" className="lg:col-span-1" header={{ icon: 'fa-pie-chart', iconColor: '#0f766e', title: 'Asset Allocation', subtitle: 'Current vs Ideal' }}>
+        <DashboardWidget title="Asset Allocation" icon="fa-chart-pie" subtitle="Current vs Ideal" className="lg:col-span-1">
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -94,9 +119,9 @@ export default function PortfolioView() {
               </div>
             ))}
           </div>
-        </CosmosCard>
+        </DashboardWidget>
 
-        <CosmosCard variant="default" className="lg:col-span-2" header={{ icon: 'fa-scale-balanced', iconColor: '#f59e0b', title: 'Performance vs Benchmark', subtitle: 'Trailing 1 year returns' }}>
+        <DashboardWidget title="Performance vs Benchmark" icon="fa-scale-balanced" subtitle="Trailing 1 year returns" className="lg:col-span-2">
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={benchmarkData} barGap={4}>
@@ -109,11 +134,20 @@ export default function PortfolioView() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </CosmosCard>
+        </DashboardWidget>
       </div>
 
       {/* SIPs */}
-      <CosmosCard variant="default" header={{ icon: 'fa-rotate', iconColor: '#14b8a6', title: 'Active SIPs', subtitle: `${sips.length} recurring investments`, action: <CosmosBadge color="success" size="sm">{sips.length} Active</CosmosBadge> }}>
+      <DashboardWidget
+        title="Active SIPs"
+        icon="fa-rotate"
+        subtitle={`${sips.length} recurring investments`}
+        action={
+          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
+            {sips.length} Active
+          </span>
+        }
+      >
         <div className="space-y-3">
           {sips.map((sip, i) => (
             <motion.div
@@ -140,26 +174,26 @@ export default function PortfolioView() {
             </motion.div>
           ))}
         </div>
-      </CosmosCard>
+      </DashboardWidget>
 
-      {/* Holdings Table */}
+      {/* Holdings Table + ESG */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <CosmosCard variant="default" className="lg:col-span-2" header={{ icon: 'fa-list', iconColor: '#8b5cf6', title: 'Investment Holdings', subtitle: `${holdings.length} assets tracked` }}>
-          <div className="overflow-x-auto">
+        <DashboardWidget title="Investment Holdings" icon="fa-list" subtitle={`${holdings.length} assets tracked`} className="lg:col-span-2">
+          <div className="overflow-x-auto -mx-4 -my-4">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700">
-                  <th className="pb-3 font-medium text-xs">Asset</th>
-                  <th className="pb-3 font-medium text-xs">Type</th>
-                  <th className="pb-3 font-medium text-xs text-right">Value</th>
-                  <th className="pb-3 font-medium text-xs text-right">Returns</th>
-                  <th className="pb-3 font-medium text-xs text-right">vs Benchmark</th>
+                  <th className="pb-3 font-medium text-xs px-5 pt-4">Asset</th>
+                  <th className="pb-3 font-medium text-xs pt-4">Type</th>
+                  <th className="pb-3 font-medium text-xs text-right pt-4">Value</th>
+                  <th className="pb-3 font-medium text-xs text-right pt-4">Returns</th>
+                  <th className="pb-3 font-medium text-xs text-right pt-4">vs Benchmark</th>
                 </tr>
               </thead>
               <tbody>
                 {holdings.map((h) => (
                   <tr key={h.name} className="border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors">
-                    <td className="py-3 font-medium text-slate-800 dark:text-white">{h.name}</td>
+                    <td className="py-3 px-5 font-medium text-slate-800 dark:text-white">{h.name}</td>
                     <td className="py-3">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${h.type === 'equity' ? 'bg-primary/10 text-primary' : h.type === 'gold' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-secondary/10 text-secondary'}`}>
                         {h.type}
@@ -177,25 +211,25 @@ export default function PortfolioView() {
               </tbody>
             </table>
           </div>
-        </CosmosCard>
+        </DashboardWidget>
         <ESGScore />
       </div>
 
       {/* Rebalancing Simulator */}
-      <CosmosCard
-        variant="gradient"
-        header={{ icon: 'fa-sliders', iconColor: '#0f766e', title: 'Rebalancing Simulator', subtitle: 'Align your portfolio with ideal allocation' }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Compare current allocation with recommended targets</p>
+      <DashboardWidget
+        title="Rebalancing Simulator"
+        icon="fa-sliders"
+        subtitle="Align your portfolio with ideal allocation"
+        action={
           <button
             onClick={() => setShowRebalance(!showRebalance)}
-            className="text-xs px-3 py-1.5 bg-primary text-white rounded-lg font-bold hover:bg-primary-dark transition-colors"
+            className="text-[10px] font-bold px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
           >
             {showRebalance ? 'Hide' : 'Show'} Simulation
           </button>
-        </div>
-
+        }
+      >
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Compare current allocation with recommended targets</p>
         {showRebalance && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3">
             {allocation.map((d, i) => {
@@ -230,7 +264,7 @@ export default function PortfolioView() {
             </div>
           </motion.div>
         )}
-      </CosmosCard>
+      </DashboardWidget>
     </div>
   );
 }

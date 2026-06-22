@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { useWealthStore } from '@/shared/store/wealthStore';
-import CosmosCard, { CosmosBadge } from '@/shared/components/ui/CosmosCard';
+import DashboardWidget from '@/features/dashboard/components/DashboardWidget';
+import CosmosCard from '@/shared/components/ui/CosmosCard';
 import SmartTriggers from '@/features/market/components/SmartTriggers';
 import MarketStrategist from '@/features/market/components/MarketStrategist';
 import MarketNewsFeed from '@/features/market/components/MarketNewsFeed';
@@ -62,19 +63,23 @@ const SENTIMENT_DATA = [
 export default function MarketView() {
   const market = useWealthStore((s) => s.marketData);
 
-  // Sector data computed from SECTORS constant
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <i className="fas fa-chart-line text-primary" /> Market Intelligence
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">AI-powered market analysis, sector heatmap, and economic calendar</p>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <i className="fas fa-chart-line text-primary" />
+              Market Intelligence
+            </h1>
+            <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-extrabold border border-emerald-200">
+              <i className="fas fa-bolt mr-1" />
+              LIVE
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">AI-powered market analysis, sector heatmap, and economic calendar</p>
         </div>
-        <CosmosBadge color="info" size="sm" pulse><i className="fas fa-bolt mr-1" />Live</CosmosBadge>
       </div>
 
       {/* Macro Indicators */}
@@ -93,10 +98,9 @@ export default function MarketView() {
       <SmartTriggers />
       <MarketStrategist />
 
-      {/* Main Grid: NIFTY + Sentiment + Sector Heatmap */}
+      {/* Main Grid: NIFTY + Sentiment */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* NIFTY Chart */}
-        <CosmosCard variant="default" className="lg:col-span-2" header={{ icon: 'fa-chart-area', iconColor: '#0f766e', title: 'NIFTY 50 Trend', subtitle: '12-month performance' }}>
+        <DashboardWidget title="NIFTY 50 Trend" icon="fa-chart-area" subtitle="12-month performance" className="lg:col-span-2">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={niftyData}>
@@ -108,10 +112,9 @@ export default function MarketView() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </CosmosCard>
+        </DashboardWidget>
 
-        {/* Sentiment Gauge */}
-        <CosmosCard variant="default" header={{ icon: 'fa-gauge-high', iconColor: '#1565C0', title: 'Market Sentiment' }}>
+        <DashboardWidget title="Market Sentiment" icon="fa-gauge-high">
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={SENTIMENT_DATA} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
@@ -128,22 +131,27 @@ export default function MarketView() {
             <p className="text-xs font-bold text-emerald-600"><i className="fas fa-arrow-trend-up mr-1" />62% Bullish</p>
             <p className="text-[10px] text-slate-400">FII inflows +₹3,200Cr this week</p>
           </div>
-        </CosmosCard>
+        </DashboardWidget>
       </div>
 
       {/* Sector Heatmap */}
-      <CosmosCard variant="default" header={{ icon: 'fa-border-all', iconColor: '#E65100', title: 'Sector Performance', subtitle: 'Heatmap by intraday change' }}>
+      <DashboardWidget title="Sector Performance" icon="fa-border-all" subtitle="Heatmap by intraday change">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {SECTORS.map((sector, i) => {
             const isUp = sector.change >= 0;
             const intensity = Math.min(Math.abs(sector.change) / 3.5, 1);
             return (
-              <motion.div key={sector.name} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }}
+              <motion.div
+                key={sector.name}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.03 }}
                 className="p-3 rounded-xl border transition-all hover:shadow-md cursor-pointer"
                 style={{
                   background: isUp ? `rgba(16, 185, 129, ${0.05 + intensity * 0.15})` : `rgba(239, 68, 68, ${0.05 + intensity * 0.15})`,
                   borderColor: isUp ? `rgba(16, 185, 129, ${0.2 + intensity * 0.3})` : `rgba(239, 68, 68, ${0.2 + intensity * 0.3})`,
-                }}>
+                }}
+              >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{sector.name}</span>
                   {sector.trending && <i className="fas fa-fire text-[9px] text-amber-500" />}
@@ -156,12 +164,11 @@ export default function MarketView() {
             );
           })}
         </div>
-      </CosmosCard>
+      </DashboardWidget>
 
       {/* Watchlist + Economic Calendar */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Watchlist */}
-        <CosmosCard variant="default" header={{ icon: 'fa-star', iconColor: '#f59e0b', title: 'Your Watchlist', subtitle: '5 stocks tracked' }}>
+        <DashboardWidget title="Your Watchlist" icon="fa-star" subtitle="5 stocks tracked">
           <div className="space-y-2">
             {WATCHLIST.map((stock) => {
               const isUp = stock.change >= 0;
@@ -177,7 +184,6 @@ export default function MarketView() {
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">{stock.name}</p>
                     <p className="text-[10px] text-slate-400">{stock.symbol}</p>
                   </div>
-                  {/* Mini sparkline */}
                   <div className="hidden sm:flex items-end gap-px h-6 w-16">
                     {stock.spark.map((v, i) => {
                       const h = ((v - min) / range) * 100;
@@ -192,10 +198,9 @@ export default function MarketView() {
               );
             })}
           </div>
-        </CosmosCard>
+        </DashboardWidget>
 
-        {/* Economic Calendar */}
-        <CosmosCard variant="default" header={{ icon: 'fa-calendar-days', iconColor: '#C2185B', title: 'Economic Calendar' }}>
+        <DashboardWidget title="Economic Calendar" icon="fa-calendar-days">
           <div className="space-y-2">
             {ECONOMIC_CALENDAR.map((event, i) => (
               <div key={i} className="flex items-start gap-3 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
@@ -212,30 +217,29 @@ export default function MarketView() {
               </div>
             ))}
           </div>
-        </CosmosCard>
+        </DashboardWidget>
       </div>
 
-      {/* AI Market Insights */}
+      {/* AI Market Insights + Global Indices */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CosmosCard variant="gradient" header={{ icon: 'fa-robot', iconColor: '#0f766e', title: 'AI Market Insights' }}>
+        <DashboardWidget title="AI Market Insights" icon="fa-robot">
           <div className="space-y-3">
-            <div className="p-3 bg-white/60 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-700/50">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-700/50">
               <p className="text-sm font-bold text-primary"><i className="fas fa-chart-line mr-2" />NIFTY P/E at {market.niftyPe}</p>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">Above historical average of 20. Consider staggered SIPs over lump sum investments.</p>
             </div>
-            <div className="p-3 bg-white/60 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-700/50">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-700/50">
               <p className="text-sm font-bold text-amber-600"><i className="fas fa-triangle-exclamation mr-2" />Inflation Alert</p>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">CPI at {market.inflation}% is above RBI's 4% target. Allocate 15% to gold/FDs for stability.</p>
             </div>
-            <div className="p-3 bg-white/60 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-700/50">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-700/50">
               <p className="text-sm font-bold text-emerald-600"><i className="fas fa-coins mr-2" />Gold Rally</p>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">Gold prices surged 2.1% this week. Good hedge against inflation. Review allocation.</p>
             </div>
           </div>
-        </CosmosCard>
+        </DashboardWidget>
 
-        {/* Global Indices */}
-        <CosmosCard variant="default" header={{ icon: 'fa-globe', iconColor: '#1565C0', title: 'Global Indices' }}>
+        <DashboardWidget title="Global Indices" icon="fa-globe">
           <div className="space-y-2">
             {[
               { name: 'S&P 500', country: 'US', value: '5,840', change: 0.8 },
@@ -256,10 +260,9 @@ export default function MarketView() {
               </div>
             ))}
           </div>
-        </CosmosCard>
+        </DashboardWidget>
       </div>
 
-      {/* Market News Feed */}
       <MarketNewsFeed />
     </div>
   );
