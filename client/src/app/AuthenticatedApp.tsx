@@ -67,17 +67,7 @@ const TransactionsView = lazyWithRetry(() => import('@/features/transactions/com
 const BillCalendar = lazyWithRetry(() => import('@/features/bills/components/BillCalendar'));
 const CreditHealth = lazyWithRetry(() => import('@/features/credit/components/CreditHealth'));
 const BhavishyaEngine = lazyWithRetry(() => import('@/features/innovation/components/BhavishyaEngine'));
-const InnovationOverview = lazyWithRetry(() => import('@/features/innovation/components/InnovationOverview'));
-const NeuroFrictionWidget = lazyWithRetry(() => import('@/features/innovation/components/NeuroFrictionWidget'));
-const MonteCarloSimulator = lazyWithRetry(() => import('@/features/innovation/components/MonteCarloSimulator'));
-const CollectiveImmuneSystem = lazyWithRetry(() => import('@/features/innovation/components/CollectiveImmuneSystem'));
-const AutonomousAgent = lazyWithRetry(() => import('@/features/innovation/components/AutonomousAgent'));
-const SovereignVault = lazyWithRetry(() => import('@/features/innovation/components/SovereignVault'));
-const ParametricInsurance = lazyWithRetry(() => import('@/features/insurance/components/ParametricInsurance'));
-const GhostMode = lazyWithRetry(() => import('@/features/security/components/GhostMode'));
-const DeadMansSwitch = lazyWithRetry(() => import('@/features/security/components/DeadMansSwitch'));
-const GigIncomeSmoother = lazyWithRetry(() => import('@/features/income/components/GigIncomeSmoother'));
-const SocialCollateralLoan = lazyWithRetry(() => import('@/features/loans/components/SocialCollateralLoan'));
+const InnovationLabView = lazyWithRetry(() => import('@/features/innovation/components/InnovationLabView'));
 const FantasyLeague = lazyWithRetry(() => import('@/features/gamification/components/FantasyLeague'));
 const BoostsManager = lazyWithRetry(() => import('@/features/goals/components/BoostsManager'));
 const ValuesAlignment = lazyWithRetry(() => import('@/features/values/components/ValuesAlignment'));
@@ -110,104 +100,6 @@ function ViewLoader() {
           <p className="text-xs text-slate-400">Please wait…</p>
         </div>
       </div>
-    </div>
-  );
-}
-
-function InnovationLabView() {
-  const [tab, setTab] = useState<'overview' | 'insurance' | 'ghost' | 'dms' | 'gig' | 'loan' | 'neuro' | 'monte' | 'immune' | 'agent' | 'vault'>('overview');
-  const tabs = [
-    { key: 'overview' as const, label: 'Overview', icon: 'fa-grid-2', color: 'text-primary', badge: 'START HERE' },
-    { key: 'neuro' as const, label: 'Neuro-Friction', icon: 'fa-heart-pulse', color: 'text-rose-500', badge: 'WORLD FIRST' },
-    { key: 'monte' as const, label: 'Monte Carlo', icon: 'fa-dice', color: 'text-blue-500', badge: 'WORLD FIRST' },
-    { key: 'immune' as const, label: 'Collective Immune', icon: 'fa-shield-virus', color: 'text-emerald-500', badge: 'WORLD FIRST' },
-    { key: 'agent' as const, label: 'Auto Agent', icon: 'fa-robot', color: 'text-violet-500', badge: 'WORLD FIRST' },
-    { key: 'vault' as const, label: 'Sovereign Vault', icon: 'fa-vault', color: 'text-amber-500', badge: 'WORLD FIRST' },
-    { key: 'insurance' as const, label: 'Parametric Insurance', icon: 'fa-bolt', color: 'text-amber-500' },
-    { key: 'ghost' as const, label: 'Ghost Mode', icon: 'fa-ghost', color: 'text-violet-500' },
-    { key: 'dms' as const, label: "Dead Man's Switch", icon: 'fa-hourglass-half', color: 'text-rose-500' },
-    { key: 'gig' as const, label: 'Income Smoother', icon: 'fa-wave-square', color: 'text-teal-500' },
-    { key: 'loan' as const, label: 'Social Loans', icon: 'fa-people-group', color: 'text-orange-500' },
-  ];
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <i className="fas fa-flask text-primary" /> Innovation Lab
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">10 world-first features no bank has built — neuro-friction, life simulation, collective defense, auto-agent, sovereign vault + insurance, security, income, lending reimagined</p>
-        </div>
-        <span className="text-[10px] px-2 py-1 bg-primary/10 text-primary rounded-full font-medium">
-          <i className="fas fa-star mr-1" />Beta
-        </span>
-      </div>
-
-      {/* BHAVISHYA Promo Banner */}
-      <div 
-        onClick={() => useWealthStore.getState().setView('bhavishya')}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-dark to-gray-900 text-white p-5 cursor-pointer group hover:shadow-xl transition-all duration-300 hover:scale-[1.01]"
-      >
-        <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3 group-hover:scale-110 transition-transform duration-500" />
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 bg-amber-400 text-primary-dark text-[9px] font-extrabold rounded-full uppercase tracking-wider">Flagship</span>
-              <span className="text-[9px] text-white/60">India's First</span>
-            </div>
-            <h3 className="text-lg font-extrabold flex items-center gap-2">
-              <i className="fas fa-infinity text-amber-400" /> BHAVISHYA — Predictive Life-Cycle AI
-            </h3>
-            <p className="text-xs text-white/80 mt-1 max-w-lg">
-              Financial DNA mapping. Life event prediction. Future self simulation. Auto-created instruments. 
-              Technology no Indian bank has ever built.
-            </p>
-          </div>
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 group-hover:bg-white/20 transition-colors">
-            <span className="text-sm font-bold">Explore</span>
-            <i className="fas fa-arrow-right text-amber-400 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </div>
-      </div>
-
-      {/* Feature Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
-              tab === t.key ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            <i className={`fas ${t.icon} ${tab === t.key ? '' : t.color}`} />
-            <span className="flex items-center gap-1.5">
-              {t.label}
-              {t.badge && (
-                <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-extrabold ${
-                  tab === t.key ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                }`}>
-                  {t.badge}
-                </span>
-              )}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      <Suspense fallback={<ViewLoader />}>
-        {tab === 'overview' && <InnovationOverview onSelect={(key) => setTab(key as any)} />}
-        {tab === 'neuro' && <NeuroFrictionWidget />}
-        {tab === 'monte' && <MonteCarloSimulator />}
-        {tab === 'immune' && <CollectiveImmuneSystem />}
-        {tab === 'agent' && <AutonomousAgent />}
-        {tab === 'vault' && <SovereignVault />}
-        {tab === 'insurance' && <ParametricInsurance />}
-        {tab === 'ghost' && <GhostMode />}
-        {tab === 'dms' && <DeadMansSwitch />}
-        {tab === 'gig' && <GigIncomeSmoother />}
-        {tab === 'loan' && <SocialCollateralLoan />}
-      </Suspense>
     </div>
   );
 }

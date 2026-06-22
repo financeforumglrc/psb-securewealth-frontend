@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useWealthStore } from '@/shared/store/wealthStore';
+import DashboardWidget from '@/features/dashboard/components/DashboardWidget';
+import CosmosCard from '@/shared/components/ui/CosmosCard';
 
 const LEADERBOARD = [
   { rank: 1, name: 'WealthWarrior***', saved: 52000, avatar: 'WW', color: 'bg-amber-500' },
@@ -36,15 +38,21 @@ export default function ChallengesView() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white">
-            <i className="fas fa-fire text-accent mr-2" />
-            Savings Challenges
-          </h2>
-          <p className="text-sm text-slate-400 mt-0.5">Compete with friends. Build habits. Win badges.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <i className="fas fa-gamepad text-accent" />
+              Gamification
+            </h1>
+            <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-extrabold border border-amber-200">
+              <i className="fas fa-fire mr-1" />
+              CHALLENGES
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Compete with friends, build habits, win badges, and climb the leaderboard.</p>
         </div>
         <button
           onClick={() => setShowInviteModal(true)}
@@ -57,79 +65,68 @@ export default function ChallengesView() {
 
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="card text-center">
+        <CosmosCard variant="stat" padding="md" className="text-center">
           <p className="text-2xl font-bold text-primary">{challenges.length}</p>
-          <p className="text-xs text-slate-500">Active Challenges</p>
-        </div>
-        <div className="card text-center">
+          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Active Challenges</p>
+        </CosmosCard>
+        <CosmosCard variant="stat" padding="md" className="text-center">
           <p className="text-2xl font-bold text-emerald-600">2</p>
-          <p className="text-xs text-slate-500">Badges Won</p>
-        </div>
-        <div className="card text-center">
+          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Badges Won</p>
+        </CosmosCard>
+        <CosmosCard variant="stat" padding="md" className="text-center">
           <p className="text-2xl font-bold text-amber-600">₹22,600</p>
-          <p className="text-xs text-slate-500">Total Saved</p>
-        </div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Total Saved</p>
+        </CosmosCard>
       </div>
 
       {/* Active Challenges */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {challenges.map((c) => {
-          const pct = getProgressPercent(c);
-          return (
-            <div key={c.id} className="card border-2 border-transparent hover:border-primary/20 transition-all">
-              <div className="flex items-start justify-between mb-3">
-                <div className={`w-12 h-12 rounded-xl ${c.color} text-white flex items-center justify-center text-lg`}>
-                  <i className={`fas ${c.icon}`} />
+      <DashboardWidget title="Active Challenges" icon="fa-fire" subtitle={`${challenges.length} running now`}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {challenges.map((c) => {
+            const pct = getProgressPercent(c);
+            return (
+              <div key={c.id} className="card border-2 border-transparent hover:border-primary/20 transition-all">
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-12 h-12 rounded-xl ${c.color} text-white flex items-center justify-center text-lg`}>
+                    <i className={`fas ${c.icon}`} />
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${c.daysLeft <= 7 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {c.daysLeft} days left
+                  </span>
                 </div>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                  c.daysLeft <= 7 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
-                }`}>
-                  {c.daysLeft} days left
-                </span>
-              </div>
-              <h3 className="font-semibold text-slate-800 dark:text-white text-sm mb-1">{c.title}</h3>
-              <p className="text-xs text-slate-400 mb-3">{c.description}</p>
+                <h3 className="font-semibold text-slate-800 dark:text-white text-sm mb-1">{c.title}</h3>
+                <p className="text-xs text-slate-400 mb-3">{c.description}</p>
 
-              {/* Progress */}
-              <div className="mb-3">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-500">{c.progressLabel}</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{pct.toFixed(0)}%</span>
+                <div className="mb-3">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-slate-500">{c.progressLabel}</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-200">{pct.toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-700 ${c.color}`} style={{ width: `${pct}%` }} />
+                  </div>
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-700 ${c.color}`}
-                    style={{ width: `${pct}%` }}
-                  />
+
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">
+                    <i className="fas fa-users mr-1" />{c.participants.toLocaleString()} participants
+                  </span>
+                  <span className="text-primary font-medium">Your rank: #{c.userRank}</span>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                  <i className="fas fa-medal text-amber-400 text-xs" />
+                  <span className="text-[10px] text-slate-400">Reward: <span className="text-amber-600 font-medium">{c.reward}</span></span>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">
-                  <i className="fas fa-users mr-1" />{c.participants.toLocaleString()} participants
-                </span>
-                <span className="text-primary font-medium">
-                  Your rank: #{c.userRank}
-                </span>
-              </div>
-
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                <i className="fas fa-medal text-amber-400 text-xs" />
-                <span className="text-[10px] text-slate-400">Reward: <span className="text-amber-600 font-medium">{c.reward}</span></span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </DashboardWidget>
 
       {/* Leaderboard + Past Split */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Leaderboard */}
-        <div className="card">
-          <h3 className="font-semibold text-slate-800 dark:text-white text-sm mb-4">
-            <i className="fas fa-trophy text-amber-500 mr-2" />
-            Leaderboard
-          </h3>
+        <DashboardWidget title="Leaderboard" icon="fa-trophy" subtitle="Top savers this month">
           <div className="space-y-2">
             {LEADERBOARD.map((entry) => (
               <div
@@ -138,12 +135,14 @@ export default function ChallengesView() {
                   entry.isUser ? 'bg-primary/5 border border-primary/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  entry.rank === 1 ? 'bg-amber-100 text-amber-700' :
-                  entry.rank === 2 ? 'bg-slate-200 text-slate-700' :
-                  entry.rank === 3 ? 'bg-orange-100 text-orange-700' :
-                  'bg-slate-100 text-slate-500'
-                }`}>
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    entry.rank === 1 ? 'bg-amber-100 text-amber-700' :
+                    entry.rank === 2 ? 'bg-slate-200 text-slate-700' :
+                    entry.rank === 3 ? 'bg-orange-100 text-orange-700' :
+                    'bg-slate-100 text-slate-500'
+                  }`}
+                >
                   {entry.rank}
                 </div>
                 <div className={`w-8 h-8 rounded-full ${entry.color} text-white flex items-center justify-center text-[10px] font-bold`}>
@@ -161,16 +160,10 @@ export default function ChallengesView() {
           <button className="w-full mt-3 py-2 text-xs text-primary hover:bg-primary/5 rounded-lg transition-colors">
             View Full Leaderboard
           </button>
-        </div>
+        </DashboardWidget>
 
-        {/* Past Challenges + Badges */}
-        <div className="space-y-4">
-          {/* Past Challenges */}
-          <div className="card">
-            <h3 className="font-semibold text-slate-800 dark:text-white text-sm mb-4">
-              <i className="fas fa-clock-rotate-left text-slate-400 mr-2" />
-              Challenge History
-            </h3>
+        <div className="space-y-6">
+          <DashboardWidget title="Challenge History" icon="fa-clock-rotate-left">
             <div className="space-y-2">
               {PAST_CHALLENGES.map((c, i) => (
                 <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
@@ -186,14 +179,9 @@ export default function ChallengesView() {
                 </div>
               ))}
             </div>
-          </div>
+          </DashboardWidget>
 
-          {/* Badges */}
-          <div className="card">
-            <h3 className="font-semibold text-slate-800 dark:text-white text-sm mb-4">
-              <i className="fas fa-certificate text-accent mr-2" />
-              My Badges
-            </h3>
+          <DashboardWidget title="My Badges" icon="fa-certificate" subtitle="Unlock more by saving">
             <div className="grid grid-cols-4 gap-3">
               {[
                 { name: 'Frugal Fox', icon: 'fa-paw', color: 'text-orange-500', bg: 'bg-orange-50', unlocked: true },
@@ -208,7 +196,7 @@ export default function ChallengesView() {
                 </div>
               ))}
             </div>
-          </div>
+          </DashboardWidget>
         </div>
       </div>
 
