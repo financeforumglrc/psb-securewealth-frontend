@@ -254,6 +254,15 @@ input[type="checkbox"], input[type="radio"] {
   animation: shimmer 2s infinite;
 }
 
+.animate-scan-x {
+  animation: scanX 2.5s linear infinite;
+}
+
+@keyframes scanX {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
 /* Stagger delays */
 .stagger-1 { animation-delay: 0.05s; opacity: 0; }
 .stagger-2 { animation-delay: 0.1s; opacity: 0; }

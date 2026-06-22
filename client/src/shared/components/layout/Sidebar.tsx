@@ -195,7 +195,11 @@ function SidebarContent({ currentView, onNavigate }: Pick<SidebarProps, 'current
   return (
     <div className="flex flex-col h-full">
       <div className="p-3 border-b border-slate-100">
-        <div className="flex items-center gap-3 mb-2">
+        <button
+          onClick={() => onNavigate('profile')}
+          className="w-full flex items-center gap-3 mb-2 p-1.5 -ml-1.5 rounded-xl hover:bg-slate-50 transition-colors text-left"
+          title="Open profile"
+        >
           <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold border-2 border-white shadow-sm">
             {user?.name
               ? user.name
@@ -210,8 +214,26 @@ function SidebarContent({ currentView, onNavigate }: Pick<SidebarProps, 'current
             <p className="text-sm font-bold text-slate-800 truncate">{greeting}</p>
             <p className="text-[10px] text-slate-500 truncate">{currentDesc}</p>
           </div>
-        </div>
+          <i className="fas fa-chevron-right text-[10px] text-slate-300 ml-auto" />
+        </button>
         <TrustScoreRing score={trustScore} />
+        <div className="mt-2 grid grid-cols-4 gap-1">
+          {[
+            { view: 'payments', icon: 'fa-paper-plane', label: 'Pay' },
+            { view: 'transactions', icon: 'fa-list', label: 'History' },
+            { view: 'goals', icon: 'fa-bullseye', label: 'Goals' },
+            { view: 'security-beast', icon: 'fa-shield-halved', label: 'Shield' },
+          ].map((q) => (
+            <button
+              key={q.view}
+              onClick={() => onNavigate(q.view)}
+              className="flex flex-col items-center gap-1 py-2 rounded-xl bg-slate-50 hover:bg-primary/10 hover:text-primary text-slate-600 transition-colors"
+            >
+              <i className={`fas ${q.icon} text-xs`} />
+              <span className="text-[9px] font-bold">{q.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-1">
@@ -245,7 +267,7 @@ export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMo
   return (
     <>
       {/* Desktop tree sidebar */}
-      <aside className="w-[280px] flex-shrink-0 hidden lg:flex flex-col bg-white border-r border-slate-200/80 h-[calc(100vh-144px)] sticky top-[144px] overflow-hidden shadow-sm">
+      <aside className="w-[280px] flex-shrink-0 hidden lg:flex flex-col bg-white border-r border-slate-200/80 h-full overflow-hidden shadow-sm">
         <SidebarContent currentView={currentView} onNavigate={onNavigate} />
       </aside>
 
