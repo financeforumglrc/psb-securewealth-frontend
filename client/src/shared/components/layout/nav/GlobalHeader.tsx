@@ -66,7 +66,7 @@ export default function GlobalHeader({ onOpenMobileSidebar, onNavigate }: Global
           <div className="flex items-center gap-3">
             <button
               onClick={onOpenMobileSidebar}
-              className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
+              className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label="Open menu"
             >
               <i className="fas fa-bars text-lg" />
@@ -83,6 +83,7 @@ export default function GlobalHeader({ onOpenMobileSidebar, onNavigate }: Global
               onClick={() => setLanguage(isHindi() ? 'en' : 'hi')}
               className="hidden sm:flex items-center justify-center w-9 h-9 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
               title="Toggle language"
+              aria-label="Toggle language"
             >
               <span className="text-[11px] font-bold">{isHindi() ? 'EN' : 'हि'}</span>
             </button>
@@ -95,7 +96,10 @@ export default function GlobalHeader({ onOpenMobileSidebar, onNavigate }: Global
               <i className="fas fa-rocket" /> Demo
             </button>
 
-            <button className="relative flex items-center justify-center w-10 h-10 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors">
+            <button
+              className="relative flex items-center justify-center w-10 h-10 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              aria-label="Notifications"
+            >
               <i className="fas fa-bell" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
             </button>

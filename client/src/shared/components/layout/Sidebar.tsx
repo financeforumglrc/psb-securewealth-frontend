@@ -182,7 +182,7 @@ function RailFlyout({
             <p className="text-[10px] text-slate-500">{category.description}</p>
           </div>
         </div>
-        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"><i className="fas fa-times" /></button>
+        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" aria-label="Close menu"><i className="fas fa-times" /></button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-1">
@@ -220,7 +220,7 @@ export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMo
         </div>
 
         {/* User */}
-        <button onClick={() => onNavigate('profile')} className="mx-auto mt-3 w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm hover:ring-2 ring-primary/30 transition-all" title="Profile">
+        <button onClick={() => onNavigate('profile')} className="mx-auto mt-3 w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm hover:ring-2 ring-primary/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" title="Profile" aria-label="Open profile">
           {initials}
         </button>
 
@@ -238,10 +238,11 @@ export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMo
                 key={cat.id}
                 onClick={() => setFlyout(open ? null : cat.id)}
                 onMouseEnter={() => { if (!flyout) setFlyout(cat.id); }}
-                className={`relative w-full aspect-square rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
+                className={`relative w-full aspect-square rounded-xl flex flex-col items-center justify-center gap-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
                   active || open ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-100 hover:text-primary'
                 }`}
                 title={cat.label}
+                aria-label={cat.label}
               >
                 <i className={`fas ${cat.icon} text-sm`} />
                 <span className="text-[8px] font-bold leading-none text-center px-0.5 line-clamp-2">{cat.label}</span>
@@ -255,8 +256,9 @@ export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMo
         <div className="p-2 border-t border-slate-100">
           <button
             onClick={() => onNavigate('security-beast')}
-            className="w-full flex flex-col items-center gap-1 p-1.5 rounded-xl hover:bg-slate-50"
+            className="w-full flex flex-col items-center gap-1 p-1.5 rounded-xl hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             title={`Trust score ${trustScore}`}
+            aria-label={`Trust score ${trustScore}`}
           >
             <div className="relative w-8 h-8">
               <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
@@ -271,8 +273,8 @@ export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMo
 
         {/* Bottom actions */}
         <div className="p-2 border-t border-slate-100 space-y-1">
-          <button onClick={() => onNavigate('accessibility')} className="w-full aspect-square rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100" title="Accessibility"><i className="fas fa-universal-access" /></button>
-          <button onClick={() => { clearAuth(); window.location.reload(); }} className="w-full aspect-square rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-50" title="Logout"><i className="fas fa-sign-out-alt" /></button>
+          <button onClick={() => onNavigate('accessibility')} className="w-full aspect-square rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" title="Accessibility" aria-label="Accessibility settings"><i className="fas fa-universal-access" /></button>
+          <button onClick={() => { clearAuth(); window.location.reload(); }} className="w-full aspect-square rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50" title="Logout" aria-label="Logout"><i className="fas fa-sign-out-alt" /></button>
         </div>
 
         {/* Flyout */}
