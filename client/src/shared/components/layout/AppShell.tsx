@@ -10,10 +10,9 @@ interface AppShellProps {
   children: React.ReactNode;
   currentView: string;
   onNavigate: (view: string) => void;
-  queuedCount: number;
 }
 
-export default function AppShell({ children, currentView, onNavigate, queuedCount }: AppShellProps) {
+export default function AppShell({ children, currentView, onNavigate }: AppShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const darkMode = useWealthStore((s) => s.darkMode);
   const accessibilityMode = useWealthStore((s) => s.accessibilityMode);
@@ -29,7 +28,6 @@ export default function AppShell({ children, currentView, onNavigate, queuedCoun
         currentView={currentView}
         onNavigate={onNavigate}
         onOpenMobileSidebar={() => setMobileSidebarOpen(true)}
-        queuedCount={queuedCount}
       />
 
       <div className="flex flex-1 overflow-hidden">

@@ -436,7 +436,6 @@ export default function AuthenticatedApp() {
       <AppShell
         currentView={currentView}
         onNavigate={navigateToView}
-        queuedCount={queuedCount}
       >
         <Suspense fallback={<ViewLoader />}>
           {duressLocked ? (
