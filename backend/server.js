@@ -134,8 +134,23 @@ app.get('/financial-modelling-v2', (req, res) => {
 });
 
 // Serve any .js tab module requested directly (tab_screener.js etc.)
+// SECURITY: Whitelist known tab names to prevent path traversal attacks
+const ALLOWED_TAB_NAMES = new Set([
+    'screener', 'dcf', 'footballfield', 'lbo', 'ma', 'modelgrid',
+    'ratios', 'sensitivity', 'summary', 'wacc', 'comps'
+]);
 app.get('/tab_:name.js', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', `tab_${req.params.name}.js`));
+    const name = req.params.name;
+    if (!ALLOWED_TAB_NAMES.has(name)) {
+        return res.status(404).json({ success: false, error: 'Tab not found' });
+    }
+    const filePath = path.resolve(path.join(__dirname, '..', `tab_${name}.js`));
+    // Verify resolved path stays within parent directory
+    const parentDir = path.resolve(path.join(__dirname, '..'));
+    if (!filePath.startsWith(parentDir + path.sep) && filePath !== parentDir) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+    }
+    res.sendFile(filePath);
 });
 app.get('/extracted_functions.js', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'extracted_functions.js'));
@@ -176,12 +191,12 @@ const authLimiter = rateLimit({
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/tax', authMiddleware, taxRoutes);
 app.use('/api/v1/gst', authMiddleware, gstRoutes);
-// Phase 2 v2: AI routes are public (portfolio mode, device-id based)
-app.use('/api/v1/ai', aiLimiter, aiRoutes);
-app.use('/api/v1/extract', aiLimiter, extractRoutes);
+// Phase 2 v2: AI routes require authentication (BYOK still supported via header)
+app.use('/api/v1/ai', aiLimiter, authMiddleware, aiRoutes);
+app.use('/api/v1/extract', aiLimiter, authMiddleware, extractRoutes);
 app.use('/api/v1/gallery', galleryRoutes);
-app.use('/api/v1/export', exportRoutes);
-app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/export', authMiddleware, exportRoutes);
+app.use('/api/v1/admin', authMiddleware, requireRole('admin'), adminRoutes);
 app.use('/api/v1/documents', authMiddleware, documentRoutes);
 app.use('/api/v1/analytics', authMiddleware, requireRole('admin'), analyticsRoutes);
 app.use('/api/v1/financial-model', authMiddleware, financialModelRoutes);
@@ -191,7 +206,7 @@ app.use('/api/v1/market', marketDataRoutes);
 app.use('/api/v1/scenarios', scenarioRoutes);
 app.use('/api/v1/query', nlpQueryRoutes);
 app.use('/api/v1/screener', screenerRoutes);
-app.use('/api/v1/banking', bankingRoutes);
+app.use('/api/v1/banking', authMiddleware, bankingRoutes);
 app.use('/api/v1/kyc', authMiddleware, kycRoutes);
 
 // Patent information endpoint

@@ -20,15 +20,16 @@ const logger = winston.createLogger({
 const authMiddleware = (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
-        const devEmail = req.headers['x-dev-user-email'];
 
-        // Dev/demo mode: allow x-dev-user-email header for hackathon demos (enabled in production for judge demos)
-        if (devEmail) {
+        // Dev/demo mode: allow x-dev-user-email header ONLY in non-production environments.
+        // This is a convenience for local development and hackathon demos only.
+        // SECURITY: Never enable in production — it bypasses all authentication.
+        const devEmail = req.headers['x-dev-user-email'];
+        if (devEmail && process.env.NODE_ENV !== 'production') {
             let user = userDb.findByEmail(devEmail);
             if (!user) {
-                const { v4: uuidv4 } = require('crypto');
-                const id = require('crypto').randomUUID();
                 const bcrypt = require('bcryptjs');
+                const id = require('crypto').randomUUID();
                 userDb.create({ id, email: devEmail, password: bcrypt.hashSync('demo123', 12), name: devEmail.split('@')[0], role: 'user', tier: 'premium' });
                 user = userDb.findByEmail(devEmail);
             }
@@ -54,8 +55,8 @@ const authMiddleware = (req, res, next) => {
             });
         }
 
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // Verify token — pinned to HS256 to prevent algorithm confusion attacks
+        const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
         
         // Verify user still exists and is active
         const user = userDb.findById(decoded.id);

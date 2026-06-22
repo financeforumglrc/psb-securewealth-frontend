@@ -8,7 +8,8 @@ router.get('/status', authMiddleware, (req, res) => {
         const kyc = bankingDb.getKycByUser(req.user.id);
         res.json({ success: true, data: kyc || { kyc_status: 'pending' } });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        console.error('KYC status error:', err);
+        res.status(500).json({ success: false, error: 'Failed to load KYC status' });
     }
 });
 
@@ -29,10 +30,10 @@ router.post('/submit', authMiddleware, (req, res) => {
             userId: req.user.id,
             panNumber,
             aadhaarMasked,
-            kycStatus: panNumber && aadhaarMasked ? 'verified' : 'pending'
+            kycStatus: 'pending' // Always pending — real eKYC verification required
         });
 
-        res.json({ success: true, message: 'KYC submitted successfully', data: { status: panNumber && aadhaarMasked ? 'verified' : 'pending' } });
+        res.json({ success: true, message: 'KYC submitted successfully', data: { status: 'pending' } });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

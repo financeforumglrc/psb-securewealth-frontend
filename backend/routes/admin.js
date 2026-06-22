@@ -9,10 +9,19 @@ const path = require('path');
 const { quotaDb, db } = require('../services/database');
 const router = express.Router();
 
-const ADMIN_ID = 'TEAM EXCELLENT MINDS';
-const ADMIN_PASSWORD = '123456@#Dd';
+// SECURITY: Admin credentials MUST be set via environment variables.
+// Fail fast on startup if not configured.
+const ADMIN_ID = process.env.ADMIN_ID;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_ID || !ADMIN_PASSWORD) {
+    console.warn('[ADMIN] WARNING: ADMIN_ID and/or ADMIN_PASSWORD environment variables are not set. Admin routes will be disabled.');
+}
 
 function basicAuth(req, res, next) {
+    if (!ADMIN_ID || !ADMIN_PASSWORD) {
+        return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
+    }
     const auth = req.headers.authorization;
     if (!auth || !auth.startsWith('Basic ')) {
         res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
@@ -29,6 +38,9 @@ function basicAuth(req, res, next) {
 
 // JWT-based admin auth for frontend API calls
 function adminApiAuth(req, res, next) {
+    if (!ADMIN_ID || !ADMIN_PASSWORD) {
+        return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
+    }
     const auth = req.headers.authorization;
     if (!auth || !auth.startsWith('Bearer ')) {
         return res.status(401).json({ success: false, error: 'Admin token required' });
@@ -228,14 +240,14 @@ router.get('/status', basicAuth, (req, res) => {
 
 // Admin API endpoints for frontend dashboard
 router.post('/login', (req, res) => {
+    if (!ADMIN_ID || !ADMIN_PASSWORD) {
+        return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
+    }
     const { adminId, password } = req.body;
-    console.log('[ADMIN LOGIN] Received:', { adminId, passwordReceived: !!password, expectedId: ADMIN_ID, expectedPw: ADMIN_PASSWORD });
     if (adminId !== ADMIN_ID || password !== ADMIN_PASSWORD) {
-        console.log('[ADMIN LOGIN] FAILED — mismatch');
         return res.status(401).json({ success: false, error: 'Invalid admin credentials' });
     }
     const token = Buffer.from(`${ADMIN_ID}:${ADMIN_PASSWORD}`).toString('base64');
-    console.log('[ADMIN LOGIN] SUCCESS');
     res.json({ success: true, token });
 });
 
@@ -260,7 +272,7 @@ router.get('/stats', adminApiAuth, (req, res) => {
         const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get();
         const faceRegistered = db.prepare('SELECT COUNT(*) as count FROM users WHERE face_descriptor IS NOT NULL').get();
         const activeToday = db.prepare("SELECT COUNT(*) as count FROM users WHERE last_login > datetime('now', '-1 day')").get();
-        const totalAccounts = db.prepare('SELECT COUNT(*) as count FROM accounts').get();
+        const totalAccounts = db.prepare('SELECT COUNT(*) as count FROM bank_accounts').get();
         const totalTransactions = db.prepare('SELECT COUNT(*) as count FROM transactions').get();
         const totalBills = db.prepare('SELECT COUNT(*) as count FROM bills').get();
         const totalGoals = db.prepare('SELECT COUNT(*) as count FROM goals').get();
