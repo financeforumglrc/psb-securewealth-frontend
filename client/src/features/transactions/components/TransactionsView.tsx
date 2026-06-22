@@ -7,6 +7,7 @@ import ScanReceipt from '@/features/transactions/components/ScanReceipt';
 import AICategorization from '@/features/transactions/components/AICategorization';
 import SmartDuplicateDetection from '@/features/transactions/components/SmartDuplicateDetection';
 import TransactionTagger from '@/features/transactions/components/TransactionTagger';
+import DashboardWidget from '@/features/dashboard/components/DashboardWidget';
 import CosmosCard, { CosmosEmptyState } from '@/shared/components/ui/CosmosCard';
 import type { Transaction } from '@/shared/types';
 
@@ -36,6 +37,13 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 const CAT_COLORS = ['#0f766e', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#64748b', '#06b6d4', '#84cc16'];
+
+const PROTECTION_STEPS = [
+  { icon: 'fa-eye', label: 'Scan', desc: 'Signals collected' },
+  { icon: 'fa-gauge-high', label: 'Score', desc: 'Risk computed' },
+  { icon: 'fa-gavel', label: 'Decide', desc: 'Allow / Warn / Block' },
+  { icon: 'fa-check-circle', label: 'Settle', desc: 'Recorded on chain' },
+];
 
 export default function TransactionsView() {
   const transactions = useWealthStore((s) => s.transactions);
@@ -74,6 +82,42 @@ export default function TransactionsView() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <i className="fas fa-money-bill-transfer text-primary" />
+              Transactions
+            </h1>
+            <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-extrabold border border-primary/20">
+              AUDIT TRAIL
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            History of every decision made by the protection layer.
+          </p>
+        </div>
+      </div>
+
+      {/* Protection stepper */}
+      <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="relative">
+          <div className="absolute inset-x-0 top-5 h-0.5 bg-slate-200 dark:bg-slate-700" />
+          <div className="relative flex justify-between">
+            {PROTECTION_STEPS.map((step) => (
+              <div key={step.label} className="flex flex-col items-center gap-2 z-10 max-w-[80px] text-center">
+                <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border-2 border-primary text-primary flex items-center justify-center text-sm font-bold shadow-sm">
+                  <i className={`fas ${step.icon}`} />
+                </div>
+                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">{step.label}</span>
+                <span className="text-[9px] text-slate-400 hidden sm:block">{step.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Hero Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
@@ -93,46 +137,48 @@ export default function TransactionsView() {
       </div>
 
       {/* Search + Filters */}
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
-          <input
-            type="text"
-            placeholder="Search transactions, categories, merchants..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
+      <DashboardWidget title="Search & Filter" icon="fa-filter">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
+            <input
+              type="text"
+              placeholder="Search transactions, categories, merchants..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {([
+              { key: 'all', label: 'All', count: stats.total },
+              { key: 'allowed', label: 'Allowed', count: stats.allowed },
+              { key: 'blocked', label: 'Blocked', count: stats.blocked },
+              { key: 'delayed', label: 'Delayed', count: stats.delayed },
+            ] as { key: FilterType; label: string; count: number }[]).map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
+                  filter === f.key ? 'bg-primary text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                }`}
+              >
+                {f.label}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${filter === f.key ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
+                  {f.count}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {([
-            { key: 'all', label: 'All', count: stats.total },
-            { key: 'allowed', label: 'Allowed', count: stats.allowed },
-            { key: 'blocked', label: 'Blocked', count: stats.blocked },
-            { key: 'delayed', label: 'Delayed', count: stats.delayed },
-          ] as { key: FilterType; label: string; count: number }[]).map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
-                filter === f.key ? 'bg-primary text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              {f.label}
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${filter === f.key ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
-                {f.count}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      </DashboardWidget>
 
       {/* AI Categorization + Spending Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
           <ScanReceipt />
         </div>
-        <CosmosCard variant="default" header={{ icon: 'fa-chart-pie', iconColor: '#f59e0b', title: 'Spending by Category', subtitle: 'AI-categorized breakdown' }}>
+        <DashboardWidget title="Spending by Category" icon="fa-chart-pie" subtitle="AI-categorized breakdown">
           {categoryData.length === 0 ? (
             <CosmosEmptyState icon="fa-chart-pie" title="No Spending Data" subtitle="Add transactions to see your spending breakdown." />
           ) : (
@@ -162,15 +208,15 @@ export default function TransactionsView() {
               </div>
             </>
           )}
-        </CosmosCard>
+        </DashboardWidget>
       </div>
 
       <AICategorization />
       <SmartDuplicateDetection />
 
       {/* Transactions Table */}
-      <CosmosCard variant="default" padding="none" header={{ icon: 'fa-list', iconColor: '#0f766e', title: 'Transaction History', subtitle: `${filtered.length} transactions` }}>
-        <div className="overflow-x-auto">
+      <DashboardWidget title="Transaction History" icon="fa-list" subtitle={`${filtered.length} transactions`}>
+        <div className="overflow-x-auto -mx-4 -my-4">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700">
@@ -231,12 +277,12 @@ export default function TransactionsView() {
         {filtered.length === 0 && (
           <CosmosEmptyState icon="fa-search" title="No matches found" subtitle="Try adjusting your search or filter criteria." />
         )}
-      </CosmosCard>
+      </DashboardWidget>
 
       <TransactionTagger />
 
       {/* Security Summary */}
-      <CosmosCard variant="default" header={{ icon: 'fa-shield-halved', iconColor: '#0f766e', title: 'Security Summary', subtitle: 'Protection at a glance' }}>
+      <DashboardWidget title="Security Summary" icon="fa-shield-halved" subtitle="Protection at a glance">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl text-center border border-emerald-100 dark:border-emerald-800/50">
             <p className="text-3xl font-bold text-emerald-600">{stats.allowed}</p>
@@ -254,7 +300,7 @@ export default function TransactionsView() {
             <p className="text-[10px] text-amber-400">Cooling vault protection</p>
           </div>
         </div>
-      </CosmosCard>
+      </DashboardWidget>
 
       <TransactionDetailModal tx={selectedTx} onClose={() => setSelectedTx(null)} />
     </div>
