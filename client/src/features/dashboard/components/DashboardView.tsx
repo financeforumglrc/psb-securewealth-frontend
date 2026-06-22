@@ -1,55 +1,34 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useRewards } from '@/shared/context/RewardsContext';
 import { getStreak } from '@/shared/services/streakService';
-import { getSalaryHistory } from '@/features/salary/components/AddSalaryModal';
-import { useVoiceNarration, numberToWords } from '@/shared/hooks/useVoiceNarration';
-import { speak, cancelSpeech, isSpeechSupported } from '@/shared/services/voiceService';
+
 import { formatCurrencyMask, formatCroreMask } from '@/shared/utils/duressMask';
 import CosmosCard from '@/shared/components/ui/CosmosCard';
-
-import FinancialPulse from '@/features/dashboard/components/FinancialPulse';
-import NetWorthCard from '@/features/dashboard/components/NetWorthCard';
-import KYCStatusCard from '@/features/dashboard/components/KYCStatusCard';
-import FinancialWeather from '@/features/dashboard/components/FinancialWeather';
-import NBAInsights from '@/features/dashboard/components/NBAInsights';
-import MonthlyNarrative from '@/features/dashboard/components/MonthlyNarrative';
-import AdaptiveInsight from '@/features/dashboard/components/AdaptiveInsight';
-import InvestmentQuiz from '@/features/quiz/components/InvestmentQuiz';
-import DeviceStatusCard from '@/features/dashboard/components/DeviceStatusCard';
-
-import QuickActions from '@/features/dashboard/components/QuickActions';
 import ChartWidget from '@/shared/components/ui/ChartWidget';
 import VirtualCard from '@/shared/components/ui/VirtualCard';
-import RecentTransactionsTable from '@/features/psb/components/RecentTransactionsTable';
-import SecurityHealthWidget from '@/features/psb/components/SecurityHealthWidget';
-import PSBSchemesCard from '@/features/psb/components/PSBSchemesCard';
-import RewardsDashboardCard from '@/features/payments/components/RewardsDashboardCard';
-import AccountAggregatorWidget from '@/features/assets/components/AccountAggregatorWidget';
-import AccountAggregatorFull from '@/features/aa/components/AccountAggregatorFull';
-import RecommendationCard from '@/features/ai/components/RecommendationCard';
-import WealthDNA from '@/features/dashboard/components/WealthDNA';
-import WealthBenchmark from '@/features/dashboard/components/WealthBenchmark';
-import AIDecisionLog from '@/features/ai/components/AIDecisionLog';
-import ComplianceBadges from '@/features/compliance/components/ComplianceBadges';
-import ComplianceBar from '@/features/compliance/components/ComplianceBar';
-import SmartActionOrchestrator from '@/features/ai/components/SmartActionOrchestrator';
-import FinancialLiteracyCards from '@/features/ai/components/FinancialLiteracyCards';
-import GoalTracker from '@/features/goals/components/GoalTracker';
-import AddSalaryModal from '@/features/salary/components/AddSalaryModal';
-
-import DemoCreditCard from '@/features/credit/components/DemoCreditCard';
-import TransactionComparison from '@/features/transactions/components/TransactionComparison';
-import ScenarioSimulator from '@/features/forecast/components/ScenarioSimulator';
-import WhatIfSimulator from '@/features/forecast/components/WhatIfSimulator';
-import StressTestSimulator from '@/features/protection/components/StressTestSimulator';
-import QuickPayCard from '@/features/psb/components/QuickPayCard';
+import DashboardWidget from './DashboardWidget';
 
 import WealthTwinHero from '@/features/dashboard/components/WealthTwinHero';
+import FinancialPulse from '@/features/dashboard/components/FinancialPulse';
+import QuickActions from '@/features/dashboard/components/QuickActions';
+import QuickPayCard from '@/features/psb/components/QuickPayCard';
+import RecentTransactionsTable from '@/features/psb/components/RecentTransactionsTable';
+import SecurityHealthWidget from '@/features/psb/components/SecurityHealthWidget';
 import MarketIntelligenceHero from '@/features/dashboard/components/MarketIntelligenceHero';
-import PredictiveShieldBadge from '@/features/dashboard/components/PredictiveShieldBadge';
+import GoalTracker from '@/features/goals/components/GoalTracker';
+import ComplianceBar from '@/features/compliance/components/ComplianceBar';
+import SmartActionOrchestrator from '@/features/ai/components/SmartActionOrchestrator';
+import RecommendationCard from '@/features/ai/components/RecommendationCard';
+
+// Advanced insights (comprehensive mode)
+import ScenarioSimulator from '@/features/forecast/components/ScenarioSimulator';
+import WhatIfSimulator from '@/features/forecast/components/WhatIfSimulator';
+import WealthDNA from '@/features/dashboard/components/WealthDNA';
+import AIDecisionLog from '@/features/ai/components/AIDecisionLog';
+import FinancialLiteracyCards from '@/features/ai/components/FinancialLiteracyCards';
 
 export default function DashboardView() {
   const user = useWealthStore((s) => s.user);
@@ -62,24 +41,13 @@ export default function DashboardView() {
   const dashboardDensity = useWealthStore((s) => s.dashboardDensity);
   const setDashboardDensity = useWealthStore((s) => s.setDashboardDensity);
   const { t, language, setLanguage } = useTranslation();
-
-  const rawNetWorth = assets.reduce((sum, a) => sum + a.value, 0);
-  const netWorth = coercedMode ? 5000 : rawNetWorth;
-  const healthScore = coercedMode ? 15 : Math.min(Math.round((user.monthlySavings / user.monthlyIncome) * 200 + 40), 100);
   const { cashbackBalance } = useRewards();
   const streak = getStreak();
-  const salaryHistory = getSalaryHistory();
 
-  const [showSalaryModal, setShowSalaryModal] = useState(false);
-  const [speakingSummary, setSpeakingSummary] = useState(false);
-
-  const openPaymentHub = () => {
-    window.dispatchEvent(new CustomEvent('sw-open-payment-hub'));
-  };
-
+  const rawNetWorth = assets.reduce((sum, a) => sum + a.value, 0);
+  const healthScore = coercedMode ? 15 : Math.min(Math.round((user.monthlySavings / user.monthlyIncome) * 200 + 40), 100);
   const activeGoals = goals.filter((g) => g.currentAmount < g.targetAmount).length;
   const savingsRate = user.monthlyIncome > 0 ? ((user.monthlySavings / user.monthlyIncome) * 100).toFixed(1) : '0';
-  const netWorthCrore = (netWorth / 1e7).toFixed(2);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -88,40 +56,24 @@ export default function DashboardView() {
     return t('goodEvening');
   }, [t]);
 
-  const handleReadSummary = () => {
-    if (!isSpeechSupported()) return;
-    if (speakingSummary) {
-      cancelSpeech();
-      setSpeakingSummary(false);
-      return;
-    }
-    const text = `Your net worth is ${netWorthCrore} crore. Savings rate is ${savingsRate} percent. You have ${activeGoals} goals in progress.`;
-    speak(text);
-    setSpeakingSummary(true);
-
-    const durationMs = Math.max(3000, text.length * 80);
-    const timeout = setTimeout(() => setSpeakingSummary(false), durationMs);
-
-    const onCancel = () => {
-      clearTimeout(timeout);
-      window.removeEventListener('sw-cancel-speech', onCancel);
-    };
-    window.addEventListener('sw-cancel-speech', onCancel);
-  };
-
   const statCards = [
-    { label: t('netWorth'), value: coercedMode ? '₹5,000' : formatCroreMask(rawNetWorth, duressModeActive), icon: 'fa-wallet', color: 'from-primary/20 to-primary/5', text: 'text-primary', speakText: `${t('netWorth')} ${numberToWords(netWorth)} rupees`, inrValue: netWorth, trend: '+2.4%', trendUp: true },
-    { label: t('monthlySavings'), value: coercedMode ? '₹500' : formatCurrencyMask(user.monthlySavings, duressModeActive), icon: 'fa-piggy-bank', color: 'from-emerald-500/20 to-emerald-500/5', text: 'text-emerald-600', speakText: `${t('monthlySavings')} ${numberToWords(user.monthlySavings)} rupees`, inrValue: user.monthlySavings, trend: '+' + savingsRate + '%', trendUp: true },
-    { label: t('healthScore'), value: `${healthScore}/100`, icon: 'fa-heart-pulse', color: 'from-amber-500/20 to-amber-500/5', text: 'text-amber-600', speakText: `${t('healthScore')} ${healthScore} out of 100`, trend: healthScore > 70 ? 'Good' : 'Needs work', trendUp: healthScore > 70 },
+    { label: t('netWorth'), value: coercedMode ? '₹5,000' : formatCroreMask(rawNetWorth, duressModeActive), icon: 'fa-wallet', color: 'from-primary/20 to-primary/5', text: 'text-primary', trend: '+2.4%', trendUp: true },
+    { label: t('monthlySavings'), value: coercedMode ? '₹500' : formatCurrencyMask(user.monthlySavings, duressModeActive), icon: 'fa-piggy-bank', color: 'from-emerald-500/20 to-emerald-500/5', text: 'text-emerald-600', trend: '+' + savingsRate + '%', trendUp: true },
+    { label: t('healthScore'), value: `${healthScore}/100`, icon: 'fa-heart-pulse', color: 'from-amber-500/20 to-amber-500/5', text: 'text-amber-600', trend: healthScore > 70 ? 'Good' : 'Needs work', trendUp: healthScore > 70 },
     { label: t('cashback'), value: formatCurrencyMask(cashbackBalance, duressModeActive), icon: 'fa-gift', color: 'from-pink-500/20 to-pink-500/5', text: 'text-pink-500', trend: 'Available', trendUp: true },
     { label: t('streak'), value: `${streak.days} days`, icon: 'fa-fire', color: 'from-orange-500/20 to-orange-500/5', text: 'text-orange-500', trend: streak.days > 5 ? 'On fire!' : 'Keep going', trendUp: streak.days > 5 },
   ];
 
   const isSimple = dashboardDensity === 'simple';
+  const [showAdvanced, setShowAdvanced] = useState(!isSimple);
+
+  const openPaymentHub = () => {
+    window.dispatchEvent(new CustomEvent('sw-open-payment-hub'));
+  };
 
   return (
     <QuickActions>
-      <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="space-y-5 max-w-7xl mx-auto">
         {/* Coerced Mode Warning */}
         {coercedMode && (
           <motion.div
@@ -141,145 +93,80 @@ export default function DashboardView() {
           </motion.div>
         )}
 
-        {/* Dashboard Header */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <p className="text-xs text-psb-muted dark:text-slate-400 font-medium">{greeting}</p>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              {user.name || t('welcome')}
-            </h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{user.name || t('welcome')}</h1>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center bg-white dark:bg-slate-900 border border-psb-border dark:border-slate-700 rounded-xl p-1">
-              <button
-                onClick={() => setLanguage('en')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${language === 'en' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLanguage('hi')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${language === 'hi' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-              >
-                हिं
-              </button>
+              <button onClick={() => setLanguage('en')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${language === 'en' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>EN</button>
+              <button onClick={() => setLanguage('hi')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${language === 'hi' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>हिं</button>
             </div>
             <div className="flex items-center bg-white dark:bg-slate-900 border border-psb-border dark:border-slate-700 rounded-xl p-1">
-              <button
-                onClick={() => setDashboardDensity('simple')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                title={t('simpleMode')}
-              >
-                {t('simpleMode')}
-              </button>
-              <button
-                onClick={() => setDashboardDensity('comprehensive')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${!isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                title={t('comprehensiveMode')}
-              >
-                {t('comprehensiveMode')}
-              </button>
+              <button onClick={() => setDashboardDensity('simple')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>{t('simpleMode')}</button>
+              <button onClick={() => setDashboardDensity('comprehensive')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${!isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>{t('comprehensiveMode')}</button>
             </div>
           </div>
         </div>
 
         <ComplianceBar />
 
-        {/* Hero + Pulse */}
-        <WealthTwinHero />
-        <FinancialPulse />
-
-        {/* Key Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {statCards.map((card, i) => (
-            <motion.div
-              key={card.label}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-            >
+            <motion.div key={card.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}>
               <StatCardV2 {...card} />
             </motion.div>
           ))}
         </div>
 
-        {/* Quick Actions */}
+        {/* Hero */}
+        <WealthTwinHero />
+        <FinancialPulse />
+
+        {/* Quick actions */}
         <SectionHeader icon="fa-bolt" title={t('quickActions')} subtitle={t('frequentTasks')} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2">
-            <QuickPayCard onExpand={openPaymentHub} />
-          </div>
+          <div className="lg:col-span-2"><QuickPayCard onExpand={openPaymentHub} /></div>
           <VirtualCard />
         </div>
 
-        {/* Main Content Grid */}
+        {/* Main grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Left + Center */}
           <div className="lg:col-span-2 space-y-5">
-            <SectionHeader icon="fa-chart-line" title={t('financialOverview')} subtitle={t('trackWealthJourney')} />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <div className="lg:col-span-2">
-                <CosmosCard variant="default" padding="sm">
-                  <ChartWidget type="area" />
-                </CosmosCard>
+            <DashboardWidget title="Wealth Overview" subtitle="Net worth & allocation" icon="fa-chart-line" action={{ label: 'Details', onClick: () => setView('wealth-twin') }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CosmosCard variant="default" padding="none"><ChartWidget type="area" /></CosmosCard>
+                <CosmosCard variant="default" padding="none"><ChartWidget type="pie" /></CosmosCard>
               </div>
-              <CosmosCard variant="default" padding="sm">
-                <ChartWidget type="pie" />
-              </CosmosCard>
-            </div>
+            </DashboardWidget>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <RecentTransactionsTable />
-              <GoalTracker asWidget />
+              <DashboardWidget title="Recent Activity" subtitle="Last 5 transactions" icon="fa-list" action={{ label: 'All', onClick: () => setView('transactions') }}>
+                <RecentTransactionsTable />
+              </DashboardWidget>
+              <DashboardWidget title="Goals" subtitle={`${activeGoals} active goal${activeGoals === 1 ? '' : 's'}`} icon="fa-bullseye" action={{ label: 'Manage', onClick: () => setView('goals') }}>
+                <GoalTracker asWidget />
+              </DashboardWidget>
             </div>
 
-            <SectionHeader icon="fa-wand-magic-sparkles" title={t('smartActions')} subtitle="AI-converted insights into money moves" />
-            <SmartActionOrchestrator />
+            <DashboardWidget title="Smart Actions" subtitle="AI-converted insights" icon="fa-wand-magic-sparkles">
+              <SmartActionOrchestrator />
+            </DashboardWidget>
 
             <RecommendationCard />
-
-            {!isSimple && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <ScenarioSimulator />
-                  <WhatIfSimulator />
-                </div>
-                <KYCStatusCard />
-                <NBAInsights />
-                <FinancialWeather />
-                <StressTestSimulator />
-                <TransactionComparison />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  <NetWorthCard />
-                  <GoalTracker asWidget />
-                </div>
-                <WealthDNA />
-                <WealthBenchmark />
-                <AIDecisionLog />
-                <ComplianceBadges />
-              </>
-            )}
           </div>
 
-          {/* Right Rail */}
           <div className="space-y-5">
-            <SectionHeader icon="fa-shield-halved" title={t('securityOffers')} subtitle={t('protectionRewards')} />
-            <SecurityHealthWidget />
-            <MarketIntelligenceHero />
-            <PredictiveShieldBadge />
+            <DashboardWidget title="Protection Status" subtitle="Live security health" icon="fa-shield-halved" action={{ label: 'Shield', onClick: () => setView('security-beast') }}>
+              <SecurityHealthWidget />
+            </DashboardWidget>
 
-            {!isSimple && (
-              <>
-                <AccountAggregatorWidget />
-                <AccountAggregatorFull />
-                <PSBSchemesCard />
-                <RewardsDashboardCard />
-                <AdaptiveInsight />
-                <MonthlyNarrative />
-                <InvestmentQuiz />
-                <DeviceStatusCard />
-              </>
-            )}
+            <DashboardWidget title="Market Pulse" subtitle="Indices & movers" icon="fa-globe" action={{ label: 'Market', onClick: () => setView('market') }}>
+              <MarketIntelligenceHero />
+            </DashboardWidget>
 
             <CosmosCard
               variant="default"
@@ -297,96 +184,29 @@ export default function DashboardView() {
           </div>
         </div>
 
-        {/* Comprehensive-only extras */}
+        {/* Advanced insights (expandable) */}
         {!isSimple && (
-          <>
-            <SectionHeader icon="fa-flask" title={t('worldFirstInnovations')} subtitle="Features no bank has ever built" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                { icon: 'fa-heart-pulse', color: 'bg-rose-50 text-rose-500 dark:bg-rose-900/20', label: 'Neuro-Friction', desc: 'Biometric spending protection', view: 'innovation-lab', tab: 'neuro', badge: 'WORLD FIRST' },
-                { icon: 'fa-dice', color: 'bg-blue-50 text-blue-500 dark:bg-blue-900/20', label: 'Monte Carlo', desc: '10,000 life scenarios', view: 'innovation-lab', tab: 'monte', badge: 'WORLD FIRST' },
-                { icon: 'fa-shield-virus', color: 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20', label: 'Collective Immune', desc: 'Community fraud defense', view: 'innovation-lab', tab: 'immune', badge: 'WORLD FIRST' },
-                { icon: 'fa-robot', color: 'bg-violet-50 text-violet-500 dark:bg-violet-900/20', label: 'Auto Agent', desc: 'Your personal CFO 24/7', view: 'innovation-lab', tab: 'agent', badge: 'WORLD FIRST' },
-                { icon: 'fa-vault', color: 'bg-amber-50 text-amber-500 dark:bg-amber-900/20', label: 'Sovereign Vault', desc: 'Zero-knowledge privacy', view: 'innovation-lab', tab: 'vault', badge: 'WORLD FIRST' },
-                { icon: 'fa-arrow-right', color: 'bg-primary/10 text-primary', label: 'Explore All', desc: '10 world-first features', view: 'innovation-lab', tab: 'neuro', badge: '10 FEATURES' },
-              ].map((card, i) => (
-                <motion.div
-                  key={card.label}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                >
-                  <CosmosCard variant="elevated" hover onClick={() => setView(card.view as any)}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 ${card.color} rounded-xl flex items-center justify-center`}>
-                        <i className={`fas ${card.icon}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-sm text-gray-800 dark:text-white">{card.label}</h3>
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-extrabold ${
-                            card.badge === 'WORLD FIRST' ? 'bg-amber-100 text-amber-700' : 'bg-primary/10 text-primary'
-                          }`}>{card.badge}</span>
-                        </div>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400">{card.desc}</p>
-                      </div>
-                      <i className="fas fa-chevron-right text-gray-300 text-xs" />
-                    </div>
-                  </CosmosCard>
-                </motion.div>
-              ))}
-            </div>
+          <div className="space-y-5">
+            <button
+              onClick={() => setShowAdvanced((s) => !s)}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            >
+              <span className="flex items-center gap-2"><i className="fas fa-layer-group text-primary" /> Advanced Insights</span>
+              <i className={`fas fa-chevron-down transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+            </button>
 
-            <SectionHeader icon="fa-star" title={t('moreForYou')} subtitle="Tools & gamification" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <CosmosCard variant="elevated" hover onClick={() => setShowSalaryModal(true)}>
-                <div className="flex items-center gap-3 group">
-                  <div className="w-11 h-11 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center text-green-600 dark:text-green-400 transition-transform group-hover:scale-110">
-                    <i className="fas fa-plus" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800 dark:text-white text-sm">Add Salary</h3>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500">{salaryHistory.length > 0 ? `Last: ₹${salaryHistory[0].amount.toLocaleString()}` : 'Update monthly income'}</p>
-                  </div>
+            {showAdvanced && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <ScenarioSimulator />
+                  <WhatIfSimulator />
                 </div>
-              </CosmosCard>
-
-              <DemoCreditCard />
-
-              <CosmosCard variant="elevated" hover onClick={() => setView('fantasy-league')}>
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-violet-50 dark:bg-violet-900/30 rounded-xl flex items-center justify-center text-violet-500">
-                    <i className="fas fa-trophy" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-sm text-gray-800 dark:text-white">Fantasy League</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Ranked #12 this week</p>
-                  </div>
-                  <span className="text-[10px] px-2 py-1 bg-violet-500 text-white rounded-lg font-bold">Play</span>
-                </div>
-              </CosmosCard>
-            </div>
-
-            <FinancialLiteracyCards />
-          </>
-        )}
-
-        <AddSalaryModal show={showSalaryModal} onClose={() => setShowSalaryModal(false)} />
-
-        {/* Floating Read Summary Button */}
-        {isSpeechSupported() && (
-          <button
-            onClick={handleReadSummary}
-            className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-xl transition-all duration-300 ${
-              speakingSummary
-                ? 'bg-rose-500 text-white hover:bg-rose-600 animate-pulse'
-                : 'bg-primary text-white hover:bg-primary/90'
-            }`}
-            title={speakingSummary ? 'Stop reading' : 'Read summary aloud'}
-          >
-            <i className={`fas ${speakingSummary ? 'fa-stop' : 'fa-volume-high'} text-sm`} />
-            <span className="text-xs font-bold">{speakingSummary ? 'Stop' : 'Read Summary'}</span>
-          </button>
+                <WealthDNA />
+                <AIDecisionLog />
+                <FinancialLiteracyCards />
+              </motion.div>
+            )}
+          </div>
         )}
       </div>
     </QuickActions>
@@ -394,32 +214,19 @@ export default function DashboardView() {
 }
 
 function StatCardV2({
-  label, value, icon, color, text, speakText, inrValue, trend, trendUp,
+  label, value, icon, color, text, trend, trendUp,
 }: {
   label: string;
   value: string;
   icon: string;
   color: string;
   text: string;
-  speakText?: string;
-  inrValue?: number;
   trend?: string;
   trendUp?: boolean;
 }) {
-  const { speak, stopSpeaking } = useVoiceNarration();
-  const nriMode = useWealthStore((s) => s.nriMode);
-  const exchangeRates = useWealthStore((s) => s.exchangeRates);
-  const usdEquivalent = inrValue ? Math.round(inrValue * (exchangeRates['USD'] || 0.012)).toLocaleString() : null;
-
   return (
-    <div
-      className="card-stat cursor-default group relative overflow-hidden"
-      onMouseEnter={() => speakText && speak(speakText)}
-      onMouseLeave={stopSpeaking}
-      tabIndex={0}
-    >
+    <div className="card-stat group relative overflow-hidden">
       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{label}</span>
@@ -428,16 +235,11 @@ function StatCardV2({
           </div>
         </div>
         <p className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">{value}</p>
-
         {trend && (
           <div className="flex items-center gap-1 mt-1.5">
             <i className={`fas fa-arrow-${trendUp ? 'up' : 'down'} text-[9px] ${trendUp ? 'text-emerald-500' : 'text-rose-500'}`} />
             <span className={`text-[10px] font-semibold ${trendUp ? 'text-emerald-500' : 'text-rose-500'}`}>{trend}</span>
           </div>
-        )}
-
-        {nriMode && usdEquivalent && (
-          <p className="text-[10px] text-primary mt-1 font-medium">≈ ${usdEquivalent} USD</p>
         )}
       </div>
     </div>
