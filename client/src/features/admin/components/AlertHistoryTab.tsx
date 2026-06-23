@@ -83,7 +83,9 @@ export default function AlertHistoryTab() {
   const [settings, setSettings] = useState(alertService.getSettings());
   const [selected, setSelected] = useState<AlertEvent | null>(null);
   const [livePulse, setLivePulse] = useState(false);
+  const [toasts, setToasts] = useState<{ id: number; title: string; message: string; severity: AlertEvent['severity'] }[]>([]);
   const feedRef = useRef<HTMLDivElement>(null);
+  const prevAlertIds = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     const unsub = alertService.subscribe(all => {
@@ -99,6 +101,22 @@ export default function AlertHistoryTab() {
       feedRef.current.scrollTop = 0;
     }
   }, [alerts.length]);
+
+  // Push toast for every new critical alert that arrives
+  useEffect(() => {
+    const currentIds = new Set(alerts.map(a => a.id));
+    const newAlerts = alerts.filter(a => !prevAlertIds.current.has(a.id));
+    prevAlertIds.current = currentIds;
+    newAlerts.forEach(a => {
+      if (a.severity === 'critical') {
+        setToasts(prev => [...prev, { id: a.id, title: a.title, message: a.message, severity: a.severity }]);
+        const t = setTimeout(() => {
+          setToasts(prev => prev.filter(t => t.id !== a.id));
+        }, 6000);
+        return () => clearTimeout(t);
+      }
+    });
+  }, [alerts]);
 
   const filtered = useMemo(() => {
     let result = alerts;
@@ -365,6 +383,35 @@ export default function AlertHistoryTab() {
             <p className="text-[11px] text-rose-400 mt-1">Critical alerts requiring immediate attention</p>
           </div>
         </div>
+      </div>
+
+      {/* Live Toasts */}
+      <div className="fixed top-4 right-4 z-[10002] space-y-2 pointer-events-none">
+        <AnimatePresence>
+          {toasts.map(t => (
+            <motion.div
+              key={t.id}
+              initial={{ opacity: 0, x: 40, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 40, scale: 0.95 }}
+              className="pointer-events-auto w-80 bg-white rounded-xl border border-rose-200 shadow-lg p-4 flex items-start gap-3"
+            >
+              <div className="w-9 h-9 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
+                <Skull className="w-4 h-4 text-rose-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-slate-800 truncate">{t.title}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{t.message}</p>
+              </div>
+              <button
+                onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Detail Modal */}
