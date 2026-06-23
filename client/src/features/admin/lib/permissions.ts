@@ -16,7 +16,8 @@ type AdminAction =
   | 'unfreeze'
   | 'reset_honeytoken'
   | 'reset_trap'
-  | 'clear_threat';
+  | 'clear_threat'
+  | 'view_health';
 
 export function can(role: AdminRole, action: AdminAction): boolean {
   if (role === 'superadmin') return true;

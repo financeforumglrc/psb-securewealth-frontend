@@ -8,7 +8,7 @@ import {
   BarChart3, ChevronRight, Menu, ArrowUpRight, Info,
   X, History, UserCheck, UserX, Settings,
   ShieldAlert, Key, ScanLine, Globe, AlertOctagon, Siren, Unlock, BellRing,
-  Radio, Skull, Clock, ClipboardList
+  Radio, Skull, Clock, ClipboardList, HeartPulse
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -24,12 +24,13 @@ import AlertToast from '@/features/admin/components/AlertToast';
 import DemoTour from '@/features/admin/components/DemoTour';
 import AlertHistoryTab from '@/features/admin/components/AlertHistoryTab';
 import AdminActivityTab from '@/features/admin/components/AdminActivityTab';
+import SystemHealthTab from '@/features/admin/components/SystemHealthTab';
 import { can, type AdminRole, ROLE_LABELS } from '@/features/admin/lib/permissions';
 import { adminActivityService } from '@/shared/services/adminActivityService';
 import { alertService } from '@/shared/services/alertService';
 import { useSecurity } from '@/shared/context/SecurityContext';
 
-type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs' | 'heatmap' | 'alerts' | 'activity';
+type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs' | 'heatmap' | 'alerts' | 'activity' | 'health';
 type SortKey = 'name' | 'email' | 'created_at' | 'tier' | 'role';
 type SortDir = 'asc' | 'desc';
 
@@ -1178,18 +1179,20 @@ export default function AdminDashboard() {
     if (!isLoggedIn) return;
     const keys: Record<string, AdminTab> = {
       '1': 'dashboard', '2': 'users', '3': 'architecture',
-      '4': 'security', '5': 'features', '6': 'logs', '7': 'heatmap', '8': 'alerts',
+      '4': 'security', '5': 'features', '6': 'logs', '7': 'heatmap', '8': 'alerts', '9': 'health',
     };
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key in keys && !e.metaKey && !e.ctrlKey) {
+        const target = keys[e.key];
+        if (target === 'health' && !can(role, 'view_health')) return;
         e.preventDefault();
-        setTab(keys[e.key]);
+        setTab(target);
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [isLoggedIn]);
+  }, [isLoggedIn, role]);
 
   const filteredUsers = useMemo(() => {
     let result = users;
@@ -1225,9 +1228,12 @@ export default function AdminDashboard() {
     { key: 'features' as AdminTab, label: 'Features', icon: BarChart3 },
     { key: 'logs' as AdminTab, label: 'Audit Logs', icon: Activity },
     { key: 'activity' as AdminTab, label: 'Admin Activity', icon: ClipboardList },
+    { key: 'health' as AdminTab, label: 'System Health', icon: HeartPulse },
     { key: 'heatmap' as AdminTab, label: 'Fraud Map', icon: Globe },
     { key: 'alerts' as AdminTab, label: 'Alert Center', icon: BellRing },
   ];
+
+  const visibleNav = navItems.filter(i => i.key !== 'health' || can(role, 'view_health'));
 
   function AnimatedCounter({ value }: { value: number }) {
     const [display, setDisplay] = useState(value);
@@ -1288,7 +1294,7 @@ export default function AdminDashboard() {
 
         {/* Nav */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {visibleNav.map((item) => {
             const Icon = item.icon;
             const active = tab === item.key;
             return (
@@ -1368,6 +1374,7 @@ export default function AdminDashboard() {
                 {tab === 'features' && 'Cosmos Features'}
                 {tab === 'logs' && 'Audit Logs'}
                 {tab === 'activity' && 'Admin Activity'}
+                {tab === 'health' && 'System Health'}
                 {tab === 'heatmap' && 'Fraud Intelligence Map'}
                 {tab === 'alerts' && 'Alert Center'}
               </h1>
@@ -1802,6 +1809,9 @@ export default function AdminDashboard() {
             )}
             {tab === 'activity' && (
               <AdminActivityTab />
+            )}
+            {tab === 'health' && can(role, 'view_health') && (
+              <SystemHealthTab stats={stats} />
             )}
           </AnimatePresence>
         </div>

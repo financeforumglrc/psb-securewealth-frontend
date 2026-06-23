@@ -89,6 +89,18 @@ const steps: TourStep[] = [
     tip: 'Click any marker on the map or event in the sidebar for full details.',
   },
   {
+    tab: 'health', title: 'System Health & Observability',
+    description: 'Real-time platform health monitoring with API status, database health, security posture, and active incident counts.',
+    highlight: 'System Health',
+    details: [
+      'Live API latency and database health checks every 30 seconds',
+      'Trust score gauge and active protection layer status',
+      'Open incident summary pulled from the live alert feed',
+      'Service metrics showing users, accounts, transactions, goals, and loans',
+    ],
+    tip: 'Press 9 to jump straight to System Health from anywhere in the admin portal.',
+  },
+  {
     tab: 'dashboard', title: 'Tour Complete',
     description: 'PSB SecureWealth — Intelligent Wealth Growth with Built-in Fraud Protection. Built for the PSB Hackathon Series 2026.',
     highlight: 'Thank You',
