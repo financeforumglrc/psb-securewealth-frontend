@@ -292,7 +292,10 @@ export default function AuthenticatedApp() {
 
   // First-time onboarding wizard — shown once after login
   if (!onboardingComplete) {
-    return <OnboardingWizard onComplete={() => setOnboardingComplete(true)} />;
+    return <OnboardingWizard onComplete={() => {
+      setOnboardingComplete(true);
+      setAAFetchComplete(true);
+    }} />;
   }
 
   // Account Aggregator onboarding animation — shown once after login

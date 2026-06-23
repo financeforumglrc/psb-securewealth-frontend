@@ -168,9 +168,15 @@ router.post('/pdf', upload.single('pdf'), async (req, res) => {
         });
     } catch (error) {
         console.error('PDF extraction error:', error);
+        const isUnsupportedImage = error.message && (
+            error.message.includes('does not support image input') ||
+            error.message.includes('only supports PDF')
+        );
         res.status(500).json({
             success: false,
-            error: 'Extraction failed: ' + error.message,
+            error: isUnsupportedImage
+                ? 'This AI model only supports PDF files. Please upload a valid PDF document.'
+                : 'Extraction failed',
             code: 'EXTRACTION_ERROR',
         });
     }
