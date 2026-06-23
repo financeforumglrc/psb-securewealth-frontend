@@ -23,6 +23,7 @@ import FraudHeatmap from '@/features/admin/components/FraudHeatmap';
 import AlertToast from '@/features/admin/components/AlertToast';
 import DemoTour from '@/features/admin/components/DemoTour';
 import AlertHistoryTab from '@/features/admin/components/AlertHistoryTab';
+import { can, type AdminRole, ROLE_LABELS } from '@/features/admin/lib/permissions';
 import { alertService } from '@/shared/services/alertService';
 import { useSecurity } from '@/shared/context/SecurityContext';
 
@@ -590,7 +591,7 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
 /* ═══════════════════════════════════════════════════════════════
    SECURITY OPS TAB — Clean Light Theme
    ═══════════════════════════════════════════════════════════════ */
-function SecurityOpsTab() {
+function SecurityOpsTab({ role }: { role: AdminRole }) {
   const { state, dispatch } = useSecurity();
   const [simulatedAttacks, setSimulatedAttacks] = useState<{id: number; type: string; blocked: boolean; time: string}[]>([]);
 
@@ -741,20 +742,20 @@ function SecurityOpsTab() {
             <ShieldAlert className="w-4 h-4 text-slate-700" /> Incident Response Controls
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button onClick={() => dispatch({ type: 'UNFREEZE_ACCOUNT' })} disabled={!state.accountFrozen}
+            <button onClick={() => dispatch({ type: 'UNFREEZE_ACCOUNT' })} disabled={!can(role, 'unfreeze') || !state.accountFrozen}
               className="px-4 py-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 disabled:opacity-40 hover:bg-emerald-100 transition-colors flex items-center gap-2">
               <Unlock className="w-4 h-4" /> Unfreeze Account
             </button>
-            <button onClick={() => dispatch({ type: 'HONEYTOKEN_RESET' })} disabled={!state.honeytokenTriggered}
+            <button onClick={() => dispatch({ type: 'HONEYTOKEN_RESET' })} disabled={!can(role, 'reset_honeytoken') || !state.honeytokenTriggered}
               className="px-4 py-3 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700 disabled:opacity-40 hover:bg-rose-100 transition-colors flex items-center gap-2">
               <ShieldAlert className="w-4 h-4" /> Reset Honeytoken
             </button>
-            <button onClick={() => dispatch({ type: 'TRAP_RESET' })} disabled={!state.trapTriggered}
+            <button onClick={() => dispatch({ type: 'TRAP_RESET' })} disabled={!can(role, 'reset_trap') || !state.trapTriggered}
               className="px-4 py-3 rounded-xl text-xs font-bold bg-amber-50 border border-amber-200 text-amber-700 disabled:opacity-40 hover:bg-amber-100 transition-colors flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" /> Reset Trap
             </button>
-            <button onClick={() => dispatch({ type: 'EBPF_ALERT', alert: '' })}
-              className="px-4 py-3 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-2">
+            <button onClick={() => dispatch({ type: 'EBPF_ALERT', alert: '' })} disabled={!can(role, 'clear_threat')}
+              className="px-4 py-3 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-700 disabled:opacity-40 hover:bg-slate-100 transition-colors flex items-center gap-2">
               <X className="w-4 h-4" /> Clear Threat
             </button>
           </div>
@@ -980,6 +981,7 @@ function LoginScreen({ onLogin, loading, error }: { onLogin: (id: string, pw: st
    ═══════════════════════════════════════════════════════════════ */
 export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [role, setRole] = useState<AdminRole>(() => (sessionStorage.getItem('sw-admin-role') as AdminRole) || 'superadmin');
   const [tab, setTab] = useState<AdminTab>('dashboard');
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [stats, setStats] = useState<SystemStats | null>(null);
@@ -997,6 +999,11 @@ export default function AdminDashboard() {
     document.documentElement.classList.remove('dark');
     document.documentElement.style.colorScheme = 'light';
   }, []);
+
+  // Persist RBAC role across reloads
+  useEffect(() => {
+    sessionStorage.setItem('sw-admin-role', role);
+  }, [role]);
 
   const handleLogin = async (adminId: string, password: string) => {
     setLoginError('');
@@ -1358,6 +1365,16 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <select
+              value={role}
+              onChange={e => setRole(e.target.value as AdminRole)}
+              className="hidden sm:block px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 focus:outline-none focus:border-emerald-400 cursor-pointer"
+              title="Switch admin role (demo)"
+            >
+              {(['superadmin', 'analyst', 'viewer'] as AdminRole[]).map(r => (
+                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+              ))}
+            </select>
             <AlertToast />
             <button onClick={loadData} disabled={loading}
               className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
@@ -1756,7 +1773,7 @@ export default function AdminDashboard() {
               </motion.div>
             )}
 
-            {tab === 'security' && <SecurityOpsTab />}
+            {tab === 'security' && <SecurityOpsTab role={role} />}
 
             {tab === 'features' && (
               <motion.div key="feat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -1771,7 +1788,7 @@ export default function AdminDashboard() {
               <FraudHeatmap />
             )}
             {tab === 'alerts' && (
-              <AlertHistoryTab />
+              <AlertHistoryTab role={role} />
             )}
           </AnimatePresence>
         </div>
