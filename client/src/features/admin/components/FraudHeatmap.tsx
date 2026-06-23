@@ -203,22 +203,47 @@ export default function FraudHeatmap() {
         opacity: 0.9,
         fillOpacity: 0.6,
       }).addTo(mapInstanceRef.current);
+      const parsed = e.parsedNewValue || {};
       marker.bindPopup(`
-        <div style="font-family:system-ui;min-width:200px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <strong style="font-size:13px;color:${color}">${riskLabel(e.riskScore)}</strong>
-            <span style="font-size:11px;color:#64748b">${new Date(e.created_at).toLocaleString('en-IN')}</span>
+        <div style="font-family:system-ui,-apple-system,sans-serif;min-width:250px">
+          <div style="background:linear-gradient(135deg,${color}15,${color}08);padding:14px 16px 12px;border-bottom:1px solid #f1f5f9">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:10px;height:10px;border-radius:50%;background:${color};box-shadow:0 0 8px ${color}66"></div>
+                <span style="font-weight:700;font-size:14px;color:#1e293b">${riskLabel(e.riskScore)}</span>
+              </div>
+              <span style="font-size:11px;font-weight:600;color:${color};background:${color}15;padding:2px 10px;border-radius:20px">${e.riskScore}/100</span>
+            </div>
           </div>
-          <div style="font-size:12px;margin-bottom:4px"><strong>${e.user_name || 'Unknown'}</strong></div>
-          <div style="font-size:11px;color:#64748b">${e.location.city}, ${e.location.country}</div>
-          <div style="font-size:11px;color:#64748b">${e.entity_type} · ${e.action}</div>
-          <div style="font-size:11px;color:#64748b">ISP: ${e.location.isp || 'N/A'}</div>
-          <div style="font-size:11px;color:#64748b">IP: ${e.ip_address}</div>
-          <div style="margin-top:6px;padding-top:6px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">
-            Risk Score: ${e.riskScore}/100
+          <div style="padding:12px 16px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,${color},${color}88);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">${(e.user_name || 'U')[0]}</div>
+              <div>
+                <div style="font-weight:600;font-size:13px;color:#1e293b">${e.user_name || 'Unknown'}</div>
+                <div style="font-size:11px;color:#94a3b8">${e.location.city}, India</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0">
+              <div style="background:#f8fafc;padding:8px 10px;border-radius:8px">
+                <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Action</div>
+                <div style="font-size:12px;font-weight:600;color:#334155;margin-top:2px">${e.action}</div>
+              </div>
+              <div style="background:#f8fafc;padding:8px 10px;border-radius:8px">
+                <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Amount</div>
+                <div style="font-size:12px;font-weight:700;color:#334155;margin-top:2px">₹${(parsed.amount || 0).toLocaleString('en-IN')}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px">
+              <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;background:${parsed.status === 'BLOCKED' ? '#fef2f2' : parsed.status === 'FLAGGED' ? '#fffbeb' : '#f0fdf4'};color:${parsed.status === 'BLOCKED' ? '#dc2626' : parsed.status === 'FLAGGED' ? '#d97706' : '#16a34a'}">${parsed.status || 'UNKNOWN'}</span>
+              <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;background:#f1f5f9;color:#64748b">${e.ip_address}</span>
+            </div>
+            <div style="font-size:10px;color:#94a3b8;padding-top:8px;margin-top:8px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between">
+              <span>${e.location.isp || 'N/A'}</span>
+              <span>${new Date(e.created_at).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</span>
+            </div>
           </div>
         </div>
-      `);
+      `, { maxWidth: 320, className: '' });
       marker.on('click', () => setSelectedEvent(e));
       markersRef.current.push(marker);
     });
@@ -276,6 +301,40 @@ export default function FraudHeatmap() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col gap-4">
+      {/* Leaflet popup & container styling */}
+      <style>{`
+        .leaflet-popup { margin-bottom: 20px; }
+        .leaflet-popup-content-wrapper {
+          border-radius: 12px !important;
+          padding: 0 !important;
+          overflow: visible !important;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.25) !important;
+        }
+        .leaflet-popup-content {
+          margin: 0 !important;
+          width: auto !important;
+          min-width: 260px !important;
+        }
+        .leaflet-popup-tip {
+          box-shadow: none !important;
+        }
+        .leaflet-popup-close-button {
+          top: 8px !important;
+          right: 8px !important;
+          font-size: 18px !important;
+          color: #94a3b8 !important;
+          width: 24px !important;
+          height: 24px !important;
+          line-height: 24px !important;
+          border-radius: 6px !important;
+          transition: all 0.15s !important;
+        }
+        .leaflet-popup-close-button:hover {
+          background: #f1f5f9 !important;
+          color: #475569 !important;
+        }
+        .leaflet-container { border-radius: 12px; }
+      `}</style>
       {/* Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
         {[
@@ -302,8 +361,8 @@ export default function FraudHeatmap() {
       {/* Map + Sidebar */}
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
         {/* Map */}
-        <div className="flex-1 relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900" style={{ minHeight: 400 }}>
-          <div ref={mapRef} className="absolute inset-0" />
+        <div className="flex-1 relative rounded-xl border border-slate-200 bg-slate-900" style={{ minHeight: 400 }}>
+          <div ref={mapRef} className="absolute inset-0 rounded-xl" />
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80 z-[999]">
               <div className="flex flex-col items-center gap-3">
