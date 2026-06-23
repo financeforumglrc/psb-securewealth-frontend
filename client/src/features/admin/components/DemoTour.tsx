@@ -184,8 +184,8 @@ export default function DemoTour({ onNavigate }: DemoTourProps) {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         onClick={start}
-        className={`fixed bottom-6 right-6 z-[9998] flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all ${
-          hasSeenTour ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white'
+        className={`fixed bottom-6 right-6 z-[9998] flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all border ${
+          hasSeenTour ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50' : 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white border-transparent'
         }`}
         style={{ boxShadow: hasSeenTour ? '0 4px 24px rgba(0,0,0,0.15)' : '0 4px 24px rgba(5, 150, 105, 0.35)' }}>
         <Play className="w-4 h-4" />
@@ -312,7 +312,7 @@ export default function DemoTour({ onNavigate }: DemoTourProps) {
                   </button>
                 ) : (
                   <button onClick={next}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white bg-slate-800 hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors shadow-md">
                     Next <ChevronRight className="w-4 h-4" />
                   </button>
                 )}

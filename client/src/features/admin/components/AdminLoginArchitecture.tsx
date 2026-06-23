@@ -1108,15 +1108,15 @@ export default function AdminLoginArchitecture() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-6 text-white shadow-lg"
+        className="rounded-2xl bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 p-6 text-slate-800 shadow-lg"
       >
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-            <Shield className="w-7 h-7 text-emerald-400" />
+          <div className="w-14 h-14 rounded-2xl bg-white border border-emerald-200 flex items-center justify-center shadow-sm">
+            <Shield className="w-7 h-7 text-emerald-600" />
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-black">Admin Login System Architecture</h2>
-            <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+            <p className="text-sm text-slate-500 mt-1 max-w-2xl">
               A comprehensive, production-grade view of the Banking Control Center authentication module —
               requirements, UML activity diagram, relational ER schema, data flow, and security controls.
             </p>
@@ -1127,13 +1127,13 @@ export default function AdminLoginArchitecture() {
           {METRICS.map((m) => {
             const Icon = m.icon;
             return (
-              <div key={m.label} className="rounded-xl bg-white/5 border border-white/10 p-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Icon className="w-4 h-4 text-emerald-400" />
+              <div key={m.label} className="rounded-xl bg-white border border-slate-100 p-3 flex items-center gap-3 shadow-sm">
+                <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <Icon className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">{m.label}</p>
-                  <p className="text-sm font-bold">{m.value}</p>
+                  <p className="text-xs text-slate-500">{m.label}</p>
+                  <p className="text-sm font-bold text-slate-800">{m.value}</p>
                 </div>
               </div>
             );
