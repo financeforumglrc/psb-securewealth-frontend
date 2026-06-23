@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Skull, AlertTriangle, Info, Bell, BellRing, CheckCheck, Trash2, Volume2, VolumeX, Monitor, MonitorOff, Search, X, ShieldAlert } from 'lucide-react';
-import { alertService, AlertEvent } from '@/shared/services/alertService';
+import { alertService, type AlertEvent } from '@/shared/services/alertService';
 
 const severityConfig = {
   critical: { icon: Skull, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', label: 'CRITICAL' },

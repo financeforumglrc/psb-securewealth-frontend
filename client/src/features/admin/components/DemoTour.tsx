@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Play, ChevronLeft, ChevronRight, X, Sparkles, Keyboard, Pause } from 'lucide-react';
 
 interface TourStep {
