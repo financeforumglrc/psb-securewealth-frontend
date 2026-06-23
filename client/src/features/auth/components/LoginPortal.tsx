@@ -453,9 +453,9 @@ export default function LoginPortal() {
               <button
                 type="button"
                 onClick={() => useWealthStore.getState().setView('admin')}
-                className="text-slate-500 transition-colors hover:text-slate-300"
+                className="text-xs bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent font-bold hover:from-emerald-400 hover:to-teal-400 transition-all"
               >
-                Admin Portal
+                ⚙ Admin Portal
               </button>
             </div>
 

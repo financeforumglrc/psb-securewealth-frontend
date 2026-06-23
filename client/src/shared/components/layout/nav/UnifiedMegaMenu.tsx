@@ -8,6 +8,7 @@ interface UnifiedMegaMenuProps {
   currentView: string;
   onNavigate: (view: string) => void;
   onClose: () => void;
+  onKeepOpen?: () => void;
 }
 
 const FEATURED: Record<string, { label: string; view: string; cta: string }> = {
@@ -18,7 +19,7 @@ const FEATURED: Record<string, { label: string; view: string; cta: string }> = {
   innovation: { label: 'Innovation Lab', view: 'innovation-lab', cta: 'Explore Lab' },
 };
 
-export default function UnifiedMegaMenu({ activeCategory, currentView, onNavigate, onClose }: UnifiedMegaMenuProps) {
+export default function UnifiedMegaMenu({ activeCategory, currentView, onNavigate, onClose, onKeepOpen }: UnifiedMegaMenuProps) {
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -51,6 +52,7 @@ export default function UnifiedMegaMenu({ activeCategory, currentView, onNavigat
         exit={{ opacity: 0, y: 4 }}
         transition={{ duration: 0.15 }}
         className="absolute left-0 right-0 top-full z-40 px-4 sm:px-6 lg:px-8 pt-1"
+        onMouseEnter={onKeepOpen}
         onMouseLeave={onClose}
       >
         <div className="max-w-[1100px] mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">

@@ -11,6 +11,7 @@ interface CategoryNavProps {
 export default function CategoryNav({ currentView, onNavigate }: CategoryNavProps) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
 
   const activeCategoryId = MEGA_MENU.find((cat) =>
     cat.groups.some((g) => g.items.some((i) => i.view === currentView))
@@ -22,11 +23,15 @@ export default function CategoryNav({ currentView, onNavigate }: CategoryNavProp
   };
 
   const closeMenuSoon = () => {
-    timeout.current = setTimeout(() => setActiveMenu(null), 120);
+    timeout.current = setTimeout(() => setActiveMenu(null), 300);
+  };
+
+  const keepMenuOpen = () => {
+    if (timeout.current) clearTimeout(timeout.current);
   };
 
   return (
-    <nav className="hidden lg:block bg-primary-dark sticky top-[60px] z-40">
+    <nav ref={navRef} className="hidden lg:block bg-primary-dark sticky top-[60px] z-40">
       <div className="max-w-[1440px] mx-auto px-4 lg:px-6">
         <div className="flex items-center gap-2 h-[44px]">
           {MEGA_MENU.map((cat) => {
@@ -72,6 +77,7 @@ export default function CategoryNav({ currentView, onNavigate }: CategoryNavProp
             currentView={currentView}
             onNavigate={onNavigate}
             onClose={() => setActiveMenu(null)}
+            onKeepOpen={keepMenuOpen}
           />
         )}
       </AnimatePresence>

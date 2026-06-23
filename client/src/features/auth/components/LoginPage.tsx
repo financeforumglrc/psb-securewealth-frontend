@@ -635,12 +635,12 @@ export default function LoginPage() {
       </div>
 
       {/* Admin Portal Link */}
-      <div className="mt-4 text-center">
+      <div className="mt-6 text-center">
         <button
           onClick={() => useWealthStore.getState().setView('admin')}
-          className="text-xs text-slate-400 hover:text-emerald-500 font-medium transition-colors flex items-center justify-center gap-1.5 mx-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 text-xs font-bold transition-all"
         >
-          <Shield className="w-3.5 h-3.5" /> Admin Portal
+          <Shield className="w-4 h-4" /> Admin Portal
         </button>
       </div>
 
