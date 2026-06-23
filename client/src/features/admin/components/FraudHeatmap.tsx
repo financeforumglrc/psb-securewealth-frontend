@@ -232,8 +232,9 @@ export default function FraudHeatmap() {
         zoomControl: false,
         attributionControl: false,
       });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 18,
+        subdomains: 'abcd',
       }).addTo(map);
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       mapInstanceRef.current = map;
@@ -460,7 +461,8 @@ export default function FraudHeatmap() {
           background: #1e293b !important;
           color: #f8fafc !important;
         }
-        .leaflet-container { border-radius: 16px; background: #020617; }
+        .leaflet-container { border-radius: 16px; background: #e2e8f0; }
+        .leaflet-tile-pane { filter: saturate(0.85) contrast(1.05) brightness(1.02); }
         .fraud-attack-vector { animation: dash-flow 1.2s linear infinite; }
         @keyframes dash-flow { to { stroke-dashoffset: -16; } }
         .fraud-radar-scan {
@@ -505,7 +507,7 @@ export default function FraudHeatmap() {
       {/* Map + Sidebar */}
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
         {/* Map */}
-        <div className="flex-1 relative rounded-2xl border border-slate-700/50 bg-slate-950 overflow-hidden" style={{ minHeight: 420 }}>
+        <div className="flex-1 relative rounded-2xl border border-slate-300 overflow-hidden bg-slate-100" style={{ minHeight: 420 }}>
           <div ref={mapRef} className="absolute inset-0 rounded-2xl" />
 
           {loading && (
