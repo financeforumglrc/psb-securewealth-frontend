@@ -331,4 +331,35 @@ router.get('/audit-logs', adminApiAuth, async (req, res) => {
     }
 });
 
+// GET /fraud-events — Returns risk events with IP location for heatmap
+router.get('/fraud-events', adminApiAuth, async (req, res) => {
+    try {
+        const logs = bankingDb.getFraudEvents(parseInt(req.query.limit) || 100);
+        const enriched = await Promise.all(logs.map(async (log) => {
+            const ip = log.ip_address;
+            let location = null;
+            if (ip && ip !== '127.0.0.1' && ip !== '::1' && ip !== 'unknown') {
+                if (ipGeoCache[ip]) {
+                    location = ipGeoCache[ip];
+                } else {
+                    try {
+                        const { data } = await axios.get(`http://ip-api.com/json/${ip}?fields=status,country,city,lat,lon,isp,query`, { timeout: 3000 });
+                        if (data.status === 'success') {
+                            location = { country: data.country, city: data.city, lat: data.lat, lon: data.lon, isp: data.isp };
+                            ipGeoCache[ip] = location;
+                        }
+                    } catch {}
+                }
+            }
+            let parsedNewValue = null;
+            try { parsedNewValue = log.new_value ? JSON.parse(log.new_value) : null; } catch {}
+            return { ...log, location, parsedNewValue, riskScore: parsedNewValue?.status >= 500 ? 95 : parsedNewValue?.status >= 400 ? 70 : 40 };
+        }));
+        res.json({ success: true, events: enriched.filter(e => e.location) });
+    } catch (error) {
+        console.error('Admin fraud events error:', error);
+        res.status(500).json({ success: false, error: 'Failed to load fraud events' });
+    }
+});
+
 module.exports = router;

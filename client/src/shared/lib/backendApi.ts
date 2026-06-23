@@ -416,6 +416,11 @@ export const backendApi = {
     });
   },
 
+  async adminGetFraudEvents(limit?: number) {
+    const qs = limit ? `?limit=${limit}` : '';
+    return fetchJson(`/admin/fraud-events${qs}`, { method: 'GET', timeoutMs: 30000 });
+  },
+
   // KYC
   async getKycStatus() {
     return fetchJson('/kyc/status');

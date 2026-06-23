@@ -731,6 +731,10 @@ const bankingDb = {
         if (filters.offset) { sql += ' OFFSET ?'; params.push(filters.offset); }
         return db.prepare(sql).all(...params);
     },
+    getFraudEvents: (limit = 100) => {
+        const sql = `SELECT a.*, u.name AS user_name, u.email AS user_email FROM audit_logs a LEFT JOIN users u ON a.user_id = u.id WHERE (a.action = 'DELETE' OR a.entity_type IN ('auth', 'transaction', 'card', 'kyc')) AND a.new_value LIKE '%"status":4%' ORDER BY a.created_at DESC LIMIT ?`;
+        return db.prepare(sql).all(limit);
+    },
     createAsset: (data) => {
         const stmt = db.prepare(`INSERT INTO user_assets (user_id, name, asset_type, value, liquidity, returns) VALUES (?, ?, ?, ?, ?, ?)`);
         return stmt.run(data.userId, data.name, data.assetType || null, data.value || 0, data.liquidity || null, data.returns || null);

@@ -18,9 +18,10 @@ import { DEMO_ACCOUNTS } from '@/shared/data/userProfiles';
 import SystemArchitecture from '@/features/architecture/components/SystemArchitecture';
 import AdminLoginArchitecture from '@/features/admin/components/AdminLoginArchitecture';
 import FeaturesUniverse from '@/features/architecture/components/FeaturesUniverse';
+import FraudHeatmap from '@/features/admin/components/FraudHeatmap';
 import { useSecurity } from '@/shared/context/SecurityContext';
 
-type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs';
+type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs' | 'heatmap';
 type SortKey = 'name' | 'email' | 'created_at' | 'tier' | 'role';
 type SortDir = 'asc' | 'desc';
 
@@ -1017,6 +1018,7 @@ export default function AdminDashboard() {
     { key: 'security' as AdminTab, label: 'Security Ops', icon: ShieldAlert },
     { key: 'features' as AdminTab, label: 'Features', icon: BarChart3 },
     { key: 'logs' as AdminTab, label: 'Audit Logs', icon: Activity },
+    { key: 'heatmap' as AdminTab, label: 'Fraud Map', icon: Globe },
   ];
 
   const heroStats = [
@@ -1123,6 +1125,7 @@ export default function AdminDashboard() {
                 {tab === 'security' && 'Security Operations'}
                 {tab === 'features' && 'Cosmos Features'}
                 {tab === 'logs' && 'Audit Logs'}
+                {tab === 'heatmap' && 'Fraud Intelligence Map'}
               </h1>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
@@ -1488,6 +1491,9 @@ export default function AdminDashboard() {
 
             {tab === 'logs' && (
               <AuditLogsTab users={users} />
+            )}
+            {tab === 'heatmap' && (
+              <FraudHeatmap />
             )}
           </AnimatePresence>
         </div>
