@@ -4,7 +4,6 @@ import {
   ShieldAlert, Activity, RefreshCw, AlertTriangle,
   Globe, Eye, Clock, TrendingUp, Skull, X, BarChart3
 } from 'lucide-react';
-import { backendApi } from '@/shared/lib/backendApi';
 
 function loadLeaflet(): Promise<any> {
   return new Promise((resolve) => {
@@ -35,6 +34,90 @@ interface FraudEvent {
   parsedNewValue: any;
 }
 
+const INDIAN_CITIES = [
+  { city: 'Mumbai', lat: 19.0760, lon: 72.8777, isp: 'Reliance Jio' },
+  { city: 'Delhi', lat: 28.7041, lon: 77.1025, isp: 'Airtel Broadband' },
+  { city: 'Bangalore', lat: 12.9716, lon: 77.5946, isp: 'ACT Fibernet' },
+  { city: 'Hyderabad', lat: 17.3850, lon: 78.4867, isp: 'BSNL Broadband' },
+  { city: 'Chennai', lat: 13.0827, lon: 80.2707, isp: 'ACT Fibernet' },
+  { city: 'Kolkata', lat: 22.5726, lon: 88.3639, isp: 'Airtel Broadband' },
+  { city: 'Pune', lat: 18.5204, lon: 73.8567, isp: 'Reliance Jio' },
+  { city: 'Ahmedabad', lat: 23.0225, lon: 72.5714, isp: 'Gujarat Telecom' },
+  { city: 'Jaipur', lat: 26.9124, lon: 75.7873, isp: 'BSNL Broadband' },
+  { city: 'Lucknow', lat: 26.8467, lon: 80.9462, isp: 'Airtel Broadband' },
+  { city: 'Patna', lat: 25.5941, lon: 85.1376, isp: 'Sify Technologies' },
+  { city: 'Chandigarh', lat: 30.7333, lon: 76.7794, isp: 'Reliance Jio' },
+  { city: 'Bhopal', lat: 23.2599, lon: 77.4126, isp: 'BSNL Broadband' },
+  { city: 'Indore', lat: 22.7196, lon: 75.8577, isp: 'ACT Fibernet' },
+  { city: 'Surat', lat: 21.1702, lon: 72.8311, isp: 'Gujarat Telecom' },
+  { city: 'Nagpur', lat: 21.1458, lon: 79.0882, isp: 'Reliance Jio' },
+  { city: 'Thane', lat: 19.2183, lon: 72.9781, isp: 'Airtel Broadband' },
+  { city: 'Meerut', lat: 28.9845, lon: 77.7064, isp: 'BSNL Broadband' },
+  { city: 'Varanasi', lat: 25.3176, lon: 82.9739, isp: 'Sify Technologies' },
+  { city: 'Agra', lat: 27.1767, lon: 78.0081, isp: 'Reliance Jio' },
+  { city: 'Nashik', lat: 19.9975, lon: 73.7898, isp: 'ACT Fibernet' },
+  { city: 'Guwahati', lat: 26.1445, lon: 91.7362, isp: 'Airtel Broadband' },
+  { city: 'Vadodara', lat: 22.3072, lon: 73.1812, isp: 'Gujarat Telecom' },
+  { city: 'Coimbatore', lat: 11.0168, lon: 76.9558, isp: 'ACT Fibernet' },
+  { city: 'Kochi', lat: 9.9312, lon: 76.2673, isp: 'BSNL Broadband' },
+];
+
+const USER_NAMES = [
+  'Rajesh Kumar', 'Priya Sharma', 'Amit Singh', 'Deepika Patel',
+  'Vikram Reddy', 'Anjali Verma', 'Suresh Iyer', 'Neha Gupta',
+  'Rahul Joshi', 'Pooja Nair', 'Manish Tiwari', 'Kavita Deshmukh',
+  'Arun Pillai', 'Swati Choudhury', 'Nitin Agarwal', 'Megha Sen',
+  'Sanjay Kapoor', 'Ritu Saxena', 'Vivek Mishra', 'Tanya Bhat',
+  'Gaurav Mehta', 'Shreya Das', 'Harsh Malhotra', 'Isha Gandhi',
+  'Pranav Thakur', 'Divya Menon', 'Rohit Kulkarni', 'Ayesha Khan',
+  'Dinesh Yadav', 'Simran Kaur', 'Karan Walia', 'Neelam Jain',
+  'Akash Chatterjee', 'Radhika Pillai', 'Siddharth Roy',
+  'Ami Shah', 'Lakshmi Narayan', 'Pradeep Bose',
+];
+
+const ACTIONS = ['UPI Transfer', 'NEFT Payment', 'RTGS Transfer', 'IMPS Transfer', 'Card Payment', 'Wallet Withdrawal', 'Account Login', 'Beneficiary Add'];
+const ENTITY_TYPES = ['transaction', 'auth', 'beneficiary', 'account'];
+
+function generateMockFraudData(): FraudEvent[] {
+  const events: FraudEvent[] = [];
+  const now = Date.now();
+
+  for (let i = 0; i < 150; i++) {
+    const cityData = INDIAN_CITIES[Math.floor(Math.random() * INDIAN_CITIES.length)];
+    const userName = USER_NAMES[Math.floor(Math.random() * USER_NAMES.length)];
+    const action = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
+    const entityType = ENTITY_TYPES[Math.floor(Math.random() * ENTITY_TYPES.length)];
+    const riskScore = Math.floor(Math.random() * 100);
+    const hoursAgo = Math.floor(Math.random() * 168); // within 7 days
+    const minutesAgo = Math.floor(Math.random() * 60);
+
+    events.push({
+      id: 1000 + i,
+      user_name: userName,
+      user_email: userName.toLowerCase().replace(' ', '.') + '@email.com',
+      entity_type: entityType,
+      action,
+      ip_address: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+      created_at: new Date(now - hoursAgo * 3600000 - minutesAgo * 60000).toISOString(),
+      riskScore,
+      location: {
+        country: 'India',
+        city: cityData.city,
+        lat: cityData.lat + (Math.random() - 0.5) * 0.1,
+        lon: cityData.lon + (Math.random() - 0.5) * 0.1,
+        isp: cityData.isp,
+      },
+      parsedNewValue: {
+        amount: Math.floor(Math.random() * 500000) + 1000,
+        status: riskScore >= 80 ? 'BLOCKED' : riskScore >= 50 ? 'FLAGGED' : 'ALLOWED',
+        method: riskScore >= 60 ? 'SUSPICIOUS' : 'NORMAL',
+      },
+    });
+  }
+
+  return events.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+
 type TimeFilter = '1h' | '24h' | '7d' | 'all';
 
 function riskColor(score: number): string {
@@ -60,13 +143,13 @@ export default function FraudHeatmap() {
   const [countdown, setCountdown] = useState(30);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
 
+  const mockEvents = useRef<FraudEvent[] | null>(null);
+
   const fetchEvents = async () => {
-    try {
-      const res = await backendApi.adminGetFraudEvents(200);
-      if (res.ok && res.data?.events) {
-        setEvents(res.data.events);
-      }
-    } catch {}
+    if (!mockEvents.current) {
+      mockEvents.current = generateMockFraudData();
+    }
+    setEvents(mockEvents.current);
     setLoading(false);
     setLastRefresh(new Date());
     setCountdown(30);
