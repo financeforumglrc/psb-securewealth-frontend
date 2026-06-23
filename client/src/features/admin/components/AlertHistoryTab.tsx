@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Skull, AlertTriangle, Info, Bell, BellRing, CheckCheck, Trash2, Volume2, VolumeX, Monitor, MonitorOff, Search, X, History, ShieldAlert, Eye } from 'lucide-react';
+import { Skull, AlertTriangle, Info, Bell, BellRing, CheckCheck, Trash2, Volume2, VolumeX, Monitor, MonitorOff, Search, X, ShieldAlert } from 'lucide-react';
 import { alertService, AlertEvent } from '@/shared/services/alertService';
 
 const severityConfig = {

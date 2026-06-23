@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, ChevronLeft, ChevronRight, X, Sparkles, SkipForward, RotateCcw, Keyboard, Pause, PlayIcon } from 'lucide-react';
+import { Play, ChevronLeft, ChevronRight, X, Sparkles, Keyboard, Pause } from 'lucide-react';
 
 interface TourStep {
   tab: string;
@@ -253,7 +253,7 @@ export default function DemoTour({ onNavigate }: DemoTourProps) {
                 <button onClick={toggleAutoPlay}
                   className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center"
                   title={autoPlaying ? 'Pause auto-play' : 'Auto-play tour'}>
-                  {autoPlaying ? <Pause className="w-3.5 h-3.5 text-emerald-500" /> : <PlayIcon className="w-3.5 h-3.5 text-slate-400" />}
+                  {autoPlaying ? <Pause className="w-3.5 h-3.5 text-emerald-500" /> : <Play className="w-3.5 h-3.5 text-slate-400" />}
                 </button>
                 <button onClick={close}
                   className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center">

@@ -1,13 +1,20 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MapPin, ShieldAlert, Activity, RefreshCw, AlertTriangle,
-  Globe, Eye, Clock, TrendingUp, Skull, X, CircleDot,
-  Filter, BarChart3
+  ShieldAlert, Activity, RefreshCw, AlertTriangle,
+  Globe, Eye, Clock, TrendingUp, Skull, X, BarChart3
 } from 'lucide-react';
 import { backendApi } from '@/shared/lib/backendApi';
 
-declare const L: any;
+function loadLeaflet(): Promise<any> {
+  return new Promise((resolve) => {
+    if ((window as any).L) return resolve((window as any).L);
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    s.onload = () => resolve((window as any).L);
+    document.body.appendChild(s);
+  });
+}
 
 interface FraudEvent {
   id: number;
@@ -67,18 +74,22 @@ export default function FraudHeatmap() {
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
-    const map = (window as any).L.map(mapRef.current, {
-      center: [20.5937, 78.9629],
-      zoom: 3,
-      zoomControl: true,
-      attributionControl: false,
+    let cancelled = false;
+    loadLeaflet().then(L => {
+      if (cancelled || !mapRef.current) return;
+      const map = L.map(mapRef.current, {
+        center: [20.5937, 78.9629],
+        zoom: 3,
+        zoomControl: true,
+        attributionControl: false,
+      });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 18,
+      }).addTo(map);
+      mapInstanceRef.current = map;
+      fetchEvents();
     });
-    (window as any).L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 18,
-    }).addTo(map);
-    mapInstanceRef.current = map;
-    fetchEvents();
-    return () => { map.remove(); mapInstanceRef.current = null; };
+    return () => { cancelled = true; if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; } };
   }, []);
 
   // Time filter logic
