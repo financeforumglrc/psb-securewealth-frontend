@@ -4,6 +4,8 @@ import {
   ShieldAlert, Activity, RefreshCw, AlertTriangle,
   Globe, Eye, Clock, TrendingUp, Skull, X, BarChart3, Radio, Play, Pause, Filter
 } from 'lucide-react';
+import { backendApi } from '@/shared/lib/backendApi';
+import { useWealthStore } from '@/shared/store/wealthStore';
 
 function loadLeaflet(): Promise<any> {
   return new Promise((resolve) => {
@@ -217,24 +219,54 @@ function timeAgo(d: string) {
 export default function FraudHeatmap() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const tileLayerRef = useRef<any>(null);
   const layersRef = useRef<{ markers: any[]; vectors: any[]; glows: any[] }>({ markers: [], vectors: [], glows: [] });
   const [events, setEvents] = useState<FraudEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<FraudEvent | null>(null);
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('live');
+  const [countryFilter, setCountryFilter] = useState<string>('all');
   const [isLive, setIsLive] = useState(true);
   const [flashCount, setFlashCount] = useState(0);
   const idCounterRef = useRef(2000);
+  const darkMode = useWealthStore((s) => s.darkMode);
 
-  const fetchEvents = useCallback(() => {
-    setEvents(prev => {
-      const base = prev.length ? prev : generateMockFraudData(150);
-      return [...base].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 250);
-    });
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    const base = events.length ? events : generateMockFraudData(150);
+    let merged = [...base];
+    try {
+      const res = await backendApi.adminGetFraudEvents(200);
+      if (res.ok && Array.isArray(res.data?.events)) {
+        const real: FraudEvent[] = res.data.events.map((e: any, idx: number) => ({
+          id: 10000 + (e.id || idx),
+          user_name: e.user_name || e.userName || 'Unknown',
+          user_email: e.user_email || e.userEmail || '',
+          entity_type: e.entity_type || 'auth',
+          action: e.action || 'Suspicious Activity',
+          ip_address: e.ip_address || e.ipAddress || 'unknown',
+          created_at: e.created_at || new Date().toISOString(),
+          riskScore: e.riskScore || e.risk_score || 50,
+          location: e.location ? {
+            country: e.location.country || 'Unknown',
+            city: e.location.city || 'Unknown',
+            lat: e.location.lat,
+            lon: e.location.lon,
+            isp: e.location.isp || 'Unknown ISP',
+          } : null,
+          parsedNewValue: e.parsedNewValue || null,
+        }));
+        // Dedupe by ip+created_at against mock events
+        const existingKeys = new Set(base.map(e => `${e.ip_address}-${e.created_at}`));
+        const newReal = real.filter(e => !existingKeys.has(`${e.ip_address}-${e.created_at}`));
+        merged = [...newReal, ...base];
+      }
+    } catch {}
+    setEvents(merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 250));
     setLoading(false);
     setLastRefresh(new Date());
-  }, []);
+  }, [events]);
 
   // Initialize map
   useEffect(() => {
@@ -250,7 +282,10 @@ export default function FraudHeatmap() {
         zoomControl: false,
         attributionControl: false,
       });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      const tileUrl = darkMode
+        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      tileLayerRef.current = L.tileLayer(tileUrl, {
         maxZoom: 18,
         subdomains: 'abcd',
       }).addTo(map);
@@ -264,17 +299,36 @@ export default function FraudHeatmap() {
     };
   }, [fetchEvents]);
 
+  // Swap tile layer when theme changes
+  useEffect(() => {
+    if (!mapInstanceRef.current || !tileLayerRef.current) return;
+    const map = mapInstanceRef.current;
+    map.removeLayer(tileLayerRef.current);
+    const L = (window as any).L;
+    const tileUrl = darkMode
+      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    tileLayerRef.current = L.tileLayer(tileUrl, {
+      maxZoom: 18,
+      subdomains: 'abcd',
+    }).addTo(map);
+  }, [darkMode]);
+
   // Filter logic
   const filteredEvents = useMemo(() => {
-    if (timeFilter === 'all') return events;
+    let list = events;
+    if (countryFilter !== 'all') {
+      list = list.filter(e => e.location?.country === countryFilter);
+    }
+    if (timeFilter === 'all') return list;
     const cutoff = Date.now() - {
       live: 15000,
       '1h': 3600000,
       '24h': 86400000,
       '7d': 604800000,
     }[timeFilter];
-    return events.filter(e => new Date(e.created_at).getTime() >= cutoff);
-  }, [events, timeFilter]);
+    return list.filter(e => new Date(e.created_at).getTime() >= cutoff);
+  }, [events, timeFilter, countryFilter]);
 
   // Render map layers
   useEffect(() => {
@@ -471,10 +525,10 @@ export default function FraudHeatmap() {
 
   const criticalPct = stats.total > 0 ? Math.round((stats.critical / stats.total) * 100) : 0;
 
+  const countries = useMemo(() => Array.from(new Set(events.map(e => e.location?.country).filter(Boolean) as string[])).sort(), [events]);
+
   const handleRefresh = () => {
-    setLoading(true);
-    setEvents(generateMockFraudData(150));
-    setTimeout(() => setLoading(false), 400);
+    fetchEvents();
   };
 
   return (
@@ -615,7 +669,7 @@ export default function FraudHeatmap() {
           </div>
 
           {/* Top-center time filters */}
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1 p-1 rounded-xl bg-white/95 border border-slate-200 shadow-sm backdrop-blur">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1 p-1 rounded-xl bg-white/95 border border-slate-200 shadow-sm backdrop-blur overflow-x-auto max-w-[calc(100%-140px)]">
             {(['live', '1h', '24h', '7d', 'all'] as TimeFilter[]).map(f => (
               <button
                 key={f}
@@ -635,6 +689,16 @@ export default function FraudHeatmap() {
 
           {/* Top-right controls */}
           <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2">
+            <select
+              value={countryFilter}
+              onChange={(e) => setCountryFilter(e.target.value)}
+              className="px-2.5 py-1.5 rounded-lg bg-white/95 border border-slate-200 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-blue-400 backdrop-blur shadow-sm max-w-[110px] truncate"
+            >
+              <option value="all">All Countries</option>
+              {countries.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
             <button
               onClick={() => setIsLive(l => !l)}
               className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-colors bg-white/95 backdrop-blur shadow-sm ${
@@ -704,7 +768,7 @@ export default function FraudHeatmap() {
         </div>
 
         {/* Sidebar */}
-        <div className="w-full lg:w-80 shrink-0 flex flex-col gap-3 min-h-0">
+        <div className="w-full lg:w-80 shrink-0 flex flex-col gap-3 min-h-0 max-h-[45vh] lg:max-h-none overflow-y-auto">
           {/* Top Countries */}
           {countryStats.length > 0 && (
             <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">

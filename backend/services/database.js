@@ -343,6 +343,21 @@ function initializeDatabase() {
         CREATE INDEX IF NOT EXISTS idx_loans_user ON loans(user_id);
         CREATE INDEX IF NOT EXISTS idx_recurring_user ON recurring_payments(user_id);
         CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id, created_at);
+
+        CREATE TABLE IF NOT EXISTS whitelisted_ips (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip TEXT UNIQUE NOT NULL,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS fraud_event_actions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            audit_log_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            admin_id TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (audit_log_id) REFERENCES audit_logs(id)
+        );
     `);
 
     // Migration: add face_descriptor column for biometric login
@@ -734,6 +749,25 @@ const bankingDb = {
     getFraudEvents: (limit = 100) => {
         const sql = `SELECT a.*, u.name AS user_name, u.email AS user_email FROM audit_logs a LEFT JOIN users u ON a.user_id = u.id WHERE (a.action = 'DELETE' OR a.entity_type IN ('auth', 'transaction', 'card', 'kyc')) AND a.new_value LIKE '%"status":4%' ORDER BY a.created_at DESC LIMIT ?`;
         return db.prepare(sql).all(limit);
+    },
+    blockUser: (userId) => {
+        return db.prepare(`UPDATE users SET is_active = 0 WHERE id = ?`).run(userId);
+    },
+    whitelistIp: (ip) => {
+        try {
+            return db.prepare(`INSERT OR IGNORE INTO whitelisted_ips (ip) VALUES (?)`).run(ip);
+        } catch (e) {
+            return { changes: 0 };
+        }
+    },
+    isIpWhitelisted: (ip) => {
+        return db.prepare(`SELECT COUNT(*) as count FROM whitelisted_ips WHERE ip = ?`).get(ip).count > 0;
+    },
+    markFalsePositive: (auditLogId, adminId = null) => {
+        return db.prepare(`INSERT INTO fraud_event_actions (audit_log_id, action, admin_id) VALUES (?, 'false_positive', ?)`).run(auditLogId, adminId);
+    },
+    acknowledgeFraudEvent: (auditLogId, adminId = null) => {
+        return db.prepare(`INSERT INTO fraud_event_actions (audit_log_id, action, admin_id) VALUES (?, 'acknowledge', ?)`).run(auditLogId, adminId);
     },
     createAsset: (data) => {
         const stmt = db.prepare(`INSERT INTO user_assets (user_id, name, asset_type, value, liquidity, returns) VALUES (?, ?, ?, ?, ?, ?)`);

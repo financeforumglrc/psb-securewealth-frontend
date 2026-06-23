@@ -10,13 +10,17 @@ const API_BASE = import.meta.env.VITE_BACKEND_URL || 'https://psb-securewealth-b
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 500;
 
-function getHeaders(): Record<string, string> {
+function getHeaders(path: string = ''): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
   const visitorId = getStoredVisitorId();
   if (visitorId) {
     headers['X-Device-Id'] = visitorId;
+  }
+  if (path.startsWith('/admin') && typeof sessionStorage !== 'undefined') {
+    const token = sessionStorage.getItem('sw-admin-token');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
   }
   return headers;
 }
@@ -34,7 +38,7 @@ async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: num
       ...options,
       credentials: 'include',
       signal: controller.signal,
-      headers: { ...getHeaders(), ...(options?.headers || {}) },
+      headers: { ...getHeaders(path), ...(options?.headers || {}) },
     });
     clearTimeout(timeoutId);
     const data = await res.json().catch(() => ({ success: false, error: 'Invalid response' }));
@@ -419,6 +423,22 @@ export const backendApi = {
   async adminGetFraudEvents(limit?: number) {
     const qs = limit ? `?limit=${limit}` : '';
     return fetchJson(`/admin/fraud-events${qs}`, { method: 'GET', timeoutMs: 30000 });
+  },
+
+  async adminAcknowledgeFraudEvent(id: number) {
+    return fetchJson(`/admin/fraud-events/${id}/acknowledge`, { method: 'POST', timeoutMs: 10000 });
+  },
+
+  async adminBlockUserFromAlert(id: number) {
+    return fetchJson(`/admin/fraud-events/${id}/block-user`, { method: 'POST', timeoutMs: 10000 });
+  },
+
+  async adminWhitelistIpFromAlert(id: number) {
+    return fetchJson(`/admin/fraud-events/${id}/whitelist-ip`, { method: 'POST', timeoutMs: 10000 });
+  },
+
+  async adminMarkFalsePositive(id: number) {
+    return fetchJson(`/admin/fraud-events/${id}/false-positive`, { method: 'POST', timeoutMs: 10000 });
   },
 
   // KYC

@@ -362,4 +362,66 @@ router.get('/fraud-events', adminApiAuth, async (req, res) => {
     }
 });
 
+function getAdminId(req) {
+    const auth = req.headers.authorization || '';
+    if (auth.startsWith('Bearer ')) {
+        try {
+            return Buffer.from(auth.substring(7), 'base64').toString('utf8').split(':')[0];
+        } catch { return null; }
+    }
+    return null;
+}
+
+router.post('/fraud-events/:id/acknowledge', adminApiAuth, (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (!id) return res.status(400).json({ success: false, error: 'Invalid event id' });
+        bankingDb.acknowledgeFraudEvent(id, getAdminId(req));
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Acknowledge fraud event error:', error);
+        res.status(500).json({ success: false, error: 'Failed to acknowledge event' });
+    }
+});
+
+router.post('/fraud-events/:id/block-user', adminApiAuth, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (!id) return res.status(400).json({ success: false, error: 'Invalid event id' });
+        const log = db.prepare('SELECT user_id, ip_address FROM audit_logs WHERE id = ?').get(id);
+        if (!log) return res.status(404).json({ success: false, error: 'Event not found' });
+        if (log.user_id) bankingDb.blockUser(log.user_id);
+        res.json({ success: true, blockedUserId: log.user_id || null });
+    } catch (error) {
+        console.error('Block user error:', error);
+        res.status(500).json({ success: false, error: 'Failed to block user' });
+    }
+});
+
+router.post('/fraud-events/:id/whitelist-ip', adminApiAuth, (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (!id) return res.status(400).json({ success: false, error: 'Invalid event id' });
+        const log = db.prepare('SELECT ip_address FROM audit_logs WHERE id = ?').get(id);
+        if (!log?.ip_address) return res.status(404).json({ success: false, error: 'No IP address for event' });
+        bankingDb.whitelistIp(log.ip_address);
+        res.json({ success: true, ip: log.ip_address });
+    } catch (error) {
+        console.error('Whitelist IP error:', error);
+        res.status(500).json({ success: false, error: 'Failed to whitelist IP' });
+    }
+});
+
+router.post('/fraud-events/:id/false-positive', adminApiAuth, (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (!id) return res.status(400).json({ success: false, error: 'Invalid event id' });
+        bankingDb.markFalsePositive(id, getAdminId(req));
+        res.json({ success: true });
+    } catch (error) {
+        console.error('False positive error:', error);
+        res.status(500).json({ success: false, error: 'Failed to mark false positive' });
+    }
+});
+
 module.exports = router;

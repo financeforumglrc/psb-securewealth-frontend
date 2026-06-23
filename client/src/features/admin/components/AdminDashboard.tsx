@@ -30,6 +30,7 @@ import { useWealthStore } from '@/shared/store/wealthStore';
 import { adminActivityService } from '@/shared/services/adminActivityService';
 import { alertService } from '@/shared/services/alertService';
 import { useSecurity } from '@/shared/context/SecurityContext';
+import { useIsMobile } from '@/shared/hooks/useMediaQuery';
 
 type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs' | 'heatmap' | 'alerts' | 'activity' | 'health';
 type SortKey = 'name' | 'email' | 'created_at' | 'tier' | 'role';
@@ -384,6 +385,7 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'warning' | 'danger'>('all');
   const [apiLogs, setApiLogs] = useState<any[] | null>(null);
   const [apiLoading, setApiLoading] = useState(true);
+  const isMobile = useIsMobile();
   const { state: securityState } = useSecurity();
 
   useEffect(() => {
@@ -534,59 +536,94 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
         </div>
       </div>
 
-      {/* Logs Table */}
+      {/* Logs Table / Mobile Cards */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50/80 dark:bg-slate-800/80">
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Timestamp</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">User</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Event</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Action</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Details</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">IP Address</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {apiLoading && filteredLogs.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-14 text-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <RefreshCw className="w-7 h-7 text-slate-400 dark:text-slate-600 animate-spin" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Loading audit logs from server...</p>
-                  </div>
-                </td></tr>
-              )}
-              {filteredLogs.map((log) => (
-                <tr key={log.id} className="border-t border-slate-50 dark:border-slate-800 hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
-                  <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-[11px] whitespace-nowrap font-mono">
-                    {new Date(log.timestamp).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">{log.userName}</span>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">{log.userEmail}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5"><EventTypeBadge type={log.eventType} /></td>
-                  <td className="px-5 py-3.5 text-slate-700 dark:text-slate-300 text-xs font-medium">{log.action}</td>
-                  <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-xs max-w-xs truncate" title={log.details}>{log.details}</td>
-                  <td className="px-5 py-3.5 text-slate-400 dark:text-slate-500 text-[11px] font-mono">{log.ipAddress}</td>
-                  <td className="px-5 py-3.5"><StatusDot status={log.status} /></td>
+        {isMobile ? (
+          <div className="p-3 space-y-2">
+            {apiLoading && filteredLogs.length === 0 && (
+              <div className="py-10 text-center">
+                <RefreshCw className="w-7 h-7 text-slate-400 dark:text-slate-600 animate-spin mx-auto mb-2" />
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Loading audit logs...</p>
+              </div>
+            )}
+            {filteredLogs.map((log) => (
+              <div key={log.id} className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <EventTypeBadge type={log.eventType} />
+                  <StatusDot status={log.status} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{log.userName}</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">{log.userEmail}</p>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">{log.action}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2" title={log.details}>{log.details}</p>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                  <span>{new Date(log.timestamp).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span>{log.ipAddress}</span>
+                </div>
+              </div>
+            ))}
+            {!apiLoading && filteredLogs.length === 0 && (
+              <div className="py-10 text-center">
+                <Search className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No audit logs match your filters</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50/80 dark:bg-slate-800/80">
+                  <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Timestamp</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">User</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Event</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Action</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Details</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">IP Address</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
                 </tr>
-              ))}
-              {!apiLoading && filteredLogs.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-14 text-center dark:text-slate-500">
-                  <div className="flex flex-col items-center gap-2">
-                    <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No audit logs match your filters</p>
-                  </div>
-                </td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {apiLoading && filteredLogs.length === 0 && (
+                  <tr><td colSpan={7} className="px-5 py-14 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <RefreshCw className="w-7 h-7 text-slate-400 dark:text-slate-600 animate-spin" />
+                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Loading audit logs from server...</p>
+                    </div>
+                  </td></tr>
+                )}
+                {filteredLogs.map((log) => (
+                  <tr key={log.id} className="border-t border-slate-50 dark:border-slate-800 hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-[11px] whitespace-nowrap font-mono">
+                      {new Date(log.timestamp).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">{log.userName}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500">{log.userEmail}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5"><EventTypeBadge type={log.eventType} /></td>
+                    <td className="px-5 py-3.5 text-slate-700 dark:text-slate-300 text-xs font-medium">{log.action}</td>
+                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-xs max-w-xs truncate" title={log.details}>{log.details}</td>
+                    <td className="px-5 py-3.5 text-slate-400 dark:text-slate-500 text-[11px] font-mono">{log.ipAddress}</td>
+                    <td className="px-5 py-3.5"><StatusDot status={log.status} /></td>
+                  </tr>
+                ))}
+                {!apiLoading && filteredLogs.length === 0 && (
+                  <tr><td colSpan={7} className="px-5 py-14 text-center dark:text-slate-500">
+                    <div className="flex flex-col items-center gap-2">
+                      <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No audit logs match your filters</p>
+                    </div>
+                  </td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -987,6 +1024,7 @@ export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState<AdminRole>(() => (sessionStorage.getItem('sw-admin-role') as AdminRole) || 'superadmin');
   const [tab, setTab] = useState<AdminTab>('dashboard');
+  const isMobile = useIsMobile();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [search, setSearch] = useState('');
@@ -1034,6 +1072,7 @@ export default function AdminDashboard() {
     if (res.ok && res.data?.success) {
       setIsLoggedIn(true);
       sessionStorage.setItem('sw-admin-session', 'true');
+      if (res.data?.token) sessionStorage.setItem('sw-admin-token', res.data.token);
     } else {
       setLoginError(res.data?.error || 'Invalid credentials. Please try again.');
     }
@@ -1722,78 +1761,118 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-slate-50/80 dark:bg-slate-800/80">
-                          {[
-                            { k: 'name' as SortKey, l: 'Name', sort: true },
-                            { k: 'email' as SortKey, l: 'Email', sort: true },
-                            { k: 'name' as SortKey, l: 'Phone', sort: false },
-                            { k: 'name' as SortKey, l: 'PAN', sort: false },
-                            { k: 'name' as SortKey, l: 'Aadhar', sort: false },
-                            { k: 'role' as SortKey, l: 'Role', sort: true },
-                            { k: 'tier' as SortKey, l: 'Tier', sort: true },
-                            { k: 'name' as SortKey, l: 'Face', sort: false },
-                            { k: 'created_at' as SortKey, l: 'Created', sort: true },
-                            { k: 'name' as SortKey, l: 'Safety', sort: false },
-                            { k: 'name' as SortKey, l: 'Status', sort: false },
-                          ].map((c) => (
-                            <th key={c.l} onClick={() => c.sort ? toggleSort(c.k) : undefined}
-                              className={`text-left px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider ${c.sort ? 'cursor-pointer hover:text-slate-700 select-none' : ''}`}>
-                              <div className="flex items-center gap-1 whitespace-nowrap">
-                                {c.l}
-                                {c.sort && (
-                                  sortKey === c.k ? (sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-emerald-600" /> : <ChevronDown className="w-3 h-3 text-emerald-600" />) : <ChevronUp className="w-3 h-3 text-slate-400" />
-                                )}
-                              </div>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredUsers.map((u) => (
-                          <tr key={u.id} className="border-t border-slate-50 dark:border-slate-800 hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
-                            <td className="px-4 py-3.5">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold">
+                  {isMobile ? (
+                    <div className="p-3 space-y-2">
+                      {filteredUsers.map((u) => {
+                        const score = computeSafetyScore(u, securityState);
+                        return (
+                          <div key={u.id} onClick={() => setSelectedUser(u)} className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-[11px] font-bold shrink-0">
                                   {u.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                 </div>
-                                <span className="font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">{u.name}</span>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{u.name}</p>
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{u.email}</p>
+                                </div>
                               </div>
-                            </td>
-                            <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{u.email}</td>
-                            <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{u.phone || '—'}</td>
-                            <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap font-mono text-[11px]">{u.pan_number || '—'}</td>
-                            <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap font-mono text-[11px]">{u.aadhar || '—'}</td>
-                            <td className="px-4 py-3.5"><Badge variant="neutral">{u.role}</Badge></td>
-                            <td className="px-4 py-3.5">
-                              {u.tier === 'premium' ? <Badge variant="premium">PREMIUM</Badge> : u.tier === 'enterprise' ? <Badge variant="enterprise">ENTERPRISE</Badge> : <Badge variant="neutral">FREE</Badge>}
-                            </td>
-                            <td className="px-4 py-3.5">
-                              {u.face_registered ? <span className="text-emerald-600 text-xs font-medium flex items-center gap-1"><Fingerprint className="w-3.5 h-3.5" /> Linked</span> : <span className="text-slate-400 dark:text-slate-500 text-xs font-medium">—</span>}
-                            </td>
-                            <td className="px-4 py-3.5 text-slate-400 dark:text-slate-500 text-[11px] whitespace-nowrap">{new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                            <td className="px-4 py-3.5">
-                              <SafetyBadge score={computeSafetyScore(u, securityState)} onClick={() => setSelectedUser(u)} />
-                            </td>
-                            <td className="px-4 py-3.5">
                               {u.is_active ? <Badge variant="success">ACTIVE</Badge> : <Badge variant="danger">INACTIVE</Badge>}
-                            </td>
-                          </tr>
-                        ))}
-                        {filteredUsers.length === 0 && (
-                          <tr><td colSpan={11} className="px-5 py-14 text-center dark:text-slate-500">
-                            <div className="flex flex-col items-center gap-2">
-                              <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" />
-                              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No account holders found</p>
-                              <p className="text-xs text-slate-400 dark:text-slate-500">Try a different search term</p>
                             </div>
-                          </td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {u.tier === 'premium' ? <Badge variant="premium">PREMIUM</Badge> : u.tier === 'enterprise' ? <Badge variant="enterprise">ENTERPRISE</Badge> : <Badge variant="neutral">FREE</Badge>}
+                              <Badge variant="neutral">{u.role}</Badge>
+                              {u.face_registered ? <span className="text-emerald-600 dark:text-emerald-400 text-[10px] font-medium flex items-center gap-1"><Fingerprint className="w-3 h-3" /> Face</span> : null}
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <SafetyBadge score={score} />
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500">{new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {filteredUsers.length === 0 && (
+                        <div className="py-10 text-center">
+                          <Search className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto mb-2" />
+                          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No account holders found</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500">Try a different search term</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-slate-50/80 dark:bg-slate-800/80">
+                            {[
+                              { k: 'name' as SortKey, l: 'Name', sort: true },
+                              { k: 'email' as SortKey, l: 'Email', sort: true },
+                              { k: 'name' as SortKey, l: 'Phone', sort: false },
+                              { k: 'name' as SortKey, l: 'PAN', sort: false },
+                              { k: 'name' as SortKey, l: 'Aadhar', sort: false },
+                              { k: 'role' as SortKey, l: 'Role', sort: true },
+                              { k: 'tier' as SortKey, l: 'Tier', sort: true },
+                              { k: 'name' as SortKey, l: 'Face', sort: false },
+                              { k: 'created_at' as SortKey, l: 'Created', sort: true },
+                              { k: 'name' as SortKey, l: 'Safety', sort: false },
+                              { k: 'name' as SortKey, l: 'Status', sort: false },
+                            ].map((c) => (
+                              <th key={c.l} onClick={() => c.sort ? toggleSort(c.k) : undefined}
+                                className={`text-left px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider ${c.sort ? 'cursor-pointer hover:text-slate-700 select-none' : ''}`}>
+                                <div className="flex items-center gap-1 whitespace-nowrap">
+                                  {c.l}
+                                  {c.sort && (
+                                    sortKey === c.k ? (sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-emerald-600" /> : <ChevronDown className="w-3 h-3 text-emerald-600" />) : <ChevronUp className="w-3 h-3 text-slate-400" />
+                                  )}
+                                </div>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredUsers.map((u) => (
+                            <tr key={u.id} className="border-t border-slate-50 dark:border-slate-800 hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
+                              <td className="px-4 py-3.5">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold">
+                                    {u.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                  </div>
+                                  <span className="font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">{u.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{u.email}</td>
+                              <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{u.phone || '—'}</td>
+                              <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap font-mono text-[11px]">{u.pan_number || '—'}</td>
+                              <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap font-mono text-[11px]">{u.aadhar || '—'}</td>
+                              <td className="px-4 py-3.5"><Badge variant="neutral">{u.role}</Badge></td>
+                              <td className="px-4 py-3.5">
+                                {u.tier === 'premium' ? <Badge variant="premium">PREMIUM</Badge> : u.tier === 'enterprise' ? <Badge variant="enterprise">ENTERPRISE</Badge> : <Badge variant="neutral">FREE</Badge>}
+                              </td>
+                              <td className="px-4 py-3.5">
+                                {u.face_registered ? <span className="text-emerald-600 text-xs font-medium flex items-center gap-1"><Fingerprint className="w-3.5 h-3.5" /> Linked</span> : <span className="text-slate-400 dark:text-slate-500 text-xs font-medium">—</span>}
+                              </td>
+                              <td className="px-4 py-3.5 text-slate-400 dark:text-slate-500 text-[11px] whitespace-nowrap">{new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                              <td className="px-4 py-3.5">
+                                <SafetyBadge score={computeSafetyScore(u, securityState)} onClick={() => setSelectedUser(u)} />
+                              </td>
+                              <td className="px-4 py-3.5">
+                                {u.is_active ? <Badge variant="success">ACTIVE</Badge> : <Badge variant="danger">INACTIVE</Badge>}
+                              </td>
+                            </tr>
+                          ))}
+                          {filteredUsers.length === 0 && (
+                            <tr><td colSpan={11} className="px-5 py-14 text-center dark:text-slate-500">
+                              <div className="flex flex-col items-center gap-2">
+                                <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No account holders found</p>
+                                <p className="text-xs text-slate-400 dark:text-slate-500">Try a different search term</p>
+                              </div>
+                            </td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}

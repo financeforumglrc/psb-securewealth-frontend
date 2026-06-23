@@ -272,6 +272,9 @@ class AlertService {
     if (alert) {
       this.updateStatus(id, 'acknowledged');
       adminActivityService.log('Acknowledge Alert', `ALT-${String(id).padStart(4, '0')}`, alert.title);
+      if (id > 0) {
+        backendApi.adminAcknowledgeFraudEvent(id).catch(() => {});
+      }
     }
   }
 
@@ -290,6 +293,9 @@ class AlertService {
       if (alert.eventData) alert.eventData.blockedAt = new Date().toISOString();
       this.notify();
       adminActivityService.log('Block User', `ALT-${String(id).padStart(4, '0')}`, alert.title);
+      if (id > 0) {
+        backendApi.adminBlockUserFromAlert(id).catch(() => {});
+      }
     }
   }
 
@@ -301,6 +307,9 @@ class AlertService {
       if (alert.eventData) alert.eventData.whitelistedAt = new Date().toISOString();
       this.notify();
       adminActivityService.log('Whitelist IP', `ALT-${String(id).padStart(4, '0')}`, alert.title);
+      if (id > 0) {
+        backendApi.adminWhitelistIpFromAlert(id).catch(() => {});
+      }
     }
   }
 
@@ -312,6 +321,9 @@ class AlertService {
       if (alert.eventData) alert.eventData.falsePositive = true;
       this.notify();
       adminActivityService.log('Mark False Positive', `ALT-${String(id).padStart(4, '0')}`, alert.title);
+      if (id > 0) {
+        backendApi.adminMarkFalsePositive(id).catch(() => {});
+      }
     }
   }
 
