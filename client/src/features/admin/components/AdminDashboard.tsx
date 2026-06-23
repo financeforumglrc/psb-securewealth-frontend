@@ -344,9 +344,69 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
   const [logSearch, setLogSearch] = useState('');
   const [eventFilter, setEventFilter] = useState<AuditEventType | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'warning' | 'danger'>('all');
+  const [apiLogs, setApiLogs] = useState<any[] | null>(null);
+  const [apiLoading, setApiLoading] = useState(true);
   const { state: securityState } = useSecurity();
 
-  const allLogs = useMemo(() => generateAuditLogs(users, securityState), [users, securityState]);
+  useEffect(() => {
+    let cancelled = false;
+    setApiLoading(true);
+    backendApi.adminGetAuditLogs({ limit: 500 }).then(res => {
+      if (!cancelled) {
+        setApiLogs(res.ok ? (res.data?.logs || []) : null);
+        setApiLoading(false);
+      }
+    }).catch(() => {
+      if (!cancelled) { setApiLogs(null); setApiLoading(false); }
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Map backend audit log to frontend AuditLog format
+  const mapBackendLog = (log: any): AuditLog => {
+    const details = log.parsedNewValue;
+    let eventType: AuditEventType = 'system_event';
+    if (log.entity_type === 'auth' && log.action === 'CREATE') eventType = 'login';
+    else if (log.entity_type === 'auth' && log.action === 'VIEW') eventType = 'login';
+    else if (log.entity_type === 'auth' && log.action === 'UPDATE') eventType = 'logout';
+    else if (log.entity_type === 'transaction') eventType = 'transaction';
+    else if (log.entity_type === 'admin') eventType = 'admin_action';
+    else if (log.action === 'DELETE') eventType = 'security_alert';
+
+    let status: 'success' | 'warning' | 'danger' = 'success';
+    if (details) {
+      if (details.status >= 500) status = 'danger';
+      else if (details.status >= 400) status = 'warning';
+    }
+
+    const actionLabel = log.action === 'CREATE' ? 'Created' :
+      log.action === 'UPDATE' ? 'Updated' :
+      log.action === 'DELETE' ? 'Deleted' :
+      log.action === 'VIEW' ? 'Viewed' : log.action;
+
+    const locationStr = log.location ? `${log.location.city || ''}, ${log.location.country || ''}`.replace(/^, /, '').replace(/, $/, '') : '';
+
+    return {
+      id: `LOG-${log.id}`,
+      timestamp: log.created_at,
+      userName: log.user_name || log.user_id || 'Unknown',
+      userEmail: log.user_email || '',
+      eventType,
+      action: `${actionLabel} ${log.entity_type}`,
+      details: details ? `${details.method} ${details.path} (${details.duration}ms)` : '',
+      ipAddress: `${log.ip_address || ''}${locationStr ? ' — ' + locationStr : ''}`,
+      status,
+    };
+  };
+
+  const generatedLogs = useMemo(() => generateAuditLogs(users, securityState), [users, securityState]);
+
+  const allLogs = useMemo(() => {
+    if (apiLogs && apiLogs.length > 0) {
+      return apiLogs.map(mapBackendLog).concat(generatedLogs.slice(0, 5)).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }
+    return generatedLogs;
+  }, [apiLogs, generatedLogs]);
 
   const filteredLogs = useMemo(() => {
     return allLogs.filter(log => {
@@ -452,6 +512,14 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
               </tr>
             </thead>
             <tbody>
+              {apiLoading && filteredLogs.length === 0 && (
+                <tr><td colSpan={7} className="px-5 py-14 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <RefreshCw className="w-7 h-7 text-slate-300 dark:text-slate-600 animate-spin" />
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Loading audit logs from server...</p>
+                  </div>
+                </td></tr>
+              )}
               {filteredLogs.map((log) => (
                 <tr key={log.id} className="border-t border-slate-50 dark:border-slate-800 hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
                   <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-[11px] whitespace-nowrap font-mono">
@@ -470,7 +538,7 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
                   <td className="px-5 py-3.5"><StatusDot status={log.status} /></td>
                 </tr>
               ))}
-              {filteredLogs.length === 0 && (
+              {!apiLoading && filteredLogs.length === 0 && (
                 <tr><td colSpan={7} className="px-5 py-14 text-center dark:text-slate-500">
                   <div className="flex flex-col items-center gap-2">
                     <Search className="w-8 h-8 text-slate-300" />

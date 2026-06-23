@@ -6,7 +6,8 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { quotaDb, db } = require('../services/database');
+const { quotaDb, db, bankingDb } = require('../services/database');
+const axios = require('axios');
 const router = express.Router();
 
 // SECURITY: Admin credentials MUST be set via environment variables.
@@ -294,6 +295,39 @@ router.get('/stats', adminApiAuth, (req, res) => {
     } catch (error) {
         console.error('Admin stats error:', error);
         res.status(500).json({ success: false, error: 'Failed to load stats' });
+    }
+});
+
+// IP geolocation cache
+const ipGeoCache = {};
+
+// GET /audit-logs — Returns all audit logs with filters + IP location enrichment
+router.get('/audit-logs', adminApiAuth, async (req, res) => {
+    try {
+        const { userId, action, entityType, dateFrom, dateTo, limit, offset } = req.query;
+        const logs = bankingDb.getAllAuditLogs({
+            userId, action, entityType, dateFrom, dateTo,
+            limit: parseInt(limit) || 200,
+            offset: parseInt(offset) || 0
+        });
+        const enriched = await Promise.all(logs.map(async (log) => {
+            const ip = log.ip_address;
+            if (ip && !ipGeoCache[ip] && ip !== '127.0.0.1' && ip !== '::1' && ip !== 'unknown') {
+                try {
+                    const { data } = await axios.get(`http://ip-api.com/json/${ip}?fields=status,country,city,isp,query`, { timeout: 3000 });
+                    if (data.status === 'success') {
+                        ipGeoCache[ip] = { country: data.country, city: data.city, isp: data.isp };
+                    }
+                } catch {}
+            }
+            let parsedNewValue = null;
+            try { parsedNewValue = log.new_value ? JSON.parse(log.new_value) : null; } catch {}
+            return { ...log, location: ipGeoCache[ip] || null, parsedNewValue };
+        }));
+        res.json({ success: true, logs: enriched });
+    } catch (error) {
+        console.error('Admin audit logs error:', error);
+        res.status(500).json({ success: false, error: 'Failed to load audit logs' });
     }
 });
 

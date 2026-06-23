@@ -718,6 +718,19 @@ const bankingDb = {
     getAuditLogsByUser: (userId, limit = 100) => {
         return db.prepare('SELECT * FROM audit_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT ?').all(userId, limit);
     },
+    getAllAuditLogs: (filters = {}) => {
+        let sql = `SELECT a.*, u.name AS user_name, u.email AS user_email FROM audit_logs a LEFT JOIN users u ON a.user_id = u.id WHERE 1=1`;
+        const params = [];
+        if (filters.userId) { sql += ' AND a.user_id = ?'; params.push(filters.userId); }
+        if (filters.action) { sql += ' AND a.action = ?'; params.push(filters.action); }
+        if (filters.entityType) { sql += ' AND a.entity_type = ?'; params.push(filters.entityType); }
+        if (filters.dateFrom) { sql += ' AND a.created_at >= ?'; params.push(filters.dateFrom); }
+        if (filters.dateTo) { sql += ' AND a.created_at <= ?'; params.push(filters.dateTo); }
+        sql += ' ORDER BY a.created_at DESC';
+        if (filters.limit) { sql += ' LIMIT ?'; params.push(filters.limit); }
+        if (filters.offset) { sql += ' OFFSET ?'; params.push(filters.offset); }
+        return db.prepare(sql).all(...params);
+    },
     createAsset: (data) => {
         const stmt = db.prepare(`INSERT INTO user_assets (user_id, name, asset_type, value, liquidity, returns) VALUES (?, ?, ?, ?, ?, ?)`);
         return stmt.run(data.userId, data.name, data.assetType || null, data.value || 0, data.liquidity || null, data.returns || null);

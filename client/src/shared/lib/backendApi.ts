@@ -400,6 +400,22 @@ export const backendApi = {
     });
   },
 
+  async adminGetAuditLogs(filters?: { userId?: string; action?: string; entityType?: string; dateFrom?: string; dateTo?: string; limit?: number; offset?: number }) {
+    const params = new URLSearchParams();
+    if (filters?.userId) params.set('userId', filters.userId);
+    if (filters?.action) params.set('action', filters.action);
+    if (filters?.entityType) params.set('entityType', filters.entityType);
+    if (filters?.dateFrom) params.set('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.set('dateTo', filters.dateTo);
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.offset) params.set('offset', String(filters.offset));
+    const qs = params.toString();
+    return fetchJson(`/admin/audit-logs${qs ? '?' + qs : ''}`, {
+      method: 'GET',
+      timeoutMs: 30000,
+    });
+  },
+
   // KYC
   async getKycStatus() {
     return fetchJson('/kyc/status');

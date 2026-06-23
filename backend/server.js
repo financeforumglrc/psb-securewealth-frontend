@@ -196,7 +196,7 @@ app.use('/api/v1/ai', aiLimiter, authMiddleware, aiRoutes);
 app.use('/api/v1/extract', aiLimiter, authMiddleware, extractRoutes);
 app.use('/api/v1/gallery', galleryRoutes);
 app.use('/api/v1/export', authMiddleware, exportRoutes);
-app.use('/api/v1/admin', authMiddleware, requireRole('admin'), adminRoutes);
+app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/documents', authMiddleware, documentRoutes);
 app.use('/api/v1/analytics', authMiddleware, requireRole('admin'), analyticsRoutes);
 app.use('/api/v1/financial-model', authMiddleware, financialModelRoutes);
