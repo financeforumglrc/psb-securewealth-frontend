@@ -1,5 +1,7 @@
 import { backendApi } from '@/shared/lib/backendApi';
 
+export type AlertStatus = 'open' | 'acknowledged' | 'blocked' | 'whitelisted' | 'false_positive';
+
 export interface AlertEvent {
   id: number;
   type: 'fraud' | 'security' | 'system' | 'compliance';
@@ -8,6 +10,7 @@ export interface AlertEvent {
   message: string;
   timestamp: string;
   acknowledged: boolean;
+  status: AlertStatus;
   eventData?: any;
 }
 
@@ -20,6 +23,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'Credential stuffing attack from Lagos, Nigeria was automatically blocked for user Rikshita Barua.',
     timestamp: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 96, location: { city: 'Lagos', country: 'Nigeria' }, action: 'LOGIN_BLOCKED' },
   },
   {
@@ -30,6 +34,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'A login attempt using a jailbroken emulator was rejected for Deepanshu Sharma.',
     timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 91, location: { city: 'Delhi', country: 'India' }, action: 'DEVICE_SPOOF' },
   },
   {
@@ -40,6 +45,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: '₹ 2,50,000 withdrawal to a new beneficiary was blocked pending MFA for Mrigesh Mohanty.',
     timestamp: new Date(Date.now() - 1000 * 60 * 28).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 88, location: { city: 'Mumbai', country: 'India' }, action: 'WITHDRAWAL_BLOCKED', amount: 250000 },
   },
   {
@@ -50,6 +56,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'Login from an unusual location (Singapore) detected for Ishita Anand.',
     timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 72, location: { city: 'Singapore', country: 'Singapore' }, action: 'GEO_ANOMALY' },
   },
   {
@@ -60,6 +67,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'A high-value UPI transfer of ₹ 85,000 was flagged for manual review for Tripti Jain.',
     timestamp: new Date(Date.now() - 1000 * 60 * 62).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 68, location: { city: 'Bangalore', country: 'India' }, action: 'TRANSFER_FLAGGED', amount: 85000 },
   },
   {
@@ -70,6 +78,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'Kunal Saxena logged in from a new Android device for the first time.',
     timestamp: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 55, location: { city: 'Hyderabad', country: 'India' }, action: 'NEW_DEVICE' },
   },
   {
@@ -80,6 +89,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'PAN card on file for Rikshita Barua expires in 7 days.',
     timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 42, location: { city: 'Chennai', country: 'India' }, action: 'KYC_EXPIRY' },
   },
   {
@@ -90,6 +100,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'Daily encrypted backup completed successfully with zero failures.',
     timestamp: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 12, location: { city: 'Mumbai', country: 'India' }, action: 'BACKUP_OK' },
   },
   {
@@ -100,6 +111,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'Deepanshu Sharma enabled biometric + FIDO2 passkey authentication.',
     timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 8, location: { city: 'Delhi', country: 'India' }, action: 'MFA_ENABLED' },
   },
   {
@@ -110,6 +122,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'Admin exported the last 30 days of audit logs for RBI compliance review.',
     timestamp: new Date(Date.now() - 1000 * 60 * 220).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 5, location: { city: 'Kolkata', country: 'India' }, action: 'AUDIT_EXPORT' },
   },
   {
@@ -120,6 +133,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'A fraudulent payment link shared via SMS was intercepted before user action.',
     timestamp: new Date(Date.now() - 1000 * 60 * 260).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 94, location: { city: 'Pune', country: 'India' }, action: 'PHISHING_BLOCKED' },
   },
   {
@@ -130,6 +144,7 @@ const MOCK_ALERTS: AlertEvent[] = [
     message: 'Typing cadence and swipe pattern deviated from baseline for Mrigesh Mohanty.',
     timestamp: new Date(Date.now() - 1000 * 60 * 310).toISOString(),
     acknowledged: false,
+    status: 'open',
     eventData: { riskScore: 61, location: { city: 'Mumbai', country: 'India' }, action: 'BEHAVIORAL_ANOMALY' },
   },
 ];
@@ -224,6 +239,7 @@ class AlertService {
         message: `${e.entity_type} ${e.action} from ${e.location?.city || 'unknown location'} — ${e.user_name || 'Unknown user'}`,
         timestamp: e.created_at,
         acknowledged: false,
+        status: 'open',
         eventData: e,
       }));
       const newEvents = events.filter(e => e.id > this.lastId);
@@ -242,14 +258,51 @@ class AlertService {
     } catch {}
   }
 
-  acknowledge(id: number) {
+  updateStatus(id: number, status: AlertStatus) {
     const alert = this.alerts.find(a => a.id === id);
-    if (alert) { alert.acknowledged = true; this.notify(); }
+    if (!alert) return;
+    alert.status = status;
+    if (status !== 'open') alert.acknowledged = true;
+    this.notify();
+  }
+
+  acknowledge(id: number) {
+    this.updateStatus(id, 'acknowledged');
   }
 
   acknowledgeAll() {
-    this.alerts.forEach(a => a.acknowledged = true);
+    this.alerts.forEach(a => { a.acknowledged = true; if (a.status === 'open') a.status = 'acknowledged'; });
     this.notify();
+  }
+
+  blockUser(id: number) {
+    const alert = this.alerts.find(a => a.id === id);
+    if (alert) {
+      alert.status = 'blocked';
+      alert.acknowledged = true;
+      if (alert.eventData) alert.eventData.blockedAt = new Date().toISOString();
+      this.notify();
+    }
+  }
+
+  whitelistIp(id: number) {
+    const alert = this.alerts.find(a => a.id === id);
+    if (alert) {
+      alert.status = 'whitelisted';
+      alert.acknowledged = true;
+      if (alert.eventData) alert.eventData.whitelistedAt = new Date().toISOString();
+      this.notify();
+    }
+  }
+
+  markFalsePositive(id: number) {
+    const alert = this.alerts.find(a => a.id === id);
+    if (alert) {
+      alert.status = 'false_positive';
+      alert.acknowledged = true;
+      if (alert.eventData) alert.eventData.falsePositive = true;
+      this.notify();
+    }
   }
 
   clearAll() {
