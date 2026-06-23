@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+  PieChart, Pie, Cell, LineChart, Line, BarChart, Bar
 } from 'recharts';
 import { backendApi } from '@/shared/lib/backendApi';
 import { DEMO_ACCOUNTS } from '@/shared/data/userProfiles';
@@ -60,6 +60,33 @@ const TIER_DATA = [
   { name: 'Premium', value: 28, color: '#fbbf24' },
   { name: 'Enterprise', value: 7, color: '#a78bfa' },
 ];
+
+const FRAUD_TREND_DATA = [
+  { day: 'Mon', attempts: 12, blocked: 10 },
+  { day: 'Tue', attempts: 19, blocked: 16 },
+  { day: 'Wed', attempts: 15, blocked: 13 },
+  { day: 'Thu', attempts: 28, blocked: 24 },
+  { day: 'Fri', attempts: 35, blocked: 30 },
+  { day: 'Sat', attempts: 42, blocked: 38 },
+  { day: 'Sun', attempts: 31, blocked: 27 },
+];
+
+const TOP_ORIGINS_DATA = [
+  { country: 'Nigeria', count: 48 },
+  { country: 'Bangladesh', count: 34 },
+  { country: 'Pakistan', count: 29 },
+  { country: 'Russia', count: 22 },
+  { country: 'China', count: 18 },
+];
+
+const CHART_TOOLTIP = {
+  borderRadius: '12px',
+  border: '1px solid #e2e8f0',
+  background: '#ffffff',
+  color: '#1e293b',
+  fontSize: '12px',
+  boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+};
 
 function Badge({ children, variant = 'neutral' }: { children: React.ReactNode; variant?: 'success' | 'danger' | 'warning' | 'premium' | 'enterprise' | 'neutral' }) {
   const map: Record<string, string> = {
@@ -1477,7 +1504,7 @@ export default function AdminDashboard() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                           <XAxis dataKey="day" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                          <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #334155', background: '#0f172a', color: '#f8fafc', fontSize: '12px' }} />
+                          <Tooltip contentStyle={CHART_TOOLTIP} />
                           <Area type="monotone" dataKey="users" stroke="#10b981" strokeWidth={2} fill="url(#uGrad)" />
                           <Area type="monotone" dataKey="txns" stroke="#3b82f6" strokeWidth={2} fill="url(#tGrad)" />
                         </AreaChart>
@@ -1494,7 +1521,7 @@ export default function AdminDashboard() {
                           <Pie data={TIER_DATA} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value" stroke="none">
                             {TIER_DATA.map((e, i) => <Cell key={i} fill={e.color} />)}
                           </Pie>
-                          <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #334155', background: '#0f172a', color: '#f8fafc', fontSize: '12px' }} />
+                          <Tooltip contentStyle={CHART_TOOLTIP} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -1504,6 +1531,50 @@ export default function AdminDashboard() {
                           <div className="w-2 h-2 rounded-full" style={{ background: t.color }} /> {t.name}
                         </span>
                       ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fraud Intelligence */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Fraud Attempt Trend</h3>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Attempts vs auto-blocked events over the last 7 days</p>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px]">
+                        <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><div className="w-2 h-2 rounded-full bg-rose-500" /> Attempts</span>
+                        <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Blocked</span>
+                      </div>
+                    </div>
+                    <div className="h-60">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={FRAUD_TREND_DATA}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                          <XAxis dataKey="day" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                          <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={CHART_TOOLTIP} />
+                          <Line type="monotone" dataKey="attempts" stroke="#ef4444" strokeWidth={2} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 5 }} />
+                          <Line type="monotone" dataKey="blocked" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 5 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-slate-900 mb-1">Top Attack Origins</h3>
+                    <p className="text-[11px] text-slate-500 mb-4">Countries by fraud attempt volume</p>
+                    <div className="h-60">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={TOP_ORIGINS_DATA} layout="vertical" margin={{ left: 20, right: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                          <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                          <YAxis type="category" dataKey="country" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                          <Tooltip contentStyle={CHART_TOOLTIP} />
+                          <Bar dataKey="count" fill="#f59e0b" radius={[0, 6, 6, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                 </div>
