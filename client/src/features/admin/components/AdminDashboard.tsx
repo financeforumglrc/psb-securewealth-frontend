@@ -692,6 +692,10 @@ function LoginScreen({ onLogin, loading, error }: { onLogin: (id: string, pw: st
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/[0.03] rounded-full blur-[120px]" />
         </div>
+        <a href="/"
+          className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-emerald-400 hover:bg-white/5 border border-slate-700/50 hover:border-emerald-500/30 transition-all z-20">
+          <LayoutDashboard className="w-3.5 h-3.5" /> Back to Website
+        </a>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md relative z-10">
           <div className="lg:hidden flex items-center gap-3 mb-10">
             <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
