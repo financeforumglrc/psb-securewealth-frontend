@@ -28,7 +28,7 @@ export default function AlertHistoryTab() {
 
   useEffect(() => {
     const unsub = alertService.subscribe(all => setAlerts(all));
-    return () => unsub();
+    return () => { unsub(); };
   }, []);
 
   const filtered = useMemo(() => {

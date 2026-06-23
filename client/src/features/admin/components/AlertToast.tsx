@@ -15,7 +15,7 @@ export default function AlertToast() {
 
   useEffect(() => {
     const unsub = alertService.subscribe(all => setAlerts(all));
-    return () => unsub();
+    return () => { unsub(); };
   }, []);
 
   useEffect(() => {
