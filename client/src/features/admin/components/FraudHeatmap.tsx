@@ -171,18 +171,36 @@ function riskLabel(score: number): string {
   return 'MONITOR';
 }
 
-function createPulseIconHtml(color: string, size = 24) {
+function createPulseIconHtml(color: string, size = 28) {
+  const center = size / 2;
   return `
-    <div style="position:relative;width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.9);box-shadow:0 0 18px ${color};display:flex;align-items:center;justify-content:center;">
-      <span style="position:absolute;inset:-8px;border-radius:50%;border:2px solid ${color};opacity:0.7;animation:pulse-ring 2s cubic-bezier(0.215,0.61,0.355,1) infinite;"></span>
-      <span style="position:absolute;inset:-8px;border-radius:50%;border:2px solid ${color};opacity:0.5;animation:pulse-ring 2s cubic-bezier(0.215,0.61,0.355,1) infinite 0.6s;"></span>
+    <svg width="${size + 24}" height="${size + 24}" viewBox="0 0 ${size + 24} ${size + 24}" style="overflow:visible">
+      <defs>
+        <filter id="glow-${color.replace('#','')}" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+      <circle cx="${center + 12}" cy="${center + 12}" r="${center + 2}" fill="${color}" fill-opacity="0.15" />
+      <circle cx="${center + 12}" cy="${center + 12}" r="${center}" fill="${color}" stroke="rgba(255,255,255,0.9)" stroke-width="2" filter="url(#glow-${color.replace('#','')})" />
+      <circle cx="${center + 12}" cy="${center + 12}" r="${center * 0.35}" fill="#ffffff" fill-opacity="0.95" />
+      <circle cx="${center + 12}" cy="${center + 12}" r="${center + 6}" fill="none" stroke="${color}" stroke-width="2" opacity="0.8">
+        <animate attributeName="r" from="${center}" to="${center + 16}" dur="2s" repeatCount="indefinite" />
+        <animate attributeName="opacity" from="0.8" to="0" dur="2s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="${center + 12}" cy="${center + 12}" r="${center + 6}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.5">
+        <animate attributeName="r" from="${center}" to="${center + 16}" dur="2s" begin="0.7s" repeatCount="indefinite" />
+        <animate attributeName="opacity" from="0.6" to="0" dur="2s" begin="0.7s" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  `;
+}
+
+function createCityLabelHtml(name: string) {
+  return `
+    <div style="pointer-events:none;white-space:nowrap">
+      <span style="font-size:10px;font-weight:700;color:#94a3b8;text-shadow:0 1px 2px rgba(0,0,0,0.9);letter-spacing:0.5px">${name}</span>
     </div>
-    <style>
-      @keyframes pulse-ring {
-        0% { transform: scale(0.5); opacity: 0.8; }
-        100% { transform: scale(2.6); opacity: 0; }
-      }
-    </style>
   `;
 }
 
@@ -232,7 +250,7 @@ export default function FraudHeatmap() {
         zoomControl: false,
         attributionControl: false,
       });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         maxZoom: 18,
         subdomains: 'abcd',
       }).addTo(map);
@@ -296,12 +314,25 @@ export default function FraudHeatmap() {
       ];
       const vector = L.polyline(latlngs, {
         color: '#ef4444',
-        weight: 2,
-        opacity: 0.65,
-        dashArray: '8, 8',
+        weight: 2.5,
+        opacity: 0.75,
+        dashArray: '6, 6',
         className: 'fraud-attack-vector',
       }).addTo(map);
       layersRef.current.vectors.push(vector);
+
+      // Animated traveling threat dot
+      const threatDot = L.circleMarker([origin.lat, origin.lon], {
+        radius: 5,
+        fillColor: '#ef4444',
+        color: '#fff',
+        weight: 1,
+        fillOpacity: 1,
+        opacity: 0,
+        className: 'fraud-threat-dot',
+        interactive: false,
+      }).addTo(map);
+      layersRef.current.vectors.push(threatDot);
     });
 
     // Event markers
@@ -359,6 +390,28 @@ export default function FraudHeatmap() {
       `, { maxWidth: 320, className: 'fraud-dark-popup' });
       marker.on('click', () => setSelectedEvent(e));
       layersRef.current.markers.push(marker);
+    });
+
+    // City labels for major metros
+    [
+      { name: 'MUMBAI', lat: 19.0760, lon: 72.8777 },
+      { name: 'DELHI', lat: 28.7041, lon: 77.1025 },
+      { name: 'BANGALORE', lat: 12.9716, lon: 77.5946 },
+      { name: 'HYDERABAD', lat: 17.3850, lon: 78.4867 },
+      { name: 'CHENNAI', lat: 13.0827, lon: 80.2707 },
+      { name: 'KOLKATA', lat: 22.5726, lon: 88.3639 },
+    ].forEach(city => {
+      const lbl = L.marker([city.lat, city.lon], {
+        icon: L.divIcon({
+          className: 'fraud-city-label',
+          html: createCityLabelHtml(city.name),
+          iconSize: [0, 0],
+          iconAnchor: [0, 12],
+        }),
+        interactive: false,
+        zIndexOffset: -100,
+      }).addTo(map);
+      layersRef.current.markers.push(lbl);
     });
 
     // Fit bounds
@@ -434,7 +487,7 @@ export default function FraudHeatmap() {
           padding: 0 !important;
           overflow: hidden !important;
           background: #0f172a !important;
-          border: 1px solid #1e293b !important;
+          border: 1px solid rgba(34,211,238,0.35) !important;
           box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
         }
         .leaflet-popup-content {
@@ -461,18 +514,41 @@ export default function FraudHeatmap() {
           background: #1e293b !important;
           color: #f8fafc !important;
         }
-        .leaflet-container { border-radius: 16px; background: #e2e8f0; }
-        .leaflet-tile-pane { filter: saturate(0.85) contrast(1.05) brightness(1.02); }
-        .fraud-attack-vector { animation: dash-flow 1.2s linear infinite; }
-        @keyframes dash-flow { to { stroke-dashoffset: -16; } }
+        .leaflet-container { border-radius: 16px; background: #0b1120; }
+        .leaflet-tile-pane {
+          filter: brightness(1.25) contrast(1.15) saturate(0.55) hue-rotate(175deg);
+        }
+        .fraud-attack-vector { animation: dash-flow 1s linear infinite; filter: drop-shadow(0 0 4px rgba(239,68,68,0.6)); }
+        @keyframes dash-flow { to { stroke-dashoffset: -12; } }
+        .fraud-threat-dot { animation: travel-threat 2.5s ease-in-out infinite; }
+        @keyframes travel-threat {
+          0% { opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { opacity: 0; }
+        }
         .fraud-radar-scan {
-          background: linear-gradient(180deg, transparent 0%, rgba(16,185,129,0.08) 50%, transparent 100%);
+          background: linear-gradient(180deg, transparent 0%, rgba(16,185,129,0.12) 50%, transparent 100%);
           animation: radar-scan 3.5s linear infinite;
+          filter: drop-shadow(0 0 12px rgba(16,185,129,0.3));
         }
         @keyframes radar-scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
         .fraud-grid-bg {
-          background-image: linear-gradient(rgba(30,41,59,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(30,41,59,0.4) 1px, transparent 1px);
-          background-size: 40px 40px;
+          background-image:
+            linear-gradient(rgba(56,189,248,0.07) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(56,189,248,0.07) 1px, transparent 1px);
+          background-size: 48px 48px;
+        }
+        .fraud-scanlines {
+          background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 3px);
+          pointer-events: none;
+        }
+        .fraud-vignette {
+          background: radial-gradient(circle at center, transparent 40%, rgba(2,6,23,0.55) 100%);
+          pointer-events: none;
+        }
+        .fraud-tactical-frame {
+          box-shadow: inset 0 0 80px rgba(6,182,212,0.08), 0 0 0 1px rgba(56,189,248,0.2);
         }
       `}</style>
 
@@ -507,7 +583,7 @@ export default function FraudHeatmap() {
       {/* Map + Sidebar */}
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
         {/* Map */}
-        <div className="flex-1 relative rounded-2xl border border-slate-300 overflow-hidden bg-slate-100" style={{ minHeight: 420 }}>
+        <div className="flex-1 relative rounded-2xl border border-cyan-500/20 overflow-hidden bg-slate-950 fraud-tactical-frame" style={{ minHeight: 420 }}>
           <div ref={mapRef} className="absolute inset-0 rounded-2xl" />
 
           {loading && (
@@ -519,24 +595,31 @@ export default function FraudHeatmap() {
             </div>
           )}
 
-          {/* Radar scan overlay */}
+          {/* Tactical overlays */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-[400]">
-            <div className="fraud-radar-scan absolute inset-x-0 h-20" />
-            <div className="absolute inset-0 fraud-grid-bg opacity-20" />
+            <div className="fraud-radar-scan absolute inset-x-0 h-24" />
+            <div className="absolute inset-0 fraud-grid-bg opacity-30" />
+            <div className="absolute inset-0 fraud-scanlines opacity-40" />
+            <div className="absolute inset-0 fraud-vignette" />
+            {/* Corner brackets */}
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-500/40 rounded-tl-lg" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyan-500/40 rounded-tr-lg" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-cyan-500/40 rounded-bl-lg" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyan-500/40 rounded-br-lg" />
           </div>
 
           {/* Top-left live badge */}
-          <div className="absolute top-3 left-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-950/80 border border-slate-700 backdrop-blur">
+          <div className="absolute top-3 left-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950/85 border border-cyan-500/30 backdrop-blur shadow-lg shadow-cyan-900/20">
             <span className={`relative flex h-2.5 w-2.5 ${isLive ? 'animate-pulse' : ''}`}>
               <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${isLive ? 'bg-red-500' : 'bg-slate-500'}`} />
               <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isLive ? 'bg-red-500' : 'bg-slate-500'}`} />
             </span>
             <Radio className={`w-3 h-3 ${isLive ? 'text-red-400' : 'text-slate-400'}`} />
-            <span className="text-[11px] font-bold text-slate-200 tracking-wide">{isLive ? 'LIVE STREAM' : 'PAUSED'}</span>
+            <span className="text-[11px] font-bold text-cyan-50 tracking-wide">{isLive ? 'LIVE THREAT STREAM' : 'PAUSED'}</span>
           </div>
 
           {/* Top-center time filters */}
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1 p-1 rounded-xl bg-slate-950/80 border border-slate-700 backdrop-blur">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1 p-1 rounded-xl bg-slate-950/85 border border-cyan-500/20 backdrop-blur shadow-lg shadow-cyan-900/10">
             {(['live', '1h', '24h', '7d', 'all'] as TimeFilter[]).map(f => (
               <button
                 key={f}
@@ -545,8 +628,8 @@ export default function FraudHeatmap() {
                   timeFilter === f
                     ? f === 'live'
                       ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                      : 'bg-slate-700 text-white'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      : 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/20'
+                    : 'text-slate-400 hover:text-cyan-100 hover:bg-cyan-950/40'
                 }`}
               >
                 {f === 'all' ? 'ALL' : f.toUpperCase()}
@@ -560,8 +643,8 @@ export default function FraudHeatmap() {
               onClick={() => setIsLive(l => !l)}
               className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-colors backdrop-blur ${
                 isLive
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                  : 'bg-slate-950/80 border-slate-700 text-slate-300 hover:bg-slate-800'
+                  ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-lg shadow-cyan-900/20'
+                  : 'bg-slate-950/85 border-cyan-500/20 text-cyan-100 hover:bg-cyan-950/30'
               }`}
             >
               {isLive ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
@@ -569,7 +652,7 @@ export default function FraudHeatmap() {
             </button>
             <button
               onClick={handleRefresh}
-              className="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-700 text-[11px] font-bold text-slate-300 hover:bg-slate-800 transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg bg-slate-950/85 border border-cyan-500/20 text-[11px] font-bold text-cyan-100 hover:bg-cyan-950/30 transition-colors flex items-center gap-1.5 backdrop-blur"
             >
               <RefreshCw className="w-3 h-3" /> Refresh
             </button>
@@ -590,23 +673,37 @@ export default function FraudHeatmap() {
           </AnimatePresence>
 
           {/* Legend */}
-          <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-700 backdrop-blur">
+          <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-950/85 border border-cyan-500/20 backdrop-blur shadow-lg shadow-cyan-900/10">
             {[
               { label: 'Critical', color: '#ef4444' },
               { label: 'Suspicious', color: '#f59e0b' },
               { label: 'Monitor', color: '#10b981' },
             ].map(l => (
               <div key={l.label} className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full border border-white/40" style={{ backgroundColor: l.color, boxShadow: `0 0 8px ${l.color}` }} />
-                <span className="text-[10px] text-slate-300 font-medium">{l.label}</span>
+                <div className="w-2.5 h-2.5 rounded-full border border-white/50" style={{ backgroundColor: l.color, boxShadow: `0 0 8px ${l.color}` }} />
+                <span className="text-[10px] text-cyan-50 font-medium">{l.label}</span>
               </div>
             ))}
           </div>
 
           {/* Bottom-right timestamp */}
-          <div className="absolute bottom-3 right-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-700 text-[10px] text-slate-400 backdrop-blur">
-            <Clock className="w-3 h-3" />
+          <div className="absolute bottom-3 right-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/85 border border-cyan-500/20 text-[10px] text-cyan-100 backdrop-blur shadow-lg shadow-cyan-900/10">
+            <Clock className="w-3 h-3 text-cyan-400" />
             Last: {lastRefresh.toLocaleTimeString('en-IN')}
+          </div>
+
+          {/* Tactical status strip */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] hidden sm:flex items-center gap-4 px-4 py-1.5 rounded-xl bg-slate-950/85 border border-cyan-500/20 backdrop-blur text-[10px] font-mono text-cyan-200 shadow-lg shadow-cyan-900/10">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              SYS: ONLINE
+            </span>
+            <span className="text-cyan-700">|</span>
+            <span>LAT: 22.5937° N</span>
+            <span className="text-cyan-700">|</span>
+            <span>LON: 78.9629° E</span>
+            <span className="text-cyan-700">|</span>
+            <span>ZOOM: 5</span>
           </div>
         </div>
 
