@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { MEGA_MENU } from '@/shared/config/navigation';
 import UnifiedMegaMenu from './UnifiedMegaMenu';
@@ -10,52 +10,52 @@ interface CategoryNavProps {
 
 export default function CategoryNav({ currentView, onNavigate }: CategoryNavProps) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setActiveMenu(null);
+      }
+    }
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape') setActiveMenu(null);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
   const activeCategoryId = MEGA_MENU.find((cat) =>
     cat.groups.some((g) => g.items.some((i) => i.view === currentView))
   )?.id;
-
-  const openMenu = (id: string) => {
-    if (timeout.current) clearTimeout(timeout.current);
-    setActiveMenu(id);
-  };
-
-  const closeMenuSoon = () => {
-    timeout.current = setTimeout(() => setActiveMenu(null), 300);
-  };
-
-  const keepMenuOpen = () => {
-    if (timeout.current) clearTimeout(timeout.current);
-  };
 
   return (
     <nav ref={navRef} className="hidden lg:block bg-primary-dark sticky top-[60px] z-40">
       <div className="max-w-[1440px] mx-auto px-4 lg:px-6">
         <div className="flex items-center gap-2 h-[44px]">
           {MEGA_MENU.map((cat) => {
-            const isActive = activeCategoryId === cat.id || activeMenu === cat.id;
+            const isOpen = activeMenu === cat.id;
+            const isActive = !isOpen && activeCategoryId === cat.id;
             return (
-              <div
+              <button
                 key={cat.id}
-                className="relative h-full flex items-center"
-                onMouseEnter={() => openMenu(cat.id)}
-                onMouseLeave={closeMenuSoon}
+                onClick={() => setActiveMenu(isOpen ? null : cat.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-bold tracking-tight transition-all ${
+                  isOpen
+                    ? 'text-primary-dark bg-secondary shadow-sm'
+                    : isActive
+                    ? 'text-primary-dark bg-secondary/70 shadow-sm'
+                    : 'text-white/90 hover:text-white hover:bg-white/10'
+                }`}
               >
-                <button
-                  onClick={() => openMenu(activeMenu === cat.id ? '' : cat.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-bold tracking-tight transition-all ${
-                    isActive
-                      ? 'text-primary-dark bg-secondary shadow-sm'
-                      : 'text-white/90 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <i className={`fas ${cat.icon}`} />
-                  {cat.label}
-                  <i className={`fas fa-chevron-down text-[9px] transition-transform ${isActive ? 'rotate-180' : ''}`} />
-                </button>
-              </div>
+                <i className={`fas ${cat.icon}`} />
+                {cat.label}
+                <i className={`fas fa-chevron-down text-[9px] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              </button>
             );
           })}
 
@@ -75,9 +75,8 @@ export default function CategoryNav({ currentView, onNavigate }: CategoryNavProp
           <UnifiedMegaMenu
             activeCategory={activeMenu}
             currentView={currentView}
-            onNavigate={onNavigate}
+            onNavigate={(view) => { onNavigate(view); setActiveMenu(null); }}
             onClose={() => setActiveMenu(null)}
-            onKeepOpen={keepMenuOpen}
           />
         )}
       </AnimatePresence>
