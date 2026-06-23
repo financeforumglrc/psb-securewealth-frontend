@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skull, AlertTriangle, Info, X, Bell, BellRing } from 'lucide-react';
-import { alertService, AlertEvent } from '@/shared/services/alertService';
+import { alertService, type AlertEvent } from '@/shared/services/alertService';
 
 const severityConfig = {
   critical: { icon: Skull, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', glow: 'shadow-red-200', label: 'CRITICAL' },
@@ -15,7 +15,7 @@ export default function AlertToast() {
 
   useEffect(() => {
     const unsub = alertService.subscribe(all => setAlerts(all));
-    return unsub;
+    return () => unsub();
   }, []);
 
   useEffect(() => {

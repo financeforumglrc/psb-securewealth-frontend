@@ -55,8 +55,6 @@ export default function TransactionDetailModal({ tx, onClose }: Props) {
     ? Object.entries(tx.signals).filter(([, v]) => v).map(([k]) => k)
     : [];
 
-  const statusColor = tx.status === 'BLOCKED' ? 'rose' : tx.status === 'DELAYED' ? 'amber' : 'emerald';
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
