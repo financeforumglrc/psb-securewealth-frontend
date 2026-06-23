@@ -8,7 +8,7 @@ import {
   BarChart3, ChevronRight, Menu, ArrowUpRight, Info,
   X, History, UserCheck, UserX, Settings,
   ShieldAlert, Key, ScanLine, Globe, AlertOctagon, Siren, Unlock, BellRing,
-  Radio, Skull, Clock
+  Radio, Skull, Clock, ClipboardList
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -23,11 +23,13 @@ import FraudHeatmap from '@/features/admin/components/FraudHeatmap';
 import AlertToast from '@/features/admin/components/AlertToast';
 import DemoTour from '@/features/admin/components/DemoTour';
 import AlertHistoryTab from '@/features/admin/components/AlertHistoryTab';
+import AdminActivityTab from '@/features/admin/components/AdminActivityTab';
 import { can, type AdminRole, ROLE_LABELS } from '@/features/admin/lib/permissions';
+import { adminActivityService } from '@/shared/services/adminActivityService';
 import { alertService } from '@/shared/services/alertService';
 import { useSecurity } from '@/shared/context/SecurityContext';
 
-type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs' | 'heatmap' | 'alerts';
+type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs' | 'heatmap' | 'alerts' | 'activity';
 type SortKey = 'name' | 'email' | 'created_at' | 'tier' | 'role';
 type SortDir = 'asc' | 'desc';
 
@@ -1005,6 +1007,12 @@ export default function AdminDashboard() {
     sessionStorage.setItem('sw-admin-role', role);
   }, [role]);
 
+  // Audit admin role changes
+  useEffect(() => {
+    adminActivityService.log('Role Switched', ROLE_LABELS[role], `Admin switched role to ${ROLE_LABELS[role]}`, role);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role]);
+
   const handleLogin = async (adminId: string, password: string) => {
     setLoginError('');
     if (!adminId || !password) { setLoginError('Admin ID and Password are required'); return; }
@@ -1216,6 +1224,7 @@ export default function AdminDashboard() {
     { key: 'security' as AdminTab, label: 'Security Ops', icon: ShieldAlert },
     { key: 'features' as AdminTab, label: 'Features', icon: BarChart3 },
     { key: 'logs' as AdminTab, label: 'Audit Logs', icon: Activity },
+    { key: 'activity' as AdminTab, label: 'Admin Activity', icon: ClipboardList },
     { key: 'heatmap' as AdminTab, label: 'Fraud Map', icon: Globe },
     { key: 'alerts' as AdminTab, label: 'Alert Center', icon: BellRing },
   ];
@@ -1358,6 +1367,7 @@ export default function AdminDashboard() {
                 {tab === 'security' && 'Security Operations'}
                 {tab === 'features' && 'Cosmos Features'}
                 {tab === 'logs' && 'Audit Logs'}
+                {tab === 'activity' && 'Admin Activity'}
                 {tab === 'heatmap' && 'Fraud Intelligence Map'}
                 {tab === 'alerts' && 'Alert Center'}
               </h1>
@@ -1789,6 +1799,9 @@ export default function AdminDashboard() {
             )}
             {tab === 'alerts' && (
               <AlertHistoryTab role={role} />
+            )}
+            {tab === 'activity' && (
+              <AdminActivityTab />
             )}
           </AnimatePresence>
         </div>

@@ -1,4 +1,5 @@
 import { backendApi } from '@/shared/lib/backendApi';
+import { adminActivityService } from './adminActivityService';
 
 export type AlertStatus = 'open' | 'acknowledged' | 'blocked' | 'whitelisted' | 'false_positive';
 
@@ -267,12 +268,18 @@ class AlertService {
   }
 
   acknowledge(id: number) {
-    this.updateStatus(id, 'acknowledged');
+    const alert = this.alerts.find(a => a.id === id);
+    if (alert) {
+      this.updateStatus(id, 'acknowledged');
+      adminActivityService.log('Acknowledge Alert', `ALT-${String(id).padStart(4, '0')}`, alert.title);
+    }
   }
 
   acknowledgeAll() {
+    const count = this.alerts.filter(a => !a.acknowledged).length;
     this.alerts.forEach(a => { a.acknowledged = true; if (a.status === 'open') a.status = 'acknowledged'; });
     this.notify();
+    if (count > 0) adminActivityService.log('Acknowledge All', `${count} alerts`, 'Bulk acknowledge');
   }
 
   blockUser(id: number) {
@@ -282,6 +289,7 @@ class AlertService {
       alert.acknowledged = true;
       if (alert.eventData) alert.eventData.blockedAt = new Date().toISOString();
       this.notify();
+      adminActivityService.log('Block User', `ALT-${String(id).padStart(4, '0')}`, alert.title);
     }
   }
 
@@ -292,6 +300,7 @@ class AlertService {
       alert.acknowledged = true;
       if (alert.eventData) alert.eventData.whitelistedAt = new Date().toISOString();
       this.notify();
+      adminActivityService.log('Whitelist IP', `ALT-${String(id).padStart(4, '0')}`, alert.title);
     }
   }
 
@@ -302,13 +311,16 @@ class AlertService {
       alert.acknowledged = true;
       if (alert.eventData) alert.eventData.falsePositive = true;
       this.notify();
+      adminActivityService.log('Mark False Positive', `ALT-${String(id).padStart(4, '0')}`, alert.title);
     }
   }
 
   clearAll() {
+    const count = this.alerts.length;
     this.alerts = [];
     this.lastId = 0;
     this.notify();
+    if (count > 0) adminActivityService.log('Clear All Alerts', `${count} alerts`, 'Cleared alert feed');
   }
 
   get unreadCount() {
