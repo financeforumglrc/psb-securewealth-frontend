@@ -637,7 +637,7 @@ export default function LoginPage() {
       {/* Admin Portal Link */}
       <div className="mt-6 text-center">
         <button
-          onClick={() => window.open('/admin', '_blank')}
+          onClick={() => window.location.href = '/admin'}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 text-xs font-bold transition-all"
         >
           <Shield className="w-4 h-4" /> Admin Portal

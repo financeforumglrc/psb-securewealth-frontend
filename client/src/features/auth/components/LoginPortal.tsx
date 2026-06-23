@@ -452,7 +452,7 @@ export default function LoginPortal() {
               </a>
               <button
                 type="button"
-                onClick={() => window.open('/admin', '_blank')}
+                onClick={() => window.location.href = '/admin'}
                 className="text-xs bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent font-bold hover:from-emerald-400 hover:to-teal-400 transition-all"
               >
                 ⚙ Admin Portal

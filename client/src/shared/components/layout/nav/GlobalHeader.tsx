@@ -160,7 +160,7 @@ export default function GlobalHeader({ onOpenMobileSidebar, onNavigate }: Global
                       </button>
                       <div className="border-t border-slate-100 mt-1 pt-1">
                         <button
-                          onClick={() => { window.open('/admin', '_blank'); setProfileOpen(false); }}
+                          onClick={() => { window.location.href = '/admin'; setProfileOpen(false); }}
                           className="w-full px-4 py-2.5 text-left text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-3"
                         >
                           <i className="fas fa-shield-alt text-emerald-400 w-4" /> Admin Portal
