@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { bankingDb, db, userDb } = require('../services/database');
 const { authMiddleware } = require('../middleware/auth');
+const { timingCheck } = require('../middleware/timingCheck');
 
 // ========== VALIDATION HELPERS ==========
 function validateRequired(body, fields) {
@@ -123,7 +124,7 @@ router.get('/transactions', authMiddleware, (req, res) => {
     }
 });
 
-router.post('/transactions', authMiddleware, (req, res) => {
+router.post('/transactions', authMiddleware, timingCheck, (req, res) => {
     try {
         const { type, amount, description, toAccount, fromAccount } = req.body;
         const amountCheck = validatePositiveNumber(amount, 'Amount');
@@ -150,7 +151,7 @@ router.post('/transactions', authMiddleware, (req, res) => {
                 description: description || `${type.toUpperCase()} Transaction`
             });
 
-            return res.json({ success: true, data: { id: result.transactionId, referenceId: result.referenceId } });
+            return res.json({ success: true, data: { id: result.transactionId, referenceId: result.referenceId }, wealthProtection: req.wealthProtection });
         }
 
         // For credit: add to primary account (also atomic)
@@ -168,7 +169,7 @@ router.post('/transactions', authMiddleware, (req, res) => {
                 description: description || 'Credit Transaction'
             });
 
-            return res.json({ success: true, data: { id: result.transactionId, referenceId: result.referenceId } });
+            return res.json({ success: true, data: { id: result.transactionId, referenceId: result.referenceId }, wealthProtection: req.wealthProtection });
         }
     } catch (err) {
         if (err.message === 'Insufficient balance') {
@@ -455,7 +456,7 @@ router.post('/goals', authMiddleware, (req, res) => {
     }
 });
 
-router.patch('/goals/:id/contribute', authMiddleware, (req, res) => {
+router.patch('/goals/:id/contribute', authMiddleware, timingCheck, (req, res) => {
     try {
         const { amount } = req.body;
         const amountCheck = validatePositiveNumber(amount, 'Amount');
@@ -478,7 +479,7 @@ router.patch('/goals/:id/contribute', authMiddleware, (req, res) => {
         });
 
         bankingDb.updateGoalAmount(req.params.id, (goal.current_amount || 0) + amountCheck.value);
-        res.json({ success: true, data: { transactionId: result.transactionId, referenceId: result.referenceId } });
+        res.json({ success: true, data: { transactionId: result.transactionId, referenceId: result.referenceId }, wealthProtection: req.wealthProtection });
     } catch (err) {
         if (err.message === 'Insufficient balance') {
             return res.status(400).json({ success: false, error: 'Insufficient balance' });
@@ -635,7 +636,7 @@ router.get('/recurring', authMiddleware, (req, res) => {
     }
 });
 
-router.post('/recurring', authMiddleware, (req, res) => {
+router.post('/recurring', authMiddleware, timingCheck, (req, res) => {
     try {
         const check = validateRequired(req.body, ['name', 'amount']);
         if (!check.valid) return res.status(400).json({ success: false, error: check.error });
@@ -644,7 +645,7 @@ router.post('/recurring', authMiddleware, (req, res) => {
         const result = bankingDb.createRecurring({
             userId: req.user.id, name, amount, frequency, category, accountId, beneficiaryId, startDate, endDate, nextExecution
         });
-        res.json({ success: true, data: { id: result.lastInsertRowid } });
+        res.json({ success: true, data: { id: result.lastInsertRowid }, wealthProtection: req.wealthProtection });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

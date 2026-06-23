@@ -80,7 +80,8 @@ const authMiddleware = (req, res, next) => {
             id: user.id,
             email: user.email,
             role: user.role || 'user',
-            tier: user.tier || 'free'
+            tier: user.tier || 'free',
+            loginAt: decoded.iat * 1000
         };
 
         // Log API usage for analytics
