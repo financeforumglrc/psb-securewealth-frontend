@@ -6,7 +6,7 @@ import {
   Activity, RefreshCw, CheckCircle2, XCircle, Lock, Fingerprint,
   Crown, Sparkles, AlertTriangle, Download, Filter, Server, Database,
   BarChart3, ChevronRight, Menu, ArrowUpRight, Info,
-  X, History, UserCheck, UserX, Settings,
+  X, History, UserCheck, UserX, Settings, Sun, Moon,
   ShieldAlert, Key, ScanLine, Globe, AlertOctagon, Siren, Unlock, BellRing,
   Radio, Skull, Clock, ClipboardList, HeartPulse
 } from 'lucide-react';
@@ -26,6 +26,7 @@ import AlertHistoryTab from '@/features/admin/components/AlertHistoryTab';
 import AdminActivityTab from '@/features/admin/components/AdminActivityTab';
 import SystemHealthTab from '@/features/admin/components/SystemHealthTab';
 import { can, type AdminRole, ROLE_LABELS } from '@/features/admin/lib/permissions';
+import { useWealthStore } from '@/shared/store/wealthStore';
 import { adminActivityService } from '@/shared/services/adminActivityService';
 import { alertService } from '@/shared/services/alertService';
 import { useSecurity } from '@/shared/context/SecurityContext';
@@ -83,14 +84,14 @@ const TOP_ORIGINS_DATA = [
   { country: 'China', count: 18 },
 ];
 
-const CHART_TOOLTIP = {
+const chartTooltip = (dark = false) => ({
   borderRadius: '12px',
-  border: '1px solid #e2e8f0',
-  background: '#ffffff',
-  color: '#1e293b',
+  border: `1px solid ${dark ? '#334155' : '#e2e8f0'}`,
+  background: dark ? '#1e293b' : '#ffffff',
+  color: dark ? '#f1f5f9' : '#1e293b',
   fontSize: '12px',
-  boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-};
+  boxShadow: dark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 10px 30px rgba(0,0,0,0.08)',
+});
 
 function Badge({ children, variant = 'neutral' }: { children: React.ReactNode; variant?: 'success' | 'danger' | 'warning' | 'premium' | 'enterprise' | 'neutral' }) {
   const map: Record<string, string> = {
@@ -637,23 +638,23 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
   ].filter(Boolean);
 
   const scoreConfig = state.trustScore >= 80
-    ? { label: 'High Trust', text: 'text-emerald-600', bar: 'bg-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-200' }
+    ? { label: 'High Trust', text: 'text-emerald-600 dark:text-emerald-300', bar: 'bg-emerald-500 dark:bg-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800' }
     : state.trustScore >= 50
-    ? { label: 'Moderate Trust', text: 'text-amber-600', bar: 'bg-amber-500', bg: 'bg-amber-50', border: 'border-amber-200' }
-    : { label: 'Low Trust', text: 'text-rose-600', bar: 'bg-rose-500', bg: 'bg-rose-50', border: 'border-rose-200' };
+    ? { label: 'Moderate Trust', text: 'text-amber-600 dark:text-amber-300', bar: 'bg-amber-500 dark:bg-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800' }
+    : { label: 'Low Trust', text: 'text-rose-600 dark:text-rose-300', bar: 'bg-rose-500 dark:bg-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-200 dark:border-rose-800' };
 
   const activeCount = features.filter(f => f.active).length;
   const activePct = Math.round((activeCount / features.length) * 100);
 
   const colorMap: Record<string, {bg: string; border: string; text: string}> = {
-    emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600' },
-    sky: { bg: 'bg-sky-50', border: 'border-sky-200', text: 'text-sky-600' },
-    violet: { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-600' },
-    indigo: { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-600' },
-    amber: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' },
-    teal: { bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-teal-600' },
-    orange: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-600' },
-    rose: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-600' },
+    emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-600 dark:text-emerald-300' },
+    sky: { bg: 'bg-sky-50 dark:bg-sky-900/20', border: 'border-sky-200 dark:border-sky-800', text: 'text-sky-600 dark:text-sky-300' },
+    violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', border: 'border-violet-200 dark:border-violet-800', text: 'text-violet-600 dark:text-violet-300' },
+    indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20', border: 'border-indigo-200 dark:border-indigo-800', text: 'text-indigo-600 dark:text-indigo-300' },
+    amber: { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-600 dark:text-amber-300' },
+    teal: { bg: 'bg-teal-50 dark:bg-teal-900/20', border: 'border-teal-200 dark:border-teal-800', text: 'text-teal-600 dark:text-teal-300' },
+    orange: { bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-600 dark:text-orange-300' },
+    rose: { bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-200 dark:border-rose-800', text: 'text-rose-600 dark:text-rose-300' },
   };
 
   return (
@@ -662,15 +663,15 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-slate-700" />
-            <h2 className="text-xl font-bold text-slate-900">Security Operations Center</h2>
+            <Shield className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Security Operations Center</h2>
           </div>
-          <p className="text-sm text-slate-500 mt-0.5">Zero-trust architecture with 8 layers of active defence</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Zero-trust architecture with 8 layers of active defence</p>
         </div>
-        <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-bold text-slate-400 uppercase">Trust Score</span>
+        <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Trust Score</span>
           <span className={`text-2xl font-bold ${scoreConfig.text}`}>{state.trustScore}</span>
-          <span className="text-xs text-slate-400">/100</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">/100</span>
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${scoreConfig.bg} ${scoreConfig.text} border ${scoreConfig.border}`}>{scoreConfig.label}</span>
         </div>
       </div>
@@ -678,13 +679,13 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
       {/* Top row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Trust Score Gauge */}
-        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="lg:col-span-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
             <Activity className="w-4 h-4 text-emerald-500" /> Platform Trust Score
           </h3>
           <div className="relative w-44 h-44 mx-auto">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="#f1f5f9" strokeWidth="8" />
+              <circle cx="50" cy="50" r="42" fill="none" className="stroke-slate-100 dark:stroke-slate-700" strokeWidth="8" />
               <circle
                 cx="50" cy="50" r="42" fill="none"
                 stroke="currentColor"
@@ -696,21 +697,21 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className={`text-4xl font-bold ${scoreConfig.text}`}>{state.trustScore}</span>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">{scoreConfig.label}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1">{scoreConfig.label}</span>
             </div>
           </div>
-          <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div className="mt-4 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
             <div className={`h-full ${scoreConfig.bar} rounded-full transition-all duration-500`} style={{ width: `${state.trustScore}%` }} />
           </div>
         </div>
 
         {/* Security Layers */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-500" /> Active Security Layers
             </h3>
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">{activeCount}/{features.length} ACTIVE</span>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800">{activeCount}/{features.length} ACTIVE</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {features.map((f, i) => {
@@ -722,14 +723,14 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.04 }}
-                  className={`p-3 rounded-xl border ${f.active ? c.border : 'border-slate-200'} ${f.active ? c.bg : 'bg-slate-50'} transition-all hover:shadow-sm`}
+                  className={`p-3 rounded-xl border ${f.active ? c.border : 'border-slate-200 dark:border-slate-700'} ${f.active ? c.bg : 'bg-slate-50 dark:bg-slate-800/50'} transition-all hover:shadow-sm`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <Icon className={`w-5 h-5 ${f.active ? c.text : 'text-slate-400'}`} />
-                    <span className={`w-2 h-2 rounded-full ${f.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                    <Icon className={`w-5 h-5 ${f.active ? c.text : 'text-slate-400 dark:text-slate-500'}`} />
+                    <span className={`w-2 h-2 rounded-full ${f.active ? 'bg-emerald-500 dark:bg-emerald-400 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'}`} />
                   </div>
-                  <p className={`text-xs font-bold ${f.active ? 'text-slate-800' : 'text-slate-400'}`}>{f.label}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{f.sub}</p>
+                  <p className={`text-xs font-bold ${f.active ? 'text-slate-800 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>{f.label}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{f.sub}</p>
                 </motion.div>
               );
             })}
@@ -740,34 +741,34 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
       {/* Middle row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Admin Controls */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-slate-700" /> Incident Response Controls
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-slate-700 dark:text-slate-300" /> Incident Response Controls
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button onClick={() => dispatch({ type: 'UNFREEZE_ACCOUNT' })} disabled={!can(role, 'unfreeze') || !state.accountFrozen}
-              className="px-4 py-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 disabled:opacity-40 hover:bg-emerald-100 transition-colors flex items-center gap-2">
+              className="px-4 py-3 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 disabled:opacity-40 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors flex items-center gap-2">
               <Unlock className="w-4 h-4" /> Unfreeze Account
             </button>
             <button onClick={() => dispatch({ type: 'HONEYTOKEN_RESET' })} disabled={!can(role, 'reset_honeytoken') || !state.honeytokenTriggered}
-              className="px-4 py-3 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700 disabled:opacity-40 hover:bg-rose-100 transition-colors flex items-center gap-2">
+              className="px-4 py-3 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 disabled:opacity-40 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors flex items-center gap-2">
               <ShieldAlert className="w-4 h-4" /> Reset Honeytoken
             </button>
             <button onClick={() => dispatch({ type: 'TRAP_RESET' })} disabled={!can(role, 'reset_trap') || !state.trapTriggered}
-              className="px-4 py-3 rounded-xl text-xs font-bold bg-amber-50 border border-amber-200 text-amber-700 disabled:opacity-40 hover:bg-amber-100 transition-colors flex items-center gap-2">
+              className="px-4 py-3 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 disabled:opacity-40 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" /> Reset Trap
             </button>
             <button onClick={() => dispatch({ type: 'EBPF_ALERT', alert: '' })} disabled={!can(role, 'clear_threat')}
-              className="px-4 py-3 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-700 disabled:opacity-40 hover:bg-slate-100 transition-colors flex items-center gap-2">
+              className="px-4 py-3 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100 dark:bg-slate-700 transition-colors flex items-center gap-2">
               <X className="w-4 h-4" /> Clear Threat
             </button>
           </div>
-          <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
-            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+          <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
               <span>Defence Coverage</span>
-              <span className="text-emerald-600 font-bold">{activePct}%</span>
+              <span className="text-emerald-600 dark:text-emerald-300 font-bold">{activePct}%</span>
             </div>
-            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${activePct}%` }}
@@ -779,13 +780,13 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
         </div>
 
         {/* Live Attack Simulation */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <Radio className="w-4 h-4 text-rose-500 animate-pulse" /> Live Threat Interception
             </h3>
-            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
               AI SHIELD ACTIVE
             </span>
           </div>
@@ -798,18 +799,18 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ delay: idx * 0.02 }}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${attack.blocked ? 'bg-emerald-50 border border-emerald-200' : 'bg-rose-50 border border-rose-200'}`}>
-                      {attack.blocked ? <Shield className="w-4 h-4 text-emerald-600" /> : <Skull className="w-4 h-4 text-rose-600" />}
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${attack.blocked ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800' : 'bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800'}`}>
+                      {attack.blocked ? <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-300" /> : <Skull className="w-4 h-4 text-rose-600 dark:text-rose-300" />}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-800">{attack.type}</p>
-                      <p className="text-[10px] text-slate-400">{attack.time}</p>
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{attack.type}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">{attack.time}</p>
                     </div>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${attack.blocked ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${attack.blocked ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'}`}>
                     {attack.blocked ? 'BLOCKED' : 'ALERT'}
                   </span>
                 </motion.div>
@@ -820,14 +821,14 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
       </div>
 
       {/* Event feed */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-slate-500" /> Recent Security Events
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-slate-500 dark:text-slate-400" /> Recent Security Events
           </h3>
-          <span className="text-[10px] text-slate-400">{events.length} events</span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500">{events.length} events</span>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {events.length > 0 ? events.map((e, i) => {
             const ev = e as any;
             const Icon = ev.icon;
@@ -837,23 +838,23 @@ function SecurityOpsTab({ role }: { role: AdminRole }) {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="px-5 py-3 flex items-start gap-3 hover:bg-slate-50 transition-colors"
+                className="px-5 py-3 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 transition-colors"
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                  ev.type === 'good' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
-                  ev.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-600' :
-                  'bg-rose-50 border-rose-200 text-rose-600'
+                  ev.type === 'good' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-300' :
+                  ev.type === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-300' :
+                  'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-300'
                 }`}>
                   <Icon className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-slate-800">{ev.text}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{ev.time}</p>
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{ev.text}</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{ev.time}</p>
                 </div>
               </motion.div>
             );
           }) : (
-            <div className="px-5 py-10 text-center text-slate-400 text-sm">No recent security events</div>
+            <div className="px-5 py-10 text-center text-slate-400 dark:text-slate-500 text-sm">No recent security events</div>
           )}
         </div>
       </div>
@@ -997,11 +998,21 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null);
   const { state: securityState } = useSecurity();
 
-  // Admin portal is always rendered in a premium light palette
+  // Theme: login screen stays light; after login respect global dark mode
+  const darkMode = useWealthStore((s) => s.darkMode);
+  const toggleDarkMode = useWealthStore((s) => s.toggleDarkMode);
   useEffect(() => {
-    document.documentElement.classList.remove('dark');
-    document.documentElement.style.colorScheme = 'light';
-  }, []);
+    if (!isLoggedIn) {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    } else if (darkMode) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
+  }, [isLoggedIn, darkMode]);
 
   // Persist RBAC role across reloads
   useEffect(() => {
@@ -1382,6 +1393,14 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <select
               value={role}
               onChange={e => setRole(e.target.value as AdminRole)}
@@ -1538,7 +1557,7 @@ export default function AdminDashboard() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                           <XAxis dataKey="day" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                          <Tooltip contentStyle={CHART_TOOLTIP} />
+                          <Tooltip contentStyle={chartTooltip(darkMode)} />
                           <Area type="monotone" dataKey="users" stroke="#10b981" strokeWidth={2} fill="url(#uGrad)" />
                           <Area type="monotone" dataKey="txns" stroke="#3b82f6" strokeWidth={2} fill="url(#tGrad)" />
                         </AreaChart>
@@ -1555,7 +1574,7 @@ export default function AdminDashboard() {
                           <Pie data={TIER_DATA} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value" stroke="none">
                             {TIER_DATA.map((e, i) => <Cell key={i} fill={e.color} />)}
                           </Pie>
-                          <Tooltip contentStyle={CHART_TOOLTIP} />
+                          <Tooltip contentStyle={chartTooltip(darkMode)} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -1588,7 +1607,7 @@ export default function AdminDashboard() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                           <XAxis dataKey="day" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                          <Tooltip contentStyle={CHART_TOOLTIP} />
+                          <Tooltip contentStyle={chartTooltip(darkMode)} />
                           <Line type="monotone" dataKey="attempts" stroke="#ef4444" strokeWidth={2} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 5 }} />
                           <Line type="monotone" dataKey="blocked" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 5 }} />
                         </LineChart>
@@ -1605,7 +1624,7 @@ export default function AdminDashboard() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
                           <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis type="category" dataKey="country" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={80} />
-                          <Tooltip contentStyle={CHART_TOOLTIP} />
+                          <Tooltip contentStyle={chartTooltip(darkMode)} />
                           <Bar dataKey="count" fill="#f59e0b" radius={[0, 6, 6, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
