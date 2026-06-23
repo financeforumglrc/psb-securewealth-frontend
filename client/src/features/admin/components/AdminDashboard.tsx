@@ -7,7 +7,7 @@ import {
   Crown, Sparkles, AlertTriangle, Download, Filter, Server, Database,
   BarChart3, ChevronRight, Menu, ArrowUpRight, Info,
   X, History, UserCheck, UserX, Settings,
-  ShieldAlert, Key, ScanLine, Globe, AlertOctagon, Siren, Unlock
+  ShieldAlert, Key, ScanLine, Globe, AlertOctagon, Siren, Unlock, BellRing
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -21,10 +21,11 @@ import FeaturesUniverse from '@/features/architecture/components/FeaturesUnivers
 import FraudHeatmap from '@/features/admin/components/FraudHeatmap';
 import AlertToast from '@/features/admin/components/AlertToast';
 import DemoTour from '@/features/admin/components/DemoTour';
+import AlertHistoryTab from '@/features/admin/components/AlertHistoryTab';
 import { alertService } from '@/shared/services/alertService';
 import { useSecurity } from '@/shared/context/SecurityContext';
 
-type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs' | 'heatmap';
+type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs' | 'heatmap' | 'alerts';
 type SortKey = 'name' | 'email' | 'created_at' | 'tier' | 'role';
 type SortDir = 'asc' | 'desc';
 
@@ -994,6 +995,24 @@ export default function AdminDashboard() {
     return () => alertService.stopPolling();
   }, [isLoggedIn]);
 
+  // Keyboard shortcuts for tabs
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const keys: Record<string, AdminTab> = {
+      '1': 'dashboard', '2': 'users', '3': 'architecture',
+      '4': 'security', '5': 'features', '6': 'logs', '7': 'heatmap', '8': 'alerts',
+    };
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key in keys && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setTab(keys[e.key]);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isLoggedIn]);
+
   const filteredUsers = useMemo(() => {
     let result = users;
     if (search.trim()) {
@@ -1028,6 +1047,7 @@ export default function AdminDashboard() {
     { key: 'features' as AdminTab, label: 'Features', icon: BarChart3 },
     { key: 'logs' as AdminTab, label: 'Audit Logs', icon: Activity },
     { key: 'heatmap' as AdminTab, label: 'Fraud Map', icon: Globe },
+    { key: 'alerts' as AdminTab, label: 'Alert Center', icon: BellRing },
   ];
 
   const heroStats = [
@@ -1135,6 +1155,7 @@ export default function AdminDashboard() {
                 {tab === 'features' && 'Cosmos Features'}
                 {tab === 'logs' && 'Audit Logs'}
                 {tab === 'heatmap' && 'Fraud Intelligence Map'}
+                {tab === 'alerts' && 'Alert Center'}
               </h1>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
@@ -1504,6 +1525,9 @@ export default function AdminDashboard() {
             )}
             {tab === 'heatmap' && (
               <FraudHeatmap />
+            )}
+            {tab === 'alerts' && (
+              <AlertHistoryTab />
             )}
           </AnimatePresence>
         </div>
