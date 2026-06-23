@@ -11,33 +11,30 @@ import { alertService, type AlertEvent } from '@/shared/services/alertService';
 const severityConfig = {
   critical: {
     icon: Skull,
-    color: 'text-red-400',
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/20',
-    glow: 'shadow-red-500/20',
+    color: 'text-rose-600',
+    bg: 'bg-rose-50',
+    border: 'border-rose-200',
     label: 'CRITICAL',
-    bar: 'from-red-500 to-rose-600',
-    scoreColor: '#ef4444'
+    bar: 'from-rose-500 to-red-600',
+    soft: 'bg-rose-500'
   },
   warning: {
     icon: AlertTriangle,
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/20',
-    glow: 'shadow-amber-500/20',
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
     label: 'WARNING',
     bar: 'from-amber-400 to-orange-500',
-    scoreColor: '#f59e0b'
+    soft: 'bg-amber-500'
   },
   info: {
     icon: Info,
-    color: 'text-cyan-400',
-    bg: 'bg-cyan-500/10',
-    border: 'border-cyan-500/20',
-    glow: 'shadow-cyan-500/20',
+    color: 'text-sky-600',
+    bg: 'bg-sky-50',
+    border: 'border-sky-200',
     label: 'INFO',
-    bar: 'from-cyan-400 to-blue-500',
-    scoreColor: '#22d3ee'
+    bar: 'from-sky-400 to-blue-500',
+    soft: 'bg-sky-500'
   },
 };
 
@@ -89,7 +86,6 @@ export default function AlertHistoryTab() {
     return () => { unsub(); };
   }, []);
 
-  // Auto-scroll feed to top on new alert
   useEffect(() => {
     if (feedRef.current && alerts.length > 0) {
       feedRef.current.scrollTop = 0;
@@ -137,55 +133,48 @@ export default function AlertHistoryTab() {
   const toggleDesktop = () => { const d = alertService.toggleDesktop(); setSettings(prev => ({ ...prev, desktopEnabled: d })); };
 
   const stats = [
-    { label: 'Total Alerts', value: counts.total, icon: Bell, color: 'text-slate-100', bg: 'bg-slate-800/50', border: 'border-slate-700/50', change: `${analytics.trendPct}%`, up: analytics.trend === 'up' },
-    { label: 'Unread', value: counts.unread, icon: BellRing, color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', change: 'Live', up: true },
-    { label: 'Critical', value: counts.critical, icon: Skull, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', change: `${analytics.critical24h} in 24h`, up: analytics.critical24h > 0 },
-    { label: 'Security', value: counts.security, icon: ShieldAlert, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', change: 'Active', up: true },
+    { label: 'Total Alerts', value: counts.total, icon: Bell, color: 'text-slate-700', bg: 'bg-white', border: 'border-slate-200', accent: 'bg-slate-100', change: `${analytics.trendPct}%`, up: analytics.trend === 'up' },
+    { label: 'Unread', value: counts.unread, icon: BellRing, color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-100', accent: 'bg-sky-100', change: 'Live', up: true },
+    { label: 'Critical', value: counts.critical, icon: Skull, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', accent: 'bg-rose-100', change: `${analytics.critical24h} in 24h`, up: analytics.critical24h > 0 },
+    { label: 'Security', value: counts.security, icon: ShieldAlert, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', accent: 'bg-amber-100', change: 'Active', up: true },
   ];
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5 max-w-[1600px]">
-      {/* Global tactical background accent */}
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.02]"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 80% 20%, rgba(239,68,68,0.4) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(6,182,212,0.3) 0%, transparent 40%)',
-        }}
-      />
-
       {/* Header */}
-      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Siren className="w-5 h-5 text-red-400" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Alert Center</h2>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20">SOC</span>
+            <Siren className="w-5 h-5 text-rose-500" />
+            <h2 className="text-xl font-bold text-slate-900">Alert Center</h2>
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">SOC</span>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Real-time fraud and security event monitoring</p>
+          <p className="text-sm text-slate-500">Real-time fraud and security event monitoring</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={toggleSound}
-            className={`p-2 rounded-xl border transition-all ${settings.soundEnabled ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-slate-200'}`}
+            className={`p-2 rounded-xl border transition-all ${settings.soundEnabled ? 'bg-sky-50 border-sky-200 text-sky-600' : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600'}`}
             title={settings.soundEnabled ? 'Mute alerts' : 'Enable sound'}>
             {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
           <button onClick={toggleDesktop}
-            className={`p-2 rounded-xl border transition-all ${settings.desktopEnabled ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-slate-200'}`}
+            className={`p-2 rounded-xl border transition-all ${settings.desktopEnabled ? 'bg-sky-50 border-sky-200 text-sky-600' : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600'}`}
             title={settings.desktopEnabled ? 'Disable desktop notifications' : 'Enable desktop notifications'}>
             {settings.desktopEnabled ? <Monitor className="w-4 h-4" /> : <MonitorOff className="w-4 h-4" />}
           </button>
           <button onClick={() => alertService.acknowledgeAll()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 text-xs font-bold text-slate-300 hover:bg-slate-700/50 transition-colors">
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-sm">
             <CheckCheck className="w-3.5 h-3.5" /> Acknowledge All
           </button>
           <button onClick={() => alertService.clearAll()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-colors">
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors shadow-sm">
             <Trash2 className="w-3.5 h-3.5" /> Clear All
           </button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {stats.map((s, i) => {
           const Icon = s.icon;
           const TrendIcon = s.up ? TrendingUp : TrendingDown;
@@ -195,15 +184,17 @@ export default function AlertHistoryTab() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className={`${s.bg} ${s.border} border rounded-2xl p-4 backdrop-blur-sm hover:brightness-110 transition-all`}
+              className={`${s.bg} ${s.border} border rounded-2xl p-4 shadow-sm hover:shadow-md transition-all`}
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{s.label}</span>
-                <Icon className={`w-5 h-5 ${s.color}`} />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</span>
+                <div className={`w-8 h-8 rounded-lg ${s.accent} flex items-center justify-center`}>
+                  <Icon className={`w-4 h-4 ${s.color}`} />
+                </div>
               </div>
               <p className={`text-2xl font-bold ${s.color}`}><AnimatedNumber value={s.value} /></p>
               <div className="flex items-center gap-1 mt-1">
-                <TrendIcon className={`w-3 h-3 ${s.up ? 'text-emerald-400' : 'text-slate-400'}`} />
+                <TrendIcon className={`w-3 h-3 ${s.up ? 'text-emerald-500' : 'text-slate-400'}`} />
                 <span className="text-[10px] text-slate-400">{s.change}</span>
               </div>
             </motion.div>
@@ -212,7 +203,7 @@ export default function AlertHistoryTab() {
       </div>
 
       {/* Main content grid */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Alert Feed */}
         <div className="lg:col-span-2 space-y-4">
           {/* Filters */}
@@ -221,15 +212,15 @@ export default function AlertHistoryTab() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search alerts by title or message..."
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-900/50 border border-slate-700/50 rounded-xl text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all" />
+                className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all" />
             </div>
             <div className="flex gap-1.5">
               {(['all', 'critical', 'warning', 'info'] as const).map(f => (
                 <button key={f} onClick={() => setFilter(f)}
                   className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
                     filter === f
-                      ? 'bg-cyan-600 text-white border-cyan-500 shadow-lg shadow-cyan-500/20'
-                      : 'bg-slate-900/50 text-slate-400 border-slate-700/50 hover:bg-slate-800/50 hover:text-slate-200'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700'
                   }`}>
                   {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
@@ -238,22 +229,22 @@ export default function AlertHistoryTab() {
           </div>
 
           {/* Live feed */}
-          <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
-            <div className="px-4 py-3 border-b border-slate-700/50 flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2">
-                <Radio className={`w-4 h-4 text-red-400 ${livePulse ? 'animate-pulse' : ''}`} />
-                <span className="text-xs font-bold text-slate-200">Live Feed</span>
-                <span className="text-[10px] text-slate-500">{filtered.length} events</span>
+                <Radio className={`w-4 h-4 text-rose-500 ${livePulse ? 'animate-pulse' : ''}`} />
+                <span className="text-xs font-bold text-slate-700">Live Feed</span>
+                <span className="text-[10px] text-slate-400">{filtered.length} events</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] text-emerald-400 font-medium">STREAMING</span>
+                <span className="text-[10px] text-emerald-600 font-medium">STREAMING</span>
               </div>
             </div>
             <div ref={feedRef} className="max-h-[480px] overflow-y-auto p-2 space-y-1">
               <AnimatePresence initial={false}>
                 {filtered.length === 0 ? (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-3 py-16 text-slate-500">
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-3 py-16 text-slate-400">
                     <Bell className="w-10 h-10 opacity-50" />
                     <p className="text-sm font-medium">No alerts</p>
                     <p className="text-xs">All clear — no security events detected.</p>
@@ -271,26 +262,26 @@ export default function AlertHistoryTab() {
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ delay: idx * 0.02 }}
                         onClick={() => setSelected(alert)}
-                        className={`w-full text-left p-3 rounded-xl hover:bg-slate-800/50 transition-all flex items-start gap-3 border ${
-                          !alert.acknowledged ? 'bg-slate-800/30 border-slate-700/30' : 'border-transparent'
+                        className={`w-full text-left p-3 rounded-xl hover:bg-slate-50 transition-all flex items-start gap-3 border ${
+                          !alert.acknowledged ? 'bg-slate-50/70 border-slate-100' : 'border-transparent'
                         }`}
                       >
-                        <div className={`w-10 h-10 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0 shadow-lg ${cfg.glow}`}>
+                        <div className={`w-10 h-10 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0`}>
                           <Icon className={`w-5 h-5 ${cfg.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${cfg.bg} ${cfg.color} border ${cfg.border}`}>{cfg.label}</span>
-                            <span className="text-[10px] text-slate-500">{fmtTime(alert.timestamp)}</span>
+                            <span className="text-[10px] text-slate-400">{fmtTime(alert.timestamp)}</span>
                             {!alert.acknowledged && (
-                              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-lg shadow-cyan-400/50" />
+                              <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
                             )}
                           </div>
-                          <p className="text-sm font-bold text-slate-100">{alert.title}</p>
-                          <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{alert.message}</p>
+                          <p className="text-sm font-bold text-slate-800">{alert.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{alert.message}</p>
                         </div>
                         <button onClick={(e) => { e.stopPropagation(); alertService.acknowledge(alert.id); }}
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${alert.acknowledged ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-700/50'}`}>
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${alert.acknowledged ? 'text-emerald-500' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'}`}>
                           <CheckCheck className="w-4 h-4" />
                         </button>
                       </motion.button>
@@ -305,9 +296,9 @@ export default function AlertHistoryTab() {
         {/* Analytics sidebar */}
         <div className="space-y-4">
           {/* Severity Breakdown */}
-          <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 p-4 backdrop-blur-sm">
-            <h3 className="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-cyan-400" /> Severity Breakdown
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-sky-500" /> Severity Breakdown
             </h3>
             <div className="space-y-4">
               {[
@@ -319,10 +310,10 @@ export default function AlertHistoryTab() {
                 return (
                   <div key={s.key}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-medium text-slate-300">{s.label}</span>
-                      <span className="text-xs font-bold" style={{ color: cfg.scoreColor }}>{s.value}%</span>
+                      <span className="text-xs font-medium text-slate-600">{s.label}</span>
+                      <span className="text-xs font-bold" style={{ color: cfg.color.replace('text-', '') === 'text-rose-600' ? '#e11d48' : cfg.color.replace('text-', '') === 'text-amber-600' ? '#d97706' : '#0284c7' }}>{s.value}%</span>
                     </div>
-                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${s.value}%` }}
@@ -337,30 +328,30 @@ export default function AlertHistoryTab() {
           </div>
 
           {/* Response Metrics */}
-          <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 p-4 backdrop-blur-sm">
-            <h3 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-cyan-400" /> Response Metrics
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-sky-500" /> Response Metrics
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <p className="text-[10px] text-slate-500 uppercase">Avg Response</p>
-                <p className="text-lg font-bold text-cyan-400">{analytics.avgResponseTime}</p>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <p className="text-[10px] text-slate-400 uppercase">Avg Response</p>
+                <p className="text-lg font-bold text-sky-600">{analytics.avgResponseTime}</p>
               </div>
-              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                <p className="text-[10px] text-slate-500 uppercase">Last 24h</p>
-                <p className="text-lg font-bold text-slate-200">{analytics.last24h}</p>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <p className="text-[10px] text-slate-400 uppercase">Last 24h</p>
+                <p className="text-lg font-bold text-slate-700">{analytics.last24h}</p>
               </div>
             </div>
           </div>
 
           {/* Active Threats Mini-Card */}
-          <div className="bg-gradient-to-br from-red-500/10 to-red-900/10 rounded-2xl border border-red-500/20 p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-rose-50 to-white rounded-2xl border border-rose-100 p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-4 h-4 text-red-400" />
-              <h3 className="text-sm font-bold text-red-200">Active Threats</h3>
+              <Shield className="w-4 h-4 text-rose-500" />
+              <h3 className="text-sm font-bold text-rose-800">Active Threats</h3>
             </div>
-            <p className="text-2xl font-bold text-red-400">{counts.critical}</p>
-            <p className="text-[11px] text-red-300/70 mt-1">Critical alerts requiring immediate attention</p>
+            <p className="text-2xl font-bold text-rose-600">{counts.critical}</p>
+            <p className="text-[11px] text-rose-400 mt-1">Critical alerts requiring immediate attention</p>
           </div>
         </div>
       </div>
@@ -370,54 +361,54 @@ export default function AlertHistoryTab() {
         {selected && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[10000]" onClick={() => setSelected(null)} />
+              className="fixed inset-0 bg-slate-950/30 backdrop-blur-sm z-[10000]" onClick={() => setSelected(null)} />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="fixed inset-0 z-[10001] flex items-center justify-center p-4 pointer-events-none">
-              <div className="bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden"
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden"
                 onClick={e => e.stopPropagation()}>
-                <div className="px-6 py-5 border-b border-slate-700/50 flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-800">
+                <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                   <div className="flex items-center gap-3">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${severityConfig[selected.severity].bg} border ${severityConfig[selected.severity].border}`}>
                       {React.createElement(severityConfig[selected.severity].icon, { className: `w-5 h-5 ${severityConfig[selected.severity].color}` })}
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm text-slate-100">Alert Details</h3>
-                      <p className="text-[10px] text-slate-500 font-mono">ID: ALT-{String(selected.id).padStart(4, '0')}</p>
+                      <h3 className="font-bold text-sm text-slate-800">Alert Details</h3>
+                      <p className="text-[10px] text-slate-400 font-mono">ID: ALT-{String(selected.id).padStart(4, '0')}</p>
                     </div>
                   </div>
-                  <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center transition-colors">
+                  <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition-colors">
                     <X className="w-4 h-4 text-slate-400" />
                   </button>
                 </div>
                 <div className="p-5 space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { label: 'Severity', value: selected.severity.toUpperCase(), color: severityConfig[selected.severity].scoreColor },
+                      { label: 'Severity', value: selected.severity.toUpperCase(), color: severityConfig[selected.severity].color },
                       { label: 'Type', value: selected.type },
                       { label: 'Title', value: selected.title },
                       { label: 'Time', value: new Date(selected.timestamp).toLocaleString('en-IN') },
                       { label: 'Acknowledged', value: selected.acknowledged ? 'Yes' : 'No' },
                     ].map(d => (
-                      <div key={d.label} className="p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{d.label}</p>
-                        <p className="text-xs font-semibold text-slate-200 mt-0.5" style={{ color: (d as any).color }}>{d.value}</p>
+                      <div key={d.label} className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{d.label}</p>
+                        <p className="text-xs font-semibold text-slate-700 mt-0.5" style={{ color: (d as any).color ? '' : undefined }}>{d.value}</p>
                       </div>
                     ))}
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Message</p>
-                    <p className="text-xs text-slate-300 leading-relaxed">{selected.message}</p>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Message</p>
+                    <p className="text-xs text-slate-600 leading-relaxed">{selected.message}</p>
                   </div>
                   {selected.eventData && (
-                    <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Raw Data</p>
-                      <pre className="text-[10px] text-slate-400 font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Raw Data</p>
+                      <pre className="text-[10px] text-slate-500 font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
                         {JSON.stringify(selected.eventData, null, 2)}
                       </pre>
                     </div>
                   )}
                   <button onClick={() => { alertService.acknowledge(selected.id); setSelected(null); }}
-                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
+                    className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
                     <CheckCheck className="w-4 h-4" /> Acknowledge Alert
                   </button>
                 </div>

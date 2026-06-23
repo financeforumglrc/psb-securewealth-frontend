@@ -199,7 +199,7 @@ function createPulseIconHtml(color: string, size = 28) {
 function createCityLabelHtml(name: string) {
   return `
     <div style="pointer-events:none;white-space:nowrap">
-      <span style="font-size:10px;font-weight:700;color:#94a3b8;text-shadow:0 1px 2px rgba(0,0,0,0.9);letter-spacing:0.5px">${name}</span>
+      <span style="font-size:10px;font-weight:700;color:#475569;text-shadow:0 1px 2px rgba(255,255,255,0.9);letter-spacing:0.5px">${name}</span>
     </div>
   `;
 }
@@ -250,7 +250,7 @@ export default function FraudHeatmap() {
         zoomControl: false,
         attributionControl: false,
       });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 18,
         subdomains: 'abcd',
       }).addTo(map);
@@ -294,10 +294,10 @@ export default function FraudHeatmap() {
     filteredEvents.slice(0, 80).forEach(e => {
       if (!e.location) return;
       const glow = L.circleMarker([e.location.lat, e.location.lon], {
-        radius: 18,
+        radius: 16,
         fillColor: riskColor(e.riskScore),
         color: 'transparent',
-        fillOpacity: 0.08,
+        fillOpacity: 0.14,
         interactive: false,
       }).addTo(map);
       layersRef.current.glows.push(glow);
@@ -349,12 +349,12 @@ export default function FraudHeatmap() {
       const marker = L.marker([e.location.lat, e.location.lon], { icon }).addTo(map);
       const parsed = e.parsedNewValue || {};
       marker.bindPopup(`
-        <div style="font-family:system-ui,-apple-system,sans-serif;min-width:260px;border-radius:12px;overflow:hidden;background:#0f172a;color:#f8fafc;border:1px solid #1e293b;box-shadow:0 20px 40px rgba(0,0,0,0.5)">
-          <div style="padding:12px 16px;border-bottom:1px solid #1e293b;background:linear-gradient(135deg,${color}18,${color}08)">
+        <div style="font-family:system-ui,-apple-system,sans-serif;min-width:260px;border-radius:14px;overflow:hidden;background:#ffffff;color:#1e293b;border:1px solid #e2e8f0;box-shadow:0 20px 40px rgba(0,0,0,0.15)">
+          <div style="padding:12px 16px;border-bottom:1px solid #f1f5f9;background:linear-gradient(135deg,${color}12,${color}06)">
             <div style="display:flex;justify-content:space-between;align-items:center">
               <div style="display:flex;align-items:center;gap:8px">
-                <div style="width:10px;height:10px;border-radius:50%;background:${color};box-shadow:0 0 10px ${color}"></div>
-                <span style="font-weight:700;font-size:13px;color:#f8fafc">${riskLabel(e.riskScore)}</span>
+                <div style="width:10px;height:10px;border-radius:50%;background:${color};box-shadow:0 0 10px ${color}80"></div>
+                <span style="font-weight:700;font-size:13px;color:#1e293b">${riskLabel(e.riskScore)}</span>
               </div>
               <span style="font-size:11px;font-weight:700;color:${color};background:${color}15;padding:2px 10px;border-radius:20px">${e.riskScore}/100</span>
             </div>
@@ -363,31 +363,31 @@ export default function FraudHeatmap() {
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
               <div style="width:32px;height:32px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">${(e.user_name || 'U')[0]}</div>
               <div>
-                <div style="font-weight:600;font-size:13px;color:#f8fafc">${e.user_name || 'Unknown'}</div>
-                <div style="font-size:11px;color:#94a3b8">${e.location.city}, India</div>
+                <div style="font-weight:600;font-size:13px;color:#1e293b">${e.user_name || 'Unknown'}</div>
+                <div style="font-size:11px;color:#64748b">${e.location.city}, India</div>
               </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0">
-              <div style="background:#1e293b;padding:8px 10px;border-radius:8px">
-                <div style="font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Action</div>
-                <div style="font-size:12px;font-weight:600;color:#e2e8f0;margin-top:2px">${e.action}</div>
+              <div style="background:#f8fafc;padding:8px 10px;border-radius:8px">
+                <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Action</div>
+                <div style="font-size:12px;font-weight:600;color:#334155;margin-top:2px">${e.action}</div>
               </div>
-              <div style="background:#1e293b;padding:8px 10px;border-radius:8px">
-                <div style="font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Amount</div>
-                <div style="font-size:12px;font-weight:700;color:#e2e8f0;margin-top:2px">₹${(parsed.amount || 0).toLocaleString('en-IN')}</div>
+              <div style="background:#f8fafc;padding:8px 10px;border-radius:8px">
+                <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Amount</div>
+                <div style="font-size:12px;font-weight:700;color:#334155;margin-top:2px">₹${(parsed.amount || 0).toLocaleString('en-IN')}</div>
               </div>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px">
-              <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;background:${parsed.status === 'BLOCKED' ? '#450a0a' : parsed.status === 'FLAGGED' ? '#451a03' : '#064e3b'};color:${parsed.status === 'BLOCKED' ? '#fca5a5' : parsed.status === 'FLAGGED' ? '#fcd34d' : '#6ee7b7'}">${parsed.status || 'UNKNOWN'}</span>
-              <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;background:#1e293b;color:#94a3b8">${e.ip_address}</span>
+              <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;background:${parsed.status === 'BLOCKED' ? '#fef2f2' : parsed.status === 'FLAGGED' ? '#fffbeb' : '#f0fdf4'};color:${parsed.status === 'BLOCKED' ? '#dc2626' : parsed.status === 'FLAGGED' ? '#d97706' : '#16a34a'}">${parsed.status || 'UNKNOWN'}</span>
+              <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;background:#f1f5f9;color:#64748b">${e.ip_address}</span>
             </div>
-            <div style="font-size:10px;color:#64748b;padding-top:8px;margin-top:8px;border-top:1px solid #1e293b;display:flex;justify-content:space-between">
+            <div style="font-size:10px;color:#94a3b8;padding-top:8px;margin-top:8px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between">
               <span>${e.location.isp || 'N/A'}</span>
               <span>${new Date(e.created_at).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</span>
             </div>
           </div>
         </div>
-      `, { maxWidth: 320, className: 'fraud-dark-popup' });
+      `, { maxWidth: 320, className: 'fraud-light-popup' });
       marker.on('click', () => setSelectedEvent(e));
       layersRef.current.markers.push(marker);
     });
@@ -482,13 +482,13 @@ export default function FraudHeatmap() {
       {/* Global styles for Leaflet customizations */}
       <style>{`
         .leaflet-popup { margin-bottom: 20px; }
-        .leaflet-popup-content-wrapper.fraud-dark-popup {
+        .leaflet-popup-content-wrapper.fraud-light-popup {
           border-radius: 14px !important;
           padding: 0 !important;
           overflow: hidden !important;
-          background: #0f172a !important;
-          border: 1px solid rgba(34,211,238,0.35) !important;
-          box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+          background: #ffffff !important;
+          border: 1px solid #e2e8f0 !important;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important;
         }
         .leaflet-popup-content {
           margin: 0 !important;
@@ -496,8 +496,8 @@ export default function FraudHeatmap() {
           min-width: 260px !important;
         }
         .leaflet-popup-tip {
-          background: #0f172a !important;
-          border: 1px solid #1e293b !important;
+          background: #ffffff !important;
+          border: 1px solid #e2e8f0 !important;
         }
         .leaflet-popup-close-button {
           top: 8px !important;
@@ -511,14 +511,14 @@ export default function FraudHeatmap() {
           transition: all 0.15s !important;
         }
         .leaflet-popup-close-button:hover {
-          background: #1e293b !important;
-          color: #f8fafc !important;
+          background: #f1f5f9 !important;
+          color: #475569 !important;
         }
-        .leaflet-container { border-radius: 16px; background: #0b1120; }
+        .leaflet-container { border-radius: 16px; background: #f1f5f9; }
         .leaflet-tile-pane {
-          filter: brightness(1.25) contrast(1.15) saturate(0.55) hue-rotate(175deg);
+          filter: saturate(0.9) contrast(1.05) brightness(1.02);
         }
-        .fraud-attack-vector { animation: dash-flow 1s linear infinite; filter: drop-shadow(0 0 4px rgba(239,68,68,0.6)); }
+        .fraud-attack-vector { animation: dash-flow 1.2s linear infinite; filter: drop-shadow(0 0 3px rgba(239,68,68,0.4)); }
         @keyframes dash-flow { to { stroke-dashoffset: -12; } }
         .fraud-threat-dot { animation: travel-threat 2.5s ease-in-out infinite; }
         @keyframes travel-threat {
@@ -528,39 +528,39 @@ export default function FraudHeatmap() {
           100% { opacity: 0; }
         }
         .fraud-radar-scan {
-          background: linear-gradient(180deg, transparent 0%, rgba(16,185,129,0.12) 50%, transparent 100%);
-          animation: radar-scan 3.5s linear infinite;
-          filter: drop-shadow(0 0 12px rgba(16,185,129,0.3));
+          background: linear-gradient(180deg, transparent 0%, rgba(16,185,129,0.06) 50%, transparent 100%);
+          animation: radar-scan 4s linear infinite;
         }
         @keyframes radar-scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
         .fraud-grid-bg {
           background-image:
-            linear-gradient(rgba(56,189,248,0.07) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(56,189,248,0.07) 1px, transparent 1px);
+            linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px);
           background-size: 48px 48px;
         }
         .fraud-scanlines {
-          background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 3px);
+          background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.4) 4px);
           pointer-events: none;
+          opacity: 0.3;
         }
         .fraud-vignette {
-          background: radial-gradient(circle at center, transparent 40%, rgba(2,6,23,0.55) 100%);
+          background: radial-gradient(circle at center, transparent 50%, rgba(15,23,42,0.08) 100%);
           pointer-events: none;
         }
-        .fraud-tactical-frame {
-          box-shadow: inset 0 0 80px rgba(6,182,212,0.08), 0 0 0 1px rgba(56,189,248,0.2);
+        .fraud-light-frame {
+          box-shadow: inset 0 0 60px rgba(255,255,255,0.5), 0 0 0 1px rgba(226,232,240,0.8);
         }
       `}</style>
 
       {/* Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Total Events', value: stats.total, icon: Activity, color: 'text-slate-100', bg: 'bg-slate-800/50', border: 'border-slate-700/50' },
-          { label: 'Critical', value: stats.critical, icon: Skull, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
-          { label: 'Suspicious', value: stats.suspicious, icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
-          { label: 'Monitor', value: stats.monitor, icon: Eye, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-          { label: 'Countries', value: stats.countries, icon: Globe, color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
-          { label: 'Critical %', value: `${criticalPct}%`, icon: TrendingUp, color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20' },
+          { label: 'Total Events', value: stats.total, icon: Activity, color: 'text-slate-700', bg: 'bg-white', border: 'border-slate-200', accent: 'bg-slate-100' },
+          { label: 'Critical', value: stats.critical, icon: Skull, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', accent: 'bg-rose-100' },
+          { label: 'Suspicious', value: stats.suspicious, icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', accent: 'bg-amber-100' },
+          { label: 'Monitor', value: stats.monitor, icon: Eye, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', accent: 'bg-emerald-100' },
+          { label: 'Countries', value: stats.countries, icon: Globe, color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-100', accent: 'bg-sky-100' },
+          { label: 'Critical %', value: `${criticalPct}%`, icon: TrendingUp, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', accent: 'bg-rose-100' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -568,13 +568,15 @@ export default function FraudHeatmap() {
               key={s.label}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`${s.bg} ${s.border} border rounded-xl p-3.5 flex items-center justify-between backdrop-blur-sm`}
+              className={`${s.bg} ${s.border} border rounded-2xl p-3.5 flex items-center justify-between shadow-sm hover:shadow-md transition-all`}
             >
               <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{s.label}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</p>
                 <p className={`text-xl font-bold mt-0.5 ${s.color}`}>{s.value}</p>
               </div>
-              <Icon className={`w-7 h-7 ${s.color} opacity-70`} />
+              <div className={`w-9 h-9 rounded-lg ${s.accent} flex items-center justify-center`}>
+                <Icon className={`w-4.5 h-4.5 ${s.color}`} />
+              </div>
             </motion.div>
           );
         })}
@@ -583,43 +585,37 @@ export default function FraudHeatmap() {
       {/* Map + Sidebar */}
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
         {/* Map */}
-        <div className="flex-1 relative rounded-2xl border border-cyan-500/20 overflow-hidden bg-slate-950 fraud-tactical-frame" style={{ minHeight: 420 }}>
+        <div className="flex-1 relative rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 fraud-light-frame shadow-sm" style={{ minHeight: 420 }}>
           <div ref={mapRef} className="absolute inset-0 rounded-2xl" />
 
           {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 z-[999]">
+            <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-[999]">
               <div className="flex flex-col items-center gap-3">
-                <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
-                <p className="text-sm text-slate-300 font-medium">Loading fraud intelligence...</p>
+                <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                <p className="text-sm text-slate-600 font-medium">Loading fraud intelligence...</p>
               </div>
             </div>
           )}
 
-          {/* Tactical overlays */}
+          {/* Subtle overlays */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-[400]">
             <div className="fraud-radar-scan absolute inset-x-0 h-24" />
-            <div className="absolute inset-0 fraud-grid-bg opacity-30" />
-            <div className="absolute inset-0 fraud-scanlines opacity-40" />
+            <div className="absolute inset-0 fraud-grid-bg opacity-20" />
             <div className="absolute inset-0 fraud-vignette" />
-            {/* Corner brackets */}
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-500/40 rounded-tl-lg" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyan-500/40 rounded-tr-lg" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-cyan-500/40 rounded-bl-lg" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyan-500/40 rounded-br-lg" />
           </div>
 
           {/* Top-left live badge */}
-          <div className="absolute top-3 left-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950/85 border border-cyan-500/30 backdrop-blur shadow-lg shadow-cyan-900/20">
+          <div className="absolute top-3 left-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/95 border border-slate-200 shadow-sm backdrop-blur">
             <span className={`relative flex h-2.5 w-2.5 ${isLive ? 'animate-pulse' : ''}`}>
-              <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${isLive ? 'bg-red-500' : 'bg-slate-500'}`} />
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isLive ? 'bg-red-500' : 'bg-slate-500'}`} />
+              <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${isLive ? 'bg-red-500' : 'bg-slate-400'}`} />
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isLive ? 'bg-red-500' : 'bg-slate-400'}`} />
             </span>
-            <Radio className={`w-3 h-3 ${isLive ? 'text-red-400' : 'text-slate-400'}`} />
-            <span className="text-[11px] font-bold text-cyan-50 tracking-wide">{isLive ? 'LIVE THREAT STREAM' : 'PAUSED'}</span>
+            <Radio className={`w-3 h-3 ${isLive ? 'text-red-500' : 'text-slate-400'}`} />
+            <span className="text-[11px] font-bold text-slate-700 tracking-wide">{isLive ? 'LIVE THREAT STREAM' : 'PAUSED'}</span>
           </div>
 
           {/* Top-center time filters */}
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1 p-1 rounded-xl bg-slate-950/85 border border-cyan-500/20 backdrop-blur shadow-lg shadow-cyan-900/10">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1 p-1 rounded-xl bg-white/95 border border-slate-200 shadow-sm backdrop-blur">
             {(['live', '1h', '24h', '7d', 'all'] as TimeFilter[]).map(f => (
               <button
                 key={f}
@@ -627,9 +623,9 @@ export default function FraudHeatmap() {
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
                   timeFilter === f
                     ? f === 'live'
-                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                      : 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/20'
-                    : 'text-slate-400 hover:text-cyan-100 hover:bg-cyan-950/40'
+                      ? 'bg-rose-500 text-white shadow-md'
+                      : 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                 }`}
               >
                 {f === 'all' ? 'ALL' : f.toUpperCase()}
@@ -641,10 +637,10 @@ export default function FraudHeatmap() {
           <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2">
             <button
               onClick={() => setIsLive(l => !l)}
-              className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-colors backdrop-blur ${
+              className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-colors bg-white/95 backdrop-blur shadow-sm ${
                 isLive
-                  ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-lg shadow-cyan-900/20'
-                  : 'bg-slate-950/85 border-cyan-500/20 text-cyan-100 hover:bg-cyan-950/30'
+                  ? 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
               {isLive ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
@@ -652,7 +648,7 @@ export default function FraudHeatmap() {
             </button>
             <button
               onClick={handleRefresh}
-              className="px-3 py-1.5 rounded-lg bg-slate-950/85 border border-cyan-500/20 text-[11px] font-bold text-cyan-100 hover:bg-cyan-950/30 transition-colors flex items-center gap-1.5 backdrop-blur"
+              className="px-3 py-1.5 rounded-lg bg-white/95 border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5 backdrop-blur shadow-sm"
             >
               <RefreshCw className="w-3 h-3" /> Refresh
             </button>
@@ -673,36 +669,36 @@ export default function FraudHeatmap() {
           </AnimatePresence>
 
           {/* Legend */}
-          <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-950/85 border border-cyan-500/20 backdrop-blur shadow-lg shadow-cyan-900/10">
+          <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-3 px-3 py-2 rounded-xl bg-white/95 border border-slate-200 shadow-sm backdrop-blur">
             {[
               { label: 'Critical', color: '#ef4444' },
               { label: 'Suspicious', color: '#f59e0b' },
               { label: 'Monitor', color: '#10b981' },
             ].map(l => (
               <div key={l.label} className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full border border-white/50" style={{ backgroundColor: l.color, boxShadow: `0 0 8px ${l.color}` }} />
-                <span className="text-[10px] text-cyan-50 font-medium">{l.label}</span>
+                <div className="w-2.5 h-2.5 rounded-full border border-white shadow-sm" style={{ backgroundColor: l.color, boxShadow: `0 0 6px ${l.color}80` }} />
+                <span className="text-[10px] text-slate-600 font-medium">{l.label}</span>
               </div>
             ))}
           </div>
 
           {/* Bottom-right timestamp */}
-          <div className="absolute bottom-3 right-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/85 border border-cyan-500/20 text-[10px] text-cyan-100 backdrop-blur shadow-lg shadow-cyan-900/10">
-            <Clock className="w-3 h-3 text-cyan-400" />
+          <div className="absolute bottom-3 right-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/95 border border-slate-200 text-[10px] text-slate-600 backdrop-blur shadow-sm">
+            <Clock className="w-3 h-3 text-slate-400" />
             Last: {lastRefresh.toLocaleTimeString('en-IN')}
           </div>
 
-          {/* Tactical status strip */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] hidden sm:flex items-center gap-4 px-4 py-1.5 rounded-xl bg-slate-950/85 border border-cyan-500/20 backdrop-blur text-[10px] font-mono text-cyan-200 shadow-lg shadow-cyan-900/10">
+          {/* Status strip */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] hidden sm:flex items-center gap-4 px-4 py-1.5 rounded-xl bg-white/95 border border-slate-200 backdrop-blur text-[10px] font-mono text-slate-500 shadow-sm">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               SYS: ONLINE
             </span>
-            <span className="text-cyan-700">|</span>
+            <span className="text-slate-300">|</span>
             <span>LAT: 22.5937° N</span>
-            <span className="text-cyan-700">|</span>
+            <span className="text-slate-300">|</span>
             <span>LON: 78.9629° E</span>
-            <span className="text-cyan-700">|</span>
+            <span className="text-slate-300">|</span>
             <span>ZOOM: 5</span>
           </div>
         </div>
@@ -711,35 +707,35 @@ export default function FraudHeatmap() {
         <div className="w-full lg:w-80 shrink-0 flex flex-col gap-3 min-h-0">
           {/* Top Countries */}
           {countryStats.length > 0 && (
-            <div className="bg-slate-900/60 rounded-2xl border border-slate-700/50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                  <BarChart3 className="w-3.5 h-3.5 text-sky-400" /> Top Countries
+                <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <BarChart3 className="w-3.5 h-3.5 text-blue-500" /> Top Countries
                 </h3>
-                <span className="text-[9px] text-slate-500">{filteredEvents.filter(e => e.location?.country).length} events</span>
+                <span className="text-[9px] text-slate-400">{filteredEvents.filter(e => e.location?.country).length} events</span>
               </div>
               <div className="space-y-2.5">
                 {countryStats.map((c, i) => {
                   const pct = Math.round((c.count / Math.max(...countryStats.map(x => x.count))) * 100);
                   return (
                     <div key={c.country} className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-slate-500 w-4 text-right">{i + 1}</span>
+                      <span className="text-[10px] font-bold text-slate-400 w-4 text-right">{i + 1}</span>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-0.5">
-                          <span className="text-[11px] font-semibold text-slate-200">{c.country}</span>
+                          <span className="text-[11px] font-semibold text-slate-700">{c.country}</span>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-bold text-slate-400">{c.count}</span>
+                            <span className="text-[10px] font-bold text-slate-500">{c.count}</span>
                             {c.critical > 0 && (
-                              <span className="text-[9px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded font-bold">{c.critical}</span>
+                              <span className="text-[9px] text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded font-bold">{c.critical}</span>
                             )}
                           </div>
                         </div>
-                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${pct}%` }}
                             transition={{ duration: 0.5, delay: i * 0.03 }}
-                            className="h-full rounded-full bg-gradient-to-r from-sky-500 to-emerald-500"
+                            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
                           />
                         </div>
                       </div>
@@ -751,13 +747,13 @@ export default function FraudHeatmap() {
           )}
 
           {/* Recent Events */}
-          <div className="bg-slate-900/60 rounded-2xl border border-slate-700/50 flex flex-col flex-1 min-h-[280px] overflow-hidden backdrop-blur-sm">
-            <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-slate-200 flex flex-col flex-1 min-h-[280px] overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-slate-200">Events</h3>
+                <Activity className="w-4 h-4 text-emerald-500" />
+                <h3 className="text-sm font-bold text-slate-700">Events</h3>
               </div>
-              <span className="text-[10px] text-slate-500">{filteredEvents.length}</span>
+              <span className="text-[10px] text-slate-400">{filteredEvents.length}</span>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
               {filteredEvents.slice(0, 50).map((e, idx) => (
@@ -767,32 +763,32 @@ export default function FraudHeatmap() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.01 }}
                   onClick={() => setSelectedEvent(e)}
-                  className="w-full text-left p-2.5 rounded-xl hover:bg-slate-800/60 transition-colors border border-transparent hover:border-slate-700 group"
+                  className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 group"
                 >
                   <div className="flex items-start gap-2.5">
                     <div
-                      className="w-2 h-2 rounded-full ring-2 ring-white/20 flex-shrink-0 mt-1.5"
+                      className="w-2 h-2 rounded-full ring-2 ring-white flex-shrink-0 mt-1.5"
                       style={{ backgroundColor: riskColor(e.riskScore), boxShadow: `0 0 8px ${riskColor(e.riskScore)}` }}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-bold text-slate-200 group-hover:text-white transition-colors truncate">{e.user_name || 'Unknown'}</span>
+                        <span className="text-[11px] font-bold text-slate-700 group-hover:text-slate-900 transition-colors truncate">{e.user_name || 'Unknown'}</span>
                         <span className="text-[10px] font-bold shrink-0" style={{ color: riskColor(e.riskScore) }}>{e.riskScore}</span>
                       </div>
                       <p className="text-[10px] text-slate-500 truncate">{e.action} · {e.location?.city || e.ip_address}</p>
-                      <p className="text-[9px] text-slate-600 mt-0.5">{timeAgo(e.created_at)}</p>
+                      <p className="text-[9px] text-slate-400 mt-0.5">{timeAgo(e.created_at)}</p>
                     </div>
                   </div>
                 </motion.button>
               ))}
               {filteredEvents.length === 0 && !loading && (
-                <div className="flex flex-col items-center gap-2 py-12 text-slate-500">
+                <div className="flex flex-col items-center gap-2 py-12 text-slate-400">
                   <ShieldAlert className="w-8 h-8" />
                   <p className="text-sm font-medium">No events in this period</p>
                 </div>
               )}
             </div>
-            <div className="p-3 border-t border-slate-700/50 text-[10px] text-slate-500 text-center">
+            <div className="p-3 border-t border-slate-100 text-[10px] text-slate-400 text-center">
               Last: {lastRefresh.toLocaleTimeString('en-IN')}
             </div>
           </div>
@@ -807,7 +803,7 @@ export default function FraudHeatmap() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[10000]"
+              className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-[10000]"
               onClick={() => setSelectedEvent(null)}
             />
             <motion.div
@@ -817,92 +813,92 @@ export default function FraudHeatmap() {
               className="fixed inset-0 z-[10001] flex items-center justify-center p-4 pointer-events-none"
             >
               <div
-                className="bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden"
+                className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden"
                 onClick={e => e.stopPropagation()}
               >
-                <div className="relative px-6 py-5 border-b border-slate-700/50 bg-gradient-to-r from-slate-900 to-slate-800/50">
+                <div className="relative px-6 py-5 border-b border-slate-100 bg-slate-50/50">
                   <button
                     onClick={() => setSelectedEvent(null)}
-                    className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center border border-white/10"
-                      style={{ backgroundColor: `${riskColor(selectedEvent.riskScore)}15` }}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center border border-slate-100"
+                      style={{ backgroundColor: `${riskColor(selectedEvent.riskScore)}12` }}
                     >
                       {selectedEvent.riskScore >= 80
-                        ? <Skull className="w-6 h-6 text-red-500" />
+                        ? <Skull className="w-6 h-6 text-rose-500" />
                         : <AlertTriangle className="w-6 h-6 text-amber-500" />
                       }
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono text-slate-500">EVT-{String(selectedEvent.id).padStart(4, '0')}</span>
+                        <span className="text-[10px] font-mono text-slate-400">EVT-{String(selectedEvent.id).padStart(4, '0')}</span>
                         <span
                           className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
-                          style={{ backgroundColor: `${riskColor(selectedEvent.riskScore)}20`, color: riskColor(selectedEvent.riskScore) }}
+                          style={{ backgroundColor: `${riskColor(selectedEvent.riskScore)}12`, color: riskColor(selectedEvent.riskScore) }}
                         >
                           {riskLabel(selectedEvent.riskScore)}
                         </span>
                       </div>
-                      <h3 className="text-lg font-bold text-slate-100">{selectedEvent.user_name || 'Unknown'}</h3>
+                      <h3 className="text-lg font-bold text-slate-800">{selectedEvent.user_name || 'Unknown'}</h3>
                     </div>
                   </div>
                   <div className="mt-3 flex items-baseline gap-2">
                     <span className="text-3xl font-bold" style={{ color: riskColor(selectedEvent.riskScore) }}>
                       {selectedEvent.riskScore}
                     </span>
-                    <span className="text-sm text-slate-400">/100 Risk Score</span>
+                    <span className="text-sm text-slate-500">/100 Risk Score</span>
                   </div>
                 </div>
 
                 <div className="p-5 space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                      <p className="text-[10px] text-slate-500 uppercase mb-1">Action</p>
-                      <p className="text-sm font-semibold text-slate-200">{selectedEvent.action}</p>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <p className="text-[10px] text-slate-400 uppercase mb-1">Action</p>
+                      <p className="text-sm font-semibold text-slate-700">{selectedEvent.action}</p>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                      <p className="text-[10px] text-slate-500 uppercase mb-1">Amount</p>
-                      <p className="text-sm font-semibold text-slate-200">₹{(selectedEvent.parsedNewValue?.amount || 0).toLocaleString('en-IN')}</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                      <p className="text-[10px] text-slate-500 uppercase mb-1">Location</p>
-                      <p className="text-sm font-semibold text-slate-200">{selectedEvent.location?.city}, {selectedEvent.location?.country}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                      <p className="text-[10px] text-slate-500 uppercase mb-1">Provider</p>
-                      <p className="text-sm font-semibold text-slate-200">{selectedEvent.location?.isp || 'N/A'}</p>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <p className="text-[10px] text-slate-400 uppercase mb-1">Amount</p>
+                      <p className="text-sm font-semibold text-slate-700">₹{(selectedEvent.parsedNewValue?.amount || 0).toLocaleString('en-IN')}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                      <p className="text-[10px] text-slate-500 uppercase mb-1">IP Address</p>
-                      <p className="text-sm font-mono text-slate-200">{selectedEvent.ip_address}</p>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <p className="text-[10px] text-slate-400 uppercase mb-1">Location</p>
+                      <p className="text-sm font-semibold text-slate-700">{selectedEvent.location?.city}, {selectedEvent.location?.country}</p>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                      <p className="text-[10px] text-slate-500 uppercase mb-1">Status</p>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <p className="text-[10px] text-slate-400 uppercase mb-1">Provider</p>
+                      <p className="text-sm font-semibold text-slate-700">{selectedEvent.location?.isp || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <p className="text-[10px] text-slate-400 uppercase mb-1">IP Address</p>
+                      <p className="text-sm font-mono text-slate-700">{selectedEvent.ip_address}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <p className="text-[10px] text-slate-400 uppercase mb-1">Status</p>
                       <p className="text-sm font-semibold" style={{ color: selectedEvent.parsedNewValue?.status === 'BLOCKED' ? '#ef4444' : selectedEvent.parsedNewValue?.status === 'FLAGGED' ? '#f59e0b' : '#10b981' }}>
                         {selectedEvent.parsedNewValue?.status || 'ALLOWED'}
                       </p>
                     </div>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-between">
-                    <p className="text-[10px] text-slate-500 uppercase">Timestamp</p>
-                    <p className="text-xs font-mono text-slate-300">{new Date(selectedEvent.created_at).toLocaleString('en-IN')}</p>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <p className="text-[10px] text-slate-400 uppercase">Timestamp</p>
+                    <p className="text-xs font-mono text-slate-600">{new Date(selectedEvent.created_at).toLocaleString('en-IN')}</p>
                   </div>
                 </div>
 
-                <div className="p-5 border-t border-slate-700/50 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <Filter className="w-4 h-4 text-emerald-400" />
-                    Method: <span className="text-slate-200 font-semibold">{selectedEvent.parsedNewValue?.method || 'NORMAL'}</span>
+                <div className="p-5 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Filter className="w-4 h-4 text-emerald-500" />
+                    Method: <span className="text-slate-700 font-semibold">{selectedEvent.parsedNewValue?.method || 'NORMAL'}</span>
                   </div>
-                  <button className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors">
+                  <button className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors">
                     Investigate
                   </button>
                 </div>

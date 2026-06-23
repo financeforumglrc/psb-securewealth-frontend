@@ -521,7 +521,7 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
               {apiLoading && filteredLogs.length === 0 && (
                 <tr><td colSpan={7} className="px-5 py-14 text-center">
                   <div className="flex flex-col items-center gap-3">
-                    <RefreshCw className="w-7 h-7 text-slate-300 dark:text-slate-600 animate-spin" />
+                    <RefreshCw className="w-7 h-7 text-slate-400 dark:text-slate-600 animate-spin" />
                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Loading audit logs from server...</p>
                   </div>
                 </td></tr>
@@ -547,7 +547,7 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
               {!apiLoading && filteredLogs.length === 0 && (
                 <tr><td colSpan={7} className="px-5 py-14 text-center dark:text-slate-500">
                   <div className="flex flex-col items-center gap-2">
-                    <Search className="w-8 h-8 text-slate-300" />
+                    <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" />
                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No audit logs match your filters</p>
                   </div>
                 </td></tr>
@@ -561,13 +561,12 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECURITY OPS TAB — Advanced Zero-Trust Command Center
+   SECURITY OPS TAB — Clean Light Theme
    ═══════════════════════════════════════════════════════════════ */
 function SecurityOpsTab() {
   const { state, dispatch } = useSecurity();
   const [simulatedAttacks, setSimulatedAttacks] = useState<{id: number; type: string; blocked: boolean; time: string}[]>([]);
 
-  // Live attack simulation feed
   useEffect(() => {
     const attackTypes = ['Credential Stuffing', 'SQL Injection', 'MITM Attempt', 'Device Spoofing', 'Behavioral Anomaly', 'Phishing Link'];
     const interval = setInterval(() => {
@@ -586,9 +585,9 @@ function SecurityOpsTab() {
 
   const features = [
     { id: 'tpm', label: 'TPM Attestation', sub: 'Hardware root of trust', active: state.tpmAttested, icon: MicrochipIcon, color: 'emerald' },
-    { id: 'passkey', label: 'FIDO2 Passkey', sub: 'Phishing-resistant auth', active: state.passkeyRegistered, icon: Fingerprint, color: 'cyan' },
+    { id: 'passkey', label: 'FIDO2 Passkey', sub: 'Phishing-resistant auth', active: state.passkeyRegistered, icon: Fingerprint, color: 'sky' },
     { id: 'enclave', label: 'Secure Enclave', sub: 'TEE-isolated keys', active: state.enclaveVerified, icon: Lock, color: 'violet' },
-    { id: 'pq', label: 'PQ Tunnel', sub: 'ML-KEM-768 encryption', active: state.pqTunnelActive, icon: ScanLine, color: 'fuchsia' },
+    { id: 'pq', label: 'PQ Tunnel', sub: 'ML-KEM-768 encryption', active: state.pqTunnelActive, icon: ScanLine, color: 'indigo' },
     { id: 'behavioral', label: 'Behavioral Bio', sub: 'Anomaly detection', active: state.behavioralBaseline !== null && state.behavioralDeviation < 0.3, icon: Activity, color: 'amber' },
     { id: 'did', label: 'Decentralized ID', sub: 'Verifiable credentials', active: state.didIssued, icon: Globe, color: 'teal' },
     { id: 'fraud', label: 'Fraud Engine', sub: 'AI risk scoring', active: true, icon: Search, color: 'orange' },
@@ -607,13 +606,24 @@ function SecurityOpsTab() {
   ].filter(Boolean);
 
   const scoreConfig = state.trustScore >= 80
-    ? { label: 'High Trust', text: 'text-emerald-400', bar: 'bg-emerald-500', glow: 'shadow-emerald-500/30', ring: 'text-emerald-500' }
+    ? { label: 'High Trust', text: 'text-emerald-600', bar: 'bg-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-200' }
     : state.trustScore >= 50
-    ? { label: 'Moderate Trust', text: 'text-amber-400', bar: 'bg-amber-500', glow: 'shadow-amber-500/30', ring: 'text-amber-500' }
-    : { label: 'Low Trust', text: 'text-rose-400', bar: 'bg-rose-500', glow: 'shadow-rose-500/30', ring: 'text-rose-500' };
+    ? { label: 'Moderate Trust', text: 'text-amber-600', bar: 'bg-amber-500', bg: 'bg-amber-50', border: 'border-amber-200' }
+    : { label: 'Low Trust', text: 'text-rose-600', bar: 'bg-rose-500', bg: 'bg-rose-50', border: 'border-rose-200' };
 
   const activeCount = features.filter(f => f.active).length;
   const activePct = Math.round((activeCount / features.length) * 100);
+
+  const colorMap: Record<string, {bg: string; border: string; text: string}> = {
+    emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600' },
+    sky: { bg: 'bg-sky-50', border: 'border-sky-200', text: 'text-sky-600' },
+    violet: { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-600' },
+    indigo: { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-600' },
+    amber: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' },
+    teal: { bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-teal-600' },
+    orange: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-600' },
+    rose: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-600' },
+  };
 
   return (
     <motion.div key="security" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6 max-w-[1600px]">
@@ -621,73 +631,59 @@ function SecurityOpsTab() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-cyan-400" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Security Operations Center</h2>
+            <Shield className="w-5 h-5 text-slate-700" />
+            <h2 className="text-xl font-bold text-slate-900">Security Operations Center</h2>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Zero-trust architecture with 8 layers of active defence</p>
+          <p className="text-sm text-slate-500 mt-0.5">Zero-trust architecture with 8 layers of active defence</p>
         </div>
-        <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-900/40 border border-slate-700/50 backdrop-blur">
-          <span className="text-[10px] font-bold text-slate-500 uppercase">Trust Score</span>
+        <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white border border-slate-200 shadow-sm">
+          <span className="text-[10px] font-bold text-slate-400 uppercase">Trust Score</span>
           <span className={`text-2xl font-bold ${scoreConfig.text}`}>{state.trustScore}</span>
-          <span className="text-xs text-slate-500">/100</span>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${scoreConfig.text.replace('text', 'bg')}/10 border ${scoreConfig.text.replace('text', 'border')}/20`}>{scoreConfig.label}</span>
+          <span className="text-xs text-slate-400">/100</span>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${scoreConfig.bg} ${scoreConfig.text} border ${scoreConfig.border}`}>{scoreConfig.label}</span>
         </div>
       </div>
 
-      {/* Top row: Trust gauge + active layers */}
+      {/* Top row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Trust Score Gauge */}
-        <div className="lg:col-span-1 bg-slate-900/40 rounded-2xl border border-slate-700/50 p-5 backdrop-blur-sm">
-          <h3 className="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-cyan-400" /> Platform Trust Score
+        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-emerald-500" /> Platform Trust Score
           </h3>
           <div className="relative w-44 h-44 mx-auto">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="#1e293b" strokeWidth="8" />
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#f1f5f9" strokeWidth="8" />
               <circle
                 cx="50" cy="50" r="42" fill="none"
                 stroke="currentColor"
                 strokeWidth="8"
                 strokeLinecap="round"
                 strokeDasharray={`${state.trustScore * 2.64} 264`}
-                className={`${scoreConfig.ring} transition-all duration-1000 drop-shadow-lg`}
+                className={`${scoreConfig.text} transition-all duration-1000`}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className={`text-4xl font-bold ${scoreConfig.text}`}>{state.trustScore}</span>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">{scoreConfig.label}</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">{scoreConfig.label}</span>
             </div>
           </div>
-          <div className="mt-4 h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div className={`h-full ${scoreConfig.bar} rounded-full transition-all duration-500 ${scoreConfig.glow} shadow-lg`} style={{ width: `${state.trustScore}%` }} />
-          </div>
-          <div className="flex items-center justify-between mt-2 text-[10px] text-slate-500 font-medium">
-            <span>Low trust</span>
-            <span>High trust</span>
+          <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className={`h-full ${scoreConfig.bar} rounded-full transition-all duration-500`} style={{ width: `${state.trustScore}%` }} />
           </div>
         </div>
 
         {/* Security Layers */}
-        <div className="lg:col-span-2 bg-slate-900/40 rounded-2xl border border-slate-700/50 p-5 backdrop-blur-sm">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-cyan-400" /> Active Security Layers
+            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-500" /> Active Security Layers
             </h3>
-            <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded border border-cyan-500/20">{activeCount}/{features.length} ACTIVE</span>
+            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">{activeCount}/{features.length} ACTIVE</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {features.map((f, i) => {
               const Icon = f.icon;
-              const colorMap: Record<string, {bg: string; border: string; text: string; glow: string}> = {
-                emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', glow: 'shadow-emerald-500/20' },
-                cyan: { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', text: 'text-cyan-400', glow: 'shadow-cyan-500/20' },
-                violet: { bg: 'bg-violet-500/10', border: 'border-violet-500/20', text: 'text-violet-400', glow: 'shadow-violet-500/20' },
-                fuchsia: { bg: 'bg-fuchsia-500/10', border: 'border-fuchsia-500/20', text: 'text-fuchsia-400', glow: 'shadow-fuchsia-500/20' },
-                amber: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', glow: 'shadow-amber-500/20' },
-                teal: { bg: 'bg-teal-500/10', border: 'border-teal-500/20', text: 'text-teal-400', glow: 'shadow-teal-500/20' },
-                orange: { bg: 'bg-orange-500/10', border: 'border-orange-500/20', text: 'text-orange-400', glow: 'shadow-orange-500/20' },
-                rose: { bg: 'bg-rose-500/10', border: 'border-rose-500/20', text: 'text-rose-400', glow: 'shadow-rose-500/20' },
-              };
               const c = colorMap[f.color];
               return (
                 <motion.div
@@ -695,13 +691,13 @@ function SecurityOpsTab() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.04 }}
-                  className={`relative p-3 rounded-xl border ${f.active ? c.border : 'border-slate-700/50'} ${f.active ? c.bg : 'bg-slate-800/30'} ${f.active ? `shadow-lg ${c.glow}` : ''} transition-all hover:brightness-110`}
+                  className={`p-3 rounded-xl border ${f.active ? c.border : 'border-slate-200'} ${f.active ? c.bg : 'bg-slate-50'} transition-all hover:shadow-sm`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <Icon className={`w-5 h-5 ${f.active ? c.text : 'text-slate-500'}`} />
-                    <span className={`w-2 h-2 rounded-full ${f.active ? 'bg-emerald-400 animate-pulse shadow-lg shadow-emerald-400/50' : 'bg-slate-600'}`} />
+                    <Icon className={`w-5 h-5 ${f.active ? c.text : 'text-slate-400'}`} />
+                    <span className={`w-2 h-2 rounded-full ${f.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
                   </div>
-                  <p className={`text-xs font-bold ${f.active ? 'text-slate-100' : 'text-slate-500'}`}>{f.label}</p>
+                  <p className={`text-xs font-bold ${f.active ? 'text-slate-800' : 'text-slate-400'}`}>{f.label}</p>
                   <p className="text-[10px] text-slate-500 mt-0.5">{f.sub}</p>
                 </motion.div>
               );
@@ -710,55 +706,55 @@ function SecurityOpsTab() {
         </div>
       </div>
 
-      {/* Middle row: Admin controls + Live attack simulation */}
+      {/* Middle row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Admin Controls */}
-        <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 p-5 backdrop-blur-sm">
-          <h3 className="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-cyan-400" /> Incident Response Controls
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-slate-700" /> Incident Response Controls
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button onClick={() => dispatch({ type: 'UNFREEZE_ACCOUNT' })} disabled={!state.accountFrozen}
-              className="px-4 py-3 rounded-xl text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 disabled:opacity-30 hover:bg-emerald-500/20 transition-colors flex items-center gap-2">
+              className="px-4 py-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 disabled:opacity-40 hover:bg-emerald-100 transition-colors flex items-center gap-2">
               <Unlock className="w-4 h-4" /> Unfreeze Account
             </button>
             <button onClick={() => dispatch({ type: 'HONEYTOKEN_RESET' })} disabled={!state.honeytokenTriggered}
-              className="px-4 py-3 rounded-xl text-xs font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400 disabled:opacity-30 hover:bg-rose-500/20 transition-colors flex items-center gap-2">
+              className="px-4 py-3 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700 disabled:opacity-40 hover:bg-rose-100 transition-colors flex items-center gap-2">
               <ShieldAlert className="w-4 h-4" /> Reset Honeytoken
             </button>
             <button onClick={() => dispatch({ type: 'TRAP_RESET' })} disabled={!state.trapTriggered}
-              className="px-4 py-3 rounded-xl text-xs font-bold bg-amber-500/10 border border-amber-500/20 text-amber-400 disabled:opacity-30 hover:bg-amber-500/20 transition-colors flex items-center gap-2">
+              className="px-4 py-3 rounded-xl text-xs font-bold bg-amber-50 border border-amber-200 text-amber-700 disabled:opacity-40 hover:bg-amber-100 transition-colors flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" /> Reset Trap
             </button>
             <button onClick={() => dispatch({ type: 'EBPF_ALERT', alert: '' })}
-              className="px-4 py-3 rounded-xl text-xs font-bold bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-colors flex items-center gap-2">
+              className="px-4 py-3 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-2">
               <X className="w-4 h-4" /> Clear Threat
             </button>
           </div>
-          <div className="mt-4 p-3 rounded-xl bg-slate-800/50 border border-slate-700/30">
-            <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
               <span>Defence Coverage</span>
-              <span className="text-cyan-400 font-bold">{activePct}%</span>
+              <span className="text-emerald-600 font-bold">{activePct}%</span>
             </div>
-            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${activePct}%` }}
                 transition={{ duration: 1 }}
-                className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500"
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-sky-500"
               />
             </div>
           </div>
         </div>
 
         {/* Live Attack Simulation */}
-        <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
-          <div className="px-5 py-4 border-b border-slate-700/50 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <Radio className="w-4 h-4 text-red-400 animate-pulse" /> Live Threat Interception
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <Radio className="w-4 h-4 text-rose-500 animate-pulse" /> Live Threat Interception
             </h3>
-            <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               AI SHIELD ACTIVE
             </span>
           </div>
@@ -771,42 +767,36 @@ function SecurityOpsTab() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ delay: idx * 0.02 }}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/30"
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${attack.blocked ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
-                      {attack.blocked ? <Shield className="w-4 h-4 text-emerald-400" /> : <Skull className="w-4 h-4 text-red-400" />}
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${attack.blocked ? 'bg-emerald-50 border border-emerald-200' : 'bg-rose-50 border border-rose-200'}`}>
+                      {attack.blocked ? <Shield className="w-4 h-4 text-emerald-600" /> : <Skull className="w-4 h-4 text-rose-600" />}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-200">{attack.type}</p>
-                      <p className="text-[10px] text-slate-500">{attack.time}</p>
+                      <p className="text-xs font-bold text-slate-800">{attack.type}</p>
+                      <p className="text-[10px] text-slate-400">{attack.time}</p>
                     </div>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${attack.blocked ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${attack.blocked ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
                     {attack.blocked ? 'BLOCKED' : 'ALERT'}
                   </span>
                 </motion.div>
               ))}
             </AnimatePresence>
-            {simulatedAttacks.length === 0 && (
-              <div className="flex flex-col items-center gap-2 py-10 text-slate-500">
-                <Shield className="w-8 h-8 opacity-50" />
-                <p className="text-xs">No active threats detected</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
 
       {/* Event feed */}
-      <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
-        <div className="px-5 py-4 border-b border-slate-700/50 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-cyan-400" /> Recent Security Events
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-slate-500" /> Recent Security Events
           </h3>
-          <span className="text-[10px] text-slate-500">{events.length} events</span>
+          <span className="text-[10px] text-slate-400">{events.length} events</span>
         </div>
-        <div className="divide-y divide-slate-800/50">
+        <div className="divide-y divide-slate-100">
           {events.length > 0 ? events.map((e, i) => {
             const ev = e as any;
             const Icon = ev.icon;
@@ -816,23 +806,23 @@ function SecurityOpsTab() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="px-5 py-3 flex items-start gap-3 hover:bg-slate-800/30 transition-colors"
+                className="px-5 py-3 flex items-start gap-3 hover:bg-slate-50 transition-colors"
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                  ev.type === 'good' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                  ev.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
-                  'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                  ev.type === 'good' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
+                  ev.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-600' :
+                  'bg-rose-50 border-rose-200 text-rose-600'
                 }`}>
                   <Icon className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-slate-200">{ev.text}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{ev.time}</p>
+                  <p className="text-xs font-bold text-slate-800">{ev.text}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{ev.time}</p>
                 </div>
               </motion.div>
             );
           }) : (
-            <div className="px-5 py-10 text-center text-slate-500 text-sm">No recent security events</div>
+            <div className="px-5 py-10 text-center text-slate-400 text-sm">No recent security events</div>
           )}
         </div>
       </div>
@@ -857,32 +847,31 @@ function LoginScreen({ onLogin, loading, error }: { onLogin: (id: string, pw: st
   const [pw, setPw] = useState('');
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-slate-50">
       {/* Left Panel — Branding */}
-      <div className="hidden lg:flex lg:w-5/12 xl:w-1/3 relative flex-col justify-between p-12 overflow-hidden"
-        style={{ background: 'linear-gradient(160deg, #064e3b 0%, #065f46 40%, #0f172a 100%)' }}>
-        <div className="absolute inset-0 opacity-20">
+      <div className="hidden lg:flex lg:w-5/12 xl:w-1/3 relative flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-slate-50">
+        <div className="absolute inset-0 opacity-40">
           <svg className="w-full h-full" viewBox="0 0 400 800" preserveAspectRatio="none">
-            <defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" /></pattern></defs>
+            <defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(16,185,129,0.08)" strokeWidth="0.5" /></pattern></defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
           </svg>
         </div>
-        <div className="absolute top-20 right-10 w-72 h-72 rounded-full bg-emerald-400/10 blur-[80px]" />
-        <div className="absolute bottom-40 left-0 w-96 h-96 rounded-full bg-teal-500/10 blur-[100px]" />
+        <div className="absolute top-20 right-10 w-72 h-72 rounded-full bg-emerald-200/30 blur-[80px]" />
+        <div className="absolute bottom-40 left-0 w-96 h-96 rounded-full bg-teal-200/20 blur-[100px]" />
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-16">
-            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
-              <Landmark className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-white/80 backdrop-blur border border-emerald-100 shadow-sm flex items-center justify-center">
+              <Landmark className="w-6 h-6 text-emerald-700" />
             </div>
             <div>
-              <h2 className="text-white font-bold text-lg tracking-tight">PSB SecureWealth</h2>
-              <p className="text-emerald-200/60 text-[11px] font-medium">Internet Banking Portal</p>
+              <h2 className="text-slate-800 font-bold text-lg tracking-tight">PSB SecureWealth</h2>
+              <p className="text-slate-500 text-[11px] font-medium">Internet Banking Portal</p>
             </div>
           </div>
           <div className="space-y-6 max-w-sm">
-            <h1 className="text-4xl font-bold text-white leading-tight">Banking Control Center</h1>
-            <p className="text-emerald-100/50 text-sm leading-relaxed">
+            <h1 className="text-4xl font-bold text-slate-900 leading-tight">Banking Control Center</h1>
+            <p className="text-slate-500 text-sm leading-relaxed">
               Secure administrative access for authorized personnel only. All login attempts are monitored and logged for compliance.
             </p>
           </div>
@@ -893,65 +882,65 @@ function LoginScreen({ onLogin, loading, error }: { onLogin: (id: string, pw: st
             { icon: Lock, text: '256-bit SSL Encryption' },
             { icon: Activity, text: 'Real-time System Monitoring' },
           ].map((item) => (
-            <div key={item.text} className="flex items-center gap-3 text-emerald-100/60 text-sm">
-              <item.icon className="w-4 h-4 text-emerald-400" /> {item.text}
+            <div key={item.text} className="flex items-center gap-3 text-slate-600 text-sm">
+              <item.icon className="w-4 h-4 text-emerald-600" /> {item.text}
             </div>
           ))}
-          <p className="text-[11px] text-emerald-200/30 pt-4">© 2025 Punjab & Sind Bank. Government of India Undertaking.</p>
+          <p className="text-[11px] text-slate-400 pt-4">© 2025 Punjab & Sind Bank. Government of India Undertaking.</p>
         </div>
       </div>
 
       {/* Right Panel — Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 relative" style={{ background: '#0b0f19' }}>
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/[0.03] rounded-full blur-[120px]" />
+      <div className="flex-1 flex items-center justify-center p-6 relative">
+        <div className="absolute inset-0 opacity-60">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/[0.04] rounded-full blur-[120px]" />
         </div>
         <a href="/"
-          className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-emerald-400 hover:bg-white/5 border border-slate-700/50 hover:border-emerald-500/30 transition-all z-20">
+          className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-emerald-700 hover:bg-white border border-slate-200 hover:border-emerald-200 transition-all z-20 bg-white/80 backdrop-blur shadow-sm">
           <LayoutDashboard className="w-3.5 h-3.5" /> Back to Website
         </a>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md relative z-10">
           <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <Landmark className="w-5 h-5 text-emerald-400" />
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+              <Landmark className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-white font-bold text-sm">PSB SecureWealth</h2>
-              <p className="text-slate-500 text-[10px]">Admin Portal</p>
+              <h2 className="text-slate-800 font-bold text-sm">PSB SecureWealth</h2>
+              <p className="text-slate-400 text-[10px]">Admin Portal</p>
             </div>
           </div>
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
-            <p className="text-slate-400 text-sm">Enter your admin credentials to access the control center.</p>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome back</h1>
+            <p className="text-slate-500 text-sm">Enter your admin credentials to access the control center.</p>
           </div>
           <div className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Admin ID</label>
+              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Admin ID</label>
               <input type="text" value={id} onChange={(e) => setId(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && onLogin(id, pw)}
                 placeholder="TEAM EXCELLENT MINDS"
-                className="w-full px-4 py-3.5 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all" />
+                className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Password</label>
+              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Password</label>
               <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && onLogin(id, pw)}
                 placeholder="Enter your password"
-                className="w-full px-4 py-3.5 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all" />
+                className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all" />
             </div>
             <AnimatePresence>
               {error && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium">
                   <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
                 </motion.div>
               )}
             </AnimatePresence>
             <button onClick={() => onLogin(id, pw)} disabled={loading}
-              className="w-full py-3.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
+              className="w-full py-3.5 rounded-xl font-bold text-white bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/15">
               {loading ? <> <RefreshCw className="w-4 h-4 animate-spin" /> Initializing Secure Connection...</> : <> <Lock className="w-4 h-4" /> Secure Login</>}
             </button>
           </div>
-          <div className="mt-8 pt-6 border-t border-slate-800 text-center">
-            <p className="text-[11px] text-slate-600">Authorized personnel only. Unauthorized access is a punishable offence under IT Act, 2000.</p>
+          <div className="mt-8 pt-6 border-t border-slate-200 text-center">
+            <p className="text-[11px] text-slate-400">Authorized personnel only. Unauthorized access is a punishable offence under IT Act, 2000.</p>
           </div>
         </motion.div>
       </div>
@@ -975,6 +964,12 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null);
   const { state: securityState } = useSecurity();
+
+  // Admin portal is always rendered in a premium light palette
+  useEffect(() => {
+    document.documentElement.classList.remove('dark');
+    document.documentElement.style.colorScheme = 'light';
+  }, []);
 
   const handleLogin = async (adminId: string, password: string) => {
     setLoginError('');
@@ -1625,7 +1620,7 @@ export default function AdminDashboard() {
                               <div className="flex items-center gap-1 whitespace-nowrap">
                                 {c.l}
                                 {c.sort && (
-                                  sortKey === c.k ? (sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-emerald-600" /> : <ChevronDown className="w-3 h-3 text-emerald-600" />) : <ChevronUp className="w-3 h-3 text-slate-300" />
+                                  sortKey === c.k ? (sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-emerald-600" /> : <ChevronDown className="w-3 h-3 text-emerald-600" />) : <ChevronUp className="w-3 h-3 text-slate-400" />
                                 )}
                               </div>
                             </th>
@@ -1666,7 +1661,7 @@ export default function AdminDashboard() {
                         {filteredUsers.length === 0 && (
                           <tr><td colSpan={11} className="px-5 py-14 text-center dark:text-slate-500">
                             <div className="flex flex-col items-center gap-2">
-                              <Search className="w-8 h-8 text-slate-300" />
+                              <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" />
                               <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No account holders found</p>
                               <p className="text-xs text-slate-400 dark:text-slate-500">Try a different search term</p>
                             </div>
