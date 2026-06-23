@@ -79,7 +79,11 @@ function AnimatedNumber({ value }: { value: number }) {
 export default function AlertHistoryTab() {
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [filter, setFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | AlertEvent['status']>('all');
   const [search, setSearch] = useState('');
+  const [locationSearch, setLocationSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [settings, setSettings] = useState(alertService.getSettings());
   const [selected, setSelected] = useState<AlertEvent | null>(null);
   const [livePulse, setLivePulse] = useState(false);
@@ -121,12 +125,30 @@ export default function AlertHistoryTab() {
   const filtered = useMemo(() => {
     let result = alerts;
     if (filter !== 'all') result = result.filter(a => a.severity === filter);
+    if (statusFilter !== 'all') result = result.filter(a => a.status === statusFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(a => a.title.toLowerCase().includes(q) || a.message.toLowerCase().includes(q));
     }
+    if (locationSearch.trim()) {
+      const q = locationSearch.toLowerCase();
+      result = result.filter(a => {
+        const loc = a.eventData?.location;
+        const city = loc?.city || '';
+        const country = loc?.country || '';
+        return city.toLowerCase().includes(q) || country.toLowerCase().includes(q);
+      });
+    }
+    if (dateFrom) {
+      const from = new Date(dateFrom).getTime();
+      result = result.filter(a => new Date(a.timestamp).getTime() >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo).getTime() + 86400000 - 1;
+      result = result.filter(a => new Date(a.timestamp).getTime() <= to);
+    }
     return result;
-  }, [alerts, filter, search]);
+  }, [alerts, filter, statusFilter, search, locationSearch, dateFrom, dateTo]);
 
   const counts = alertService.counts;
 
@@ -233,24 +255,51 @@ export default function AlertHistoryTab() {
         {/* Alert Feed */}
         <div className="lg:col-span-2 space-y-4">
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Search alerts by title or message..."
-                className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all" />
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Search alerts by title or message..."
+                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all" />
+              </div>
+              <div className="flex gap-1.5">
+                {(['all', 'critical', 'warning', 'info'] as const).map(f => (
+                  <button key={f} onClick={() => setFilter(f)}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
+                      filter === f
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700'
+                    }`}>
+                    {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-1.5">
-              {(['all', 'critical', 'warning', 'info'] as const).map(f => (
-                <button key={f} onClick={() => setFilter(f)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
-                    filter === f
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700'
-                  }`}>
-                  {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
-                </button>
-              ))}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)}
+                className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 focus:outline-none focus:border-sky-400">
+                <option value="all">All Status</option>
+                <option value="open">Open</option>
+                <option value="acknowledged">Acknowledged</option>
+                <option value="blocked">Blocked</option>
+                <option value="whitelisted">Whitelisted</option>
+                <option value="false_positive">False Positive</option>
+              </select>
+              <input value={locationSearch} onChange={e => setLocationSearch(e.target.value)}
+                placeholder="City / Country"
+                className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-sky-400 flex-1" />
+              <div className="flex items-center gap-2">
+                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                  className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-sky-400" />
+                <span className="text-slate-400 text-xs">to</span>
+                <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                  className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-sky-400" />
+              </div>
+              <button onClick={() => { setFilter('all'); setStatusFilter('all'); setSearch(''); setLocationSearch(''); setDateFrom(''); setDateTo(''); }}
+                className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors">
+                Reset
+              </button>
             </div>
           </div>
 
