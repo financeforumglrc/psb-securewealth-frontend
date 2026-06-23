@@ -11,6 +11,129 @@ export interface AlertEvent {
   eventData?: any;
 }
 
+const MOCK_ALERTS: AlertEvent[] = [
+  {
+    id: -1,
+    type: 'fraud',
+    severity: 'critical',
+    title: 'High-Risk Login Blocked',
+    message: 'Credential stuffing attack from Lagos, Nigeria was automatically blocked for user Rikshita Barua.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 96, location: { city: 'Lagos', country: 'Nigeria' }, action: 'LOGIN_BLOCKED' },
+  },
+  {
+    id: -2,
+    type: 'security',
+    severity: 'critical',
+    title: 'Device Spoofing Detected',
+    message: 'A login attempt using a jailbroken emulator was rejected for Deepanshu Sharma.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 91, location: { city: 'Delhi', country: 'India' }, action: 'DEVICE_SPOOF' },
+  },
+  {
+    id: -3,
+    type: 'fraud',
+    severity: 'critical',
+    title: 'Suspicious Withdrawal Blocked',
+    message: '₹ 2,50,000 withdrawal to a new beneficiary was blocked pending MFA for Mrigesh Mohanty.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 28).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 88, location: { city: 'Mumbai', country: 'India' }, action: 'WITHDRAWAL_BLOCKED', amount: 250000 },
+  },
+  {
+    id: -4,
+    type: 'security',
+    severity: 'warning',
+    title: 'Geo-Location Anomaly',
+    message: 'Login from an unusual location (Singapore) detected for Ishita Anand.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 72, location: { city: 'Singapore', country: 'Singapore' }, action: 'GEO_ANOMALY' },
+  },
+  {
+    id: -5,
+    type: 'fraud',
+    severity: 'warning',
+    title: 'Large Transfer Flagged',
+    message: 'A high-value UPI transfer of ₹ 85,000 was flagged for manual review for Tripti Jain.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 62).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 68, location: { city: 'Bangalore', country: 'India' }, action: 'TRANSFER_FLAGGED', amount: 85000 },
+  },
+  {
+    id: -6,
+    type: 'security',
+    severity: 'warning',
+    title: 'New Device Login',
+    message: 'Kunal Saxena logged in from a new Android device for the first time.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 55, location: { city: 'Hyderabad', country: 'India' }, action: 'NEW_DEVICE' },
+  },
+  {
+    id: -7,
+    type: 'compliance',
+    severity: 'warning',
+    title: 'KYC Document Expiring',
+    message: 'PAN card on file for Rikshita Barua expires in 7 days.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 42, location: { city: 'Chennai', country: 'India' }, action: 'KYC_EXPIRY' },
+  },
+  {
+    id: -8,
+    type: 'system',
+    severity: 'info',
+    title: 'System Backup Completed',
+    message: 'Daily encrypted backup completed successfully with zero failures.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 12, location: { city: 'Mumbai', country: 'India' }, action: 'BACKUP_OK' },
+  },
+  {
+    id: -9,
+    type: 'security',
+    severity: 'info',
+    title: 'Two-Factor Authentication Enabled',
+    message: 'Deepanshu Sharma enabled biometric + FIDO2 passkey authentication.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 8, location: { city: 'Delhi', country: 'India' }, action: 'MFA_ENABLED' },
+  },
+  {
+    id: -10,
+    type: 'compliance',
+    severity: 'info',
+    title: 'Audit Log Exported',
+    message: 'Admin exported the last 30 days of audit logs for RBI compliance review.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 220).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 5, location: { city: 'Kolkata', country: 'India' }, action: 'AUDIT_EXPORT' },
+  },
+  {
+    id: -11,
+    type: 'fraud',
+    severity: 'critical',
+    title: 'Phishing Link Intercepted',
+    message: 'A fraudulent payment link shared via SMS was intercepted before user action.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 260).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 94, location: { city: 'Pune', country: 'India' }, action: 'PHISHING_BLOCKED' },
+  },
+  {
+    id: -12,
+    type: 'security',
+    severity: 'warning',
+    title: 'Behavioral Biometric Deviation',
+    message: 'Typing cadence and swipe pattern deviated from baseline for Mrigesh Mohanty.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 310).toISOString(),
+    acknowledged: false,
+    eventData: { riskScore: 61, location: { city: 'Mumbai', country: 'India' }, action: 'BEHAVIORAL_ANOMALY' },
+  },
+];
+
 type AlertListener = (alerts: AlertEvent[]) => void;
 
 function playAlertSound() {
@@ -45,6 +168,22 @@ class AlertService {
   private lastId = 0;
   private soundEnabled = true;
   private desktopEnabled = true;
+  private mockSeeded = false;
+
+  constructor() {
+    this.seedMockAlerts();
+  }
+
+  private seedMockAlerts() {
+    if (this.mockSeeded) return;
+    this.mockSeeded = true;
+    // Always keep realistic demo alerts so the SOC never looks empty.
+    // Real backend events (positive IDs) are merged on top as they arrive.
+    this.alerts = [...MOCK_ALERTS].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    this.notify();
+  }
 
   subscribe(listener: AlertListener) {
     this.listeners.add(listener);
