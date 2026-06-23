@@ -88,6 +88,7 @@ export default function AlertHistoryTab() {
   const [selected, setSelected] = useState<AlertEvent | null>(null);
   const [livePulse, setLivePulse] = useState(false);
   const [toasts, setToasts] = useState<{ id: number; title: string; message: string; severity: AlertEvent['severity'] }[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const feedRef = useRef<HTMLDivElement>(null);
   const prevAlertIds = useRef<Set<number>>(new Set());
 
@@ -179,6 +180,54 @@ export default function AlertHistoryTab() {
 
   const toggleSound = () => { const s = alertService.toggleSound(); setSettings(prev => ({ ...prev, soundEnabled: s })); };
   const toggleDesktop = () => { const d = alertService.toggleDesktop(); setSettings(prev => ({ ...prev, desktopEnabled: d })); };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const selectAllVisible = () => setSelectedIds(new Set(filtered.map(a => a.id)));
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const acknowledgeSelected = () => {
+    selectedIds.forEach(id => alertService.acknowledge(id));
+    clearSelection();
+  };
+  const flagSelectedFalsePositive = () => {
+    selectedIds.forEach(id => alertService.markFalsePositive(id));
+    clearSelection();
+  };
+  const exportSelectedCsv = () => {
+    const rows = alerts.filter(a => selectedIds.has(a.id));
+    const headers = ['ID', 'Severity', 'Type', 'Status', 'Title', 'Message', 'Timestamp', 'City', 'Country'];
+    const csv = [
+      headers.join(','),
+      ...rows.map(a => {
+        const loc = a.eventData?.location || {};
+        return [
+          a.id,
+          a.severity,
+          a.type,
+          a.status,
+          `"${(a.title || '').replace(/"/g, '""')}"`,
+          `"${(a.message || '').replace(/"/g, '""')}"`,
+          a.timestamp,
+          loc.city || '',
+          loc.country || '',
+        ].join(',');
+      })
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `alerts-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const stats = [
     { label: 'Total Alerts', value: counts.total, icon: Bell, color: 'text-slate-700', bg: 'bg-white', border: 'border-slate-200', accent: 'bg-slate-100', change: `${analytics.trendPct}%`, up: analytics.trend === 'up' },
@@ -303,6 +352,38 @@ export default function AlertHistoryTab() {
             </div>
           </div>
 
+          {/* Bulk actions */}
+          <AnimatePresence>
+            {selectedIds.size > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-xl bg-slate-800 text-white shadow-md"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold">{selectedIds.size} selected</span>
+                  <button onClick={selectAllVisible} className="text-[11px] text-slate-300 hover:text-white underline">Select all visible</button>
+                  <button onClick={clearSelection} className="text-[11px] text-slate-300 hover:text-white underline">Clear</button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={acknowledgeSelected}
+                    className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors">
+                    <CheckCheck className="w-3.5 h-3.5" /> Acknowledge
+                  </button>
+                  <button onClick={flagSelectedFalsePositive}
+                    className="px-3 py-2 rounded-lg bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors">
+                    <ShieldOff className="w-3.5 h-3.5" /> False +ve
+                  </button>
+                  <button onClick={exportSelectedCsv}
+                    className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors">
+                    <Activity className="w-3.5 h-3.5" /> Export CSV
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Live feed */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -339,8 +420,15 @@ export default function AlertHistoryTab() {
                         onClick={() => setSelected(alert)}
                         className={`w-full text-left p-3 rounded-xl hover:bg-slate-50 transition-all flex items-start gap-3 border ${
                           !alert.acknowledged ? 'bg-slate-50/70 border-slate-100' : 'border-transparent'
-                        }`}
+                        } ${selectedIds.has(alert.id) ? 'ring-2 ring-blue-200' : ''}`}
                       >
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(alert.id)}
+                          onClick={e => e.stopPropagation()}
+                          onChange={() => toggleSelect(alert.id)}
+                          className="mt-3 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
                         <div className={`w-10 h-10 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0`}>
                           <Icon className={`w-5 h-5 ${cfg.color}`} />
                         </div>
