@@ -58,6 +58,20 @@ export const backendApi = {
     return fetchJson('/health', { timeoutMs: 5000 });
   },
 
+  // Wake up the backend (cold start workaround for Render free tier)
+  async healthWakeup() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    try {
+      await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://psb-securewealth-backend.onrender.com/api/v1'}/health`, {
+        signal: controller.signal,
+      });
+    } catch {
+      // ignore — the wake-up call may timeout; the actual request will follow
+    }
+    clearTimeout(timeoutId);
+  },
+
   // OTP (email-based one-time passwords)
   async sendOtp(payload: { email?: string; userId?: string; purpose?: string }) {
     return fetchJson('/otp/send', {
@@ -363,10 +377,12 @@ export const backendApi = {
 
   // Admin
   async adminLogin(adminId: string, password: string) {
+    // First wake up the backend (cold start takes 30-60s on Render free tier)
+    await this.healthWakeup();
     return fetchJson('/admin/login', {
       method: 'POST',
       body: JSON.stringify({ adminId, password }),
-      timeoutMs: 15000,
+      timeoutMs: 60000,
     });
   },
 

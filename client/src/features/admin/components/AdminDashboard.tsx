@@ -729,8 +729,7 @@ function LoginScreen({ onLogin, loading, error }: { onLogin: (id: string, pw: st
             </AnimatePresence>
             <button onClick={() => onLogin(id, pw)} disabled={loading}
               className="w-full py-3.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
-              {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-              Secure Login
+              {loading ? <> <RefreshCw className="w-4 h-4 animate-spin" /> Initializing Secure Connection...</> : <> <Lock className="w-4 h-4" /> Secure Login</>}
             </button>
           </div>
           <div className="mt-8 pt-6 border-t border-slate-800 text-center">
