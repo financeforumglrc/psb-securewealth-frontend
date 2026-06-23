@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/shared/context/AuthContext';
+import { SecurityProvider } from '@/shared/context/SecurityContext';
 import { lazyWithRetry } from '@/shared/utils/lazyWithRetry';
 import { backendApi } from '@/shared/lib/backendApi';
 import { collectFingerprint } from '@/shared/services/fingerprintService';
@@ -7,6 +8,7 @@ import DemoShowcase from '@/features/demo/components/DemoShowcase';
 
 const LoginPortal = lazyWithRetry(() => import('@/features/auth/components/LoginPortal'));
 const AuthenticatedApp = lazyWithRetry(() => import('@/app/AuthenticatedApp'));
+const AdminPortal = lazyWithRetry(() => import('@/features/admin/components/AdminDashboard'));
 
 // Loading fallback component
 function ViewLoader() {
@@ -62,6 +64,12 @@ export default function App() {
     return p === '/demo' || p === '/demo/';
   });
 
+  // Admin route — standalone admin portal, no auth, no AA/onboarding
+  const [adminPath] = useState(() => {
+    const p = window.location.pathname;
+    return p === '/admin' || p === '/admin/';
+  });
+
   const { state: authState } = useAuth();
   const warmed = useRef(false);
 
@@ -96,6 +104,17 @@ export default function App() {
 
   if (demoPath) {
     return <DemoShowcase />;
+  }
+
+  // Standalone admin portal — no auth, no AA/onboarding, direct login
+  if (adminPath) {
+    return (
+      <Suspense fallback={<ViewLoader />}>
+        <SecurityProvider>
+          <AdminPortal />
+        </SecurityProvider>
+      </Suspense>
+    );
   }
 
   if (authState.loading) {

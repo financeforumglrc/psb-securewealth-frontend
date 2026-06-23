@@ -35,7 +35,6 @@ import OnboardingWizard from '@/features/onboarding/components/OnboardingWizard'
 
 const PaymentsPage = lazyWithRetry(() => import('@/features/payments/components/PaymentsPage'));
 const ProfileSettings = lazyWithRetry(() => import('@/features/profile/components/ProfileSettings'));
-const AdminDashboard = lazyWithRetry(() => import('@/features/admin/components/AdminDashboard'));
 
 // PitchMode is bundled statically to avoid a separate chunk fetch failing on some networks/edges.
 const DemoMode = lazyWithRetry(() => import('@/features/demo/components/DemoMode'));
@@ -302,18 +301,6 @@ export default function AuthenticatedApp() {
   if (!aaFetchComplete) {
     return <AAFetchAnimation onComplete={() => setAAFetchComplete(true)} />;
   }
-
-  // Admin panel renders standalone — no PSB headers/sidebars
-  if (currentView === 'admin') {
-    return (
-      <Suspense fallback={<ViewLoader />}>
-        <SecurityProvider>
-          <AdminDashboard />
-        </SecurityProvider>
-      </Suspense>
-    );
-  }
-
 
   return (
     <ToastProvider>

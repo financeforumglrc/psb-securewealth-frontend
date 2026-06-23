@@ -1018,11 +1018,15 @@ export default function AdminDashboard() {
         </div>
 
         {/* Logout */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-1">
           <button onClick={() => { backendApi.logout(); sessionStorage.removeItem('sw-admin-session'); setIsLoggedIn(false); }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
             <LogOut className="w-[18px] h-[18px]" /> Logout
           </button>
+          <a href="/"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+            <LayoutDashboard className="w-[18px] h-[18px]" /> Main Dashboard
+          </a>
         </div>
       </aside>
 
