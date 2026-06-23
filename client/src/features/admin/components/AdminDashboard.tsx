@@ -19,6 +19,9 @@ import SystemArchitecture from '@/features/architecture/components/SystemArchite
 import AdminLoginArchitecture from '@/features/admin/components/AdminLoginArchitecture';
 import FeaturesUniverse from '@/features/architecture/components/FeaturesUniverse';
 import FraudHeatmap from '@/features/admin/components/FraudHeatmap';
+import AlertToast from '@/features/admin/components/AlertToast';
+import DemoTour from '@/features/admin/components/DemoTour';
+import { alertService } from '@/shared/services/alertService';
 import { useSecurity } from '@/shared/context/SecurityContext';
 
 type AdminTab = 'dashboard' | 'users' | 'architecture' | 'security' | 'features' | 'logs' | 'heatmap';
@@ -983,7 +986,13 @@ export default function AdminDashboard() {
     if (saved === 'true') setIsLoggedIn(true);
   }, []);
 
-  useEffect(() => { if (isLoggedIn) loadData(); }, [isLoggedIn]);
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadData();
+      alertService.startPolling(15000);
+    }
+    return () => alertService.stopPolling();
+  }, [isLoggedIn]);
 
   const filteredUsers = useMemo(() => {
     let result = users;
@@ -1130,7 +1139,8 @@ export default function AdminDashboard() {
               <p className="text-[11px] text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <AlertToast />
             <button onClick={loadData} disabled={loading}
               className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
@@ -1587,6 +1597,9 @@ export default function AdminDashboard() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Demo Tour */}
+      <DemoTour onNavigate={(t) => setTab(t as AdminTab)} />
     </div>
   );
 }

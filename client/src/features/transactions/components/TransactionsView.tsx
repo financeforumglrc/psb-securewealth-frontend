@@ -265,9 +265,35 @@ export default function TransactionsView() {
                     </span>
                   </td>
                   <td className="py-3 text-center">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-medium border ${RISK_STYLES[t.riskLevel]}`}>
-                      {t.riskLevel}
-                    </span>
+                    <div className="flex items-center justify-center gap-1">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium border ${RISK_STYLES[t.riskLevel]}`}>
+                        {t.riskLevel}
+                      </span>
+                      {t.signals && (() => {
+                        const active = Object.entries(t.signals).filter(([, v]) => v);
+                        if (active.length === 0) return null;
+                        return (
+                          <div className="relative group">
+                            <div className={`w-5 h-5 rounded flex items-center justify-center cursor-help ${
+                              t.riskLevel === 'HIGH' ? 'bg-rose-100 text-rose-500' :
+                              t.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-500' :
+                              'bg-slate-100 text-slate-400'
+                            }`}>
+                              <i className="fas fa-shield-exclamation text-[10px]" />
+                            </div>
+                            <div className="absolute bottom-full right-0 mb-1.5 w-44 p-2 rounded-lg bg-slate-800 text-white text-[10px] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                              <p className="font-bold mb-1">Triggered Signals:</p>
+                              {active.map(([k]) => (
+                                <div key={k} className="flex items-center gap-1 py-0.5">
+                                  <div className="w-1 h-1 rounded-full bg-rose-400" />
+                                  {k.replace(/([A-Z])/g, ' $1').trim()}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </td>
                 </motion.tr>
               ))}
