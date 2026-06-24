@@ -238,8 +238,13 @@ export default function FraudHeatmap() {
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
-    const base = events.length ? events : generateMockFraudData(150);
-    let merged = [...base];
+    // Render mock data immediately so the map is never stuck waiting on the backend
+    const base = generateMockFraudData(150);
+    setEvents(base.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 250));
+    setLoading(false);
+    setLastRefresh(new Date());
+
+    // Try to enrich with real backend data in the background
     try {
       const res = await backendApi.adminGetFraudEvents(200);
       if (res.ok && Array.isArray(res.data?.events)) {
@@ -261,18 +266,19 @@ export default function FraudHeatmap() {
           } : null,
           parsedNewValue: e.parsedNewValue || null,
         }));
-        // Dedupe by ip+created_at against mock events
-        const existingKeys = new Set(base.map(e => `${e.ip_address}-${e.created_at}`));
-        const newReal = real.filter(e => !existingKeys.has(`${e.ip_address}-${e.created_at}`));
-        merged = [...newReal, ...base];
+        setEvents(prev => {
+          const existingKeys = new Set(prev.map(e => `${e.ip_address}-${e.created_at}`));
+          const newReal = real.filter(e => !existingKeys.has(`${e.ip_address}-${e.created_at}`));
+          return [...newReal, ...prev]
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .slice(0, 250);
+        });
+        setLastRefresh(new Date());
       }
     } catch {
-      /* backend unavailable — fall back to generated mock data */
+      /* backend unavailable — mock data is already displayed */
     }
-    setEvents(merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 250));
-    setLoading(false);
-    setLastRefresh(new Date());
-  }, [events]);
+  }, []);
 
   // Initialize map
   useEffect(() => {
@@ -662,7 +668,7 @@ export default function FraudHeatmap() {
         <div className="flex-1 relative rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 fraud-light-frame shadow-sm" style={{ minHeight: 420 }}>
           <div ref={mapRef} className="absolute inset-0 rounded-2xl" />
 
-          {loading && !loadError && (
+          {loading && events.length === 0 && !loadError && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-[999]">
               <div className="flex flex-col items-center gap-3">
                 <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
