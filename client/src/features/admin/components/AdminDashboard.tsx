@@ -237,125 +237,6 @@ interface AuditLog {
   status: 'success' | 'warning' | 'danger';
 }
 
-function generateAuditLogs(allUsers: UserRecord[], securityState?: ReturnType<typeof useSecurity>['state']): AuditLog[] {
-  const logs: AuditLog[] = [];
-  const now = new Date();
-  const ips = ['103.21.45.12', '103.21.45.89', '43.204.12.5', '182.74.9.33', '45.127.8.101', '106.51.77.22', '103.91.12.44'];
-
-  // Admin login event
-  logs.push({
-    id: 'AUD-001', timestamp: new Date(now.getTime() - 5 * 60000).toISOString(),
-    userName: 'TEAM EXCELLENT MINDS', userEmail: 'admin@psbsecurewealth.com',
-    eventType: 'admin_action', action: 'Admin Login', details: 'Secure login from admin portal',
-    ipAddress: ips[0], status: 'success',
-  });
-
-  // Data refresh
-  logs.push({
-    id: 'AUD-002', timestamp: new Date(now.getTime() - 12 * 60000).toISOString(),
-    userName: 'TEAM EXCELLENT MINDS', userEmail: 'admin@psbsecurewealth.com',
-    eventType: 'admin_action', action: 'Data Refresh', details: 'Refreshed account holders data',
-    ipAddress: ips[0], status: 'success',
-  });
-
-  // Generate user login/logout events
-  allUsers.forEach((u, idx) => {
-    const baseTime = now.getTime() - (idx + 1) * 45 * 60000;
-    logs.push({
-      id: `AUD-LG-${idx}`, timestamp: new Date(baseTime).toISOString(),
-      userName: u.name, userEmail: u.email,
-      eventType: 'login', action: 'User Login', details: 'Successful login via web portal',
-      ipAddress: ips[idx % ips.length], status: 'success',
-    });
-    // Logout 30 min later
-    logs.push({
-      id: `AUD-LO-${idx}`, timestamp: new Date(baseTime + 30 * 60000).toISOString(),
-      userName: u.name, userEmail: u.email,
-      eventType: 'logout', action: 'User Logout', details: 'Session ended normally',
-      ipAddress: ips[idx % ips.length], status: 'success',
-    });
-  });
-
-  // Demo account transactions as audit logs
-  DEMO_ACCOUNTS.forEach((demo, idx) => {
-    demo.transactions.forEach((tx, tidx) => {
-      logs.push({
-        id: `AUD-TX-${idx}-${tidx}`, timestamp: new Date(tx.date + 'T' + String(10 + tidx).padStart(2, '0') + ':30:00').toISOString(),
-        userName: demo.profile.name, userEmail: demo.email,
-        eventType: 'transaction', action: tx.category,
-        details: `${tx.type === 'credit' ? 'Received' : 'Paid'} ₹${tx.amount.toLocaleString('en-IN')} — ${tx.description}`,
-        ipAddress: ips[(idx + tidx) % ips.length],
-        status: tx.status === 'BLOCKED' ? 'danger' : tx.riskLevel === 'HIGH' ? 'warning' : 'success',
-      });
-    });
-  });
-
-  // Security alerts
-  logs.push({
-    id: 'AUD-SEC-001', timestamp: new Date(now.getTime() - 2 * 3600000).toISOString(),
-    userName: 'Deepanshu Sharma', userEmail: 'deepanshu.sharma@psbsecurewealth.com',
-    eventType: 'security_alert', action: 'Fraud Block',
-    details: 'High-value UPI transfer of ₹5,00,000 to unknown payee blocked. Risk score: 88/100',
-    ipAddress: ips[3], status: 'danger',
-  });
-  logs.push({
-    id: 'AUD-SEC-002', timestamp: new Date(now.getTime() - 5 * 3600000).toISOString(),
-    userName: 'Unknown', userEmail: 'unknown@tempmail.com',
-    eventType: 'security_alert', action: 'Failed Login',
-    details: '3 consecutive failed login attempts from new device in Bangalore',
-    ipAddress: '103.91.77.102', status: 'warning',
-  });
-  logs.push({
-    id: 'AUD-SEC-003', timestamp: new Date(now.getTime() - 8 * 3600000).toISOString(),
-    userName: 'Rikshita Barua', userEmail: 'rikshita.barua@psbsecurewealth.com',
-    eventType: 'security_alert', action: 'Unusual Access',
-    details: 'Account accessed from new location (Mumbai) while primary location is Kolkata',
-    ipAddress: ips[5], status: 'warning',
-  });
-
-  // System events
-  logs.push({
-    id: 'AUD-SYS-001', timestamp: new Date(now.getTime() - 15 * 60000).toISOString(),
-    userName: 'System', userEmail: 'system@psbsecurewealth.com',
-    eventType: 'system_event', action: 'DB Backup',
-    details: 'Automated SQLite database backup completed successfully. Size: 14.2 MB',
-    ipAddress: '127.0.0.1', status: 'success',
-  });
-  logs.push({
-    id: 'AUD-SYS-002', timestamp: new Date(now.getTime() - 45 * 60000).toISOString(),
-    userName: 'System', userEmail: 'system@psbsecurewealth.com',
-    eventType: 'system_event', action: 'API Health Check',
-    details: 'All API endpoints responding. Avg latency: 124ms. Uptime: 99.97%',
-    ipAddress: '127.0.0.1', status: 'success',
-  });
-  logs.push({
-    id: 'AUD-SYS-003', timestamp: new Date(now.getTime() - 3 * 3600000).toISOString(),
-    userName: 'System', userEmail: 'system@psbsecurewealth.com',
-    eventType: 'system_event', action: 'Security State Sync',
-    details: `Trust score ${securityState?.trustScore ?? 50}. Passkey: ${securityState?.passkeyRegistered ? 'yes' : 'no'}. PQ tunnel: ${securityState?.pqTunnelActive ? 'yes' : 'no'}.`,
-    ipAddress: '127.0.0.1', status: 'success',
-  });
-
-  // Real-time security signals
-  if (securityState?.passkeyRegistered) {
-    logs.push({ id: 'AUD-SEC-PK', timestamp: new Date(now.getTime() - 20 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'Passkey Registered', details: 'FIDO2 platform authenticator registered successfully.', ipAddress: '127.0.0.1', status: 'success' });
-  }
-  if (securityState?.pqTunnelActive) {
-    logs.push({ id: 'AUD-SEC-PQ', timestamp: new Date(now.getTime() - 18 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'PQ Tunnel Active', details: 'ML-KEM-768 key encapsulation + AES-GCM verified.', ipAddress: '127.0.0.1', status: 'success' });
-  }
-  if (securityState?.lastEbpfAlert) {
-    logs.push({ id: 'AUD-SEC-BT', timestamp: new Date(now.getTime() - 5 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'Browser Threat', details: securityState.lastEbpfAlert, ipAddress: '127.0.0.1', status: 'warning' });
-  }
-  if (securityState?.honeytokenTriggered) {
-    logs.push({ id: 'AUD-SEC-HT', timestamp: new Date(now.getTime() - 2 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'Honeytoken Triggered', details: 'Decoy account touched — account frozen.', ipAddress: '127.0.0.1', status: 'danger' });
-  }
-  if (securityState?.trapTriggered) {
-    logs.push({ id: 'AUD-SEC-TR', timestamp: new Date(now.getTime() - 3 * 60000).toISOString(), userName: 'System', userEmail: 'system@psbsecurewealth.com', eventType: 'security_alert', action: 'Transaction Trap', details: 'Trap confirmation code entered — 24h lockdown activated.', ipAddress: '127.0.0.1', status: 'danger' });
-  }
-
-  return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-}
-
 function EventTypeBadge({ type }: { type: AuditEventType }) {
   const map: Record<AuditEventType, { label: string; icon: any; color: string; bg: string; border: string }> = {
     login: { label: 'LOGIN', icon: UserCheck, color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800' },
@@ -379,28 +260,34 @@ function StatusDot({ status }: { status: 'success' | 'warning' | 'danger' }) {
   return <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: colors[status] }} />;
 }
 
-function AuditLogsTab({ users }: { users: UserRecord[] }) {
+function AuditLogsTab() {
   const [logSearch, setLogSearch] = useState('');
   const [eventFilter, setEventFilter] = useState<AuditEventType | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'warning' | 'danger'>('all');
   const [apiLogs, setApiLogs] = useState<any[] | null>(null);
   const [apiLoading, setApiLoading] = useState(true);
+  const [logsPage, setLogsPage] = useState(1);
+  const [logsLimit] = useState(25);
+  const [logsTotal, setLogsTotal] = useState(0);
+  const [logsPages, setLogsPages] = useState(1);
   const isMobile = useIsMobile();
-  const { state: securityState } = useSecurity();
 
   useEffect(() => {
     let cancelled = false;
     setApiLoading(true);
-    backendApi.adminGetAuditLogs({ limit: 500 }).then(res => {
+    backendApi.adminGetAuditLogs({ q: logSearch, page: logsPage, limit: logsLimit }).then(res => {
       if (!cancelled) {
         setApiLogs(res.ok ? (res.data?.logs || []) : null);
+        setLogsTotal(res.ok ? (res.data?.total || 0) : 0);
+        setLogsPages(res.ok ? (res.data?.pages || 1) : 1);
         setApiLoading(false);
       }
     }).catch(() => {
       if (!cancelled) { setApiLogs(null); setApiLoading(false); }
     });
     return () => { cancelled = true; };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logsPage, logsLimit]);
 
   // Map backend audit log to frontend AuditLog format
   const mapBackendLog = (log: any): AuditLog => {
@@ -439,29 +326,23 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
     };
   };
 
-  const generatedLogs = useMemo(() => generateAuditLogs(users, securityState), [users, securityState]);
-
   const allLogs = useMemo(() => {
-    if (apiLogs && apiLogs.length > 0) {
-      return apiLogs.map(mapBackendLog).concat(generatedLogs.slice(0, 5)).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    }
-    return generatedLogs;
-  }, [apiLogs, generatedLogs]);
+    return apiLogs ? apiLogs.map(mapBackendLog) : [];
+  }, [apiLogs]);
 
   const filteredLogs = useMemo(() => {
     return allLogs.filter(log => {
       if (eventFilter !== 'all' && log.eventType !== eventFilter) return false;
       if (statusFilter !== 'all' && log.status !== statusFilter) return false;
-      if (logSearch.trim()) {
-        const q = logSearch.toLowerCase();
-        return log.userName.toLowerCase().includes(q) ||
-               log.action.toLowerCase().includes(q) ||
-               log.details.toLowerCase().includes(q) ||
-               log.ipAddress.includes(q);
-      }
       return true;
     });
-  }, [allLogs, eventFilter, statusFilter, logSearch]);
+  }, [allLogs, eventFilter, statusFilter]);
+
+  // Debounced server-side search for audit logs
+  useEffect(() => {
+    const t = setTimeout(() => { setLogsPage(1); }, 500);
+    return () => clearTimeout(t);
+  }, [logSearch]);
 
   const counts = useMemo(() => {
     return {
@@ -624,6 +505,30 @@ function AuditLogsTab({ users }: { users: UserRecord[] }) {
             </table>
           </div>
         )}
+
+        {/* Pagination */}
+        <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            Showing <strong className="text-slate-800 dark:text-slate-200">{filteredLogs.length}</strong> of <strong className="text-slate-800 dark:text-slate-200">{logsTotal}</strong> events
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLogsPage(p => Math.max(1, p - 1))}
+              disabled={logsPage <= 1}
+              className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              Previous
+            </button>
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Page {logsPage} of {logsPages}</span>
+            <button
+              onClick={() => setLogsPage(p => Math.min(logsPages, p + 1))}
+              disabled={logsPage >= logsPages}
+              className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -1032,9 +937,22 @@ export default function AdminDashboard() {
   const [loginError, setLoginError] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersLimit] = useState(25);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [usersPages, setUsersPages] = useState(1);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null);
+  const [metrics, setMetrics] = useState<any>(null);
   const { state: securityState } = useSecurity();
+
+  const activityData = useMemo(() => {
+    if (!metrics?.registrations || !metrics?.transactions) return ACTIVITY_DATA;
+    return metrics.registrations.map((r: any, i: number) => ({ day: r.day, users: r.users, txns: metrics.transactions[i]?.txns || 0 }));
+  }, [metrics]);
+  const tierData = useMemo(() => metrics?.tierDistribution || TIER_DATA, [metrics]);
+  const fraudTrendData = useMemo(() => metrics?.fraudTrends || FRAUD_TREND_DATA, [metrics]);
+  const topOriginsData = useMemo(() => (metrics?.topOrigins?.length ? metrics.topOrigins : TOP_ORIGINS_DATA), [metrics]);
 
   // Theme: login screen stays light; after login respect global dark mode
   const darkMode = useWealthStore((s) => s.darkMode);
@@ -1148,51 +1066,29 @@ export default function AdminDashboard() {
     }));
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (page = usersPage, opts: { q?: string; sort?: SortKey; order?: SortDir } = {}) => {
     setLoading(true);
 
-    // Render demo data instantly so the dashboard never shows empty zeros
-    const demoAccounts = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.assets.length, 0);
-    const demoTxns = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.transactions.length, 0);
-    const demoGoals = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.goals.length, 0);
-    setUsers(demoUsers);
-    setStats({
-      totalUsers: demoUsers.length,
-      faceRegistered: demoUsers.filter(u => u.face_registered).length,
-      activeToday: demoUsers.filter(u => u.is_active).length,
-      totalAccounts: demoAccounts,
-      totalTransactions: demoTxns,
-      totalBills: 0,
-      totalGoals: demoGoals,
-      totalLoans: 0,
-    });
-
-    const [usersRes, statsRes] = await Promise.all([
-      backendApi.adminGetUsers(),
+    const [usersRes, statsRes, metricsRes] = await Promise.all([
+      backendApi.adminGetUsers({ q: opts.q ?? search, sort: opts.sort ?? sortKey, order: opts.order ?? sortDir, page, limit: usersLimit }),
       backendApi.adminGetStats(),
+      backendApi.adminGetDashboardMetrics(7),
     ]);
-    const backendUsers = usersRes.ok ? (usersRes.data?.users || []) : [];
+
+    if (usersRes.ok && usersRes.data?.users) {
+      setUsers(usersRes.data.users);
+      setUsersTotal(usersRes.data.total || 0);
+      setUsersPages(usersRes.data.pages || 1);
+    } else {
+      // Fallback to demo users only if backend is unreachable
+      setUsers(demoUsers);
+      setUsersTotal(demoUsers.length);
+      setUsersPages(1);
+    }
+
     const backendStats = statsRes.ok ? (statsRes.data?.stats || null) : null;
-
-    // Merge backend users + demo users
-    const merged = [...demoUsers, ...backendUsers];
-    setUsers(merged);
-
-    // Compute combined stats
     if (backendStats) {
-      const demoAccounts = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.assets.length, 0);
-      const demoTxns = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.transactions.length, 0);
-      const demoGoals = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.goals.length, 0);
-      setStats({
-        totalUsers: backendStats.totalUsers + demoUsers.length,
-        faceRegistered: backendStats.faceRegistered + demoUsers.filter(u => u.face_registered).length,
-        activeToday: backendStats.activeToday + demoUsers.filter(u => u.is_active).length,
-        totalAccounts: backendStats.totalAccounts + demoAccounts,
-        totalTransactions: backendStats.totalTransactions + demoTxns,
-        totalBills: backendStats.totalBills,
-        totalGoals: backendStats.totalGoals + demoGoals,
-        totalLoans: backendStats.totalLoans,
-      });
+      setStats(backendStats);
     } else {
       const demoAccounts = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.assets.length, 0);
       const demoTxns = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.transactions.length, 0);
@@ -1208,6 +1104,11 @@ export default function AdminDashboard() {
         totalLoans: 0,
       });
     }
+
+    if (metricsRes.ok && metricsRes.data?.metrics) {
+      setMetrics(metricsRes.data.metrics);
+    }
+
     setLoading(false);
   };
 
@@ -1244,26 +1145,55 @@ export default function AdminDashboard() {
     return () => window.removeEventListener('keydown', handler);
   }, [isLoggedIn, role]);
 
-  const filteredUsers = useMemo(() => {
-    let result = users;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((u) =>
-        u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) ||
-        u.phone?.toLowerCase().includes(q) || u.pan_number?.toLowerCase().includes(q) || u.aadhar?.toLowerCase().includes(q)
-      );
-    }
-    result = [...result].sort((a, b) => {
-      const dir = sortDir === 'asc' ? 1 : -1;
-      const av = a[sortKey] || ''; const bv = b[sortKey] || '';
-      return av > bv ? dir : av < bv ? -dir : 0;
-    });
-    return result;
-  }, [users, search, sortKey, sortDir]);
-
   const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else { setSortKey(key); setSortDir('desc'); }
+    const nextKey = key;
+    let nextDir: SortDir = 'desc';
+    if (sortKey === key) {
+      nextDir = sortDir === 'asc' ? 'desc' : 'asc';
+      setSortDir(nextDir);
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
+    setUsersPage(1);
+    loadData(1, { sort: nextKey, order: nextDir });
+  };
+
+  // Debounced server-side search for account holders
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (isLoggedIn) {
+        setUsersPage(1);
+        loadData(1);
+      }
+    }, 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, isLoggedIn]);
+
+  const handleToggleUserStatus = async (u: UserRecord) => {
+    const next = !u.is_active;
+    const res = await backendApi.adminUpdateUserStatus(u.id, next);
+    if (res.ok) {
+      adminActivityService.log(next ? 'Activate User' : 'Deactivate User', u.email, `User ${u.name} ${next ? 'activated' : 'deactivated'}`);
+      loadData(usersPage);
+    }
+  };
+
+  const handleUpdateUserRole = async (u: UserRecord, newRole: string) => {
+    const res = await backendApi.adminUpdateUser(u.id, { role: newRole });
+    if (res.ok) {
+      adminActivityService.log('Update User Role', u.email, `Role changed to ${newRole}`);
+      loadData(usersPage);
+    }
+  };
+
+  const handleUpdateUserTier = async (u: UserRecord, newTier: string) => {
+    const res = await backendApi.adminUpdateUser(u.id, { tier: newTier });
+    if (res.ok) {
+      adminActivityService.log('Update User Tier', u.email, `Tier changed to ${newTier}`);
+      loadData(usersPage);
+    }
   };
 
   if (!isLoggedIn) {
@@ -1451,7 +1381,7 @@ export default function AdminDashboard() {
               ))}
             </select>
             <AlertToast />
-            <button onClick={loadData} disabled={loading}
+            <button onClick={() => loadData()} disabled={loading}
               className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </button>
@@ -1588,7 +1518,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="h-60">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={ACTIVITY_DATA}>
+                        <AreaChart data={activityData}>
                           <defs>
                             <linearGradient id="uGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.2} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
                             <linearGradient id="tGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} /></linearGradient>
@@ -1610,15 +1540,15 @@ export default function AdminDashboard() {
                     <div className="h-48">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Pie data={TIER_DATA} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value" stroke="none">
-                            {TIER_DATA.map((e, i) => <Cell key={i} fill={e.color} />)}
+                          <Pie data={tierData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value" stroke="none">
+                            {tierData.map((e: any, i: number) => <Cell key={i} fill={e.color} />)}
                           </Pie>
                           <Tooltip contentStyle={chartTooltip(darkMode)} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="flex items-center justify-center gap-4 mt-2">
-                      {TIER_DATA.map((t) => (
+                      {tierData.map((t: any) => (
                         <span key={t.name} className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                           <div className="w-2 h-2 rounded-full" style={{ background: t.color }} /> {t.name}
                         </span>
@@ -1642,7 +1572,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="h-60">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={FRAUD_TREND_DATA}>
+                        <LineChart data={fraudTrendData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                           <XAxis dataKey="day" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
@@ -1659,7 +1589,7 @@ export default function AdminDashboard() {
                     <p className="text-[11px] text-slate-500 mb-4">Countries by fraud attempt volume</p>
                     <div className="h-60">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={TOP_ORIGINS_DATA} layout="vertical" margin={{ left: 20, right: 20 }}>
+                        <BarChart data={topOriginsData} layout="vertical" margin={{ left: 20, right: 20 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
                           <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis type="category" dataKey="country" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={80} />
@@ -1751,7 +1681,7 @@ export default function AdminDashboard() {
                         className="w-full sm:w-80 pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-900/30 transition-all" />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium"><strong className="text-slate-800">{filteredUsers.length}</strong> accounts</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium"><strong className="text-slate-800">{users.length}</strong> accounts</span>
                       <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                         <Filter className="w-3.5 h-3.5" /> Filter
                       </button>
@@ -1763,11 +1693,11 @@ export default function AdminDashboard() {
 
                   {isMobile ? (
                     <div className="p-3 space-y-2">
-                      {filteredUsers.map((u) => {
+                      {users.map((u) => {
                         const score = computeSafetyScore(u, securityState);
                         return (
-                          <div key={u.id} onClick={() => setSelectedUser(u)} className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
-                            <div className="flex items-center justify-between gap-3">
+                          <div key={u.id} className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
+                            <div onClick={() => setSelectedUser(u)} className="flex items-center justify-between gap-3 cursor-pointer">
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-[11px] font-bold shrink-0">
                                   {u.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -1779,19 +1709,44 @@ export default function AdminDashboard() {
                               </div>
                               {u.is_active ? <Badge variant="success">ACTIVE</Badge> : <Badge variant="danger">INACTIVE</Badge>}
                             </div>
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div onClick={() => setSelectedUser(u)} className="flex flex-wrap items-center gap-2 cursor-pointer">
                               {u.tier === 'premium' ? <Badge variant="premium">PREMIUM</Badge> : u.tier === 'enterprise' ? <Badge variant="enterprise">ENTERPRISE</Badge> : <Badge variant="neutral">FREE</Badge>}
                               <Badge variant="neutral">{u.role}</Badge>
                               {u.face_registered ? <span className="text-emerald-600 dark:text-emerald-400 text-[10px] font-medium flex items-center gap-1"><Fingerprint className="w-3 h-3" /> Face</span> : null}
                             </div>
-                            <div className="flex items-center justify-between">
+                            <div onClick={() => setSelectedUser(u)} className="flex items-center justify-between cursor-pointer">
                               <SafetyBadge score={score} />
                               <span className="text-[10px] text-slate-400 dark:text-slate-500">{new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                              <select
+                                value={u.role}
+                                onChange={(e) => handleUpdateUserRole(u, e.target.value)}
+                                className="px-2 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300"
+                              >
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                              </select>
+                              <select
+                                value={u.tier}
+                                onChange={(e) => handleUpdateUserTier(u, e.target.value)}
+                                className="px-2 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300"
+                              >
+                                <option value="free">Free</option>
+                                <option value="premium">Premium</option>
+                                <option value="enterprise">Enterprise</option>
+                              </select>
+                              <button
+                                onClick={() => handleToggleUserStatus(u)}
+                                className={`px-2 py-1 rounded-md text-[10px] font-bold border transition-colors ${u.is_active ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'}`}
+                              >
+                                {u.is_active ? 'Deactivate' : 'Activate'}
+                              </button>
                             </div>
                           </div>
                         );
                       })}
-                      {filteredUsers.length === 0 && (
+                      {users.length === 0 && (
                         <div className="py-10 text-center">
                           <Search className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto mb-2" />
                           <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No account holders found</p>
@@ -1816,6 +1771,7 @@ export default function AdminDashboard() {
                               { k: 'created_at' as SortKey, l: 'Created', sort: true },
                               { k: 'name' as SortKey, l: 'Safety', sort: false },
                               { k: 'name' as SortKey, l: 'Status', sort: false },
+                              { k: 'name' as SortKey, l: 'Actions', sort: false },
                             ].map((c) => (
                               <th key={c.l} onClick={() => c.sort ? toggleSort(c.k) : undefined}
                                 className={`text-left px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider ${c.sort ? 'cursor-pointer hover:text-slate-700 select-none' : ''}`}>
@@ -1830,7 +1786,7 @@ export default function AdminDashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredUsers.map((u) => (
+                          {users.map((u) => (
                             <tr key={u.id} className="border-t border-slate-50 dark:border-slate-800 hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
                               <td className="px-4 py-3.5">
                                 <div className="flex items-center gap-3">
@@ -1858,10 +1814,39 @@ export default function AdminDashboard() {
                               <td className="px-4 py-3.5">
                                 {u.is_active ? <Badge variant="success">ACTIVE</Badge> : <Badge variant="danger">INACTIVE</Badge>}
                               </td>
+                              <td className="px-4 py-3.5">
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    value={u.role}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => handleUpdateUserRole(u, e.target.value)}
+                                    className="px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
+                                  >
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                  </select>
+                                  <select
+                                    value={u.tier}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => handleUpdateUserTier(u, e.target.value)}
+                                    className="px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
+                                  >
+                                    <option value="free">Free</option>
+                                    <option value="premium">Premium</option>
+                                    <option value="enterprise">Enterprise</option>
+                                  </select>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleToggleUserStatus(u); }}
+                                    className={`px-2 py-1 rounded-md text-[10px] font-bold border transition-colors ${u.is_active ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'}`}
+                                  >
+                                    {u.is_active ? 'Deactivate' : 'Activate'}
+                                  </button>
+                                </div>
+                              </td>
                             </tr>
                           ))}
-                          {filteredUsers.length === 0 && (
-                            <tr><td colSpan={11} className="px-5 py-14 text-center dark:text-slate-500">
+                          {users.length === 0 && (
+                            <tr><td colSpan={12} className="px-5 py-14 text-center dark:text-slate-500">
                               <div className="flex flex-col items-center gap-2">
                                 <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" />
                                 <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No account holders found</p>
@@ -1873,6 +1858,30 @@ export default function AdminDashboard() {
                       </table>
                     </div>
                   )}
+
+                  {/* Pagination */}
+                  <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      Showing <strong className="text-slate-800 dark:text-slate-200">{users.length}</strong> of <strong className="text-slate-800 dark:text-slate-200">{usersTotal}</strong> accounts
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { setUsersPage(p => Math.max(1, p - 1)); loadData(Math.max(1, usersPage - 1)); }}
+                        disabled={usersPage <= 1}
+                        className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Page {usersPage} of {usersPages}</span>
+                      <button
+                        onClick={() => { setUsersPage(p => Math.min(usersPages, p + 1)); loadData(Math.min(usersPages, usersPage + 1)); }}
+                        disabled={usersPage >= usersPages}
+                        className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1897,7 +1906,7 @@ export default function AdminDashboard() {
             )}
 
             {tab === 'logs' && (
-              <AuditLogsTab users={users} />
+              <AuditLogsTab />
             )}
             {tab === 'heatmap' && (
               <FraudHeatmap />

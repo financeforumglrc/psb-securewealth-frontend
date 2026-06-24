@@ -390,10 +390,27 @@ export const backendApi = {
     });
   },
 
-  async adminGetUsers() {
-    return fetchJson('/admin/users', {
+  async adminGetUsers(params?: { q?: string; sort?: string; order?: string; page?: number; limit?: number }) {
+    const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString() : '';
+    return fetchJson(`/admin/users${qs}`, {
       method: 'GET',
       timeoutMs: 15000,
+    });
+  },
+
+  async adminUpdateUserStatus(id: string, isActive: boolean) {
+    return fetchJson(`/admin/users/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isActive }),
+      timeoutMs: 10000,
+    });
+  },
+
+  async adminUpdateUser(id: string, payload: { role?: string; tier?: string }) {
+    return fetchJson(`/admin/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+      timeoutMs: 10000,
     });
   },
 
@@ -404,15 +421,16 @@ export const backendApi = {
     });
   },
 
-  async adminGetAuditLogs(filters?: { userId?: string; action?: string; entityType?: string; dateFrom?: string; dateTo?: string; limit?: number; offset?: number }) {
+  async adminGetAuditLogs(filters?: { userId?: string; action?: string; entityType?: string; dateFrom?: string; dateTo?: string; q?: string; page?: number; limit?: number }) {
     const params = new URLSearchParams();
     if (filters?.userId) params.set('userId', filters.userId);
     if (filters?.action) params.set('action', filters.action);
     if (filters?.entityType) params.set('entityType', filters.entityType);
     if (filters?.dateFrom) params.set('dateFrom', filters.dateFrom);
     if (filters?.dateTo) params.set('dateTo', filters.dateTo);
+    if (filters?.q) params.set('q', filters.q);
     if (filters?.limit) params.set('limit', String(filters.limit));
-    if (filters?.offset) params.set('offset', String(filters.offset));
+    if (filters?.page) params.set('page', String(filters.page));
     const qs = params.toString();
     return fetchJson(`/admin/audit-logs${qs ? '?' + qs : ''}`, {
       method: 'GET',
@@ -439,6 +457,11 @@ export const backendApi = {
 
   async adminMarkFalsePositive(id: number) {
     return fetchJson(`/admin/fraud-events/${id}/false-positive`, { method: 'POST', timeoutMs: 10000 });
+  },
+
+  async adminGetDashboardMetrics(days?: number) {
+    const qs = days ? `?days=${days}` : '';
+    return fetchJson(`/admin/dashboard-metrics${qs}`, { method: 'GET', timeoutMs: 15000 });
   },
 
   // KYC

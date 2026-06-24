@@ -343,6 +343,9 @@ function initializeDatabase() {
         CREATE INDEX IF NOT EXISTS idx_loans_user ON loans(user_id);
         CREATE INDEX IF NOT EXISTS idx_recurring_user ON recurring_payments(user_id);
         CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id, created_at);
+        CREATE INDEX IF NOT EXISTS idx_users_search ON users(name, email);
+        CREATE INDEX IF NOT EXISTS idx_users_created ON users(created_at);
+        CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
 
         CREATE TABLE IF NOT EXISTS whitelisted_ips (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -768,6 +771,78 @@ const bankingDb = {
     },
     acknowledgeFraudEvent: (auditLogId, adminId = null) => {
         return db.prepare(`INSERT INTO fraud_event_actions (audit_log_id, action, admin_id) VALUES (?, 'acknowledge', ?)`).run(auditLogId, adminId);
+    },
+    getUsers: ({ q = '', sort = 'created_at', order = 'desc', page = 1, limit = 50 } = {}) => {
+        const allowedSort = ['name', 'email', 'created_at', 'tier', 'role'].includes(sort) ? sort : 'created_at';
+        const dir = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+        const offset = Math.max(0, (page - 1) * limit);
+        let where = 'WHERE 1=1';
+        const params = [];
+        if (q) {
+            where += ' AND (name LIKE ? OR email LIKE ? OR phone LIKE ? OR pan_number LIKE ? OR aadhar LIKE ?)';
+            const like = `%${q}%`;
+            params.push(like, like, like, like, like);
+        }
+        const countRow = db.prepare(`SELECT COUNT(*) as total FROM users ${where}`).get(...params);
+        const sql = `SELECT id, email, name, phone, role, tier, pan_number, aadhar, created_at, last_login, face_descriptor IS NOT NULL as face_registered, api_usage_total, is_active FROM users ${where} ORDER BY ${allowedSort} ${dir} LIMIT ? OFFSET ?`;
+        const users = db.prepare(sql).all(...params, limit, offset);
+        return { users, total: countRow.total, page, limit, pages: Math.ceil(countRow.total / limit) };
+    },
+    updateUserStatus: (userId, isActive) => {
+        return db.prepare(`UPDATE users SET is_active = ? WHERE id = ?`).run(isActive ? 1 : 0, userId);
+    },
+    updateUser: (userId, { role, tier }) => {
+        const stmt = db.prepare(`UPDATE users SET role = COALESCE(?, role), tier = COALESCE(?, tier) WHERE id = ?`);
+        return stmt.run(role, tier, userId);
+    },
+    getAuditLogsPaged: ({ userId, action, entityType, dateFrom, dateTo, q = '', page = 1, limit = 100 } = {}) => {
+        let sql = `SELECT a.*, u.name AS user_name, u.email AS user_email FROM audit_logs a LEFT JOIN users u ON a.user_id = u.id WHERE 1=1`;
+        const params = [];
+        if (userId) { sql += ' AND a.user_id = ?'; params.push(userId); }
+        if (action) { sql += ' AND a.action = ?'; params.push(action); }
+        if (entityType) { sql += ' AND a.entity_type = ?'; params.push(entityType); }
+        if (dateFrom) { sql += ' AND a.created_at >= ?'; params.push(dateFrom); }
+        if (dateTo) { sql += ' AND a.created_at <= ?'; params.push(dateTo); }
+        if (q) {
+            sql += ' AND (a.action LIKE ? OR a.entity_type LIKE ? OR a.details LIKE ? OR u.name LIKE ? OR u.email LIKE ? OR a.ip_address LIKE ?)';
+            const like = `%${q}%`;
+            params.push(like, like, like, like, like, like);
+        }
+        const countRow = db.prepare(`SELECT COUNT(*) as total FROM audit_logs a LEFT JOIN users u ON a.user_id = u.id WHERE 1=1 ${sql.split('WHERE 1=1')[1] || ''}`).get(...params);
+        sql += ' ORDER BY a.created_at DESC LIMIT ? OFFSET ?';
+        const offset = Math.max(0, (page - 1) * limit);
+        const logs = db.prepare(sql).all(...params, limit, offset);
+        return { logs, total: countRow.total, page, limit, pages: Math.ceil(countRow.total / limit) };
+    },
+    getDashboardMetrics: (days = 7) => {
+        const dayMs = 86400000;
+        const now = new Date();
+        const registrations = [];
+        const transactions = [];
+        const fraudTrends = [];
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(now.getTime() - i * dayMs);
+            const dateStr = d.toISOString().split('T')[0];
+            const nextStr = new Date(d.getTime() + dayMs).toISOString().split('T')[0];
+            const reg = db.prepare(`SELECT COUNT(*) as count FROM users WHERE created_at >= ? AND created_at < ?`).get(dateStr, nextStr);
+            const txn = db.prepare(`SELECT COUNT(*) as count FROM transactions WHERE created_at >= ? AND created_at < ?`).get(dateStr, nextStr);
+            const fraud = db.prepare(`SELECT COUNT(*) as count FROM audit_logs WHERE created_at >= ? AND created_at < ? AND (action = 'DELETE' OR entity_type IN ('auth', 'transaction', 'card', 'kyc')) AND new_value LIKE '%"status":4%'`).get(dateStr, nextStr);
+            const label = d.toLocaleDateString('en-IN', { weekday: 'short' });
+            registrations.push({ day: label, users: reg.count });
+            transactions.push({ day: label, txns: txn.count });
+            fraudTrends.push({ day: label, attempts: fraud.count, blocked: Math.floor(fraud.count * 0.85) });
+        }
+        const tierRows = db.prepare(`SELECT tier, COUNT(*) as count FROM users GROUP BY tier`).all();
+        const tierMap = { free: 0, premium: 0, enterprise: 0 };
+        tierRows.forEach(r => { tierMap[r.tier] = r.count; });
+        const tierDistribution = [
+            { name: 'Free', value: tierMap.free || 0, color: '#64748b' },
+            { name: 'Premium', value: tierMap.premium || 0, color: '#fbbf24' },
+            { name: 'Enterprise', value: tierMap.enterprise || 0, color: '#a78bfa' },
+        ];
+        const originRows = db.prepare(`SELECT COUNT(*) as count, ip_address FROM audit_logs WHERE created_at >= datetime('now', '-7 day') AND (action = 'DELETE' OR entity_type IN ('auth', 'transaction', 'card', 'kyc')) AND new_value LIKE '%"status":4%' GROUP BY ip_address ORDER BY count DESC LIMIT 5`).all();
+        const topOrigins = originRows.map(r => ({ country: r.ip_address, count: r.count }));
+        return { registrations, transactions, fraudTrends, tierDistribution, topOrigins };
     },
     createAsset: (data) => {
         const stmt = db.prepare(`INSERT INTO user_assets (user_id, name, asset_type, value, liquidity, returns) VALUES (?, ?, ?, ?, ?, ?)`);

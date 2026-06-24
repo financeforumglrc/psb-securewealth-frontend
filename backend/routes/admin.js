@@ -254,17 +254,43 @@ router.post('/login', (req, res) => {
 
 router.get('/users', adminApiAuth, (req, res) => {
     try {
-        const users = db.prepare(`
-            SELECT id, email, name, phone, role, tier, pan_number, aadhar, 
-                   created_at, last_login, face_descriptor IS NOT NULL as face_registered,
-                   api_usage_total, is_active
-            FROM users
-            ORDER BY created_at DESC
-        `).all();
-        res.json({ success: true, users });
+        const { q, sort, order, page, limit } = req.query;
+        const result = bankingDb.getUsers({
+            q: q || '',
+            sort: sort || 'created_at',
+            order: order || 'desc',
+            page: parseInt(page) || 1,
+            limit: parseInt(limit) || 50,
+        });
+        res.json({ success: true, ...result });
     } catch (error) {
         console.error('Admin users error:', error);
         res.status(500).json({ success: false, error: 'Failed to load users' });
+    }
+});
+
+router.patch('/users/:id/status', adminApiAuth, (req, res) => {
+    try {
+        const { isActive } = req.body;
+        if (typeof isActive !== 'boolean') {
+            return res.status(400).json({ success: false, error: 'isActive boolean required' });
+        }
+        bankingDb.updateUserStatus(req.params.id, isActive);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Update user status error:', error);
+        res.status(500).json({ success: false, error: 'Failed to update user status' });
+    }
+});
+
+router.patch('/users/:id', adminApiAuth, (req, res) => {
+    try {
+        const { role, tier } = req.body;
+        bankingDb.updateUser(req.params.id, { role, tier });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Update user error:', error);
+        res.status(500).json({ success: false, error: 'Failed to update user' });
     }
 });
 
@@ -304,13 +330,14 @@ const ipGeoCache = {};
 // GET /audit-logs — Returns all audit logs with filters + IP location enrichment
 router.get('/audit-logs', adminApiAuth, async (req, res) => {
     try {
-        const { userId, action, entityType, dateFrom, dateTo, limit, offset } = req.query;
-        const logs = bankingDb.getAllAuditLogs({
+        const { userId, action, entityType, dateFrom, dateTo, q, page, limit } = req.query;
+        const result = bankingDb.getAuditLogsPaged({
             userId, action, entityType, dateFrom, dateTo,
-            limit: parseInt(limit) || 200,
-            offset: parseInt(offset) || 0
+            q: q || '',
+            page: parseInt(page) || 1,
+            limit: parseInt(limit) || 100,
         });
-        const enriched = await Promise.all(logs.map(async (log) => {
+        const enriched = await Promise.all(result.logs.map(async (log) => {
             const ip = log.ip_address;
             if (ip && !ipGeoCache[ip] && ip !== '127.0.0.1' && ip !== '::1' && ip !== 'unknown') {
                 try {
@@ -324,10 +351,21 @@ router.get('/audit-logs', adminApiAuth, async (req, res) => {
             try { parsedNewValue = log.new_value ? JSON.parse(log.new_value) : null; } catch {}
             return { ...log, location: ipGeoCache[ip] || null, parsedNewValue };
         }));
-        res.json({ success: true, logs: enriched });
+        res.json({ success: true, logs: enriched, total: result.total, page: result.page, pages: result.pages, limit: result.limit });
     } catch (error) {
         console.error('Admin audit logs error:', error);
         res.status(500).json({ success: false, error: 'Failed to load audit logs' });
+    }
+});
+
+// GET /dashboard-metrics — Returns time-series and distribution data for the admin dashboard
+router.get('/dashboard-metrics', adminApiAuth, (req, res) => {
+    try {
+        const metrics = bankingDb.getDashboardMetrics(parseInt(req.query.days) || 7);
+        res.json({ success: true, metrics });
+    } catch (error) {
+        console.error('Dashboard metrics error:', error);
+        res.status(500).json({ success: false, error: 'Failed to load dashboard metrics' });
     }
 });
 
