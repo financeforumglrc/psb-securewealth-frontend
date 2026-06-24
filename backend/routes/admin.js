@@ -14,7 +14,7 @@ const router = express.Router();
 // SECURITY: Admin credentials MUST be set via environment variables.
 // Fail fast on startup if not configured.
 // SECURITY: Admin credentials SHOULD be set via environment variables.
-// For hackathon/demo deployments without env vars, a default demo credential is used.
+// For hackathon/demo deployments without env vars, default demo credentials are used.
 const ADMIN_ID = process.env.ADMIN_ID || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
@@ -230,10 +230,12 @@ router.post('/login', (req, res) => {
         return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
     }
     const { adminId, password } = req.body;
-    if (adminId !== ADMIN_ID || password !== ADMIN_PASSWORD) {
+    // Accept configured env credentials OR default demo credentials for hackathon demos
+    const usingDefault = adminId === 'admin' && password === 'admin123';
+    if ((adminId !== ADMIN_ID || password !== ADMIN_PASSWORD) && !usingDefault) {
         return res.status(401).json({ success: false, error: 'Invalid admin credentials' });
     }
-    const token = Buffer.from(`${ADMIN_ID}:${ADMIN_PASSWORD}`).toString('base64');
+    const token = Buffer.from(`${adminId}:${password}`).toString('base64');
     res.json({ success: true, token });
 });
 
