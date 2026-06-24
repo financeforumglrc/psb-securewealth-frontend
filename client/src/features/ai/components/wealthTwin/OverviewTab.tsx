@@ -45,14 +45,15 @@ export default function OverviewTab() {
         <div className="lg:col-span-2 card" ref={chartRef}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-slate-800 dark:text-white">
-              <i className="fas fa-chart-area text-primary mr-2" />
+              <i className="fas fa-chart-area text-primary mr-2" aria-hidden="true" />
               Monte Carlo Wealth Projection
             </h3>
             <button
               onClick={() => toggleFullscreen(chartRef.current || undefined)}
+              aria-label={isFullscreen ? 'Exit fullscreen chart' : 'Open chart fullscreen'}
               className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors flex items-center justify-center"
             >
-              <i className={`fas ${isFullscreen ? 'fa-compress' : 'fa-expand'} text-xs`} />
+              <i className={`fas ${isFullscreen ? 'fa-compress' : 'fa-expand'} text-xs`} aria-hidden="true" />
             </button>
           </div>
           <div className="h-72">
@@ -91,11 +92,11 @@ export default function OverviewTab() {
           </div>
 
           <div className="card">
-            <h3 className="font-semibold text-slate-800 dark:text-white mb-3"><i className="fas fa-dna text-violet-500 mr-2" />Wealth DNA</h3>
+            <h3 className="font-semibold text-slate-800 dark:text-white mb-3"><i className="fas fa-dna text-violet-500 mr-2" aria-hidden="true" />Wealth DNA</h3>
             <div className="space-y-2">
               {wealthDNA.map((d, i) => (
                 <div key={i} className="flex items-start gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <i className={`fas ${d.icon} ${d.color} mt-0.5 text-xs`} />
+                  <i className={`fas ${d.icon} ${d.color} mt-0.5 text-xs`} aria-hidden="true" />
                   <div>
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{d.label}</p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">{d.desc}</p>
@@ -110,7 +111,7 @@ export default function OverviewTab() {
       {/* Life Event Simulator */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-slate-800 dark:text-white"><i className="fas fa-flask text-accent mr-2" />Life Event Simulator</h3>
+          <h3 className="font-semibold text-slate-800 dark:text-white"><i className="fas fa-flask text-accent mr-2" aria-hidden="true" />Life Event Simulator</h3>
           <select
             value={lifeEvent}
             onChange={(e) => setLifeEvent(e.target.value)}
@@ -177,7 +178,7 @@ export default function OverviewTab() {
           { label: 'Top Spend', value: topCategory.name, icon: 'fa-receipt', color: 'text-rose-500' },
         ].map((s, i) => (
           <div key={i} className="card text-center">
-            <i className={`fas ${s.icon} ${s.color} text-lg mb-2`} />
+            <i className={`fas ${s.icon} ${s.color} text-lg mb-2`} aria-hidden="true" />
             <div className="text-lg font-bold text-slate-800 dark:text-white truncate">{s.value}</div>
             <p className="text-[10px] text-slate-500">{s.label}</p>
           </div>
@@ -186,13 +187,13 @@ export default function OverviewTab() {
 
       {/* AI Recommendations */}
       <div className="card">
-        <h3 className="font-semibold text-slate-800 dark:text-white mb-4"><i className="fas fa-wand-magic-sparkles text-accent mr-2" /> AI Recommendations</h3>
+        <h3 className="font-semibold text-slate-800 dark:text-white mb-4"><i className="fas fa-wand-magic-sparkles text-accent mr-2" aria-hidden="true" /> AI Recommendations</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {recommendations.map((rec) => (
             <div key={rec.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-2">
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityColor(rec.priority)}`}>{rec.priority.toUpperCase()}</span>
-                <i className={`fas ${typeIcon(rec.type)} text-slate-400`} />
+                <i className={`fas ${typeIcon(rec.type)} text-slate-400`} aria-hidden="true" />
               </div>
               <h4 className="font-semibold text-sm text-slate-800 dark:text-slate-200 mb-1">{rec.title}</h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{rec.description}</p>

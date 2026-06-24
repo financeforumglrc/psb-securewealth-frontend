@@ -199,7 +199,7 @@ export default function FestivalAwareEngine() {
                           </div>
                           <div className="flex items-center gap-3 text-[10px] text-gray-500 mt-0.5">
                             <span><i className="fas fa-calendar mr-1" aria-hidden="true" />{festival.date}</span>
-                            <span><i className="fas fa-hourglass-half mr-1" aria-hidden="true" />{festival.daysAway} days</span>
+                            <span><i className="fas fa-hourglass-half mr-1" aria-hidden="true" />{festival.daysAway} {t('festivalDays')}</span>
                           </div>
                         </div>
                       </div>

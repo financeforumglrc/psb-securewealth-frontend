@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
@@ -51,6 +52,7 @@ function generateTimeline(
 }
 
 export default function TemporalWealth() {
+  const { t } = useTranslation();
   const user = useWealthStore((s) => s.user);
   const assets = useWealthStore((s) => s.assets);
   const goals = useWealthStore((s) => s.goals);
@@ -78,9 +80,9 @@ export default function TemporalWealth() {
       {/* Scenario Toggles */}
       <div className="flex gap-2 flex-wrap">
         {([
-          { key: 'actual', label: 'Your Path', icon: 'fa-user', color: 'bg-primary' },
-          { key: 'early', label: 'Started Early (+₹5K/mo)', icon: 'fa-rocket', color: 'bg-emerald-500' },
-          { key: 'late', label: 'Delayed Start', icon: 'fa-hourglass-half', color: 'bg-amber-500' },
+          { key: 'actual', label: t('temporalYourPath'), icon: 'fa-user', color: 'bg-primary' },
+          { key: 'early', label: t('temporalStartedEarly'), icon: 'fa-rocket', color: 'bg-emerald-500' },
+          { key: 'late', label: t('temporalDelayed'), icon: 'fa-hourglass-half', color: 'bg-amber-500' },
         ] as const).map((s) => (
           <button
             key={s.key}
@@ -101,17 +103,17 @@ export default function TemporalWealth() {
           {/* Current Point Stats */}
           <div className="space-y-3">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Year {selectedPoint.year}</p>
-              <p className="text-2xl font-extrabold text-slate-800 dark:text-white">Age {selectedPoint.age}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">{t('temporalYear').replace('{year}', String(selectedPoint.year))}</p>
+              <p className="text-2xl font-extrabold text-slate-800 dark:text-white">{t('temporalAge').replace('{age}', String(selectedPoint.age))}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Projected Net Worth</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">{t('temporalProjectedNetWorth')}</p>
               <motion.p key={selectedPoint.netWorth} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-extrabold text-primary">
                 ₹{(selectedPoint.netWorth / 1e5).toFixed(1)}L
               </motion.p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Monthly SIP</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">{t('temporalMonthlySIP')}</p>
               <p className="text-lg font-bold text-slate-700 dark:text-slate-200">₹{selectedPoint.monthlySavings.toLocaleString()}</p>
             </div>
             {selectedPoint.milestone && (
@@ -126,9 +128,9 @@ export default function TemporalWealth() {
           <div className="lg:col-span-2">
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500">Today</span>
-                <span className="text-xs font-bold text-primary">Year {sliderYear}</span>
-                <span className="text-xs font-bold text-slate-500">30 Years</span>
+                <span className="text-xs font-bold text-slate-500">{t('temporalToday')}</span>
+                <span className="text-xs font-bold text-primary">{t('temporalYear').replace('{year}', String(sliderYear))}</span>
+                <span className="text-xs font-bold text-slate-500">{t('temporal30Years')}</span>
               </div>
               <input
                 type="range"
@@ -141,7 +143,7 @@ export default function TemporalWealth() {
               />
               <div className="flex justify-between mt-1">
                 {activeData.filter((_, i) => i % 5 === 0).map((p) => (
-                  <span key={p.year} className="text-[9px] text-slate-400">{p.year}</span>
+                  <span key={p.year} className="text-[10px] text-slate-400">{p.year}</span>
                 ))}
               </div>
             </div>
@@ -149,13 +151,13 @@ export default function TemporalWealth() {
             {/* Comparison */}
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800">
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">vs. Started Early</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{t('temporalVsStartedEarly')}</p>
                 <p className="text-sm font-extrabold text-emerald-700 dark:text-emerald-300">
                   {diffEarly > 0 ? '+' : ''}₹{(diffEarly / 1e5).toFixed(1)}L
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800">
-                <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">vs. Delayed</p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">{t('temporalVsDelayed')}</p>
                 <p className="text-sm font-extrabold text-amber-700 dark:text-amber-300">
                   +₹{(diffLate / 1e5).toFixed(1)}L
                 </p>
@@ -166,7 +168,7 @@ export default function TemporalWealth() {
       </CosmosCard>
 
       {/* Wealth Trajectory Chart */}
-      <CosmosCard variant="default" header={{ icon: 'fa-chart-area', iconColor: '#0f766e', title: 'Wealth Trajectory', subtitle: '30-year projection with milestones' }}>
+      <CosmosCard variant="default" header={{ icon: 'fa-chart-area', iconColor: '#0f766e', title: t('temporalWealthTrajectory'), subtitle: t('temporalWealthTrajectorySubtitle') }}>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={activeData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -192,7 +194,7 @@ export default function TemporalWealth() {
           {activeData.filter((d) => d.milestone).map((d) => (
             <div key={d.year} className="flex items-center gap-1 text-[10px] text-slate-500">
               <div className="w-2 h-2 rounded-full bg-primary/30" />
-              {d.year}: {d.milestone}
+              {d.year}: {t(`temporalMilestone${d.milestone?.replace(/[₹\\s]+/g, '')}` as any)}
             </div>
           ))}
         </div>
@@ -212,7 +214,7 @@ export default function TemporalWealth() {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-1 ${sliderYear >= i * 5 ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'}`}>
                   <i className={`fas ${d.milestoneIcon}`} aria-hidden="true" />
                 </div>
-                <p className="text-[9px] font-bold text-slate-400">{d.year}</p>
+                <p className="text-[10px] font-bold text-slate-400">{d.year}</p>
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{d.milestone}</p>
                 <p className="text-[10px] text-primary font-bold">₹{(d.netWorth / 1e5).toFixed(1)}L</p>
               </div>
@@ -223,7 +225,7 @@ export default function TemporalWealth() {
 
       {/* Goals Overlay */}
       {goals.length > 0 && (
-        <CosmosCard variant="default" header={{ icon: 'fa-bullseye', iconColor: '#1565C0', title: 'Goal Alignment', subtitle: 'When your goals meet your timeline' }}>
+        <CosmosCard variant="default" header={{ icon: 'fa-bullseye', iconColor: '#1565C0', title: t('temporalGoalAlignment'), subtitle: t('temporalGoalAlignmentSubtitle') }}>
           <div className="space-y-2">
             {goals.map((goal) => {
               const goalYear = new Date(goal.deadline).getFullYear();
@@ -237,11 +239,11 @@ export default function TemporalWealth() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{goal.name}</p>
-                    <p className="text-[10px] text-slate-400">Target: ₹{goal.targetAmount.toLocaleString()} by {goalYear}</p>
+                    <p className="text-[10px] text-slate-400">{t('temporalGoalTarget').replace('{amount}', goal.targetAmount.toLocaleString()).replace('{year}', String(goalYear))}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-200">₹{projectedAtGoal.toLocaleString()}</p>
-                    <p className={`text-[10px] font-bold ${onTrack ? 'text-emerald-500' : 'text-amber-500'}`}>{onTrack ? 'On Track' : 'Gap: ₹' + (goal.targetAmount - projectedAtGoal).toLocaleString()}</p>
+                    <p className={`text-[10px] font-bold ${onTrack ? 'text-emerald-500' : 'text-amber-500'}`}>{onTrack ? t('temporalOnTrack') : t('temporalGap').replace('{amount}', (goal.targetAmount - projectedAtGoal).toLocaleString())}</p>
                   </div>
                 </div>
               );

@@ -97,15 +97,15 @@ const CRISIS_SIGNALS: CrisisSignal[] = [
   },
 ];
 
-const SEVERITY_CONFIG = {
-  low: { label: 'Low Risk', bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', bar: 'bg-green-500' },
-  medium: { label: 'Moderate', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', bar: 'bg-amber-500' },
-  high: { label: 'High Risk', bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', bar: 'bg-orange-500' },
-  critical: { label: 'Critical', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', bar: 'bg-rose-500' },
-};
-
 export default function CrisisPredictor() {
   const { t } = useTranslation();
+
+  const SEVERITY_CONFIG = {
+    low: { label: t('crisisLowRisk'), bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', bar: 'bg-green-500' },
+    medium: { label: t('crisisModerate'), bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', bar: 'bg-amber-500' },
+    high: { label: t('crisisHighRisk'), bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', bar: 'bg-orange-500' },
+    critical: { label: t('crisisCritical'), bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', bar: 'bg-rose-500' },
+  };
   const [selected, setSelected] = useState<string | null>(null);
   const [showAutoHedge, setShowAutoHedge] = useState(false);
 
@@ -203,7 +203,7 @@ export default function CrisisPredictor() {
                           </div>
                           <div className="flex items-center gap-3 text-[10px] text-gray-500 mt-1">
                             <span><i className="fas fa-clock mr-1" aria-hidden="true" />{crisis.timeframe}</span>
-                            <span><i className="fas fa-percent mr-1" aria-hidden="true" />{crisis.probability}% probability</span>
+                            <span><i className="fas fa-percent mr-1" aria-hidden="true" />{crisis.probability}% {t('crisisProbability')}</span>
                             <span className="font-semibold text-gray-700">{crisis.financialImpact}</span>
                           </div>
                         </div>

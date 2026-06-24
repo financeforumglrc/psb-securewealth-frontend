@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
@@ -12,17 +13,18 @@ interface DataCategory {
 }
 
 export default function SovereignVault() {
+  const { t } = useTranslation();
   const assets = useWealthStore((s) => s.assets);
   const transactions = useWealthStore((s) => s.transactions);
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
 
   const [categories] = useState<DataCategory[]>([
-    { id: 'transactions', label: 'Transaction History', icon: 'fa-list', local: true, size: `${transactions.length} records`, description: 'Every transaction narrative, merchant, amount, timestamp — stored only on your device. Bank sees only aggregated risk scores.' },
-    { id: 'spending', label: 'Spending Patterns', icon: 'fa-chart-pie', local: true, size: '12 categories', description: 'AI categorization, behavioral insights, predictive models — all computed locally. Zero-knowledge proof sent to bank.' },
-    { id: 'goals', label: 'Financial Goals', icon: 'fa-bullseye', local: true, size: '3 active goals', description: 'Target amounts, deadlines, progress — never leaves your phone. Bank only verifies you have a goal plan.' },
-    { id: 'biometrics', label: 'Biometric Templates', icon: 'fa-fingerprint', local: true, size: 'Encrypted', description: 'Face scan, voice print, behavioral typing pattern — stored in secure enclave. Bank receives only match/not-match.' },
-    { id: 'networth', label: 'Net Worth', icon: 'fa-gem', local: false, size: formatCurrency(netWorth), description: 'Aggregated net worth is shared with bank for product eligibility. Individual asset breakdown stays local.' },
-    { id: 'kyc', label: 'KYC Documents', icon: 'fa-id-card', local: false, size: 'PAN, Aadhaar', description: 'Required by RBI KYC norms. Stored encrypted on bank servers with consent. You control access duration.' },
+    { id: 'transactions', label: t('sovereignCatTransactions'), icon: 'fa-list', local: true, size: `${transactions.length} ${t('sovereignSizeRecords')}`, description: t('sovereignDescTransactions') },
+    { id: 'spending', label: t('sovereignCatSpending'), icon: 'fa-chart-pie', local: true, size: t('sovereignSizeCategories'), description: t('sovereignDescSpending') },
+    { id: 'goals', label: t('sovereignCatGoals'), icon: 'fa-bullseye', local: true, size: t('sovereignSizeGoals'), description: t('sovereignDescGoals') },
+    { id: 'biometrics', label: t('sovereignCatBiometrics'), icon: 'fa-fingerprint', local: true, size: t('sovereignSizeEncrypted'), description: t('sovereignDescBiometrics') },
+    { id: 'networth', label: t('sovereignCatNetworth'), icon: 'fa-gem', local: false, size: formatCurrency(netWorth), description: t('sovereignDescNetworth') },
+    { id: 'kyc', label: t('sovereignCatKyc'), icon: 'fa-id-card', local: false, size: t('sovereignSizeKyc'), description: t('sovereignDescKyc') },
   ]);
 
   const localCount = categories.filter((c) => c.local).length;
@@ -41,9 +43,9 @@ export default function SovereignVault() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <i className="fas fa-vault text-primary" aria-hidden="true" /> Sovereign Data Vault
+            <i className="fas fa-vault text-primary" aria-hidden="true" /> {t('sovereignTitle')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">Your financial history never leaves your device. The bank sees proofs, not data.</p>
+          <p className="text-xs text-slate-500 mt-0.5">{t('sovereignSubtitle')}</p>
         </div>
       </div>
 
@@ -52,9 +54,9 @@ export default function SovereignVault() {
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full -translate-y-1/3 translate-x-1/3" />
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <p className="text-xs text-white/70 font-medium uppercase tracking-wider">Privacy Score</p>
+            <p className="text-xs text-white/70 font-medium uppercase tracking-wider">{t('sovereignPrivacyScore')}</p>
             <p className="text-4xl font-extrabold mt-1">{privacyScore}<span className="text-lg text-white/50">/100</span></p>
-            <p className="text-xs text-white/70 mt-1">{localCount} of {categories.length} data categories fully local</p>
+            <p className="text-xs text-white/70 mt-1">{t('sovereignCategoriesLocal').replace('{local}', String(localCount)).replace('{total}', String(categories.length))}</p>
           </div>
           <div className="hidden sm:flex flex-col items-center">
             <svg viewBox="0 0 100 100" className="w-20 h-20">
@@ -70,7 +72,7 @@ export default function SovereignVault() {
                 transition={{ duration: 1.5, ease: 'easeOut' }}
               />
             </svg>
-            <span className="text-[10px] text-white/60 mt-1">{privacyScore >= 80 ? 'SOVEREIGN' : privacyScore >= 50 ? 'GUARDED' : 'EXPOSED'}</span>
+            <span className="text-[10px] text-white/60 mt-1">{privacyScore >= 80 ? t('sovereignLevelSovereign') : privacyScore >= 50 ? t('sovereignLevelGuarded') : t('sovereignLevelExposed')}</span>
           </div>
         </div>
       </div>
@@ -79,7 +81,7 @@ export default function SovereignVault() {
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
           <i className="fas fa-database text-primary text-sm" aria-hidden="true" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Data Locality Audit</h4>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('sovereignDataLocalityAudit')}</h4>
         </div>
         <div className="space-y-3">
           {categories.map((cat, idx) => (
@@ -98,12 +100,12 @@ export default function SovereignVault() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-slate-800 dark:text-white">{cat.label}</p>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                     cat.local
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30'
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30'
                   }`}>
-                    {cat.local ? 'DEVICE ONLY' : 'BANK COPY'}
+                    {cat.local ? t('sovereignDeviceOnly') : t('sovereignBankCopy')}
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-500">{cat.size} • {cat.description}</p>
@@ -120,24 +122,23 @@ export default function SovereignVault() {
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
           <i className="fas fa-key text-violet-500 text-sm" aria-hidden="true" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Zero-Knowledge Proof Demo</h4>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('sovereignZkDemoTitle')}</h4>
         </div>
         <p className="text-xs text-slate-500 mb-3">
-          Prove something to the bank without revealing the underlying data. Try it:
+          {t('sovereignZkDemoDesc')}
         </p>
         <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
           {!proofDemo ? (
             <div className="text-center">
               <p className="text-sm text-slate-700 dark:text-slate-200 mb-3">
-                <strong>Scenario:</strong> You want to prove your net worth is above ₹50L to qualify for a premium credit card,
-                <em> without revealing your exact net worth or individual assets.</em>
+                {t('sovereignZkScenario')}
               </p>
               <button
                 onClick={() => setProofDemo(true)}
                 className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors"
               >
                 <i className="fas fa-wand-magic-sparkles mr-2" aria-hidden="true" />
-                Generate ZK Proof
+                {t('sovereignGenerateProof')}
               </button>
             </div>
           ) : (
@@ -151,32 +152,32 @@ export default function SovereignVault() {
                   <i className="fas fa-check text-lg" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">Proof Validated</p>
+                  <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">{t('sovereignProofValidated')}</p>
                   <p className="text-[10px] text-emerald-700 dark:text-emerald-300">
-                    Verified: Net Worth ≥ ₹50,00,000 • Actual: {formatCurrency(netWorth)} • Proof ID: ZK-{Math.random().toString(36).slice(2, 10).toUpperCase()}
+                    {t('sovereignProofDetail').replace('{actual}', formatCurrency(netWorth)).replace('{proofId}', `ZK-${Math.random().toString(36).slice(2, 10).toUpperCase()}`)}
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="p-2 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">
-                  <p className="text-[10px] text-slate-500">What Bank Sees</p>
-                  <p className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">VALID: ≥ ₹50L</p>
+                  <p className="text-[10px] text-slate-500">{t('sovereignBankSees')}</p>
+                  <p className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{t('sovereignBankSeesValue')}</p>
                 </div>
                 <div className="p-2 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">
-                  <p className="text-[10px] text-slate-500">What Bank Does NOT See</p>
+                  <p className="text-[10px] text-slate-500">{t('sovereignBankDoesNotSee')}</p>
                   <p className="font-mono text-rose-500 font-bold line-through">{formatCurrency(netWorth)}</p>
-                  <p className="font-mono text-rose-500 font-bold line-through">6 asset details</p>
+                  <p className="font-mono text-rose-500 font-bold line-through">{t('sovereignBankDoesNotSeeAssets')}</p>
                 </div>
               </div>
               <p className="text-[10px] text-slate-500">
                 <i className="fas fa-circle-info mr-1" aria-hidden="true" />
-                Mathematical guarantee: It is computationally impossible for the bank to reverse-engineer your actual net worth from this proof.
+                {t('sovereignZkGuarantee')}
               </p>
               <button
                 onClick={() => setProofDemo(false)}
                 className="text-xs text-primary font-bold hover:underline"
               >
-                Reset Demo
+                {t('sovereignResetDemo')}
               </button>
             </motion.div>
           )}
@@ -189,28 +190,28 @@ export default function SovereignVault() {
           <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-emerald-500 mx-auto mb-2">
             <i className="fas fa-mobile-screen text-xl" aria-hidden="true" />
           </div>
-          <p className="text-xs font-bold text-slate-800 dark:text-white">Your Device</p>
-          <p className="text-[10px] text-slate-500 mt-1">All raw data, AI models, and biometric templates live here</p>
+          <p className="text-xs font-bold text-slate-800 dark:text-white">{t('sovereignYourDevice')}</p>
+          <p className="text-[10px] text-slate-500 mt-1">{t('sovereignYourDeviceDesc')}</p>
         </div>
         <div className="card text-center">
           <div className="w-12 h-12 bg-violet-50 dark:bg-violet-900/20 rounded-xl flex items-center justify-center text-violet-500 mx-auto mb-2">
             <i className="fas fa-shield-halved text-xl" aria-hidden="true" />
           </div>
-          <p className="text-xs font-bold text-slate-800 dark:text-white">ZK Prover</p>
-          <p className="text-[10px] text-slate-500 mt-1">Generates cryptographic proofs without revealing underlying data</p>
+          <p className="text-xs font-bold text-slate-800 dark:text-white">{t('sovereignZkProver')}</p>
+          <p className="text-[10px] text-slate-500 mt-1">{t('sovereignZkProverDesc')}</p>
         </div>
         <div className="card text-center">
           <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-500 mx-auto mb-2">
             <i className="fas fa-building-columns text-xl" aria-hidden="true" />
           </div>
-          <p className="text-xs font-bold text-slate-800 dark:text-white">Bank Server</p>
-          <p className="text-[10px] text-slate-500 mt-1">Only receives verified proofs, never raw personal data</p>
+          <p className="text-xs font-bold text-slate-800 dark:text-white">{t('sovereignBankServer')}</p>
+          <p className="text-[10px] text-slate-500 mt-1">{t('sovereignBankServerDesc')}</p>
         </div>
       </div>
 
       {/* Regulatory */}
       <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Regulatory Alignment</p>
+        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">{t('sovereignRegulatoryAlignment')}</p>
         <div className="flex flex-wrap gap-2">
           {[
             { id: 'RBI-DPDP', text: 'RBI — Digital Personal Data Protection Act 2023 (Consent & Purpose Limitation)' },

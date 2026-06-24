@@ -40,10 +40,12 @@ export default function WealthTwinAssistant() {
     <>
       <button
         onClick={() => setOpen(!open)}
+        aria-label="Open Wealth Twin chat"
+        aria-expanded={open}
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-primary text-white shadow-xl shadow-primary/30 hover:bg-primary-dark transition-all"
       >
         <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-          <i className="fas fa-robot text-xs" />
+          <i className="fas fa-robot text-xs" aria-hidden="true" />
         </div>
         <span className="text-xs font-bold hidden sm:inline">Wealth Twin</span>
       </button>
@@ -68,15 +70,15 @@ export default function WealthTwinAssistant() {
               <div className="bg-gradient-to-br from-primary to-primary-dark px-4 py-3 text-white flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                    <i className="fas fa-robot" />
+                    <i className="fas fa-robot" aria-hidden="true" />
                   </div>
                   <div>
                     <p className="text-sm font-bold">BHAVISHYA AI</p>
                     <p className="text-[10px] text-white/80">Your Wealth Twin</p>
                   </div>
                 </div>
-                <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white">
-                  <i className="fas fa-times" />
+                <button onClick={() => setOpen(false)} aria-label="Close Wealth Twin chat" className="text-white/80 hover:text-white">
+                  <i className="fas fa-times" aria-hidden="true" />
                 </button>
               </div>
 
@@ -110,7 +112,7 @@ export default function WealthTwinAssistant() {
                       }}
                       className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 hover:bg-primary/10 hover:text-primary transition-colors"
                     >
-                      <i className={`fas ${p.icon} text-[9px]`} /> {p.label}
+                      <i className={`fas ${p.icon} text-[9px]`} aria-hidden="true" /> {p.label}
                     </button>
                   ))}
                 </div>
@@ -124,9 +126,10 @@ export default function WealthTwinAssistant() {
                   />
                   <button
                     onClick={() => handleSend(input)}
+                    aria-label="Send message"
                     className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-dark transition-colors"
                   >
-                    <i className="fas fa-paper-plane text-xs" />
+                    <i className="fas fa-paper-plane text-xs" aria-hidden="true" />
                   </button>
                 </div>
               </div>

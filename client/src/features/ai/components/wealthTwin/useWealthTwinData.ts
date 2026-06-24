@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { useRecommendationEngine } from '@/shared/hooks/useRecommendationEngine';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { aggregateSpending, generateMonteCarlo, generateLifeEventImpact, formatCr } from './utils';
 import type { Asset } from '@/shared/types';
 
@@ -64,6 +65,7 @@ export function useWealthTwinData() {
   const transactions = useWealthStore((s) => s.transactions);
   const setView = useWealthStore((s) => s.setView);
 
+  const { t } = useTranslation();
   const recommendations = useRecommendationEngine(user, marketData);
 
   const currentNW = useMemo(() => assets.reduce((sum, a) => sum + a.value, 0), [assets]);
@@ -85,21 +87,61 @@ export function useWealthTwinData() {
 
   const wealthDNA = useMemo(() => {
     const dna = [];
-    if (savingsRate >= 30) dna.push({ label: 'Wealth Builder', icon: 'fa-crown', color: 'text-amber-500', desc: 'You save aggressively above 30%.' });
-    else if (savingsRate >= 20) dna.push({ label: 'Balanced Saver', icon: 'fa-scale-balanced', color: 'text-emerald-500', desc: 'Healthy savings rate, room to optimize.' });
-    else dna.push({ label: 'Spending Optimizer', icon: 'fa-wallet', color: 'text-rose-500', desc: 'Focus on reducing expenses first.' });
+    if (savingsRate >= 30)
+      dna.push({
+        label: t('twinDnaWealthBuilder'),
+        icon: 'fa-crown',
+        color: 'text-amber-500',
+        desc: t('twinDnaWealthBuilderDesc'),
+      });
+    else if (savingsRate >= 20)
+      dna.push({
+        label: t('twinDnaBalancedSaver'),
+        icon: 'fa-scale-balanced',
+        color: 'text-emerald-500',
+        desc: t('twinDnaBalancedSaverDesc'),
+      });
+    else
+      dna.push({
+        label: t('twinDnaSpendingOptimizer'),
+        icon: 'fa-wallet',
+        color: 'text-rose-500',
+        desc: t('twinDnaSpendingOptimizerDesc'),
+      });
 
     if (assets.some((a: Asset) => a.type === 'stock' || a.type === 'mutualFund'))
-      dna.push({ label: 'Equity Investor', icon: 'fa-chart-line', color: 'text-primary', desc: 'Comfortable with market-linked returns.' });
-    else dna.push({ label: 'Capital Preserver', icon: 'fa-piggy-bank', color: 'text-blue-500', desc: 'Prefer safety over growth.' });
+      dna.push({
+        label: t('twinDnaEquityInvestor'),
+        icon: 'fa-chart-line',
+        color: 'text-primary',
+        desc: t('twinDnaEquityInvestorDesc'),
+      });
+    else
+      dna.push({
+        label: t('twinDnaCapitalPreserver'),
+        icon: 'fa-piggy-bank',
+        color: 'text-blue-500',
+        desc: t('twinDnaCapitalPreserverDesc'),
+      });
 
-    const highRiskTxns = transactions.filter((t) => t.riskLevel === 'HIGH').length;
+    const highRiskTxns = transactions.filter((txn) => txn.riskLevel === 'HIGH').length;
     if (highRiskTxns === 0)
-      dna.push({ label: 'Safety First', icon: 'fa-shield-halved', color: 'text-emerald-500', desc: 'No blocked transactions. Clean history.' });
-    else dna.push({ label: 'Risk Aware', icon: 'fa-triangle-exclamation', color: 'text-amber-500', desc: `${highRiskTxns} high-risk events detected & blocked.` });
+      dna.push({
+        label: t('twinDnaSafetyFirst'),
+        icon: 'fa-shield-halved',
+        color: 'text-emerald-500',
+        desc: t('twinDnaSafetyFirstDesc'),
+      });
+    else
+      dna.push({
+        label: t('twinDnaRiskAware'),
+        icon: 'fa-triangle-exclamation',
+        color: 'text-amber-500',
+        desc: t('twinDnaRiskAwareDesc').replace('{count}', String(highRiskTxns)),
+      });
 
     return dna;
-  }, [savingsRate, assets, transactions]);
+  }, [savingsRate, assets, transactions, t]);
 
   const goalPlans = useMemo<GoalPlan[]>(() => {
     return goals.map((goal) => {
@@ -119,29 +161,29 @@ export function useWealthTwinData() {
 
     const max80C = 150000;
     suggestions.push({
-      name: '80C (ELSS + PPF)',
+      name: 'twinTaxSuggestion80cName',
       limit: max80C,
       recommended: max80C,
       saving: Math.round(max80C * (bracket / 100)),
-      action: 'Start ELSS SIP',
+      action: 'twinTaxSuggestion80cAction',
     });
 
     const maxNps = 50000;
     suggestions.push({
-      name: 'NPS 80CCD(1B)',
+      name: 'twinTaxSuggestionNpsName',
       limit: maxNps,
       recommended: maxNps,
       saving: Math.round(maxNps * (bracket / 100)),
-      action: 'Open NPS Tier-1',
+      action: 'twinTaxSuggestionNpsAction',
     });
 
     if (monthlyIncome > 80000) {
       suggestions.push({
-        name: 'HRA Optimization',
+        name: 'twinTaxSuggestionHraName',
         limit: 120000,
         recommended: 120000,
         saving: Math.round(120000 * (bracket / 100)),
-        action: 'Submit rent receipts',
+        action: 'twinTaxSuggestionHraAction',
       });
     }
 
@@ -162,16 +204,16 @@ export function useWealthTwinData() {
 
     return {
       current: [
-        { name: 'Equity', value: Math.round((equity / total) * 100), color: '#0f766e' },
-        { name: 'Debt/Liquid', value: Math.round((debt / total) * 100), color: '#f59e0b' },
-        { name: 'Property', value: Math.round((property / total) * 100), color: '#8b5cf6' },
+        { name: 'twinRebalanceSliceEquity', value: Math.round((equity / total) * 100), color: '#0f766e' },
+        { name: 'twinRebalanceSliceDebt', value: Math.round((debt / total) * 100), color: '#f59e0b' },
+        { name: 'twinRebalanceSliceProperty', value: Math.round((property / total) * 100), color: '#8b5cf6' },
       ] as AllocationSlice[],
       target: [
-        { name: 'Equity', value: equityTarget, color: '#0f766e' },
-        { name: 'Debt/Liquid', value: debtTarget, color: '#f59e0b' },
-        { name: 'Property', value: propertyTarget, color: '#8b5cf6' },
+        { name: 'twinRebalanceSliceEquity', value: equityTarget, color: '#0f766e' },
+        { name: 'twinRebalanceSliceDebt', value: debtTarget, color: '#f59e0b' },
+        { name: 'twinRebalanceSliceProperty', value: propertyTarget, color: '#8b5cf6' },
       ] as AllocationSlice[],
-      action: equity / total < equityTarget / 100 ? 'Increase equity allocation' : 'Reduce equity allocation',
+      action: equity / total < equityTarget / 100 ? 'twinRebalanceActionIncreaseEquity' : 'twinRebalanceActionReduceEquity',
     };
   }, [assets, marketData]);
 

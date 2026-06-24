@@ -17,6 +17,7 @@ import {
 } from '@/shared/services/aiConfig';
 import type { AIResponse } from '@/shared/services/aiRouter';
 import { speak, isSpeechSupported } from '@/shared/services/voiceService';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 /* ═══════════════════════════════════════════════════════════════
    TYPEWRITER HOOK — ChatGPT-style text reveal
@@ -49,7 +50,21 @@ function useTypewriter(text: string, speed: number = 8, enabled: boolean = true)
   return { displayed, done };
 }
 
+const FOLLOW_UPS = [
+  { query: 'Show me the formula', labelKey: 'wealthChatFollowupFormula', icon: 'fa-calculator' },
+  { query: 'What are the risks?', labelKey: 'wealthChatFollowupRisks', icon: 'fa-triangle-exclamation' },
+  { query: 'How do I get started?', labelKey: 'wealthChatFollowupStart', icon: 'fa-rocket' },
+];
+
+const WELCOME_TOPICS = [
+  { icon: 'fa-receipt', labelKey: 'wealthChatTopicTaxTitle', descKey: 'wealthChatTopicTaxDesc', query: 'How do I save tax?', color: 'bg-emerald-50 text-emerald-600' },
+  { icon: 'fa-chart-line', labelKey: 'wealthChatTopicSipTitle', descKey: 'wealthChatTopicSipDesc', query: 'SIP recommendations', color: 'bg-blue-50 text-blue-600' },
+  { icon: 'fa-wallet', labelKey: 'wealthChatTopicSpendingTitle', descKey: 'wealthChatTopicSpendingDesc', query: 'Analyze my spending', color: 'bg-amber-50 text-amber-600' },
+  { icon: 'fa-globe', labelKey: 'wealthChatTopicMarketTitle', descKey: 'wealthChatTopicMarketDesc', query: 'Market outlook?', color: 'bg-violet-50 text-violet-600' },
+];
+
 function BotMessageBubble({ message, isLatest }: { message: BotMessage; isLatest: boolean }) {
+  const { t } = useTranslation();
   const { displayed, done } = useTypewriter(message.text, 4, isLatest);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
@@ -68,7 +83,7 @@ function BotMessageBubble({ message, isLatest }: { message: BotMessage; isLatest
     <div className="space-y-3">
       <div className="flex gap-3">
         <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary flex-shrink-0">
-          <i className="fas fa-robot text-xs" />
+          <i className="fas fa-robot text-xs" aria-hidden="true" />
         </div>
         <div className="flex-1">
           <div className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4">
@@ -83,8 +98,8 @@ function BotMessageBubble({ message, isLatest }: { message: BotMessage; isLatest
                 message.confidence >= 85 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
                 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
               }`}>
-                <i className="fas fa-shield-halved mr-1" />
-                Confidence: {message.confidence}%
+                <i className="fas fa-shield-halved mr-1" aria-hidden="true" />
+                {t('wealthChatConfidenceLabel')}: {message.confidence}%
               </span>
               <span className="text-[10px] text-slate-400">{message.time}</span>
               {isSpeechSupported() && (
@@ -104,8 +119,8 @@ function BotMessageBubble({ message, isLatest }: { message: BotMessage; isLatest
                   className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                   title={speakingId === message.id ? 'Stop speaking' : 'Read aloud'}
                 >
-                  <i className={`fas ${speakingId === message.id ? 'fa-stop text-rose-500' : 'fa-volume-high'} mr-1`} />
-                  {speakingId === message.id ? 'Speaking' : 'Speak'}
+                  <i className={`fas ${speakingId === message.id ? 'fa-stop text-rose-500' : 'fa-volume-high'} mr-1`} aria-hidden="true" />
+                  {speakingId === message.id ? t('wealthChatSpeaking') : t('wealthChatSpeak')}
                 </button>
               )}
               <button
@@ -113,31 +128,27 @@ function BotMessageBubble({ message, isLatest }: { message: BotMessage; isLatest
                 className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors ml-auto"
                 title="Copy response"
               >
-                <i className={`fas ${copiedId === message.id ? 'fa-check text-emerald-500' : 'fa-copy'} mr-1`} />
-                {copiedId === message.id ? 'Copied' : 'Copy'}
+                <i className={`fas ${copiedId === message.id ? 'fa-check text-emerald-500' : 'fa-copy'} mr-1`} aria-hidden="true" />
+                {copiedId === message.id ? t('wealthChatCopied') : t('wealthChatCopy')}
               </button>
             </div>
 
             {/* Follow-up suggestions */}
             {done && message.confidence >= 90 && (
               <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-                <p className="text-[10px] text-slate-400 mb-1.5">Suggested follow-ups:</p>
+                <p className="text-[10px] text-slate-400 mb-1.5">{t('wealthChatSuggestedFollowups')}</p>
                 <div className="flex gap-2 flex-wrap">
-                  {[
-                    { q: 'Show me the formula', icon: 'fa-calculator' },
-                    { q: 'What are the risks?', icon: 'fa-triangle-exclamation' },
-                    { q: 'How do I get started?', icon: 'fa-rocket' },
-                  ].map((fu) => (
+                  {FOLLOW_UPS.map((fu) => (
                     <button
-                      key={fu.q}
+                      key={fu.labelKey}
                       onClick={() => {
-                        const event = new CustomEvent('sw-ai-query', { detail: fu.q });
+                        const event = new CustomEvent('sw-ai-query', { detail: fu.query });
                         window.dispatchEvent(event);
                       }}
                       className="px-2.5 py-1 bg-primary/5 text-primary rounded-full text-[11px] font-medium hover:bg-primary/10 transition-colors flex items-center gap-1"
                     >
-                      <i className={`fas ${fu.icon} text-[9px]`} />
-                      {fu.q}
+                      <i className={`fas ${fu.icon} text-[10px]`} aria-hidden="true" />
+                      {t(fu.labelKey)}
                     </button>
                   ))}
                 </div>
@@ -1568,6 +1579,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
   const [providerConfigs, setProviderConfigs] = useState<ProviderConfig[]>(getProviderConfigs());
   const [routingMode, setRoutingModeState] = useState<RoutingMode>(getRoutingMode());
   const [ensembleCount, setEnsembleCountState] = useState<number>(getEnsembleCount());
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const sendRef = useRef<(text: string) => Promise<void>>(async () => {});
 
@@ -1586,19 +1598,19 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
   };
 
   const PRESETS = [
-    { label: '💰 Save Tax', query: 'How do I save tax?' },
-    { label: '📈 SIP Plan', query: 'SIP recommendations' },
-    { label: '💳 Spending', query: 'Analyze my spending' },
-    { label: '📊 Market', query: 'Market outlook?' },
-    { label: '🏦 CIBIL', query: 'How is my CIBIL?' },
-    { label: '💎 Net Worth', query: 'What is my net worth?' },
-    { label: '🏠 Home Loan', query: 'Home loan EMI?' },
-    { label: '🛡️ Insurance', query: 'Insurance planning' },
-    { label: '🧠 Neuro', query: 'Neuro-friction status' },
-    { label: '🎲 Monte Carlo', query: 'Run Monte Carlo simulation' },
-    { label: '🛡️ Immune', query: 'Collective immune system' },
-    { label: '🤖 Agent', query: 'Autonomous agent status' },
-    { label: '🔒 Vault', query: 'Sovereign data vault' },
+    { labelKey: 'wealthChatPresetSaveTax', query: 'How do I save tax?' },
+    { labelKey: 'wealthChatPresetSipPlan', query: 'SIP recommendations' },
+    { labelKey: 'wealthChatPresetSpending', query: 'Analyze my spending' },
+    { labelKey: 'wealthChatPresetMarket', query: 'Market outlook?' },
+    { labelKey: 'wealthChatPresetCibil', query: 'How is my CIBIL?' },
+    { labelKey: 'wealthChatPresetNetWorth', query: 'What is my net worth?' },
+    { labelKey: 'wealthChatPresetHomeLoan', query: 'Home loan EMI?' },
+    { labelKey: 'wealthChatPresetInsurance', query: 'Insurance planning' },
+    { labelKey: 'wealthChatPresetNeuro', query: 'Neuro-friction status' },
+    { labelKey: 'wealthChatPresetMonteCarlo', query: 'Run Monte Carlo simulation' },
+    { labelKey: 'wealthChatPresetImmune', query: 'Collective immune system' },
+    { labelKey: 'wealthChatPresetAgent', query: 'Autonomous agent status' },
+    { labelKey: 'wealthChatPresetVault', query: 'Sovereign data vault' },
   ];
 
   const aiConfigModal = showAiConfig && (
@@ -1607,12 +1619,12 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                <i className="fas fa-sparkles text-emerald-500" /> AI Provider Hub
+                <i className="fas fa-sparkles text-emerald-500" aria-hidden="true" /> AI Provider Hub
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">Connect multiple LLM providers for redundancy, speed, and quality</p>
             </div>
-            <button onClick={() => setShowAiConfig(false)} className="w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600">
-              <i className="fas fa-times" />
+            <button onClick={() => setShowAiConfig(false)} aria-label="Close AI provider settings" className="w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600">
+              <i className="fas fa-times" aria-hidden="true" />
             </button>
           </div>
 
@@ -1865,18 +1877,19 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center relative">
-                <i className="fas fa-brain text-lg" />
+                <i className="fas fa-brain text-lg" aria-hidden="true" />
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
               </div>
               <div>
-                <h3 className="font-bold text-base">Wealth Twin AI</h3>
-                <p className="text-[11px] text-white/70">Explainable • Evidence-Based • Regulated</p>
+                <h3 className="font-bold text-base">{t('wealthChatHeaderTitle')}</h3>
+                <p className="text-[11px] text-white/70">{t('wealthChatHeaderSubtitle')}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               {/* AI Source Badge */}
               <button
                 onClick={(e) => { e.stopPropagation(); setShowAiConfig(true); }}
+                aria-label={aiSource !== 'offline' ? `AI powered by ${aiSource}, click to configure` : 'Offline mode, click to add AI provider keys'}
                 className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                   aiSource !== 'offline'
                     ? 'bg-emerald-400/20 text-emerald-300 hover:bg-emerald-400/30'
@@ -1884,52 +1897,56 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                 }`}
                 title={aiSource !== 'offline' ? `Powered by ${aiSource} — Click to configure` : 'Offline Mode — Click to add AI provider keys'}
               >
-                <i className={`fas ${aiSource !== 'offline' ? 'fa-sparkles' : 'fa-wifi-slash'}`} />
-                {aiSource !== 'offline' ? aiSource : 'Offline'}
+                <i className={`fas ${aiSource !== 'offline' ? 'fa-sparkles' : 'fa-wifi-slash'}`} aria-hidden="true" />
+                <span aria-live="polite" aria-atomic="true">{aiSource !== 'offline' ? aiSource : t('wealthChatStatusOffline')}</span>
               </button>
               <div className="hidden sm:flex items-center gap-4">
                 <div className="text-right">
-                  <p className="text-[10px] text-white/60">Net Worth</p>
+                  <p className="text-[10px] text-white/60">{t('wealthChatNetWorthLabel')}</p>
                   <p className="text-sm font-bold">₹{(netWorth / 1e7).toFixed(2)}Cr</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] text-white/60">Savings Rate</p>
+                  <p className="text-[10px] text-white/60">{t('wealthChatSavingsRateLabel')}</p>
                   <p className="text-sm font-bold">{savingsRate.toFixed(1)}%</p>
                 </div>
               </div>
               <button
                 onClick={() => setMessages([])}
+                aria-label="Start a new chat"
                 className="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
                 title="New Chat"
               >
-                <i className="fas fa-plus text-sm" />
+                <i className="fas fa-plus text-sm" aria-hidden="true" />
               </button>
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
+                aria-label={showSidebar ? 'Hide reasoning sidebar' : 'Show reasoning sidebar'}
+                aria-pressed={showSidebar}
                 className="lg:hidden w-9 h-9 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
                 title="Toggle Sidebar"
               >
-                <i className={`fas ${showSidebar ? 'fa-columns' : 'fa-table-columns'} text-sm`} />
+                <i className={`fas ${showSidebar ? 'fa-columns' : 'fa-table-columns'} text-sm`} aria-hidden="true" />
               </button>
               <button
                 onClick={() => setIsFullscreen(true)}
+                aria-label="Expand chat to fullscreen"
                 className="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
                 title="Expand Fullscreen"
               >
-                <i className="fas fa-expand text-sm" />
+                <i className="fas fa-expand text-sm" aria-hidden="true" />
               </button>
             </div>
           </div>
 
           {/* Preset Chips */}
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+          <div className="flex flex-wrap gap-2 mt-3">
             {PRESETS.map((p) => (
               <button
-                key={p.label}
+                key={p.labelKey}
                 onClick={() => send(p.query)}
-                className="px-3 py-1.5 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium text-white whitespace-nowrap transition-colors backdrop-blur-sm"
+                className="px-3 py-1.5 bg-white/15 hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-lg text-xs font-medium text-white transition-colors backdrop-blur-sm"
               >
-                {p.label}
+                {t(p.labelKey)}
               </button>
             ))}
           </div>
@@ -1945,29 +1962,24 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                   <div className="py-8">
                     <div className="text-center mb-6">
                       <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <i className="fas fa-robot text-primary text-2xl" />
+                        <i className="fas fa-robot text-primary text-2xl" aria-hidden="true" />
                       </div>
-                      <p className="text-base font-bold text-slate-800 dark:text-white">Welcome, {user.name}!</p>
-                      <p className="text-sm text-slate-500 mt-1">I'm your Explainable Wealth Twin AI. Ask me anything.</p>
+                      <p className="text-base font-bold text-slate-800 dark:text-white">{t('wealthChatWelcome')}, {user.name}!</p>
+                      <p className="text-sm text-slate-500 mt-1">{t('wealthChatWelcomeMessage')}</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
-                      {[
-                        { icon: 'fa-receipt', label: 'Tax Optimization', desc: 'Save ₹46,800/year', query: 'How do I save tax?', color: 'bg-emerald-50 text-emerald-600' },
-                        { icon: 'fa-chart-line', label: 'SIP Projections', desc: '10-year wealth forecast', query: 'SIP recommendations', color: 'bg-blue-50 text-blue-600' },
-                        { icon: 'fa-wallet', label: 'Spending Analysis', desc: 'Category breakdown', query: 'Analyze my spending', color: 'bg-amber-50 text-amber-600' },
-                        { icon: 'fa-globe', label: 'Market Outlook', desc: 'Live NIFTY & Gold', query: 'Market outlook?', color: 'bg-violet-50 text-violet-600' },
-                      ].map((topic) => (
+                      {WELCOME_TOPICS.map((topic) => (
                         <button
-                          key={topic.label}
+                          key={topic.labelKey}
                           onClick={() => send(topic.query)}
                           className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-primary/30 hover:shadow-sm transition-all text-left"
                         >
                           <div className={`w-10 h-10 ${topic.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                            <i className={`fas ${topic.icon}`} />
+                            <i className={`fas ${topic.icon}`} aria-hidden="true" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-800 dark:text-white">{topic.label}</p>
-                            <p className="text-[11px] text-slate-500">{topic.desc}</p>
+                            <p className="text-sm font-bold text-slate-800 dark:text-white">{t(topic.labelKey)}</p>
+                            <p className="text-[11px] text-slate-500">{t(topic.descKey)}</p>
                           </div>
                         </button>
                       ))}
@@ -1991,13 +2003,13 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                 {typing && (
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                      <i className="fas fa-robot text-xs" />
+                      <i className="fas fa-robot text-xs" aria-hidden="true" />
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" />
                       <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                       <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      <span className="text-xs text-slate-400">Wealth Twin is reasoning…</span>
+                      <span className="text-xs text-slate-400">{t('wealthChatTypingIndicator')}</span>
                     </div>
                   </div>
                 )}
@@ -2011,15 +2023,15 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && send(input)}
-                    placeholder="Ask about taxes, SIP, spending, market, CIBIL, net worth, fraud, retirement, home loan, insurance, neuro-friction, monte carlo, agent, vault…"
+                    placeholder={t('wealthChatInputPlaceholder')}
                     className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white"
                   />
                   <button
                     onClick={() => send(input)}
                     className="px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors flex items-center gap-2"
                   >
-                    <i className="fas fa-paper-plane" />
-                    Ask
+                    <i className="fas fa-paper-plane" aria-hidden="true" />
+                    {t('wealthChatAskButton')}
                   </button>
                 </div>
               </div>
@@ -2029,8 +2041,8 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
             <div className={`space-y-4 overflow-y-auto max-h-[600px] pb-2 ${showSidebar ? '' : 'hidden lg:hidden'}`}>
               <div className="card">
                 <div className="flex items-center gap-2 mb-3">
-                  <i className="fas fa-microchip text-primary text-sm" />
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">Reasoning Chain</h3>
+                  <i className="fas fa-microchip text-primary text-sm" aria-hidden="true" />
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('wealthChatReasoningTitle')}</h3>
                 </div>
                 {lastBot && lastBot.reasoning.length > 0 ? (
                   <div className="space-y-3">
@@ -2046,46 +2058,46 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                         )}
                         {r.result && (
                           <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                            <i className="fas fa-equals mr-1" />{r.result}
+                            <i className="fas fa-equals mr-1" aria-hidden="true" />{r.result}
                           </p>
                         )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400 text-center py-4">Ask a question to see the AI reasoning chain.</p>
+                  <p className="text-xs text-slate-400 text-center py-4">{t('wealthChatReasoningEmpty')}</p>
                 )}
               </div>
 
               <div className="card">
                 <div className="flex items-center gap-2 mb-3">
-                  <i className="fas fa-fingerprint text-secondary text-sm" />
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">Evidence</h3>
+                  <i className="fas fa-fingerprint text-secondary text-sm" aria-hidden="true" />
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('wealthChatEvidenceTitle')}</h3>
                 </div>
                 {lastBot && lastBot.evidence.length > 0 ? (
                   <div className="space-y-2">
                     {lastBot.evidence.map((e, idx) => (
                       <div key={idx} className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
                         <div className="w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center text-primary flex-shrink-0">
-                          <i className={`fas ${e.icon} text-[10px]`} />
+                          <i className={`fas ${e.icon} text-[10px]`} aria-hidden="true" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] text-slate-500 dark:text-slate-400">{e.label}</p>
                           <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{e.value}</p>
                         </div>
-                        <span className="text-[9px] text-slate-400 flex-shrink-0">{e.source}</span>
+                        <span className="text-[10px] text-slate-400 flex-shrink-0">{e.source}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400 text-center py-4">Data evidence will appear here.</p>
+                  <p className="text-xs text-slate-400 text-center py-4">{t('wealthChatEvidenceEmpty')}</p>
                 )}
               </div>
 
               <div className="card">
                 <div className="flex items-center gap-2 mb-3">
-                  <i className="fas fa-scale-balanced text-accent text-sm" />
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">Regulatory Citations</h3>
+                  <i className="fas fa-scale-balanced text-accent text-sm" aria-hidden="true" />
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('wealthChatCitationsTitle')}</h3>
                 </div>
                 {lastBot && lastBot.citations.length > 0 ? (
                   <div className="space-y-2">
@@ -2097,7 +2109,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400 text-center py-4">Citations from RBI, SEBI, IT Act, IRDAI, PFRDA will appear here.</p>
+                  <p className="text-xs text-slate-400 text-center py-4">{t('wealthChatCitationsEmpty')}</p>
                 )}
               </div>
             </div>
@@ -2116,12 +2128,12 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center relative">
-              <i className="fas fa-brain text-lg" />
+              <i className="fas fa-brain text-lg" aria-hidden="true" />
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
             </div>
             <div>
-              <h2 className="text-base font-bold">Wealth Twin AI — Explainable Finance</h2>
-              <p className="text-[10px] text-white/70">Every answer backed by evidence • Regulatory citations • Formula transparency</p>
+              <h2 className="text-base font-bold">{t('wealthChatFullscreenTitle')}</h2>
+              <p className="text-[10px] text-white/70">{t('wealthChatFullscreenSubtitle')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -2135,28 +2147,29 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                 <p className="text-sm font-bold">{savingsRate.toFixed(1)}%</p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-white/60">Tax Bracket</p>
+                <p className="text-[10px] text-white/60">{t('wealthChatTaxBracketLabel')}</p>
                 <p className="text-sm font-bold">{user.taxBracket}%</p>
               </div>
             </div>
             <button
               onClick={() => setIsFullscreen(false)}
+              aria-label="Close fullscreen chat"
               className="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
               title="Close Fullscreen"
             >
-              <i className="fas fa-compress text-sm" />
+              <i className="fas fa-compress text-sm" aria-hidden="true" />
             </button>
           </div>
         </div>
 
-        <div className="flex gap-2 mt-3 overflow-x-auto pb-1 max-w-7xl mx-auto">
+        <div className="flex flex-wrap gap-2 mt-3 max-w-7xl mx-auto">
           {PRESETS.map((p) => (
             <button
-              key={p.label}
+              key={p.labelKey}
               onClick={() => send(p.query)}
-              className="px-3 py-1.5 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium text-white whitespace-nowrap transition-colors backdrop-blur-sm"
+              className="px-3 py-1.5 bg-white/15 hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-lg text-xs font-medium text-white transition-colors backdrop-blur-sm"
             >
-              {p.label}
+              {t(p.labelKey)}
             </button>
           ))}
         </div>
@@ -2171,10 +2184,10 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
               {messages.length === 0 && (
                 <div className="text-center py-12 text-slate-400 dark:text-slate-500">
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i className="fas fa-robot text-primary text-2xl" />
+                    <i className="fas fa-robot text-primary text-2xl" aria-hidden="true" />
                   </div>
-                  <p className="text-sm font-medium">Welcome, {user.name}!</p>
-                  <p className="text-xs mt-1">I'm your Explainable AI. Ask anything — I show my work.</p>
+                  <p className="text-sm font-medium">{t('wealthChatWelcome')}, {user.name}!</p>
+                  <p className="text-xs mt-1">{t('wealthChatWelcomeMessageFullscreen')}</p>
                 </div>
               )}
 
@@ -2194,13 +2207,13 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
               {typing && (
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                    <i className="fas fa-robot text-xs" />
+                    <i className="fas fa-robot text-xs" aria-hidden="true" />
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" />
                     <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                     <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    <span className="text-xs text-slate-400">Wealth Twin is reasoning…</span>
+                    <span className="text-xs text-slate-400">{t('wealthChatTypingIndicator')}</span>
                   </div>
                 </div>
               )}
@@ -2213,7 +2226,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && send(input)}
-                  placeholder="Ask about taxes, SIP, spending, market, CIBIL, net worth, fraud, retirement, home loan, insurance, neuro-friction, monte carlo, agent, vault…"
+                  placeholder={t('wealthChatInputPlaceholder')}
                   className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white"
                   autoFocus
                 />
@@ -2221,8 +2234,8 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                   onClick={() => send(input)}
                   className="px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors flex items-center gap-2"
                 >
-                  <i className="fas fa-paper-plane" />
-                  Ask
+                  <i className="fas fa-paper-plane" aria-hidden="true" />
+                  {t('wealthChatAskButton')}
                 </button>
               </div>
             </div>
@@ -2232,8 +2245,8 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
           <div className="space-y-4 overflow-y-auto h-full pb-4">
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
-                <i className="fas fa-microchip text-primary text-sm" />
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white">Reasoning Chain</h3>
+                <i className="fas fa-microchip text-primary text-sm" aria-hidden="true" />
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('wealthChatReasoningTitle')}</h3>
               </div>
               {lastBot && lastBot.reasoning.length > 0 ? (
                 <div className="space-y-3">
@@ -2249,28 +2262,28 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                       )}
                       {r.result && (
                         <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                          <i className="fas fa-equals mr-1" />{r.result}
+                          <i className="fas fa-equals mr-1" aria-hidden="true" />{r.result}
                         </p>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 text-center py-4">Ask a question to see the AI reasoning chain.</p>
+                <p className="text-xs text-slate-400 text-center py-4">{t('wealthChatReasoningEmpty')}</p>
               )}
             </div>
 
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
-                <i className="fas fa-fingerprint text-secondary text-sm" />
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white">Evidence</h3>
+                <i className="fas fa-fingerprint text-secondary text-sm" aria-hidden="true" />
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('wealthChatEvidenceTitle')}</h3>
               </div>
               {lastBot && lastBot.evidence.length > 0 ? (
                 <div className="space-y-2">
                   {lastBot.evidence.map((e, idx) => (
                     <div key={idx} className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
                       <div className="w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center text-primary flex-shrink-0">
-                        <i className={`fas ${e.icon} text-[10px]`} />
+                        <i className={`fas ${e.icon} text-[10px]`} aria-hidden="true" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] text-slate-500 dark:text-slate-400">{e.label}</p>
@@ -2281,14 +2294,14 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 text-center py-4">Data evidence will appear here.</p>
+                <p className="text-xs text-slate-400 text-center py-4">{t('wealthChatEvidenceEmpty')}</p>
               )}
             </div>
 
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
-                <i className="fas fa-scale-balanced text-accent text-sm" />
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white">Regulatory Citations</h3>
+                <i className="fas fa-scale-balanced text-accent text-sm" aria-hidden="true" />
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('wealthChatCitationsTitle')}</h3>
               </div>
               {lastBot && lastBot.citations.length > 0 ? (
                 <div className="space-y-2">
@@ -2300,7 +2313,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 text-center py-4">Citations from RBI, SEBI, IT Act, IRDAI, PFRDA will appear here.</p>
+                <p className="text-xs text-slate-400 text-center py-4">{t('wealthChatCitationsEmpty')}</p>
               )}
             </div>
           </div>

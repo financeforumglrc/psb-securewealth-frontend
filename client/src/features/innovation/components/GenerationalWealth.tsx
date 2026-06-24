@@ -160,14 +160,14 @@ export default function GenerationalWealth() {
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                     item.status === 'active' ? 'bg-green-50 text-green-700' : item.status === 'setup' ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-500'
                   }`}>
-                    {item.status}
+                    {t(`generationalStatus${item.status.charAt(0).toUpperCase() + item.status.slice(1)}`)}
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-500">{t('generationalTo')} {item.to}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-extrabold text-gray-900">{item.value}</p>
-                <p className="text-[10px] text-gray-400">{item.type}</p>
+                <p className="text-[10px] text-gray-400">{t(`generationalType${item.type.replace(/\s/g, '')}`)}</p>
               </div>
             </motion.div>
           ))}

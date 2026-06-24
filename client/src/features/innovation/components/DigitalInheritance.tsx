@@ -44,7 +44,7 @@ export default function DigitalInheritance() {
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 
   const securedCount = DIGITAL_ASSETS.filter(a => a.status === 'secured').length;
-  const totalValue = '₹6.5L+';
+  const totalValue = t('digitalInheritanceTotalValueAmount');
 
   return (
     <div className="space-y-5">
@@ -54,7 +54,7 @@ export default function DigitalInheritance() {
           { label: t('digitalInheritanceAssets'), value: DIGITAL_ASSETS.length, icon: 'fa-laptop', color: 'bg-blue-50 text-blue-600' },
           { label: t('digitalInheritanceSecured'), value: securedCount, icon: 'fa-lock', color: 'bg-green-50 text-green-600' },
           { label: t('digitalInheritanceTotalValue'), value: totalValue, icon: 'fa-coins', color: 'bg-amber-50 text-amber-600' },
-          { label: t('digitalInheritanceWillStatus'), value: 'Smart', icon: 'fa-file-contract', color: 'bg-violet-50 text-violet-600' },
+          { label: t('digitalInheritanceWillStatus'), value: t('digitalInheritanceWillStatusValue'), icon: 'fa-file-contract', color: 'bg-violet-50 text-violet-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -116,7 +116,7 @@ export default function DigitalInheritance() {
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                   asset.status === 'secured' ? 'bg-green-50 text-green-700' : asset.status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'
                 }`}>
-                  {asset.status}
+                  {t(`digitalInheritanceStatus${asset.status.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()).replace(/^./, (c: string) => c.toUpperCase())}` as any)}
                 </span>
               </div>
               <p className="text-[10px] text-gray-400 mt-1">{t('digitalInheritanceLastAccessed')} {asset.lastAccessed}</p>
@@ -130,7 +130,7 @@ export default function DigitalInheritance() {
                     className="mt-2 pt-2 border-t border-dashed border-gray-200"
                   >
                     <div className="flex items-center gap-2 text-[10px]">
-                      <span className="text-gray-500">Nominee:</span>
+                      <span className="text-gray-500">{t('digitalInheritanceNominee')}</span>
                       <span className="font-semibold text-gray-700">{asset.nominee}</span>
                     </div>
                     <div className="mt-2 flex gap-2">
@@ -172,7 +172,7 @@ export default function DigitalInheritance() {
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                     clause.status === 'notarized' ? 'bg-green-50 text-green-700' : clause.status === 'smart-contract' ? 'bg-violet-50 text-violet-700' : clause.status === 'active' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'
                   }`}>
-                    {clause.status}
+                    {t(`digitalInheritanceClause${clause.status.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()).replace(/^./, (c: string) => c.toUpperCase())}` as any)}
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-500">{clause.detail}</p>
@@ -201,7 +201,7 @@ export default function DigitalInheritance() {
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                   trig.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-rose-50 text-rose-700'
                 }`}>
-                  {trig.status}
+                  {t(`digitalInheritanceTrigger${trig.status.charAt(0).toUpperCase() + trig.status.slice(1)}`)}
                 </span>
               </div>
               <div className="space-y-1 text-[10px] text-gray-500">

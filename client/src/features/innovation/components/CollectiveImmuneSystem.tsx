@@ -163,7 +163,7 @@ export default function CollectiveImmuneSystem() {
               </div>
               <div className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
                 <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 bg-white/80 dark:bg-slate-800/80 px-1.5 py-0.5 rounded">{city.city}</p>
-                <p className="text-[10px] text-center text-rose-500 font-bold">{city.threats} threats</p>
+                <p className="text-[10px] text-center text-rose-500 font-bold">{city.threats} {t('collectiveImmuneThreats')}</p>
               </div>
             </motion.div>
           ))}
@@ -181,7 +181,7 @@ export default function CollectiveImmuneSystem() {
           <i className="fas fa-radar text-rose-500 text-sm" aria-hidden="true" />
           <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('collectiveImmuneFeedTitle')}</h4>
           <span className={`ml-auto text-[10px] px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full font-bold ${prefersReducedMotion ? '' : 'animate-pulse'}`} aria-label="Live feed">
-            LIVE
+            {t('collectiveImmuneLiveBadge')}
           </span>
         </div>
         <div className="space-y-2">

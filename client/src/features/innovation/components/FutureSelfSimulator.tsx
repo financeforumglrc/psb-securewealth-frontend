@@ -25,15 +25,6 @@ const PROJECTION_DATA: ProjectionScenario[] = [
   { year: 2036, currentPath: 115, optimizedPath: 291 },
 ];
 
-const AVATAR_STATES = [
-  { label: 'Struggling', emoji: '😰', netWorth: '< ₹10L', color: '#EF4444' },
-  { label: 'Surviving', emoji: '😐', netWorth: '₹10-50L', color: '#F59E0B' },
-  { label: 'Stable', emoji: '🙂', netWorth: '₹50L-1Cr', color: '#3B82F6' },
-  { label: 'Thriving', emoji: '😊', netWorth: '₹1-3Cr', color: '#8B5CF6' },
-  { label: 'Wealthy', emoji: '🤩', netWorth: '₹3-7Cr', color: '#10B981' },
-  { label: 'Financially Free', emoji: '👑', netWorth: '> ₹7Cr', color: '#FFD700' },
-];
-
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload) return null;
   const data = PROJECTION_DATA.find(d => d.year === label);
@@ -60,6 +51,15 @@ export default function FutureSelfSimulator() {
   const { t } = useTranslation();
   const [selectedYear, setSelectedYear] = useState(2030);
   const [showAvatar, setShowAvatar] = useState(true);
+
+  const AVATAR_STATES = [
+    { label: t('futureSelfStruggling'), emoji: '😰', netWorth: '< ₹10L', color: '#EF4444' },
+    { label: t('futureSelfSurviving'), emoji: '😐', netWorth: '₹10-50L', color: '#F59E0B' },
+    { label: t('futureSelfStable'), emoji: '🙂', netWorth: '₹50L-1Cr', color: '#3B82F6' },
+    { label: t('futureSelfThriving'), emoji: '😊', netWorth: '₹1-3Cr', color: '#8B5CF6' },
+    { label: t('futureSelfWealthy'), emoji: '🤩', netWorth: '₹3-7Cr', color: '#10B981' },
+    { label: t('futureSelfFree'), emoji: '👑', netWorth: '> ₹7Cr', color: '#FFD700' },
+  ];
 
   const currentData = PROJECTION_DATA.find(d => d.year === selectedYear) || PROJECTION_DATA[0];
   const avatarIndex = Math.min(
@@ -165,7 +165,7 @@ export default function FutureSelfSimulator() {
               step={1}
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              aria-label="Select projected year"
+              aria-label={t('futureSelfSelectYear')}
               className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-primary"
             />
             <div className="flex justify-between text-[10px] text-gray-400 mt-1">
@@ -188,8 +188,8 @@ export default function FutureSelfSimulator() {
             >
               <div className="text-5xl mb-2">{avatar.emoji}</div>
               <p className="text-lg font-extrabold" style={{ color: avatar.color }}>{avatar.label}</p>
-              <p className="text-[11px] text-gray-500">{avatar.netWorth} estimated net worth</p>
-              <p className="text-[10px] text-gray-400 mt-1">Year {selectedYear}</p>
+              <p className="text-[11px] text-gray-500">{avatar.netWorth} {t('futureSelfEstimatedNetWorth')}</p>
+              <p className="text-[10px] text-gray-400 mt-1">{t('futureSelfYear').replace('{year}', String(selectedYear))}</p>
             </motion.div>
           )}
 

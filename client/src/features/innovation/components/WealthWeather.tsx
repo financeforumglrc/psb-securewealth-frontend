@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -31,6 +32,7 @@ const CONDITION_CONFIG = {
 };
 
 export default function WealthWeather() {
+  const { t } = useTranslation();
   const [selectedDay, setSelectedDay] = useState(0);
   const [animating, setAnimating] = useState(false);
   const current = FORECAST[selectedDay];
@@ -47,10 +49,10 @@ export default function WealthWeather() {
       {/* Header Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Financial Climate', value: 'Sunny', icon: 'fa-sun', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Weekly Outlook', value: '+₹8.5K', icon: 'fa-chart-line', color: 'bg-green-50 text-green-600' },
-          { label: 'Storm Days', value: '1', icon: 'fa-bolt', color: 'bg-rose-50 text-rose-600' },
-          { label: 'AI Accuracy', value: '91%', icon: 'fa-bullseye', color: 'bg-blue-50 text-blue-600' },
+          { label: t('weatherClimate'), value: 'Sunny', icon: 'fa-sun', color: 'bg-amber-50 text-amber-600' },
+          { label: t('weatherOutlook'), value: '+₹8.5K', icon: 'fa-chart-line', color: 'bg-green-50 text-green-600' },
+          { label: t('weatherStormDays'), value: '1', icon: 'fa-bolt', color: 'bg-rose-50 text-rose-600' },
+          { label: t('weatherAccuracy'), value: '91%', icon: 'fa-bullseye', color: 'bg-blue-50 text-blue-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -75,10 +77,10 @@ export default function WealthWeather() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-cloud-sun text-blue-600" aria-hidden="true" /> Wealth Weather Forecast
+              <i className="fas fa-cloud-sun text-blue-600" aria-hidden="true" /> {t('weatherTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              AI predicts your financial climate 7 days ahead — like weather, but for your money
+              {t('weatherSubtitle')}
             </p>
           </div>
         </div>
@@ -98,7 +100,7 @@ export default function WealthWeather() {
                     : 'border-gray-100 bg-white/60 hover:bg-white hover:shadow-sm'
                 }`}
               >
-                <p className="text-[9px] text-gray-400">{day.day}</p>
+                <p className="text-[10px] text-gray-400">{day.day}</p>
                 <p className="text-[10px] font-bold text-gray-600">{day.date}</p>
                 <div className="my-1.5">
                   <i className={`fas ${dc.icon} text-lg`} style={{ color: dc.color }} aria-hidden="true" />
@@ -138,14 +140,14 @@ export default function WealthWeather() {
                   current.risk === 'medium' ? 'bg-amber-100 text-amber-700' :
                   'bg-rose-100 text-rose-700'
                 }`}>
-                  {current.risk.toUpperCase()} RISK
+                  {current.risk.toUpperCase()} {t('weatherRiskSuffix')}
                 </span>
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3 bg-white/70 rounded-lg">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Expected Events</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{t('weatherExpectedEvents')}</p>
                 <div className="space-y-1">
                   {current.events.map((evt, i) => (
                     <div key={i} className="flex items-center gap-2 text-[11px] text-gray-700">
@@ -156,7 +158,7 @@ export default function WealthWeather() {
                 </div>
               </div>
               <div className="p-3 bg-white/70 rounded-lg">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">AI Advice</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{t('weatherAiAdvice')}</p>
                 <p className="text-[11px] text-gray-700 leading-relaxed">{current.advice}</p>
               </div>
             </div>
@@ -167,7 +169,7 @@ export default function WealthWeather() {
       {/* Monthly Climate Trend */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-calendar-days text-primary" aria-hidden="true" /> 90-Day Financial Climate Outlook
+          <i className="fas fa-calendar-days text-primary" aria-hidden="true" /> {t('weather90DayOutlook')}
         </h4>
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: 90 }).map((_, idx) => {
@@ -184,7 +186,7 @@ export default function WealthWeather() {
                 style={{ backgroundColor: cc.color + '20' }}
                 title={`Day ${idx + 1}: ${cc.desc}`}
               >
-                <i className={`fas ${cc.icon} text-[8px]`} style={{ color: cc.color }} aria-hidden="true" />
+                <i className={`fas ${cc.icon} text-[10px]`} style={{ color: cc.color }} aria-hidden="true" />
               </motion.div>
             );
           })}

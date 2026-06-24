@@ -84,7 +84,7 @@ export default function EmotionalResonance() {
                 <PolarGrid stroke="#E5E7EB" />
                 <PolarAngleAxis dataKey="emotion" tick={{ fontSize: 10, fill: '#6B7280' }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar name="Your Score" dataKey="score" stroke="#8B5CF6" strokeWidth={2.5} fill="#8B5CF6" fillOpacity={0.15} />
+                <Radar name={t('emotionalResonanceYourScore')} dataKey="score" stroke="#8B5CF6" strokeWidth={2.5} fill="#8B5CF6" fillOpacity={0.15} />
                 <Tooltip
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '11px' }}
                   formatter={(value: any, _name: any, props: any) => [

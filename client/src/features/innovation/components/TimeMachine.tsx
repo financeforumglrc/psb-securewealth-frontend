@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -30,6 +31,7 @@ const TIMELINE: TimelineEvent[] = [
 ];
 
 export default function TimeMachine() {
+  const { t } = useTranslation();
   const [year, setYear] = useState(2036);
   const current = TIMELINE.find(t => t.year === year) || TIMELINE[0];
   const index = TIMELINE.findIndex(t => t.year === year);
@@ -48,10 +50,10 @@ export default function TimeMachine() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Years Scanned', value: '34', icon: 'fa-clock-rotate-left', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Timeline Events', value: TIMELINE.length, icon: 'fa-timeline', color: 'bg-violet-50 text-violet-600' },
-          { label: 'Peak Net Worth', value: '₹22Cr', icon: 'fa-mountain', color: 'bg-amber-50 text-amber-600' },
-          { label: 'FIRE Age', value: '46', icon: 'fa-fire', color: 'bg-rose-50 text-rose-600' },
+          { label: t('timeYearsScanned'), value: '34', icon: 'fa-clock-rotate-left', color: 'bg-blue-50 text-blue-600' },
+          { label: t('timeTimelineEvents'), value: TIMELINE.length, icon: 'fa-timeline', color: 'bg-violet-50 text-violet-600' },
+          { label: t('timePeakNetWorth'), value: '₹22Cr', icon: 'fa-mountain', color: 'bg-amber-50 text-amber-600' },
+          { label: t('timeFireAge'), value: '46', icon: 'fa-fire', color: 'bg-rose-50 text-rose-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -75,17 +77,17 @@ export default function TimeMachine() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-clock-rotate-left text-violet-600" aria-hidden="true" /> Financial Time Machine
+              <i className="fas fa-clock-rotate-left text-violet-600" aria-hidden="true" /> {t('timeTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              Travel to any year of your financial future. See your life, wealth, and milestones unfold.
+              {t('timeSubtitle')}
             </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={prevYear} aria-label="Previous year" className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <button onClick={prevYear} aria-label={t('timePreviousYear')} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
               <i className="fas fa-chevron-left text-gray-600 text-xs" aria-hidden="true" />
             </button>
-            <button onClick={nextYear} aria-label="Next year" className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <button onClick={nextYear} aria-label={t('timeNextYear')} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
               <i className="fas fa-chevron-right text-gray-600 text-xs" aria-hidden="true" />
             </button>
           </div>
@@ -100,31 +102,31 @@ export default function TimeMachine() {
             step={1}
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
-            aria-label="Select projected year"
+            aria-label={t('timeSelectYear')}
             className="w-full h-2 bg-gradient-to-r from-blue-200 via-violet-200 to-amber-200 rounded-full appearance-none cursor-pointer accent-primary"
           />
-          <div className="flex justify-between text-[9px] text-gray-400 mt-1">
-            <span>2026 (Age 32)</span>
+          <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <span>2026 ({t('timeAge')} 32)</span>
             <span>2043</span>
-            <span>2060 (Age 66)</span>
+            <span>2060 ({t('timeAge')} 66)</span>
           </div>
         </div>
 
         {/* Timeline Dots */}
         <div className="flex justify-between mb-6 px-2">
-          {TIMELINE.map((t) => (
+          {TIMELINE.map((evt) => (
             <button
-              key={t.year}
-              onClick={() => setYear(t.year)}
-              aria-label={`Jump to year ${t.year}`}
+              key={evt.year}
+              onClick={() => setYear(evt.year)}
+              aria-label={t('timeJumpToYear').replace('{year}', String(evt.year))}
               className={`relative w-3 h-3 rounded-full transition-all ${
-                t.year === year ? 'bg-primary scale-150 shadow-lg shadow-primary/30' :
-                t.year < year ? 'bg-primary/40' : 'bg-gray-200'
+                evt.year === year ? 'bg-primary scale-150 shadow-lg shadow-primary/30' :
+                evt.year < year ? 'bg-primary/40' : 'bg-gray-200'
               }`}
             >
-              {t.year === year && (
-                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-primary whitespace-nowrap">
-                  {t.year}
+              {evt.year === year && (
+                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary whitespace-nowrap">
+                  {evt.year}
                 </span>
               )}
             </button>
@@ -147,25 +149,25 @@ export default function TimeMachine() {
                 <div>
                   <p className="text-2xl font-extrabold text-gray-900">{current.year}</p>
                   <p className="text-sm font-bold text-violet-600">{current.title}</p>
-                  <p className="text-[11px] text-gray-500">Age {current.age} · {current.mood}</p>
+                  <p className="text-[11px] text-gray-500">{t('timeAgeMood').replace('{age}', String(current.age)).replace('{mood}', current.mood)}</p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-3xl font-extrabold text-primary">₹{(current.netWorth / 100).toFixed(1)}Cr</p>
-                <p className="text-[10px] text-gray-500">Net Worth</p>
+                <p className="text-[10px] text-gray-500">{t('timeNetWorth')}</p>
               </div>
             </div>
 
             {/* Financial Breakdown */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
               {[
-                { label: 'Monthly Income', value: `₹${(current.income / 12).toLocaleString()}`, icon: 'fa-money-bill-wave', color: 'text-green-600' },
-                { label: 'Monthly Expenses', value: `₹${(current.expenses / 12).toLocaleString()}`, icon: 'fa-cart-shopping', color: 'text-rose-600' },
-                { label: 'Monthly Invested', value: `₹${(current.investments / 12).toLocaleString()}`, icon: 'fa-chart-line', color: 'text-blue-600' },
-                { label: 'Savings Rate', value: `${Math.round((current.investments / current.income) * 100)}%`, icon: 'fa-piggy-bank', color: 'text-amber-600' },
+                { label: t('timeMonthlyIncome'), value: `₹${(current.income / 12).toLocaleString()}`, icon: 'fa-money-bill-wave', color: 'text-green-600' },
+                { label: t('timeMonthlyExpenses'), value: `₹${(current.expenses / 12).toLocaleString()}`, icon: 'fa-cart-shopping', color: 'text-rose-600' },
+                { label: t('timeMonthlyInvested'), value: `₹${(current.investments / 12).toLocaleString()}`, icon: 'fa-chart-line', color: 'text-blue-600' },
+                { label: t('timeSavingsRate'), value: `${Math.round((current.investments / current.income) * 100)}%`, icon: 'fa-piggy-bank', color: 'text-amber-600' },
               ].map((item, idx) => (
                 <div key={idx} className="p-2.5 bg-white/70 rounded-lg">
-                  <p className="text-[9px] text-gray-400">{item.label}</p>
+                  <p className="text-[10px] text-gray-400">{item.label}</p>
                   <p className={`text-sm font-extrabold ${item.color}`}>{item.value}</p>
                 </div>
               ))}
@@ -175,7 +177,7 @@ export default function TimeMachine() {
             <div className="flex flex-wrap gap-2">
               {current.milestones.map((m, i) => (
                 <span key={i} className="px-3 py-1.5 bg-white rounded-full text-[10px] font-bold text-violet-700 border border-violet-100">
-                  <i className="fas fa-star text-amber-400 mr-1 text-[8px]" aria-hidden="true" />{m}
+                  <i className="fas fa-star text-amber-400 mr-1 text-[10px]" aria-hidden="true" />{m}
                 </span>
               ))}
             </div>
@@ -184,7 +186,7 @@ export default function TimeMachine() {
 
         {/* Comparison Bar */}
         <div className="mt-4">
-          <p className="text-[10px] text-gray-400 mb-2">Net Worth Trajectory</p>
+          <p className="text-[10px] text-gray-400 mb-2">{t('timeNetWorthTrajectory')}</p>
           <div className="flex items-end gap-1 h-[80px]">
             {TIMELINE.map((t, idx) => {
               const height = (t.netWorth / 2200) * 100;
