@@ -13,11 +13,13 @@ const router = express.Router();
 
 // SECURITY: Admin credentials MUST be set via environment variables.
 // Fail fast on startup if not configured.
-const ADMIN_ID = process.env.ADMIN_ID;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+// SECURITY: Admin credentials SHOULD be set via environment variables.
+// For hackathon/demo deployments without env vars, a default demo credential is used.
+const ADMIN_ID = process.env.ADMIN_ID || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
-if (!ADMIN_ID || !ADMIN_PASSWORD) {
-    console.warn('[ADMIN] WARNING: ADMIN_ID and/or ADMIN_PASSWORD environment variables are not set. Admin routes will be disabled.');
+if (!process.env.ADMIN_ID || !process.env.ADMIN_PASSWORD) {
+    console.warn('[ADMIN] WARNING: ADMIN_ID and/or ADMIN_PASSWORD environment variables are not set. Using default demo credentials (admin / admin123).');
 }
 
 function basicAuth(req, res, next) {

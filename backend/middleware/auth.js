@@ -199,8 +199,9 @@ const apiKeyMiddleware = (req, res, next) => {
 };
 
 // Admin dashboard credentials (must match routes/admin.js)
-const ADMIN_ID = process.env.ADMIN_ID;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+// SECURITY: Override with env vars in production. Demo defaults are provided for hackathon deployments.
+const ADMIN_ID = process.env.ADMIN_ID || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 /**
  * Admin API token authentication

@@ -33,6 +33,7 @@ const nlpQueryRoutes = require('./routes/nlp-query');
 const screenerRoutes  = require('./routes/screener');
 const bankingRoutes = require('./routes/banking');
 const kycRoutes = require('./routes/kyc');
+const { seedAll } = require('./scripts/seedDemoData');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -291,11 +292,20 @@ app.use(errorHandler);
 
 // Start server only when run directly (not when imported by tests)
 if (require.main === module) {
-    app.listen(PORT, () => {
-        logger.info(`DS Financial API Server running on port ${PORT}`);
-        logger.info(`Environment: ${process.env.NODE_ENV}`);
-        logger.info(`Patent Portfolio: 47 innovations ready`);
-    });
+    seedAll()
+        .then(() => {
+            app.listen(PORT, () => {
+                logger.info(`DS Financial API Server running on port ${PORT}`);
+                logger.info(`Environment: ${process.env.NODE_ENV}`);
+                logger.info(`Patent Portfolio: 47 innovations ready`);
+            });
+        })
+        .catch((err) => {
+            logger.error('Demo seed failed, starting server anyway:', err);
+            app.listen(PORT, () => {
+                logger.info(`DS Financial API Server running on port ${PORT}`);
+            });
+        });
 }
 
 module.exports = app;

@@ -6,12 +6,14 @@ import {
 } from 'lucide-react';
 import { fraudService, statusColor, priorityColor, categoryLabel } from '@/features/admin/services/fraudService';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import type { FraudCase, FraudHop } from '@/features/admin/lib/fraudTypes';
+import type { FraudCase, FraudHop, FraudNote, FraudStatus } from '@/features/admin/lib/fraudTypes';
 
 interface Props {
   caseData: FraudCase;
   onClose: () => void;
   onUpdate: () => void;
+  isMock?: boolean;
+  onLocalUpdate?: (updated: FraudCase) => void;
 }
 
 const ACTION_OPTIONS = [
@@ -52,7 +54,7 @@ function HopRow({ hop, isLast }: { hop: FraudHop; isLast: boolean }) {
   );
 }
 
-export default function FraudCaseDetail({ caseData, onClose, onUpdate }: Props) {
+export default function FraudCaseDetail({ caseData, onClose, onUpdate, isMock, onLocalUpdate }: Props) {
   const { t } = useTranslation();
   const [fullCase, setFullCase] = useState<FraudCase>(caseData);
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,11 @@ export default function FraudCaseDetail({ caseData, onClose, onUpdate }: Props) 
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
+    if (isMock) {
+      setFullCase(caseData);
+      setLoading(false);
+      return;
+    }
     let mounted = true;
     setLoading(true);
     fraudService.getCase(caseData.id).then(c => {
@@ -71,11 +78,30 @@ export default function FraudCaseDetail({ caseData, onClose, onUpdate }: Props) 
       if (mounted) setLoading(false);
     });
     return () => { mounted = false; };
-  }, [caseData.id]);
+  }, [caseData.id, isMock]);
 
   const handleAction = async (action: string) => {
     setActionLoading(true);
     try {
+      if (isMock) {
+        const statusMap: Record<string, FraudStatus> = {
+          acknowledge: 'investigating',
+          investigate: 'investigating',
+          escalate: 'escalated',
+          close: 'closed',
+          false_positive: 'false_positive',
+        };
+        const updated: FraudCase = {
+          ...fullCase,
+          status: statusMap[action] || fullCase.status,
+          updatedAt: new Date().toISOString(),
+        };
+        setFullCase(updated);
+        onLocalUpdate?.(updated);
+        setNote('');
+        onUpdate();
+        return;
+      }
       await fraudService.applyAction(fullCase.id, action, note || undefined);
       const updated = await fraudService.getCase(fullCase.id);
       setFullCase(updated);
@@ -92,6 +118,26 @@ export default function FraudCaseDetail({ caseData, onClose, onUpdate }: Props) 
     if (!note.trim()) return;
     setActionLoading(true);
     try {
+      if (isMock) {
+        const text = note.trim();
+        const entry: FraudNote = {
+          id: Date.now(),
+          fraudCaseId: fullCase.id,
+          adminId: 'admin_local',
+          note: text,
+          createdAt: new Date().toISOString(),
+        };
+        const updated: FraudCase = {
+          ...fullCase,
+          notes: [...(fullCase.notes || []), entry],
+          updatedAt: new Date().toISOString(),
+        };
+        setFullCase(updated);
+        onLocalUpdate?.(updated);
+        setNote('');
+        setActiveTab('notes');
+        return;
+      }
       await fraudService.addNote(fullCase.id, note.trim());
       const updated = await fraudService.getCase(fullCase.id);
       setFullCase(updated);

@@ -8,6 +8,7 @@ import {
 import { useFraudCases } from '@/features/admin/hooks/useFraudCases';
 import { fraudService } from '@/features/admin/services/fraudService';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { generateLiveMockCase } from '@/features/admin/lib/fraudDataGenerator';
 import type { FraudCase } from '@/features/admin/lib/fraudTypes';
 import FraudCaseExplorer from './FraudCaseExplorer';
 import FraudCaseDetail from './FraudCaseDetail';
@@ -33,7 +34,7 @@ export default function FraudIntelligenceCenter() {
   const [liveCases, setLiveCases] = useState<FraudCase[]>([]);
   const [liveLog, setLiveLog] = useState<LiveLogEntry[]>([]);
   const [simulating, setSimulating] = useState(false);
-  const { cases, loading, error, filters, setFilters, pagination, setPage, refresh, stats, statsLoading } = useFraudCases({ limit: 25 });
+  const { cases, loading, error, filters, setFilters, pagination, setPage, refresh, stats, statsLoading, isLocalMock, mutateLocalCase } = useFraudCases({ limit: 25 });
   const liveIntervalRef = useRef<number | null>(null);
 
   const allCases = useCallback(() => {
@@ -74,27 +75,36 @@ export default function FraudIntelligenceCenter() {
     };
   }, [liveMode]);
 
+  function mergeLiveCases(created: FraudCase[]) {
+    setLiveCases(prev => {
+      const map = new Map(prev.map(c => [c.id, c]));
+      created.forEach(c => map.set(c.id, c));
+      return Array.from(map.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 200);
+    });
+    created.forEach(c => {
+      const dest = c.hops?.[c.hops.length - 1]?.nodeName || 'unknown';
+      addLiveLog(c.caseRef, `Traced to ${dest} · Risk ${c.riskScore}`);
+    });
+  }
+
   async function injectMockCases(count = 1) {
     setSimulating(true);
     try {
       const created = await fraudService.simulateCases(count);
-      setLiveCases(prev => {
-        const map = new Map(prev.map(c => [c.id, c]));
-        created.forEach(c => map.set(c.id, c));
-        return Array.from(map.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 200);
-      });
-      created.forEach(c => {
-        const dest = c.hops?.[c.hops.length - 1]?.nodeName || 'unknown';
-        addLiveLog(c.caseRef, `Traced to ${dest} · Risk ${c.riskScore}`);
-      });
+      mergeLiveCases(created);
     } catch (err: any) {
-      console.error('Live simulation error', err);
+      console.warn('Backend simulation unavailable, using client-side mock', err);
+      const localCreated = Array.from({ length: count }, (_, i) =>
+        generateLiveMockCase(-(Date.now() + i))
+      );
+      mergeLiveCases(localCreated);
     } finally {
       setSimulating(false);
     }
   }
 
   async function fetchRecentLive() {
+    if (isLocalMock) return; // client-side injectMockCases already feeds live cases
     try {
       const recent = await fraudService.getLiveCases(10);
       if (recent.length) {
@@ -173,6 +183,11 @@ export default function FraudIntelligenceCenter() {
             <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> {t('fraudIntelSyntheticBadge')}
             </span>
+            {isLocalMock && (
+              <span className="text-xs px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" /> {t('fraudIntelLocalMockWarning')}
+              </span>
+            )}
           </div>
         </div>
 
@@ -291,6 +306,11 @@ export default function FraudIntelligenceCenter() {
             caseData={selectedCase}
             onClose={() => setSelectedCase(null)}
             onUpdate={refresh}
+            isMock={isLocalMock}
+            onLocalUpdate={(updated) => {
+              mutateLocalCase(updated.id, updated);
+              setSelectedCase(prev => (prev?.id === updated.id ? updated : prev));
+            }}
           />
         )}
       </AnimatePresence>

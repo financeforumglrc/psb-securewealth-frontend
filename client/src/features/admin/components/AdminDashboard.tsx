@@ -927,6 +927,7 @@ function LoginScreen({ onLogin, loading, error }: { onLogin: (id: string, pw: st
    ═══════════════════════════════════════════════════════════════ */
 export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [offlineMode, setOfflineMode] = useState(false);
   const [role, setRole] = useState<AdminRole>(() => (sessionStorage.getItem('sw-admin-role') as AdminRole) || 'superadmin');
   const [tab, setTab] = useState<AdminTab>('dashboard');
   const isMobile = useIsMobile();
@@ -991,6 +992,7 @@ export default function AdminDashboard() {
       setIsLoggedIn(true);
       sessionStorage.setItem('sw-admin-session', 'true');
       if (res.data?.token) sessionStorage.setItem('sw-admin-token', res.data.token);
+      setOfflineMode(!!res.data?.offline);
     } else {
       setLoginError(res.data?.error || 'Invalid credentials. Please try again.');
     }
@@ -1075,12 +1077,12 @@ export default function AdminDashboard() {
       backendApi.adminGetDashboardMetrics(7),
     ]);
 
-    if (usersRes.ok && usersRes.data?.users) {
+    if (usersRes.ok && Array.isArray(usersRes.data?.users) && usersRes.data.users.length > 0) {
       setUsers(usersRes.data.users);
       setUsersTotal(usersRes.data.total || 0);
       setUsersPages(usersRes.data.pages || 1);
     } else {
-      // Fallback to demo users only if backend is unreachable
+      // Fallback to demo users when backend is unreachable or returns empty data
       setUsers(demoUsers);
       setUsersTotal(demoUsers.length);
       setUsersPages(1);
@@ -1114,7 +1116,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const saved = sessionStorage.getItem('sw-admin-session');
-    if (saved === 'true') setIsLoggedIn(true);
+    if (saved === 'true') {
+      setIsLoggedIn(true);
+      setOfflineMode(sessionStorage.getItem('sw-admin-token') === 'sw-demo-admin-token');
+    }
   }, []);
 
   useEffect(() => {
@@ -1394,6 +1399,12 @@ export default function AdminDashboard() {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-6">
+          {offlineMode && (
+            <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span>Backend is offline — showing demo/synthetic data. Refresh or re-login once the backend is deployed to see live data.</span>
+            </div>
+          )}
           <AnimatePresence mode="wait">
             {/* ═════ DASHBOARD ═════ */}
             {tab === 'dashboard' && (

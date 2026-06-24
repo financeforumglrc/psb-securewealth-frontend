@@ -13,6 +13,8 @@
 - Frontend code lives in `client/src/features/admin/components/FraudIntelligenceCenter.tsx` and siblings.
 - Exports (Excel/CSV) are generated server-side with `exceljs`; PDF summaries are generated client-side with `jspdf`.
 - Live simulation endpoints: `POST /api/v1/fraud/simulate` and `GET /api/v1/fraud/live` generate/poll recently created mock traces.
+- If the backend Fraud API is unavailable, the frontend automatically falls back to a client-side synthetic generator (`client/src/features/admin/lib/fraudDataGenerator.ts`) so the map/explorer still render demo data.
+- Admin login also has an offline/demo fallback: if `/admin/login` is unreachable, the portal logs in with a demo token and serves demo account holders + synthetic fraud data until the backend is deployed.
 
 ## Adding new admin features
 1. Add backend schema + `fraudDb` methods in `services/database.js`.
