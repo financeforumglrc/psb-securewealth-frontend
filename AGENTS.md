@@ -12,6 +12,7 @@
 - Backend routes are in `backend/routes/fraud.js`, mounted at `/api/v1/fraud`.
 - Frontend code lives in `client/src/features/admin/components/FraudIntelligenceCenter.tsx` and siblings.
 - Exports (Excel/CSV) are generated server-side with `exceljs`; PDF summaries are generated client-side with `jspdf`.
+- Live simulation endpoints: `POST /api/v1/fraud/simulate` and `GET /api/v1/fraud/live` generate/poll recently created mock traces.
 
 ## Adding new admin features
 1. Add backend schema + `fraudDb` methods in `services/database.js`.

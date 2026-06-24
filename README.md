@@ -104,6 +104,7 @@ The admin portal includes a comprehensive **Fraud Intelligence Center** under th
 - **Risk Explainer** — risk-score breakdown and top risk factors across the dataset.
 - **Rules & Alerts** — create thresholds that auto-flag or escalate cases.
 - **Reports** — download **Excel (.xlsx)**, **CSV (.csv)**, and **PDF summary** exports.
+- **Live Simulation** — toggle a live mock feed that injects new cross-border traces every few seconds, or simulate a burst of cases for load testing.
 
 > ⚠️ All fraud data is **synthetic and anonymized**. No real PII or bank account details are used. The architecture is API-ready to plug in an authorized real data source later.
 

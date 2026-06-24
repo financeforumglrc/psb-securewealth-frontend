@@ -20,13 +20,15 @@ function loadLeaflet(): Promise<any> {
 interface Props {
   cases: FraudCase[];
   loading: boolean;
+  highlightCases?: FraudCase[];
 }
 
-export default function FraudMapView({ cases, loading }: Props) {
+export default function FraudMapView({ cases, loading, highlightCases = [] }: Props) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const layersRef = useRef<any[]>([]);
+  const pulseRef = useRef<any[]>([]);
   const [leafletReady, setLeafletReady] = useState(false);
   const darkMode = useWealthStore(s => s.darkMode);
 
@@ -101,6 +103,50 @@ export default function FraudMapView({ cases, loading }: Props) {
     }
   }, [leafletReady, cases]);
 
+  // Pulse animation for live/highlighted cases
+  useEffect(() => {
+    if (!leafletReady || !mapRef.current) return;
+    const L = (window as any).L;
+    const map = mapRef.current;
+
+    // clear old pulse markers
+    pulseRef.current.forEach(m => { try { map.removeLayer(m); } catch { /* ignore */ } });
+    pulseRef.current = [];
+
+    highlightCases.slice(0, 20).forEach(c => {
+      const origin = c.hops?.find(h => h.hopType === 'origin');
+      const dest = c.hops?.slice().reverse().find(h => h.hopType === 'destination');
+      if (origin?.lat && origin?.lon) {
+        const m = L.circleMarker([origin.lat, origin.lon], {
+          radius: 12, fillColor: '#10b981', color: '#fff', weight: 2, fillOpacity: 0.4, opacity: 0.8
+        }).addTo(map);
+        const el = m.getElement?.();
+        if (el) {
+          el.style.transition = 'r 1s ease-out, opacity 1s ease-out';
+          el.style.animation = 'fraud-pulse 2s infinite';
+        }
+        pulseRef.current.push(m);
+      }
+      if (dest?.lat && dest?.lon) {
+        const m = L.circleMarker([dest.lat, dest.lon], {
+          radius: 12, fillColor: '#ef4444', color: '#fff', weight: 2, fillOpacity: 0.4, opacity: 0.8
+        }).addTo(map);
+        const el = m.getElement?.();
+        if (el) {
+          el.style.animation = 'fraud-pulse 2s infinite';
+        }
+        pulseRef.current.push(m);
+      }
+    });
+
+    const timer = window.setTimeout(() => {
+      pulseRef.current.forEach(m => { try { map.removeLayer(m); } catch { /* ignore */ } });
+      pulseRef.current = [];
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [leafletReady, highlightCases]);
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
       <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
@@ -122,6 +168,13 @@ export default function FraudMapView({ cases, loading }: Props) {
             </div>
           </div>
         )}
+        <style>{`
+          @keyframes fraud-pulse {
+            0% { r: 6; opacity: 0.9; }
+            70% { r: 24; opacity: 0; }
+            100% { r: 6; opacity: 0; }
+          }
+        `}</style>
         <div className="absolute bottom-3 left-3 z-[500] bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-lg border border-slate-200 dark:border-slate-800 p-2 text-xs space-y-1">
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500" /> {t('fraudIntelMapLegendOrigin')}</div>
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-indigo-500" /> {t('fraudIntelMapLegendDestination')}</div>

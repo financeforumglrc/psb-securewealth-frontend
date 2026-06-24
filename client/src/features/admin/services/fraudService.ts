@@ -146,6 +146,22 @@ export const fraudService = {
     });
     if (!res.ok) throw new Error(res.data?.error || 'Failed to delete rule');
   },
+
+  async simulateCases(count = 1): Promise<FraudCase[]> {
+    const res = await backendApi.fetchJson('/fraud/simulate', {
+      method: 'POST',
+      body: JSON.stringify({ count }),
+      timeoutMs: 30000,
+    });
+    if (!res.ok) throw new Error(res.data?.error || 'Failed to simulate cases');
+    return (res.data as { created: FraudCase[] }).created.map(c => ({ ...c, userName: (c as any).user_name, userEmail: (c as any).user_email }));
+  },
+
+  async getLiveCases(seconds = 5): Promise<FraudCase[]> {
+    const res = await backendApi.fetchJson(`/fraud/live?seconds=${seconds}`, { timeoutMs: 10000 });
+    if (!res.ok) throw new Error(res.data?.error || 'Failed to load live feed');
+    return (res.data as { cases: FraudCase[] }).cases.map(c => ({ ...c, userName: (c as any).user_name, userEmail: (c as any).user_email }));
+  },
 };
 
 export function statusColor(status: FraudStatus | string): string {
