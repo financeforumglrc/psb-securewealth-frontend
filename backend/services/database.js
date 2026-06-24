@@ -361,6 +361,96 @@ function initializeDatabase() {
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (audit_log_id) REFERENCES audit_logs(id)
         );
+
+        -- Fraud Intelligence Center tables
+        CREATE TABLE IF NOT EXISTS fraud_cases (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_ref TEXT UNIQUE NOT NULL,
+            audit_log_id INTEGER,
+            user_id TEXT,
+            status TEXT DEFAULT 'open',
+            priority TEXT DEFAULT 'medium',
+            risk_score REAL DEFAULT 0,
+            risk_factors TEXT,
+            category TEXT,
+            summary TEXT,
+            source_entity_type TEXT,
+            source_entity_id INTEGER,
+            assigned_admin_id TEXT,
+            country_risk_tags TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (audit_log_id) REFERENCES audit_logs(id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS fraud_hops (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fraud_case_id INTEGER NOT NULL,
+            hop_number INTEGER NOT NULL,
+            hop_type TEXT NOT NULL,
+            node_name TEXT,
+            country TEXT,
+            city TEXT,
+            lat REAL,
+            lon REAL,
+            entity_type TEXT,
+            entity_value TEXT,
+            institution TEXT,
+            ifsc TEXT,
+            swift_bic TEXT,
+            amount REAL,
+            currency TEXT DEFAULT 'INR',
+            timestamp TEXT DEFAULT (datetime('now')),
+            evidence_json TEXT,
+            confidence REAL DEFAULT 0,
+            is_sanctioned INTEGER DEFAULT 0,
+            FOREIGN KEY (fraud_case_id) REFERENCES fraud_cases(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS fraud_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fraud_case_id INTEGER NOT NULL,
+            account_type TEXT NOT NULL,
+            holder_name TEXT,
+            bank_name TEXT,
+            branch TEXT,
+            masked_account TEXT,
+            ifsc TEXT,
+            swift_bic TEXT,
+            country TEXT,
+            risk_flags TEXT,
+            FOREIGN KEY (fraud_case_id) REFERENCES fraud_cases(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS fraud_notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fraud_case_id INTEGER NOT NULL,
+            admin_id TEXT,
+            note TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (fraud_case_id) REFERENCES fraud_cases(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS fraud_rules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            enabled INTEGER DEFAULT 1,
+            condition_json TEXT NOT NULL,
+            action TEXT DEFAULT 'flag',
+            severity TEXT DEFAULT 'medium',
+            created_by TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_fraud_cases_ref ON fraud_cases(case_ref);
+        CREATE INDEX IF NOT EXISTS idx_fraud_cases_user ON fraud_cases(user_id);
+        CREATE INDEX IF NOT EXISTS idx_fraud_cases_status ON fraud_cases(status);
+        CREATE INDEX IF NOT EXISTS idx_fraud_cases_priority ON fraud_cases(priority);
+        CREATE INDEX IF NOT EXISTS idx_fraud_cases_created ON fraud_cases(created_at);
+        CREATE INDEX IF NOT EXISTS idx_fraud_hops_case ON fraud_hops(fraud_case_id);
+        CREATE INDEX IF NOT EXISTS idx_fraud_accounts_case ON fraud_accounts(fraud_case_id);
+        CREATE INDEX IF NOT EXISTS idx_fraud_notes_case ON fraud_notes(fraud_case_id);
     `);
 
     // Migration: add face_descriptor column for biometric login
@@ -872,6 +962,248 @@ const bankingDb = {
     }
 };
 
+const fraudDb = {
+    createCase: (data) => {
+        const stmt = db.prepare(`INSERT INTO fraud_cases
+            (case_ref, audit_log_id, user_id, status, priority, risk_score, risk_factors, category, summary,
+             source_entity_type, source_entity_id, assigned_admin_id, country_risk_tags)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+        const result = stmt.run(
+            data.caseRef,
+            data.auditLogId || null,
+            data.userId || null,
+            data.status || 'open',
+            data.priority || 'medium',
+            data.riskScore || 0,
+            data.riskFactors ? JSON.stringify(data.riskFactors) : null,
+            data.category || null,
+            data.summary || null,
+            data.sourceEntityType || null,
+            data.sourceEntityId || null,
+            data.assignedAdminId || null,
+            data.countryRiskTags ? JSON.stringify(data.countryRiskTags) : null
+        );
+        return result;
+    },
+    getCaseById: (id) => db.prepare('SELECT * FROM fraud_cases WHERE id = ?').get(id),
+    getCaseByRef: (caseRef) => db.prepare('SELECT * FROM fraud_cases WHERE case_ref = ?').get(caseRef),
+    getCases: (filters = {}) => {
+        let sql = `SELECT c.*, u.name AS user_name, u.email AS user_email FROM fraud_cases c LEFT JOIN users u ON c.user_id = u.id WHERE 1=1`;
+        const params = [];
+        if (filters.status) { sql += ' AND c.status = ?'; params.push(filters.status); }
+        if (filters.priority) { sql += ' AND c.priority = ?'; params.push(filters.priority); }
+        if (filters.category) { sql += ' AND c.category = ?'; params.push(filters.category); }
+        if (filters.assignedAdminId) { sql += ' AND c.assigned_admin_id = ?'; params.push(filters.assignedAdminId); }
+        if (filters.userId) { sql += ' AND c.user_id = ?'; params.push(filters.userId); }
+        if (filters.dateFrom) { sql += ' AND c.created_at >= ?'; params.push(filters.dateFrom); }
+        if (filters.dateTo) { sql += ' AND c.created_at <= ?'; params.push(filters.dateTo); }
+        if (filters.minRisk !== undefined) { sql += ' AND c.risk_score >= ?'; params.push(filters.minRisk); }
+        if (filters.maxRisk !== undefined) { sql += ' AND c.risk_score <= ?'; params.push(filters.maxRisk); }
+        if (filters.q) {
+            sql += ` AND (c.case_ref LIKE ? OR c.summary LIKE ? OR c.category LIKE ? OR u.name LIKE ? OR u.email LIKE ? OR c.country_risk_tags LIKE ?)`;
+            const like = `%${filters.q}%`;
+            params.push(like, like, like, like, like, like);
+        }
+        const countRow = db.prepare(`SELECT COUNT(*) as total FROM fraud_cases c LEFT JOIN users u ON c.user_id = u.id WHERE 1=1 ${sql.split('WHERE 1=1')[1] || ''}`).get(...params);
+        const allowedSort = ['created_at', 'updated_at', 'risk_score', 'priority', 'status'].includes(filters.sort) ? filters.sort : 'created_at';
+        const dir = filters.order && filters.order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+        sql += ` ORDER BY c.${allowedSort} ${dir}`;
+        const page = Math.max(1, parseInt(filters.page) || 1);
+        const limit = Math.max(1, Math.min(500, parseInt(filters.limit) || 50));
+        const offset = (page - 1) * limit;
+        sql += ' LIMIT ? OFFSET ?';
+        const cases = db.prepare(sql).all(...params, limit, offset);
+        const casesWithHops = cases.map(c => ({
+            ...c,
+            hops: db.prepare('SELECT * FROM fraud_hops WHERE fraud_case_id = ? ORDER BY hop_number, timestamp').all(c.id).map(h => ({
+                ...h,
+                evidenceJson: safeJsonParse(h.evidence_json, null),
+                isSanctioned: !!h.is_sanctioned
+            }))
+        }));
+        return { cases: casesWithHops, total: countRow.total, page, limit, pages: Math.ceil(countRow.total / limit) };
+    },
+    updateCase: (id, data) => {
+        const stmt = db.prepare(`UPDATE fraud_cases SET
+            status = COALESCE(?, status),
+            priority = COALESCE(?, priority),
+            risk_score = COALESCE(?, risk_score),
+            risk_factors = COALESCE(?, risk_factors),
+            category = COALESCE(?, category),
+            summary = COALESCE(?, summary),
+            assigned_admin_id = COALESCE(?, assigned_admin_id),
+            country_risk_tags = COALESCE(?, country_risk_tags),
+            updated_at = datetime('now')
+            WHERE id = ?`);
+        return stmt.run(
+            data.status || null,
+            data.priority || null,
+            data.riskScore !== undefined ? data.riskScore : null,
+            data.riskFactors ? JSON.stringify(data.riskFactors) : null,
+            data.category || null,
+            data.summary || null,
+            data.assignedAdminId !== undefined ? data.assignedAdminId : null,
+            data.countryRiskTags ? JSON.stringify(data.countryRiskTags) : null,
+            id
+        );
+    },
+    deleteCase: (id) => db.prepare('DELETE FROM fraud_cases WHERE id = ?').run(id),
+
+    createHop: (data) => {
+        const stmt = db.prepare(`INSERT INTO fraud_hops
+            (fraud_case_id, hop_number, hop_type, node_name, country, city, lat, lon, entity_type,
+             entity_value, institution, ifsc, swift_bic, amount, currency, timestamp, evidence_json, confidence, is_sanctioned)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+        return stmt.run(
+            data.fraudCaseId, data.hopNumber, data.hopType, data.nodeName || null, data.country || null,
+            data.city || null, data.lat || null, data.lon || null, data.entityType || null,
+            data.entityValue || null, data.institution || null, data.ifsc || null, data.swiftBic || null,
+            data.amount || 0, data.currency || 'INR', data.timestamp || null,
+            data.evidenceJson ? JSON.stringify(data.evidenceJson) : null,
+            data.confidence || 0, data.isSanctioned ? 1 : 0
+        );
+    },
+    getHopsByCase: (caseId) => db.prepare('SELECT * FROM fraud_hops WHERE fraud_case_id = ? ORDER BY hop_number, timestamp').all(caseId),
+    updateHop: (id, data) => {
+        const stmt = db.prepare(`UPDATE fraud_hops SET
+            hop_number = COALESCE(?, hop_number), hop_type = COALESCE(?, hop_type), node_name = COALESCE(?, node_name),
+            country = COALESCE(?, country), city = COALESCE(?, city), lat = COALESCE(?, lat), lon = COALESCE(?, lon),
+            entity_type = COALESCE(?, entity_type), entity_value = COALESCE(?, entity_value),
+            institution = COALESCE(?, institution), ifsc = COALESCE(?, ifsc), swift_bic = COALESCE(?, swift_bic),
+            amount = COALESCE(?, amount), currency = COALESCE(?, currency), timestamp = COALESCE(?, timestamp),
+            evidence_json = COALESCE(?, evidence_json), confidence = COALESCE(?, confidence), is_sanctioned = COALESCE(?, is_sanctioned)
+            WHERE id = ?`);
+        return stmt.run(
+            data.hopNumber !== undefined ? data.hopNumber : null,
+            data.hopType || null, data.nodeName || null, data.country || null, data.city || null,
+            data.lat !== undefined ? data.lat : null, data.lon !== undefined ? data.lon : null,
+            data.entityType || null, data.entityValue || null, data.institution || null,
+            data.ifsc || null, data.swiftBic || null, data.amount !== undefined ? data.amount : null,
+            data.currency || null, data.timestamp || null,
+            data.evidenceJson ? JSON.stringify(data.evidenceJson) : null,
+            data.confidence !== undefined ? data.confidence : null,
+            data.isSanctioned !== undefined ? (data.isSanctioned ? 1 : 0) : null,
+            id
+        );
+    },
+    deleteHop: (id) => db.prepare('DELETE FROM fraud_hops WHERE id = ?').run(id),
+
+    createAccount: (data) => {
+        const stmt = db.prepare(`INSERT INTO fraud_accounts
+            (fraud_case_id, account_type, holder_name, bank_name, branch, masked_account, ifsc, swift_bic, country, risk_flags)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+        return stmt.run(
+            data.fraudCaseId, data.accountType, data.holderName || null, data.bankName || null,
+            data.branch || null, data.maskedAccount || null, data.ifsc || null, data.swiftBic || null,
+            data.country || null, data.riskFlags ? JSON.stringify(data.riskFlags) : null
+        );
+    },
+    getAccountsByCase: (caseId) => db.prepare('SELECT * FROM fraud_accounts WHERE fraud_case_id = ?').all(caseId),
+    updateAccount: (id, data) => {
+        const stmt = db.prepare(`UPDATE fraud_accounts SET
+            account_type = COALESCE(?, account_type), holder_name = COALESCE(?, holder_name),
+            bank_name = COALESCE(?, bank_name), branch = COALESCE(?, branch),
+            masked_account = COALESCE(?, masked_account), ifsc = COALESCE(?, ifsc),
+            swift_bic = COALESCE(?, swift_bic), country = COALESCE(?, country), risk_flags = COALESCE(?, risk_flags)
+            WHERE id = ?`);
+        return stmt.run(
+            data.accountType || null, data.holderName || null, data.bankName || null, data.branch || null,
+            data.maskedAccount || null, data.ifsc || null, data.swiftBic || null, data.country || null,
+            data.riskFlags ? JSON.stringify(data.riskFlags) : null,
+            id
+        );
+    },
+    deleteAccount: (id) => db.prepare('DELETE FROM fraud_accounts WHERE id = ?').run(id),
+
+    createNote: (data) => {
+        const stmt = db.prepare(`INSERT INTO fraud_notes (fraud_case_id, admin_id, note) VALUES (?, ?, ?)`);
+        return stmt.run(data.fraudCaseId, data.adminId || null, data.note);
+    },
+    getNotesByCase: (caseId) => db.prepare('SELECT * FROM fraud_notes WHERE fraud_case_id = ? ORDER BY created_at DESC').all(caseId),
+    deleteNote: (id) => db.prepare('DELETE FROM fraud_notes WHERE id = ?').run(id),
+
+    getFullCase: (id) => {
+        const caseRow = db.prepare('SELECT c.*, u.name AS user_name, u.email AS user_email FROM fraud_cases c LEFT JOIN users u ON c.user_id = u.id WHERE c.id = ?').get(id);
+        if (!caseRow) return null;
+        return {
+            ...caseRow,
+            riskFactors: safeJsonParse(caseRow.risk_factors, []),
+            countryRiskTags: safeJsonParse(caseRow.country_risk_tags, []),
+            hops: db.prepare('SELECT * FROM fraud_hops WHERE fraud_case_id = ? ORDER BY hop_number, timestamp').all(id).map(h => ({
+                ...h,
+                evidenceJson: safeJsonParse(h.evidence_json, null),
+                isSanctioned: !!h.is_sanctioned
+            })),
+            accounts: db.prepare('SELECT * FROM fraud_accounts WHERE fraud_case_id = ?').all(id).map(a => ({
+                ...a,
+                riskFlags: safeJsonParse(a.risk_flags, [])
+            })),
+            notes: db.prepare('SELECT * FROM fraud_notes WHERE fraud_case_id = ? ORDER BY created_at DESC').all(id)
+        };
+    },
+
+    getStats: () => {
+        const total = db.prepare('SELECT COUNT(*) as count FROM fraud_cases').get();
+        const byStatus = db.prepare("SELECT status, COUNT(*) as count FROM fraud_cases GROUP BY status").all();
+        const byPriority = db.prepare("SELECT priority, COUNT(*) as count FROM fraud_cases GROUP BY priority").all();
+        const byCategory = db.prepare("SELECT category, COUNT(*) as count FROM fraud_cases GROUP BY category").all();
+        const highRisk = db.prepare("SELECT COUNT(*) as count FROM fraud_cases WHERE risk_score >= 80").get();
+        const sanctioned = db.prepare("SELECT COUNT(DISTINCT fraud_case_id) as count FROM fraud_hops WHERE is_sanctioned = 1").get();
+        const totalAmount = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM fraud_hops WHERE currency = 'INR'").get();
+        return {
+            totalCases: total.count,
+            byStatus,
+            byPriority,
+            byCategory,
+            highRiskCases: highRisk.count,
+            sanctionedCases: sanctioned.count,
+            totalInrAmount: totalAmount.total
+        };
+    },
+
+    createRule: (data) => {
+        const stmt = db.prepare(`INSERT INTO fraud_rules (name, enabled, condition_json, action, severity, created_by) VALUES (?, ?, ?, ?, ?, ?)`);
+        return stmt.run(data.name, data.enabled !== false ? 1 : 0, JSON.stringify(data.conditionJson), data.action || 'flag', data.severity || 'medium', data.createdBy || null);
+    },
+    getRules: (filters = {}) => {
+        let sql = 'SELECT * FROM fraud_rules WHERE 1=1';
+        const params = [];
+        if (filters.enabled !== undefined) { sql += ' AND enabled = ?'; params.push(filters.enabled ? 1 : 0); }
+        sql += ' ORDER BY created_at DESC';
+        const limit = Math.max(1, Math.min(500, parseInt(filters.limit) || 100));
+        sql += ' LIMIT ?';
+        return db.prepare(sql).all(...params, limit).map(r => ({ ...r, conditionJson: safeJsonParse(r.condition_json, {}) }));
+    },
+    getRuleById: (id) => {
+        const r = db.prepare('SELECT * FROM fraud_rules WHERE id = ?').get(id);
+        if (!r) return null;
+        return { ...r, conditionJson: safeJsonParse(r.condition_json, {}) };
+    },
+    updateRule: (id, data) => {
+        const stmt = db.prepare(`UPDATE fraud_rules SET
+            name = COALESCE(?, name), enabled = COALESCE(?, enabled),
+            condition_json = COALESCE(?, condition_json), action = COALESCE(?, action),
+            severity = COALESCE(?, severity) WHERE id = ?`);
+        return stmt.run(
+            data.name || null,
+            data.enabled !== undefined ? (data.enabled ? 1 : 0) : null,
+            data.conditionJson ? JSON.stringify(data.conditionJson) : null,
+            data.action || null,
+            data.severity || null,
+            id
+        );
+    },
+    deleteRule: (id) => db.prepare('DELETE FROM fraud_rules WHERE id = ?').run(id)
+};
+
+function safeJsonParse(value, fallback) {
+    try {
+        return value ? JSON.parse(value) : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
 module.exports = {
     db,
     userDb,
@@ -882,5 +1214,7 @@ module.exports = {
     extractionDb,
     deviceDb,
     modelDb,
-    bankingDb
+    bankingDb,
+    fraudDb,
+    safeJsonParse
 };

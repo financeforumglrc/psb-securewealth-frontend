@@ -198,9 +198,48 @@ const apiKeyMiddleware = (req, res, next) => {
     });
 };
 
+// Admin dashboard credentials (must match routes/admin.js)
+const ADMIN_ID = process.env.ADMIN_ID;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+/**
+ * Admin API token authentication
+ * Frontend admin dashboard uses a base64(ADMIN_ID:ADMIN_PASSWORD) Bearer token.
+ */
+const adminApiAuth = (req, res, next) => {
+    if (!ADMIN_ID || !ADMIN_PASSWORD) {
+        return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
+    }
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Admin token required' });
+    }
+    const token = auth.substring(7);
+    const expected = Buffer.from(`${ADMIN_ID}:${ADMIN_PASSWORD}`).toString('base64');
+    if (token !== expected) {
+        return res.status(401).json({ success: false, error: 'Invalid admin token' });
+    }
+    next();
+};
+
+/**
+ * Extract admin id from the admin Bearer token (best-effort).
+ */
+function getAdminIdFromToken(req) {
+    const auth = req.headers.authorization || '';
+    if (auth.startsWith('Bearer ')) {
+        try {
+            return Buffer.from(auth.substring(7), 'base64').toString('utf8').split(':')[0];
+        } catch { return null; }
+    }
+    return null;
+}
+
 module.exports = {
     authMiddleware,
     requireRole,
     requireTier,
-    apiKeyMiddleware
+    apiKeyMiddleware,
+    adminApiAuth,
+    getAdminIdFromToken
 };

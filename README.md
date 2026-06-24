@@ -91,3 +91,37 @@ Bas `PSB-Website-Clean` folder zip karo aur bhej do.
 - ✅ All 15+ innovation features
 # Auto-deploy enabled
 # Deployed with live backend
+
+
+## 🛡️ Fraud Intelligence Center (Admin)
+
+The admin portal includes a comprehensive **Fraud Intelligence Center** under the **Fraud Intel** tab:
+
+- **Case Explorer** — filterable table of synthetic fraud cases with status, priority, category, risk score, amount, and country route.
+- **Cross-Border Map** — Leaflet map rendering origin → intermediate → destination money trails with sanctioned/high-risk markers.
+- **Trace Network** — SVG network graph of accounts, mules, shell companies, and final destinations.
+- **Timeline** — chronological view of every money hop.
+- **Risk Explainer** — risk-score breakdown and top risk factors across the dataset.
+- **Rules & Alerts** — create thresholds that auto-flag or escalate cases.
+- **Reports** — download **Excel (.xlsx)**, **CSV (.csv)**, and **PDF summary** exports.
+
+> ⚠️ All fraud data is **synthetic and anonymized**. No real PII or bank account details are used. The architecture is API-ready to plug in an authorized real data source later.
+
+### Seed synthetic fraud data
+
+```bash
+cd backend
+npm install
+npm run seed:fraud 500
+```
+
+### Backend fraud routes
+
+Mounted at `/api/v1/fraud` and protected by admin Bearer token:
+
+- `GET /fraud/cases` — list/filter/paginate cases
+- `GET /fraud/cases/:id` — full case with hops, accounts, notes
+- `POST /fraud/cases/:id/actions` — acknowledge / investigate / escalate / close / false-positive
+- `GET /fraud/export/cases?format=xlsx|csv` — export workbook
+- `GET /fraud/stats/summary` — KPIs
+- `GET|POST|PATCH|DELETE /fraud/rules` — alerting rules engine

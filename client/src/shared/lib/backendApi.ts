@@ -18,7 +18,7 @@ function getHeaders(path: string = ''): Record<string, string> {
   if (visitorId) {
     headers['X-Device-Id'] = visitorId;
   }
-  if (path.startsWith('/admin') && typeof sessionStorage !== 'undefined') {
+  if ((path.startsWith('/admin') || path.startsWith('/fraud')) && typeof sessionStorage !== 'undefined') {
     const token = sessionStorage.getItem('sw-admin-token');
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
@@ -57,6 +57,9 @@ async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: num
 }
 
 export const backendApi = {
+  // Low-level fetch helper
+  fetchJson,
+
   // Health check to warm up the Render backend
   async health() {
     return fetchJson('/health', { timeoutMs: 5000 });

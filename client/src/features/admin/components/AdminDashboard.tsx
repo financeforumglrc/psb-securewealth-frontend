@@ -19,7 +19,7 @@ import { DEMO_ACCOUNTS } from '@/shared/data/userProfiles';
 import SystemArchitecture from '@/features/architecture/components/SystemArchitecture';
 import AdminLoginArchitecture from '@/features/admin/components/AdminLoginArchitecture';
 import FeaturesUniverse from '@/features/architecture/components/FeaturesUniverse';
-import FraudHeatmap from '@/features/admin/components/FraudHeatmap';
+import FraudIntelligenceCenter from '@/features/admin/components/FraudIntelligenceCenter';
 import AlertToast from '@/features/admin/components/AlertToast';
 import DemoTour from '@/features/admin/components/DemoTour';
 import AlertHistoryTab from '@/features/admin/components/AlertHistoryTab';
@@ -1209,7 +1209,7 @@ export default function AdminDashboard() {
     { key: 'logs' as AdminTab, label: 'Audit Logs', icon: Activity },
     { key: 'activity' as AdminTab, label: 'Admin Activity', icon: ClipboardList },
     { key: 'health' as AdminTab, label: 'System Health', icon: HeartPulse },
-    { key: 'heatmap' as AdminTab, label: 'Fraud Map', icon: Globe },
+    { key: 'heatmap' as AdminTab, label: 'Fraud Intel', icon: Globe },
     { key: 'alerts' as AdminTab, label: 'Alert Center', icon: BellRing },
   ];
 
@@ -1355,7 +1355,7 @@ export default function AdminDashboard() {
                 {tab === 'logs' && 'Audit Logs'}
                 {tab === 'activity' && 'Admin Activity'}
                 {tab === 'health' && 'System Health'}
-                {tab === 'heatmap' && 'Fraud Intelligence Map'}
+                {tab === 'heatmap' && 'Fraud Intelligence Center'}
                 {tab === 'alerts' && 'Alert Center'}
               </h1>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
@@ -1909,7 +1909,7 @@ export default function AdminDashboard() {
               <AuditLogsTab />
             )}
             {tab === 'heatmap' && (
-              <FraudHeatmap />
+              <FraudIntelligenceCenter />
             )}
             {tab === 'alerts' && (
               <AlertHistoryTab role={role} />

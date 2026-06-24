@@ -7,6 +7,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { quotaDb, db, bankingDb } = require('../services/database');
+const { adminApiAuth, getAdminIdFromToken } = require('../middleware/auth');
 const axios = require('axios');
 const router = express.Router();
 
@@ -33,24 +34,6 @@ function basicAuth(req, res, next) {
     if (user !== ADMIN_ID || pass !== ADMIN_PASSWORD) {
         res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
         return res.status(401).send('Invalid credentials');
-    }
-    next();
-}
-
-// JWT-based admin auth for frontend API calls
-function adminApiAuth(req, res, next) {
-    if (!ADMIN_ID || !ADMIN_PASSWORD) {
-        return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
-    }
-    const auth = req.headers.authorization;
-    if (!auth || !auth.startsWith('Bearer ')) {
-        return res.status(401).json({ success: false, error: 'Admin token required' });
-    }
-    const token = auth.substring(7);
-    // Simple token check: base64 of ADMIN_ID:ADMIN_PASSWORD
-    const expected = Buffer.from(`${ADMIN_ID}:${ADMIN_PASSWORD}`).toString('base64');
-    if (token !== expected) {
-        return res.status(401).json({ success: false, error: 'Invalid admin token' });
     }
     next();
 }
@@ -400,21 +383,11 @@ router.get('/fraud-events', adminApiAuth, async (req, res) => {
     }
 });
 
-function getAdminId(req) {
-    const auth = req.headers.authorization || '';
-    if (auth.startsWith('Bearer ')) {
-        try {
-            return Buffer.from(auth.substring(7), 'base64').toString('utf8').split(':')[0];
-        } catch { return null; }
-    }
-    return null;
-}
-
 router.post('/fraud-events/:id/acknowledge', adminApiAuth, (req, res) => {
     try {
         const id = parseInt(req.params.id);
         if (!id) return res.status(400).json({ success: false, error: 'Invalid event id' });
-        bankingDb.acknowledgeFraudEvent(id, getAdminId(req));
+        bankingDb.acknowledgeFraudEvent(id, getAdminIdFromToken(req));
         res.json({ success: true });
     } catch (error) {
         console.error('Acknowledge fraud event error:', error);
@@ -454,7 +427,7 @@ router.post('/fraud-events/:id/false-positive', adminApiAuth, (req, res) => {
     try {
         const id = parseInt(req.params.id);
         if (!id) return res.status(400).json({ success: false, error: 'Invalid event id' });
-        bankingDb.markFalsePositive(id, getAdminId(req));
+        bankingDb.markFalsePositive(id, getAdminIdFromToken(req));
         res.json({ success: true });
     } catch (error) {
         console.error('False positive error:', error);
