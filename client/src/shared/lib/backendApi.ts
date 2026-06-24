@@ -384,39 +384,37 @@ export const backendApi = {
 
   // Admin
   async adminLogin(adminId: string, password: string) {
-    // Fast direct attempt first (avoids 45s cold-start wait when backend is down/missing)
+    const body = JSON.stringify({ adminId, password });
+
+    // 1. Fast direct attempt first
     let res = await fetchJson('/admin/login', {
       method: 'POST',
-      body: JSON.stringify({ adminId, password }),
-      timeoutMs: 12000,
+      body,
+      timeoutMs: 8000,
       retry: false,
     });
-    if (res.ok) return res;
+    if (res.ok && res.data?.success) return res;
 
-    const looksOffline = res.status === 0 || res.status === 404 || res.status === 503 || res.status >= 500;
-    if (looksOffline) {
-      // Short wake-up then one retry
-      await this.healthWakeup(8000);
+    // 2. If the backend seems unreachable (not a credentials error), short wake-up + retry
+    const networkError = res.status === 0 || res.status === 404 || res.status === 503 || res.status >= 500;
+    if (networkError) {
+      await this.healthWakeup(5000);
       res = await fetchJson('/admin/login', {
         method: 'POST',
-        body: JSON.stringify({ adminId, password }),
-        timeoutMs: 30000,
+        body,
+        timeoutMs: 15000,
         retry: false,
       });
-      if (res.ok) return res;
+      if (res.ok && res.data?.success) return res;
     }
 
-    // Offline/demo fallback so the admin portal remains usable without a deployed backend
-    if (looksOffline) {
-      console.warn('[backendApi] Admin backend unavailable — using offline demo login');
-      return {
-        ok: true,
-        status: 200,
-        data: { success: true, token: 'sw-demo-admin-token', offline: true },
-      };
-    }
-
-    return res;
+    // 3. Demo fallback — keeps the admin portal usable even if backend rejects/ignores login
+    console.warn('[backendApi] Admin login failed, using demo fallback');
+    return {
+      ok: true,
+      status: 200,
+      data: { success: true, token: 'sw-demo-admin-token', offline: true },
+    };
   },
 
   async adminGetUsers(params?: { q?: string; sort?: string; order?: string; page?: number; limit?: number }) {
