@@ -61,7 +61,7 @@ export default function TimeMachine() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -75,18 +75,18 @@ export default function TimeMachine() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-clock-rotate-left text-violet-600" /> Financial Time Machine
+              <i className="fas fa-clock-rotate-left text-violet-600" aria-hidden="true" /> Financial Time Machine
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
               Travel to any year of your financial future. See your life, wealth, and milestones unfold.
             </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={prevYear} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <i className="fas fa-chevron-left text-gray-600 text-xs" />
+            <button onClick={prevYear} aria-label="Previous year" className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+              <i className="fas fa-chevron-left text-gray-600 text-xs" aria-hidden="true" />
             </button>
-            <button onClick={nextYear} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <i className="fas fa-chevron-right text-gray-600 text-xs" />
+            <button onClick={nextYear} aria-label="Next year" className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+              <i className="fas fa-chevron-right text-gray-600 text-xs" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -100,6 +100,7 @@ export default function TimeMachine() {
             step={1}
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
+            aria-label="Select projected year"
             className="w-full h-2 bg-gradient-to-r from-blue-200 via-violet-200 to-amber-200 rounded-full appearance-none cursor-pointer accent-primary"
           />
           <div className="flex justify-between text-[9px] text-gray-400 mt-1">
@@ -115,6 +116,7 @@ export default function TimeMachine() {
             <button
               key={t.year}
               onClick={() => setYear(t.year)}
+              aria-label={`Jump to year ${t.year}`}
               className={`relative w-3 h-3 rounded-full transition-all ${
                 t.year === year ? 'bg-primary scale-150 shadow-lg shadow-primary/30' :
                 t.year < year ? 'bg-primary/40' : 'bg-gray-200'
@@ -173,7 +175,7 @@ export default function TimeMachine() {
             <div className="flex flex-wrap gap-2">
               {current.milestones.map((m, i) => (
                 <span key={i} className="px-3 py-1.5 bg-white rounded-full text-[10px] font-bold text-violet-700 border border-violet-100">
-                  <i className="fas fa-star text-amber-400 mr-1 text-[8px]" />{m}
+                  <i className="fas fa-star text-amber-400 mr-1 text-[8px]" aria-hidden="true" />{m}
                 </span>
               ))}
             </div>
@@ -192,7 +194,10 @@ export default function TimeMachine() {
                   key={t.year}
                   className={`flex-1 rounded-t-sm cursor-pointer transition-all ${isCurrent ? 'bg-primary' : 'bg-gray-200 hover:bg-gray-300'}`}
                   style={{ height: `${height}%` }}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setYear(t.year)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setYear(t.year); } }}
                   initial={{ height: 0 }}
                   animate={{ height: `${height}%` }}
                   transition={{ delay: idx * 0.03, duration: 0.5 }}

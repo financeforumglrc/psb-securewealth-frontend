@@ -1,5 +1,7 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 
 interface Neuron {
   x: number;
@@ -17,7 +19,6 @@ interface Signal {
 }
 
 const LAYER_CONFIG = [6, 8, 10, 8, 6];
-const LAYER_LABELS = ['Input', 'Pattern', 'Analysis', 'Decision', 'Output'];
 const LAYER_COLORS = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981'];
 
 function generateNeurons(): Neuron[] {
@@ -59,9 +60,12 @@ function generateSignals(_neurons: Neuron[]): Signal[] {
 }
 
 export default function NeuralNetworkViz() {
+  const { t } = useTranslation();
+  const LAYER_LABELS = [t('neuralInput'), t('neuralPattern'), t('neuralAnalysis'), t('neuralDecision'), t('neuralOutput')];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [activeNeurons, setActiveNeurons] = useState(0);
   const [signalCount, setSignalCount] = useState(0);
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const neuronsRef = useRef<Neuron[]>(generateNeurons());
   const signalsRef = useRef<Signal[]>(generateSignals(neuronsRef.current));
 
@@ -71,7 +75,7 @@ export default function NeuralNetworkViz() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animId: number;
+    let animId: number = 0;
     const neurons = neuronsRef.current;
     const signals = signalsRef.current;
 
@@ -167,23 +171,29 @@ export default function NeuralNetworkViz() {
     };
 
     resize();
-    draw();
+    if (!prefersReducedMotion) {
+      draw();
+    } else {
+      // Static render once for reduced motion
+      draw();
+      cancelAnimationFrame(animId);
+    }
 
     window.addEventListener('resize', resize);
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', resize);
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Neurons Active', value: activeNeurons, icon: 'fa-circle-nodes', color: 'bg-violet-50 text-violet-600' },
-          { label: 'Signals/sec', value: signalCount * 60, icon: 'fa-bolt', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Layers Deep', value: '5', icon: 'fa-layer-group', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Confidence', value: '94.2%', icon: 'fa-brain', color: 'bg-pink-50 text-pink-600' },
+          { label: t('neuralNeurons'), value: activeNeurons, icon: 'fa-circle-nodes', color: 'bg-violet-50 text-violet-600' },
+          { label: t('neuralSignals'), value: signalCount * 60, icon: 'fa-bolt', color: 'bg-amber-50 text-amber-600' },
+          { label: t('neuralLayers'), value: '5', icon: 'fa-layer-group', color: 'bg-blue-50 text-blue-600' },
+          { label: t('neuralConfidence'), value: '94.2%', icon: 'fa-brain', color: 'bg-pink-50 text-pink-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -193,7 +203,7 @@ export default function NeuralNetworkViz() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -207,10 +217,10 @@ export default function NeuralNetworkViz() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-brain text-pink-600" /> BHAVISHYA Neural Core
+              <i className="fas fa-brain text-pink-600" aria-hidden="true" /> {t('neuralTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              Real-time visualization of the AI analyzing your financial signals — watch it think
+              {t('neuralSubtitle')}
             </p>
           </div>
         </div>
@@ -223,19 +233,19 @@ export default function NeuralNetworkViz() {
             {LAYER_LABELS.map((label, idx) => (
               <div key={label} className="text-center">
                 <div className="w-2 h-2 rounded-full mx-auto mb-1" style={{ backgroundColor: LAYER_COLORS[idx] }} />
-                <p className="text-[9px] text-gray-400">{label}</p>
-                <p className="text-[8px] text-gray-600">{LAYER_CONFIG[idx]} nodes</p>
+                <p className="text-[10px] text-gray-400">{label}</p>
+                <p className="text-[10px] text-gray-600">{LAYER_CONFIG[idx]} {t('neuralNodes')}</p>
               </div>
             ))}
           </div>
 
           {/* Top info bar */}
           <div className="absolute top-3 left-3 right-3 flex justify-between">
-            <div className="px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-[9px] text-gray-300">
-              <i className="fas fa-microchip mr-1 text-green-400" /> Processing: Live
+            <div className="px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-[10px] text-gray-300">
+              <i className="fas fa-microchip mr-1 text-green-400" aria-hidden="true" /> {t('neuralProcessing')}
             </div>
-            <div className="px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-[9px] text-gray-300">
-              <i className="fas fa-satellite-dish mr-1 text-amber-400" /> Signals: 174
+            <div className="px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-[10px] text-gray-300">
+              <i className="fas fa-satellite-dish mr-1 text-amber-400" aria-hidden="true" /> {t('neuralSignalsCount')}
             </div>
           </div>
         </div>
@@ -243,9 +253,9 @@ export default function NeuralNetworkViz() {
         {/* Signal Feed */}
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { label: 'Input Layer', signals: ['Transaction history', 'Market data', 'Biometric data', 'Social signals', 'Macro trends', 'Emotional state'], color: '#3B82F6' },
-            { label: 'Hidden Layers', signals: ['Pattern recognition', 'Anomaly detection', 'Correlation analysis', 'Trend forecasting', 'Risk modeling', 'Behavioral prediction'], color: '#EC4899' },
-            { label: 'Output Layer', signals: ['Life event alerts', 'Crisis warnings', 'Market timing', 'Auto-instruments', 'Wealth projection', 'Emotional coaching'], color: '#10B981' },
+            { label: t('neuralInputLayer'), signals: ['Transaction history', 'Market data', 'Biometric data', 'Social signals', 'Macro trends', 'Emotional state'], color: '#3B82F6' },
+            { label: t('neuralHiddenLayer'), signals: ['Pattern recognition', 'Anomaly detection', 'Correlation analysis', 'Trend forecasting', 'Risk modeling', 'Behavioral prediction'], color: '#EC4899' },
+            { label: t('neuralOutputLayer'), signals: ['Life event alerts', 'Crisis warnings', 'Market timing', 'Auto-instruments', 'Wealth projection', 'Emotional coaching'], color: '#10B981' },
           ].map((layer, idx) => (
             <motion.div
               key={layer.label}
@@ -261,7 +271,7 @@ export default function NeuralNetworkViz() {
               <div className="space-y-1">
                 {layer.signals.map((sig, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-[10px] text-gray-500">
-                    <i className="fas fa-chevron-right text-[6px]" style={{ color: layer.color }} />
+                    <i className="fas fa-chevron-right text-[6px]" style={{ color: layer.color }} aria-hidden="true" />
                     {sig}
                   </div>
                 ))}

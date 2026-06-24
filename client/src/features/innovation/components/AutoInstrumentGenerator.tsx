@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -114,6 +115,7 @@ const RISK_COLORS = {
 };
 
 export default function AutoInstrumentGenerator() {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
 
@@ -127,10 +129,10 @@ export default function AutoInstrumentGenerator() {
       <div className="flex items-center justify-between mb-1">
         <div>
           <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <i className="fas fa-robot text-emerald-600" /> Proactive Instrument Generator
+            <i className="fas fa-robot text-emerald-600" aria-hidden="true" /> {t('autoInstrumentTitle')}
           </h3>
           <p className="text-[11px] text-gray-500 mt-0.5">
-            AI auto-creates financial instruments before you need them — world's first predictive banking
+            {t('autoInstrumentSubtitle')}
           </p>
         </div>
       </div>
@@ -139,15 +141,15 @@ export default function AutoInstrumentGenerator() {
       <div className="mt-3 grid grid-cols-3 gap-3 mb-4">
         <div className="p-3 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/10 text-center">
           <p className="text-lg font-extrabold text-primary">{INSTRUMENTS.length}</p>
-          <p className="text-[9px] text-gray-500 font-medium uppercase tracking-wide">Instruments Ready</p>
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">{t('autoInstrumentReady')}</p>
         </div>
         <div className="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl border border-emerald-100 text-center">
           <p className="text-lg font-extrabold text-emerald-700">₹{activeMonthly.toLocaleString()}</p>
-          <p className="text-[9px] text-gray-500 font-medium uppercase tracking-wide">Auto-Committed/Month</p>
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">{t('autoInstrumentCommitted')}</p>
         </div>
         <div className="p-3 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl border border-amber-100 text-center">
           <p className="text-lg font-extrabold text-amber-700">₹{totalMonthly.toLocaleString()}</p>
-          <p className="text-[9px] text-gray-500 font-medium uppercase tracking-wide">Recommended/Month</p>
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">{t('autoInstrumentRecommended')}</p>
         </div>
       </div>
 
@@ -163,7 +165,7 @@ export default function AutoInstrumentGenerator() {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            {f === 'all' ? 'All' : STATUS_CONFIG[f as keyof typeof STATUS_CONFIG].label}
+            {f === 'all' ? t('autoInstrumentAll') : f === 'recommended' ? t('autoInstrumentAiRecommended') : f === 'auto-created' ? t('autoInstrumentAutoCreated') : t('autoInstrumentActive')}
           </button>
         ))}
       </div>
@@ -188,7 +190,10 @@ export default function AutoInstrumentGenerator() {
               >
                 <div
                   className="p-3 cursor-pointer"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelected(isOpen ? null : inst.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(isOpen ? null : inst.id); } }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -196,34 +201,34 @@ export default function AutoInstrumentGenerator() {
                         className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: inst.color + '12' }}
                       >
-                        <i className={`fas ${inst.icon}`} style={{ color: inst.color, fontSize: '15px' }} />
+                        <i className={`fas ${inst.icon}`} style={{ color: inst.color, fontSize: '15px' }} aria-hidden="true" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[12px] font-bold text-gray-800">{inst.name}</span>
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${status.badge} ${status.text}`}>
-                            {status.label}
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${status.badge} ${status.text}`}>
+                            {status.label === 'AI Recommended' ? t('autoInstrumentAiRecommended') : status.label === 'Auto-Created' ? t('autoInstrumentAutoCreated') : t('autoInstrumentActive')}
                           </span>
                         </div>
                         <p className="text-[10px] text-gray-500 mt-0.5">
-                          <i className="fas fa-wand-magic-sparkles text-violet-400 mr-1" />
+                          <i className="fas fa-wand-magic-sparkles text-violet-400 mr-1" aria-hidden="true" />
                           {inst.triggeredBy}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-extrabold text-gray-900">₹{inst.monthlyAmount.toLocaleString()}</p>
-                      <p className="text-[9px] text-gray-400">/month</p>
+                      <p className="text-[10px] text-gray-400">/month</p>
                     </div>
                   </div>
 
                   {/* Quick stats row */}
                   <div className="flex items-center gap-4 mt-2.5 text-[10px] text-gray-500">
-                    <span><i className="fas fa-bullseye mr-1" />₹{(inst.targetCorpus / 1e5).toFixed(1)}L target</span>
-                    <span><i className="fas fa-clock mr-1" />{inst.timeline}</span>
+                    <span><i className="fas fa-bullseye mr-1" aria-hidden="true" />₹{(inst.targetCorpus / 1e5).toFixed(1)}L {t('autoInstrumentTarget')}</span>
+                    <span><i className="fas fa-clock mr-1" aria-hidden="true" />{inst.timeline}</span>
                     <span>
-                      <i className="fas fa-shield-halved mr-1" style={{ color: RISK_COLORS[inst.riskLevel] }} />
-                      {inst.riskLevel} Risk
+                      <i className="fas fa-shield-halved mr-1" style={{ color: RISK_COLORS[inst.riskLevel] }} aria-hidden="true" />
+                      {inst.riskLevel} {t('autoInstrumentRisk')}
                     </span>
                   </div>
                 </div>
@@ -238,19 +243,19 @@ export default function AutoInstrumentGenerator() {
                     >
                       <div className="p-3 grid grid-cols-2 gap-3">
                         <div className="p-2.5 bg-gray-50 rounded-lg">
-                          <p className="text-[9px] text-gray-400 uppercase tracking-wide">Provider</p>
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t('autoInstrumentProvider')}</p>
                           <p className="text-[11px] font-semibold text-gray-700">{inst.bank}</p>
                         </div>
                         <div className="p-2.5 bg-gray-50 rounded-lg">
-                          <p className="text-[9px] text-gray-400 uppercase tracking-wide">Expected Returns</p>
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t('autoInstrumentExpectedReturns')}</p>
                           <p className="text-[11px] font-semibold text-gray-700">{inst.interestRate}</p>
                         </div>
                         <div className="p-2.5 bg-gray-50 rounded-lg">
-                          <p className="text-[9px] text-gray-400 uppercase tracking-wide">Tax Benefit</p>
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t('autoInstrumentTaxBenefit')}</p>
                           <p className="text-[11px] font-semibold text-gray-700">{inst.taxBenefit}</p>
                         </div>
                         <div className="p-2.5 bg-gray-50 rounded-lg">
-                          <p className="text-[9px] text-gray-400 uppercase tracking-wide">Risk Level</p>
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t('autoInstrumentRiskLevel')}</p>
                           <p className="text-[11px] font-semibold" style={{ color: RISK_COLORS[inst.riskLevel] }}>
                             {inst.riskLevel}
                           </p>
@@ -259,16 +264,16 @@ export default function AutoInstrumentGenerator() {
                       <div className="px-3 pb-3 flex gap-2">
                         {inst.status === 'recommended' && (
                           <button className="flex-1 py-2 bg-primary text-white text-[11px] font-bold rounded-lg hover:bg-primary-dark transition-colors">
-                            <i className="fas fa-check mr-1" /> Activate Now
+                            <i className="fas fa-check mr-1" aria-hidden="true" /> {t('autoInstrumentActivateNow')}
                           </button>
                         )}
                         {inst.status === 'auto-created' && (
                           <button className="flex-1 py-2 bg-emerald-600 text-white text-[11px] font-bold rounded-lg">
-                            <i className="fas fa-check-circle mr-1" /> Already Active
+                            <i className="fas fa-check-circle mr-1" aria-hidden="true" /> {t('autoInstrumentAlreadyActive')}
                           </button>
                         )}
                         <button className="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-[11px] font-bold rounded-lg hover:bg-gray-50 transition-colors">
-                          <i className="fas fa-pen mr-1" /> Customize
+                          <i className="fas fa-pen mr-1" aria-hidden="true" /> {t('autoInstrumentCustomize')}
                         </button>
                       </div>
                     </motion.div>

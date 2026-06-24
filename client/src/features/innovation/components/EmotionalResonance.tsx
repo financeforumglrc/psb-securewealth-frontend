@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts';
@@ -40,6 +41,7 @@ const COACHING_INSIGHTS = [
 ];
 
 export default function EmotionalResonance() {
+  const { t } = useTranslation();
   const [selectedTrigger, setSelectedTrigger] = useState<number | null>(null);
 
   return (
@@ -47,10 +49,10 @@ export default function EmotionalResonance() {
       {/* Header */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Emotional States', value: '8', icon: 'fa-face-smile', color: 'bg-pink-50 text-pink-600' },
-          { label: 'Triggers Detected', value: '6', icon: 'fa-bolt', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Mood-Spend Correlation', value: '-0.74', icon: 'fa-link', color: 'bg-rose-50 text-rose-600' },
-          { label: 'Savings if Controlled', value: '₹4.2L/yr', icon: 'fa-piggy-bank', color: 'bg-green-50 text-green-600' },
+          { label: t('emotionalResonanceStates'), value: '8', icon: 'fa-face-smile', color: 'bg-pink-50 text-pink-600' },
+          { label: t('emotionalResonanceTriggers'), value: '6', icon: 'fa-bolt', color: 'bg-amber-50 text-amber-600' },
+          { label: t('emotionalResonanceCorrelation'), value: '-0.74', icon: 'fa-link', color: 'bg-rose-50 text-rose-600' },
+          { label: t('emotionalResonanceSavings'), value: '₹4.2L/yr', icon: 'fa-piggy-bank', color: 'bg-green-50 text-green-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -60,7 +62,7 @@ export default function EmotionalResonance() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -74,7 +76,7 @@ export default function EmotionalResonance() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="card-psb">
           <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <i className="fas fa-brain text-violet-500" /> Emotional Financial Profile
+            <i className="fas fa-brain text-violet-500" aria-hidden="true" /> {t('emotionalResonanceProfileTitle')}
           </h4>
           <div className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -97,7 +99,7 @@ export default function EmotionalResonance() {
 
         <div className="card-psb">
           <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <i className="fas fa-calendar-week text-primary" /> Mood vs. Spending Pattern
+            <i className="fas fa-calendar-week text-primary" aria-hidden="true" /> {t('emotionalResonancePatternTitle')}
           </h4>
           <div className="space-y-2.5">
             {WEEKLY_MOOD_SPEND.map((d, idx) => (
@@ -113,7 +115,7 @@ export default function EmotionalResonance() {
                         transition={{ delay: idx * 0.1, duration: 0.6 }}
                       />
                     </div>
-                    <span className="text-[9px] text-gray-400 w-8 text-right">Mood</span>
+                    <span className="text-[10px] text-gray-400 w-8 text-right">{t('emotionalResonanceMood')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -124,17 +126,17 @@ export default function EmotionalResonance() {
                         transition={{ delay: idx * 0.1 + 0.2, duration: 0.6 }}
                       />
                     </div>
-                    <span className="text-[9px] text-gray-500 w-10 text-right font-bold">₹{d.spend}</span>
+                    <span className="text-[10px] text-gray-500 w-10 text-right font-bold">₹{d.spend}</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
           <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500">
-            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-violet-400" /> Mood</span>
-            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-400" /> Low Spend</span>
-            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-400" /> Med Spend</span>
-            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-rose-400" /> High Spend</span>
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-violet-400" aria-hidden="true" /> {t('emotionalResonanceMood')}</span>
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-400" aria-hidden="true" /> {t('emotionalResonanceLowSpend')}</span>
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" /> {t('emotionalResonanceMedSpend')}</span>
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-rose-400" aria-hidden="true" /> {t('emotionalResonanceHighSpend')}</span>
           </div>
         </div>
       </div>
@@ -142,7 +144,7 @@ export default function EmotionalResonance() {
       {/* Emotional Triggers */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-bolt text-amber-500" /> Emotional Spending Triggers
+          <i className="fas fa-bolt text-amber-500" aria-hidden="true" /> {t('emotionalResonanceTriggersTitle')}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {EMOTIONAL_TRIGGERS.map((trig, idx) => (
@@ -154,20 +156,23 @@ export default function EmotionalResonance() {
               className={`p-3 rounded-xl border cursor-pointer transition-all ${
                 selectedTrigger === idx ? 'border-amber-200 bg-amber-50/30 shadow-md' : 'border-gray-100 hover:border-gray-200'
               }`}
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedTrigger(selectedTrigger === idx ? null : idx)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedTrigger(selectedTrigger === idx ? null : idx); } }}
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
-                  <i className={`fas ${trig.icon} text-gray-500 text-xs`} />
+                  <i className={`fas ${trig.icon} text-gray-500 text-xs`} aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-bold text-gray-800 truncate">{trig.trigger}</p>
-                  <p className="text-[9px] text-gray-400">{trig.frequency}</p>
+                  <p className="text-[10px] text-gray-400">{trig.frequency}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-rose-600">{trig.cost}</span>
-                <span className="text-[9px] px-1.5 py-0.5 bg-gray-100 rounded-full text-gray-500">{trig.emotion}</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded-full text-gray-500">{trig.emotion}</span>
               </div>
             </motion.div>
           ))}
@@ -177,7 +182,7 @@ export default function EmotionalResonance() {
       {/* AI Coaching Insights */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-user-doctor text-emerald-600" /> AI Emotional Financial Coach
+          <i className="fas fa-user-doctor text-emerald-600" aria-hidden="true" /> {t('emotionalResonanceCoachTitle')}
         </h4>
         <div className="space-y-3">
           {COACHING_INSIGHTS.map((insight, idx) => (
@@ -194,7 +199,7 @@ export default function EmotionalResonance() {
                   <p className="text-[10px] text-gray-500 leading-relaxed">{insight.detail}</p>
                 </div>
                 <button className="ml-3 px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-bold rounded-lg hover:bg-emerald-700 transition-colors whitespace-nowrap">
-                  <i className={`fas ${insight.icon} mr-1`} />{insight.action}
+                  <i className={`fas ${insight.icon} mr-1`} aria-hidden="true" />{insight.action}
                 </button>
               </div>
             </motion.div>

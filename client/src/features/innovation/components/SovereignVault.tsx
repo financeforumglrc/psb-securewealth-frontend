@@ -41,7 +41,7 @@ export default function SovereignVault() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <i className="fas fa-vault text-primary" /> Sovereign Data Vault
+            <i className="fas fa-vault text-primary" aria-hidden="true" /> Sovereign Data Vault
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">Your financial history never leaves your device. The bank sees proofs, not data.</p>
         </div>
@@ -78,7 +78,7 @@ export default function SovereignVault() {
       {/* Data Locality Grid */}
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
-          <i className="fas fa-database text-primary text-sm" />
+          <i className="fas fa-database text-primary text-sm" aria-hidden="true" />
           <h4 className="text-sm font-bold text-slate-800 dark:text-white">Data Locality Audit</h4>
         </div>
         <div className="space-y-3">
@@ -93,7 +93,7 @@ export default function SovereignVault() {
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                 cat.local ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-amber-50 text-amber-600 dark:bg-amber-900/20'
               }`}>
-                <i className={`fas ${cat.icon}`} />
+                <i className={`fas ${cat.icon}`} aria-hidden="true" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export default function SovereignVault() {
                 <p className="text-[10px] text-slate-500">{cat.size} • {cat.description}</p>
               </div>
               <div className="flex-shrink-0">
-                <i className={`fas ${cat.local ? 'fa-lock text-emerald-500' : 'fa-lock-open text-amber-500'} text-sm`} />
+                <i className={`fas ${cat.local ? 'fa-lock text-emerald-500' : 'fa-lock-open text-amber-500'} text-sm`} aria-hidden="true" />
               </div>
             </motion.div>
           ))}
@@ -119,7 +119,7 @@ export default function SovereignVault() {
       {/* Zero-Knowledge Proof Demo */}
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
-          <i className="fas fa-key text-violet-500 text-sm" />
+          <i className="fas fa-key text-violet-500 text-sm" aria-hidden="true" />
           <h4 className="text-sm font-bold text-slate-800 dark:text-white">Zero-Knowledge Proof Demo</h4>
         </div>
         <p className="text-xs text-slate-500 mb-3">
@@ -136,7 +136,7 @@ export default function SovereignVault() {
                 onClick={() => setProofDemo(true)}
                 className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors"
               >
-                <i className="fas fa-wand-magic-sparkles mr-2" />
+                <i className="fas fa-wand-magic-sparkles mr-2" aria-hidden="true" />
                 Generate ZK Proof
               </button>
             </div>
@@ -148,7 +148,7 @@ export default function SovereignVault() {
             >
               <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
                 <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
-                  <i className="fas fa-check text-lg" />
+                  <i className="fas fa-check text-lg" aria-hidden="true" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">Proof Validated</p>
@@ -169,7 +169,7 @@ export default function SovereignVault() {
                 </div>
               </div>
               <p className="text-[10px] text-slate-500">
-                <i className="fas fa-circle-info mr-1" />
+                <i className="fas fa-circle-info mr-1" aria-hidden="true" />
                 Mathematical guarantee: It is computationally impossible for the bank to reverse-engineer your actual net worth from this proof.
               </p>
               <button
@@ -187,21 +187,21 @@ export default function SovereignVault() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="card text-center">
           <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-emerald-500 mx-auto mb-2">
-            <i className="fas fa-mobile-screen text-xl" />
+            <i className="fas fa-mobile-screen text-xl" aria-hidden="true" />
           </div>
           <p className="text-xs font-bold text-slate-800 dark:text-white">Your Device</p>
           <p className="text-[10px] text-slate-500 mt-1">All raw data, AI models, and biometric templates live here</p>
         </div>
         <div className="card text-center">
           <div className="w-12 h-12 bg-violet-50 dark:bg-violet-900/20 rounded-xl flex items-center justify-center text-violet-500 mx-auto mb-2">
-            <i className="fas fa-shield-halved text-xl" />
+            <i className="fas fa-shield-halved text-xl" aria-hidden="true" />
           </div>
           <p className="text-xs font-bold text-slate-800 dark:text-white">ZK Prover</p>
           <p className="text-[10px] text-slate-500 mt-1">Generates cryptographic proofs without revealing underlying data</p>
         </div>
         <div className="card text-center">
           <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-500 mx-auto mb-2">
-            <i className="fas fa-building-columns text-xl" />
+            <i className="fas fa-building-columns text-xl" aria-hidden="true" />
           </div>
           <p className="text-xs font-bold text-slate-800 dark:text-white">Bank Server</p>
           <p className="text-[10px] text-slate-500 mt-1">Only receives verified proofs, never raw personal data</p>

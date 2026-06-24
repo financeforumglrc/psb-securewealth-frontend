@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -111,6 +112,7 @@ const READINESS_CONFIG = {
 };
 
 export default function LifeEventPredictor() {
+  const { t } = useTranslation();
   const [selectedEvent, setSelectedEvent] = useState<PredictedEvent | null>(null);
   const [filter, setFilter] = useState<string>('all');
 
@@ -123,14 +125,14 @@ export default function LifeEventPredictor() {
       <div className="flex items-center justify-between mb-1">
         <div>
           <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <i className="fas fa-crystal-ball text-violet-600" /> Life Event Predictor
+            <i className="fas fa-crystal-ball text-violet-600" aria-hidden="true" /> {t('lifeEventTitle')}
           </h3>
           <p className="text-[11px] text-gray-500 mt-0.5">
-            AI analyzes 127 behavioral signals to predict major life events before they happen
+            {t('lifeEventSubtitle')}
           </p>
         </div>
         <div className="px-2.5 py-1 bg-violet-50 rounded-full text-[10px] font-bold text-violet-700">
-          94% Historical Accuracy
+          {t('lifeEventAccuracy')}
         </div>
       </div>
 
@@ -146,7 +148,7 @@ export default function LifeEventPredictor() {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            {cat === 'all' ? 'All Events' : CATEGORY_LABELS[cat]}
+            {cat === 'all' ? t('lifeEventAll') : CATEGORY_LABELS[cat] === 'Family' ? t('lifeEventFamily') : CATEGORY_LABELS[cat] === 'Career' ? t('lifeEventCareer') : CATEGORY_LABELS[cat] === 'Health' ? t('lifeEventHealth') : CATEGORY_LABELS[cat] === 'Asset' ? t('lifeEventAsset') : t('lifeEventEducation')}
           </button>
         ))}
       </div>
@@ -172,29 +174,33 @@ export default function LifeEventPredictor() {
                       ? 'border-violet-300 bg-violet-50/50 shadow-md' 
                       : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
                   }`}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedEvent(selectedEvent?.id === event.id ? null : event)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedEvent(selectedEvent?.id === event.id ? null : event); } }}
                 >
                   {/* Timeline dot */}
                   <div 
                     className="absolute -left-[26px] top-4 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm"
                     style={{ backgroundColor: event.color }}
+                    aria-label={`${event.title} timeline marker`}
                   />
                   
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <i className={`fas ${event.icon} text-xs`} style={{ color: event.color }} />
+                        <i className={`fas ${event.icon} text-xs`} style={{ color: event.color }} aria-hidden="true" />
                         <span className="text-[11px] font-bold text-gray-800">{event.title}</span>
-                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${readiness.bg} ${readiness.text} border ${readiness.border}`}>
-                          <i className={`fas ${readiness.icon} mr-0.5 text-[8px]`} />
-                          {readiness.label}
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${readiness.bg} ${readiness.text} border ${readiness.border}`}>
+                          <i className={`fas ${readiness.icon} mr-0.5 text-[10px]`} aria-hidden="true" />
+                          {readiness.label === 'On Track' ? t('lifeEventOnTrack') : readiness.label === 'Needs Attention' ? t('lifeEventNeedsAttention') : t('lifeEventUrgent')}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                        <span><i className="fas fa-clock mr-1" />{event.timeframe}</span>
-                        <span><i className="fas fa-percent mr-1" />{event.probability}% probability</span>
+                        <span><i className="fas fa-clock mr-1" aria-hidden="true" />{event.timeframe}</span>
+                        <span><i className="fas fa-percent mr-1" aria-hidden="true" />{event.probability}% probability</span>
                         <span className="font-semibold text-gray-700">
-                          <i className="fas fa-indian-rupee-sign mr-0.5" />{event.financialImpact.replace('₹', '')}
+                          <i className="fas fa-indian-rupee-sign mr-0.5" aria-hidden="true" />{event.financialImpact.replace('₹', '')}
                         </span>
                       </div>
                     </div>
@@ -216,7 +222,7 @@ export default function LifeEventPredictor() {
                             strokeLinecap="round"
                           />
                         </svg>
-                        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-gray-700">
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-700">
                           {event.probability}
                         </span>
                       </div>
@@ -234,19 +240,19 @@ export default function LifeEventPredictor() {
                       >
                         <div className="flex items-start gap-2">
                           <div className="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <i className="fas fa-wand-magic-sparkles text-violet-500 text-xs" />
+                            <i className="fas fa-wand-magic-sparkles text-violet-500 text-xs" aria-hidden="true" />
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-gray-700 mb-0.5">AI Recommended Action</p>
+                            <p className="text-[10px] font-bold text-gray-700 mb-0.5">{t('lifeEventAiAction')}</p>
                             <p className="text-[11px] text-gray-600 leading-relaxed">{event.suggestedAction}</p>
                           </div>
                         </div>
                         <div className="mt-2 flex gap-2">
                           <button className="px-3 py-1.5 bg-violet-600 text-white text-[10px] font-bold rounded-lg hover:bg-violet-700 transition-colors">
-                            <i className="fas fa-rocket mr-1" />Auto-Setup Now
+                            <i className="fas fa-rocket mr-1" aria-hidden="true" />{t('lifeEventAutoSetup')}
                           </button>
                           <button className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-50 transition-colors">
-                            <i className="fas fa-bell mr-1" />Remind Me Later
+                            <i className="fas fa-bell mr-1" aria-hidden="true" />{t('lifeEventRemind')}
                           </button>
                         </div>
                       </motion.div>

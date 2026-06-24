@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
@@ -22,6 +23,7 @@ const CHAKRAS: Chakra[] = [
 ];
 
 export default function ChakraBalance() {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<number | null>(null);
   const avgScore = Math.round(CHAKRAS.reduce((s, c) => s + c.score, 0) / CHAKRAS.length);
 
@@ -30,14 +32,14 @@ export default function ChakraBalance() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <i className="fas fa-om text-violet-600" /> Sapta-Chakra Financial Balance
+            <i className="fas fa-om text-violet-600" aria-hidden="true" /> {t('chakraTitle')}
           </h3>
           <p className="text-[11px] text-gray-500 mt-0.5">
-            Ancient chakra energy system mapped to modern financial wellness — a framework found nowhere else in banking
+            {t('chakraSubtitle')}
           </p>
         </div>
         <div className="px-2.5 py-1 bg-violet-50 rounded-full text-[10px] font-bold text-violet-700">
-          Balance: {avgScore}%
+          {t('chakraBalance')}: {avgScore}%
         </div>
       </div>
 
@@ -64,7 +66,10 @@ export default function ChakraBalance() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.1, type: 'spring' }}
                   className="flex items-center gap-3 cursor-pointer group"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelected(isSelected ? null : idx)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(isSelected ? null : idx); } }}
                 >
                   {/* Node */}
                   <motion.div
@@ -81,14 +86,14 @@ export default function ChakraBalance() {
                       border: `2px solid ${chakra.color}${isSelected ? 'FF' : '60'}`
                     }}
                   >
-                    <i className={`fas ${chakra.icon}`} style={{ color: chakra.color, fontSize: size * 0.35 }} />
+                    <i className={`fas ${chakra.icon}`} style={{ color: chakra.color, fontSize: size * 0.35 }} aria-hidden="true" />
                   </motion.div>
 
                   {/* Label */}
                   <div className={`transition-all duration-300 ${isSelected ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`}>
                     <p className="text-[10px] font-bold" style={{ color: chakra.color }}>{chakra.sanskrit}</p>
                     <p className="text-[11px] font-semibold text-gray-700">{chakra.name}</p>
-                    <p className="text-[9px] text-gray-400">{chakra.financialAspect}</p>
+                    <p className="text-[10px] text-gray-400">{chakra.financialAspect}</p>
                   </div>
 
                   {/* Score */}
@@ -136,7 +141,7 @@ export default function ChakraBalance() {
                   className="w-12 h-12 rounded-xl flex items-center justify-center"
                   style={{ backgroundColor: CHAKRAS[selected].color + '15' }}
                 >
-                  <i className={`fas ${CHAKRAS[selected].icon} text-lg`} style={{ color: CHAKRAS[selected].color }} />
+                  <i className={`fas ${CHAKRAS[selected].icon} text-lg`} style={{ color: CHAKRAS[selected].color }} aria-hidden="true" />
                 </div>
                 <div>
                   <p className="text-lg font-extrabold" style={{ color: CHAKRAS[selected].color }}>
@@ -158,7 +163,7 @@ export default function ChakraBalance() {
               <p className="text-[10px] text-gray-400 mt-1">Score: {CHAKRAS[selected].score}/100</p>
 
               <div className="mt-3 p-2.5 bg-white rounded-lg border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-700 mb-1">AI Recommendation</p>
+                <p className="text-[10px] font-bold text-gray-700 mb-1">{t('chakraAiRecommendation')}</p>
                 <p className="text-[10px] text-gray-500 leading-relaxed">
                   {CHAKRAS[selected].score < 60 
                     ? `Your ${CHAKRAS[selected].name} chakra needs attention. Focus on ${CHAKRAS[selected].financialAspect.toLowerCase()} for the next 30 days.`
@@ -168,9 +173,9 @@ export default function ChakraBalance() {
             </motion.div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">
-              <i className="fas fa-hand-pointer text-3xl mb-3 text-gray-300" />
-              <p className="text-sm font-medium">Select a chakra to reveal your financial energy profile</p>
-              <p className="text-[11px] mt-1">Each chakra represents a dimension of your financial wellness</p>
+              <i className="fas fa-hand-pointer text-3xl mb-3 text-gray-300" aria-hidden="true" />
+              <p className="text-sm font-medium">{t('chakraSelectEmptyTitle')}</p>
+              <p className="text-[11px] mt-1">{t('chakraSelectEmptySubtitle')}</p>
             </div>
           )}
 
@@ -183,9 +188,12 @@ export default function ChakraBalance() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.07 }}
                 className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${selected === idx ? 'bg-gray-50' : 'hover:bg-gray-50/50'}`}
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelected(idx)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(idx); } }}
               >
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chakra.color }} />
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chakra.color }} aria-hidden="true" />
                 <span className="text-[10px] text-gray-600 flex-1">{chakra.name}</span>
                 <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${chakra.score}%`, backgroundColor: chakra.color }} />

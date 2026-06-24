@@ -1,6 +1,8 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 
 interface ThreatSignal {
   id: string;
@@ -23,8 +25,10 @@ interface CityStat {
 }
 
 export default function CollectiveImmuneSystem() {
+  const { t } = useTranslation();
   const includeCommunity = useWealthStore((s) => s.includeInCommunityData);
   const toggleCommunity = useWealthStore((s) => s.toggleCommunityData);
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [threats] = useState<ThreatSignal[]>([
     { id: 't1', type: 'UPI Phishing SMS', city: 'Mumbai', pattern: 'Fake HDFC reward link', count: 47, firstSeen: '2 min ago', status: 'active', severity: 'critical' },
     { id: 't2', type: 'OTP Harvesting', city: 'Delhi', pattern: 'Impersonating Amazon refund', count: 32, firstSeen: '5 min ago', status: 'contained', severity: 'high' },
@@ -75,36 +79,38 @@ export default function CollectiveImmuneSystem() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <i className="fas fa-shield-virus text-emerald-500" /> Collective Immune System
+            <i className="fas fa-shield-virus text-emerald-500" aria-hidden="true" /> {t('collectiveImmuneTitle')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">Community-powered fraud defense. Your city protects you before you know you're under attack.</p>
+          <p className="text-xs text-slate-500 mt-0.5">{t('collectiveImmuneSubtitle')}</p>
         </div>
         <button
           onClick={toggleCommunity}
+          aria-label={includeCommunity ? t('collectiveImmuneDisable') : t('collectiveImmuneEnable')}
+          aria-pressed={includeCommunity}
           className={`relative w-14 h-7 rounded-full transition-colors ${includeCommunity ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
         >
           <motion.div
             className="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow"
             animate={{ left: includeCommunity ? '26px' : '2px' }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 30 }}
           />
         </button>
       </div>
 
       {!includeCommunity && (
         <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-200">
-          <i className="fas fa-circle-exclamation mr-1" />
-          You are in SOLO mode. Enable community data to receive real-time threat immunization from 2.8M+ users.
+          <i className="fas fa-circle-exclamation mr-1" aria-hidden="true" />
+          {t('collectiveImmuneSoloMode')}
         </div>
       )}
 
       {/* Live Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Immune Users', value: stats.users.toLocaleString(), icon: 'fa-users', color: 'bg-blue-50 text-blue-600', sub: '+ Growing' },
-          { label: 'Protected Today', value: stats.protected.toLocaleString(), icon: 'fa-shield-halved', color: 'bg-emerald-50 text-emerald-600', sub: 'Auto-immunized' },
-          { label: 'Threats Neutralized', value: stats.neutralized.toLocaleString(), icon: 'fa-ban', color: 'bg-rose-50 text-rose-600', sub: 'All-time' },
-          { label: 'Active Threats', value: stats.active, icon: 'fa-triangle-exclamation', color: 'bg-amber-50 text-amber-600', sub: 'Being contained' },
+          { label: t('collectiveImmuneUsers'), value: stats.users.toLocaleString(), icon: 'fa-users', color: 'bg-blue-50 text-blue-600', sub: t('collectiveImmuneGrowing') },
+          { label: t('collectiveImmuneProtected'), value: stats.protected.toLocaleString(), icon: 'fa-shield-halved', color: 'bg-emerald-50 text-emerald-600', sub: t('collectiveImmuneProtectedSub') },
+          { label: t('collectiveImmuneNeutralized'), value: stats.neutralized.toLocaleString(), icon: 'fa-ban', color: 'bg-rose-50 text-rose-600', sub: t('collectiveImmuneNeutralizedSub') },
+          { label: t('collectiveImmuneActive'), value: stats.active, icon: 'fa-triangle-exclamation', color: 'bg-amber-50 text-amber-600', sub: t('collectiveImmuneActiveSub') },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -115,12 +121,12 @@ export default function CollectiveImmuneSystem() {
           >
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-                <i className={`fas ${stat.icon}`} />
+                <i className={`fas ${stat.icon}`} aria-hidden="true" />
               </div>
               <div>
                 <p className="text-[10px] text-slate-500 font-bold uppercase">{stat.label}</p>
                 <p className="text-xl font-extrabold text-slate-800 dark:text-white">{stat.value}</p>
-                <p className="text-[9px] text-slate-400">{stat.sub}</p>
+                <p className="text-[10px] text-slate-400">{stat.sub}</p>
               </div>
             </div>
           </motion.div>
@@ -130,11 +136,11 @@ export default function CollectiveImmuneSystem() {
       {/* Threat Map Visualization */}
       <div className="card">
         <div className="flex items-center gap-2 mb-3">
-          <i className="fas fa-map text-primary text-sm" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Live Threat Map — India</h4>
+          <i className="fas fa-map text-primary text-sm" aria-hidden="true" />
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('collectiveImmuneMapTitle')}</h4>
           <span className="ml-auto flex items-center gap-1 text-[10px] text-slate-400">
-            <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
-            Live
+            <span className={`w-2 h-2 bg-rose-500 rounded-full ${prefersReducedMotion ? '' : 'animate-pulse'}`} aria-label="Live" />
+            {t('collectiveImmuneLive')}
           </span>
         </div>
         <div className="relative h-64 bg-slate-50 dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700">
@@ -152,62 +158,62 @@ export default function CollectiveImmuneSystem() {
               transition={{ delay: Math.random() * 0.5 }}
             >
               <div className="relative">
-                <div className={`w-${Math.round(city.size / 6)} h-${Math.round(city.size / 6)} rounded-full bg-rose-500/20 animate-ping absolute`} style={{ width: city.size * 1.5, height: city.size * 1.5, marginLeft: -(city.size * 0.75), marginTop: -(city.size * 0.75) }} />
+                <div className={`w-${Math.round(city.size / 6)} h-${Math.round(city.size / 6)} rounded-full bg-rose-500/20 ${prefersReducedMotion ? '' : 'animate-ping'} absolute`} style={{ width: city.size * 1.5, height: city.size * 1.5, marginLeft: -(city.size * 0.75), marginTop: -(city.size * 0.75) }} />
                 <div className="w-3 h-3 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800 shadow" />
               </div>
               <div className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <p className="text-[9px] font-bold text-slate-700 dark:text-slate-200 bg-white/80 dark:bg-slate-800/80 px-1.5 py-0.5 rounded">{city.city}</p>
-                <p className="text-[8px] text-center text-rose-500 font-bold">{city.threats} threats</p>
+                <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 bg-white/80 dark:bg-slate-800/80 px-1.5 py-0.5 rounded">{city.city}</p>
+                <p className="text-[10px] text-center text-rose-500 font-bold">{city.threats} threats</p>
               </div>
             </motion.div>
           ))}
         </div>
         <div className="flex flex-wrap gap-4 mt-2 text-[10px] text-slate-500">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-rose-500 rounded-full" /> Active threat cluster</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full" /> Protected zone</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-amber-500 rounded-full" /> Containment in progress</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-rose-500 rounded-full" aria-hidden="true" /> {t('collectiveImmuneThreatCluster')}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full" aria-hidden="true" /> {t('collectiveImmuneProtectedZone')}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-amber-500 rounded-full" aria-hidden="true" /> {t('collectiveImmuneContainment')}</span>
         </div>
       </div>
 
       {/* Threat Feed */}
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
-          <i className="fas fa-radar text-rose-500 text-sm" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Real-Time Threat Feed</h4>
-          <span className="ml-auto text-[10px] px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full font-bold animate-pulse">
+          <i className="fas fa-radar text-rose-500 text-sm" aria-hidden="true" />
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('collectiveImmuneFeedTitle')}</h4>
+          <span className={`ml-auto text-[10px] px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full font-bold ${prefersReducedMotion ? '' : 'animate-pulse'}`} aria-label="Live feed">
             LIVE
           </span>
         </div>
         <div className="space-y-2">
-          {threats.map((t) => (
+          {threats.map((threat) => (
             <motion.div
-              key={t.id}
+              key={threat.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700"
             >
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${severityColor[t.severity]} ${t.status === 'active' ? 'animate-pulse' : ''}`} />
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${severityColor[threat.severity]} ${threat.status === 'active' && !prefersReducedMotion ? 'animate-pulse' : ''}`} aria-label={`${threat.severity} severity`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{t.type}</p>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-                    t.status === 'active' ? 'bg-rose-100 text-rose-700' :
-                    t.status === 'contained' ? 'bg-amber-100 text-amber-700' :
+                  <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{threat.type}</p>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                    threat.status === 'active' ? 'bg-rose-100 text-rose-700' :
+                    threat.status === 'contained' ? 'bg-amber-100 text-amber-700' :
                     'bg-emerald-100 text-emerald-700'
                   }`}>
-                    {t.status.toUpperCase()}
+                    {threat.status.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500 truncate">{t.pattern} • {t.city}</p>
+                <p className="text-[10px] text-slate-500 truncate">{threat.pattern} • {threat.city}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-xs font-bold text-slate-800 dark:text-white">{t.count}</p>
-                <p className="text-[9px] text-slate-400">reports</p>
+                <p className="text-xs font-bold text-slate-800 dark:text-white">{threat.count}</p>
+                <p className="text-[10px] text-slate-400">{t('collectiveImmuneReports')}</p>
               </div>
               <div className="text-right flex-shrink-0 min-w-[60px]">
-                <p className="text-[10px] text-slate-400">{t.firstSeen}</p>
+                <p className="text-[10px] text-slate-400">{threat.firstSeen}</p>
               </div>
-              <i className={`fas ${statusIcon[t.status]} text-xs flex-shrink-0`} />
+              <i className={`fas ${statusIcon[threat.status]} text-xs flex-shrink-0`} aria-hidden="true" />
             </motion.div>
           ))}
         </div>
@@ -216,13 +222,13 @@ export default function CollectiveImmuneSystem() {
       {/* How It Works */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          { step: 1, title: 'Detect', desc: 'Any user flags a suspicious pattern anonymously', icon: 'fa-eye' },
-          { step: 2, title: 'Cluster', desc: 'AI clusters similar reports across cities in real-time', icon: 'fa-object-group' },
-          { step: 3, title: 'Immunize', desc: 'All users get auto-protection before they encounter the threat', icon: 'fa-syringe' },
+          { step: 1, title: t('collectiveImmuneDetect'), desc: t('collectiveImmuneDetectDesc'), icon: 'fa-eye' },
+          { step: 2, title: t('collectiveImmuneCluster'), desc: t('collectiveImmuneClusterDesc'), icon: 'fa-object-group' },
+          { step: 3, title: t('collectiveImmuneImmunize'), desc: t('collectiveImmuneImmunizeDesc'), icon: 'fa-syringe' },
         ].map((s) => (
           <div key={s.step} className="card flex items-start gap-3">
             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary flex-shrink-0">
-              <i className={`fas ${s.icon} text-xs`} />
+              <i className={`fas ${s.icon} text-xs`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-xs font-bold text-slate-800 dark:text-white">{s.step}. {s.title}</p>

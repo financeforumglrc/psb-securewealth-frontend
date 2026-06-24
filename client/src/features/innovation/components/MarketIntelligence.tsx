@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, ComposedChart } from 'recharts';
@@ -34,6 +35,7 @@ const PREDICTIVE_TIMING = [
 ];
 
 export default function MarketIntelligence() {
+  const { t } = useTranslation();
   const [selectedSignal, setSelectedSignal] = useState<number | null>(null);
 
   return (
@@ -41,10 +43,10 @@ export default function MarketIntelligence() {
       {/* Header Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Signals Monitored', value: '47', icon: 'fa-satellite-dish', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Timing Accuracy', value: '81%', icon: 'fa-bullseye', color: 'bg-green-50 text-green-600' },
-          { label: 'Alpha Generated', value: '+₹4.2L', icon: 'fa-chart-line', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Missed Opportunities', value: '2', icon: 'fa-eye', color: 'bg-rose-50 text-rose-600' },
+          { label: t('marketSignals'), value: '47', icon: 'fa-satellite-dish', color: 'bg-blue-50 text-blue-600' },
+          { label: t('marketAccuracy'), value: '81%', icon: 'fa-bullseye', color: 'bg-green-50 text-green-600' },
+          { label: t('marketAlpha'), value: '+₹4.2L', icon: 'fa-chart-line', color: 'bg-amber-50 text-amber-600' },
+          { label: t('marketMissed'), value: '2', icon: 'fa-eye', color: 'bg-rose-50 text-rose-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -54,7 +56,7 @@ export default function MarketIntelligence() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -69,10 +71,10 @@ export default function MarketIntelligence() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-chart-line text-primary" /> Predictive Market Timing
+              <i className="fas fa-chart-line text-primary" aria-hidden="true" /> {t('marketTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              AI predicts optimal entry/exit windows by correlating your life events with market cycles
+              {t('marketSubtitle')}
             </p>
           </div>
         </div>
@@ -91,9 +93,9 @@ export default function MarketIntelligence() {
               <Tooltip
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '11px' }}
               />
-              <Area type="monotone" dataKey="market" name="Market Index" stroke="#1B5E20" strokeWidth={2} fill="url(#marketGrad)" dot={false} />
-              <Line type="monotone" dataKey="optimalEntry" name="AI Optimal Entry" stroke="#FFD700" strokeWidth={2.5} strokeDasharray="6 4" dot={{ r: 4, fill: '#FFD700', stroke: '#1B5E20', strokeWidth: 2 }} />
-              <Line type="monotone" dataKey="yourTiming" name="Your Actual Timing" stroke="#F44336" strokeWidth={2} dot={{ r: 3, fill: '#F44336' }} />
+              <Area type="monotone" dataKey="market" name={t('marketIndex')} stroke="#1B5E20" strokeWidth={2} fill="url(#marketGrad)" dot={false} />
+              <Line type="monotone" dataKey="optimalEntry" name={t('marketAiEntry')} stroke="#FFD700" strokeWidth={2.5} strokeDasharray="6 4" dot={{ r: 4, fill: '#FFD700', stroke: '#1B5E20', strokeWidth: 2 }} />
+              <Line type="monotone" dataKey="yourTiming" name={t('marketYourTiming')} stroke="#F44336" strokeWidth={2} dot={{ r: 3, fill: '#F44336' }} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -101,15 +103,15 @@ export default function MarketIntelligence() {
         <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-1 bg-primary rounded-full" />
-            <span>Market Index</span>
+            <span>{t('marketIndex')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-1 bg-amber-400 rounded-full" />
-            <span>AI Optimal Entry Window</span>
+            <span>{t('marketAiEntry')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-1 bg-rose-500 rounded-full" />
-            <span>Your Actual Timing</span>
+            <span>{t('marketYourTiming')}</span>
           </div>
         </div>
       </div>
@@ -117,7 +119,7 @@ export default function MarketIntelligence() {
       {/* Predictive Timing Recommendations */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-wand-magic-sparkles text-amber-500" /> AI Timing Recommendations
+          <i className="fas fa-wand-magic-sparkles text-amber-500" aria-hidden="true" /> {t('marketRecommendationsTitle')}
         </h4>
         <div className="space-y-3">
           {PREDICTIVE_TIMING.map((rec, idx) => (
@@ -132,16 +134,16 @@ export default function MarketIntelligence() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[11px] font-bold text-gray-800">{rec.action}</span>
-                    <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded-full">{rec.confidence}% confidence</span>
+                    <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full">{rec.confidence}% confidence</span>
                   </div>
                   <p className="text-[10px] text-gray-500 mb-1">
-                    <i className="fas fa-calendar-day mr-1 text-primary" /> Optimal window: <span className="font-semibold text-gray-700">{rec.timing}</span>
+                    <i className="fas fa-calendar-day mr-1 text-primary" aria-hidden="true" /> {t('marketOptimalWindow')} <span className="font-semibold text-gray-700">{rec.timing}</span>
                   </p>
                   <p className="text-[10px] text-gray-500 leading-relaxed">{rec.reason}</p>
                 </div>
                 <div className="text-right ml-3">
                   <p className="text-sm font-extrabold text-green-600">{rec.potentialGain}</p>
-                  <p className="text-[9px] text-gray-400">potential/yr</p>
+                  <p className="text-[10px] text-gray-400">{t('marketPotential')}</p>
                 </div>
               </div>
             </motion.div>
@@ -152,7 +154,7 @@ export default function MarketIntelligence() {
       {/* External Signal Calendar */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-calendar-days text-primary" /> External Event Radar
+          <i className="fas fa-calendar-days text-primary" aria-hidden="true" /> {t('marketRadarTitle')}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {EXTERNAL_SIGNALS.map((sig, idx) => (
@@ -164,24 +166,27 @@ export default function MarketIntelligence() {
               className={`p-3 rounded-xl border cursor-pointer transition-all ${
                 selectedSignal === idx ? 'border-gray-300 shadow-md' : 'border-gray-100 hover:border-gray-200'
               }`}
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedSignal(selectedSignal === idx ? null : idx)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedSignal(selectedSignal === idx ? null : idx); } }}
             >
               <div className="flex items-center gap-2.5 mb-2">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: sig.color + '12' }}>
-                  <i className={`fas ${sig.icon}`} style={{ color: sig.color, fontSize: '12px' }} />
+                  <i className={`fas ${sig.icon}`} style={{ color: sig.color, fontSize: '12px' }} aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-bold text-gray-800 truncate">{sig.name}</p>
-                  <p className="text-[9px] text-gray-400">{sig.date}</p>
+                  <p className="text-[10px] text-gray-400">{sig.date}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                   sig.impact === 'Critical' ? 'bg-rose-50 text-rose-700' : sig.impact === 'High' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'
                 }`}>
                   {sig.impact}
                 </span>
-                <span className="text-[9px] text-gray-500">{sig.direction}</span>
+                <span className="text-[10px] text-gray-500">{sig.direction}</span>
               </div>
             </motion.div>
           ))}

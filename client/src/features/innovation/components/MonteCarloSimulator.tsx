@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
@@ -15,10 +16,10 @@ interface Scenario {
 
 const SCENARIOS: Scenario[] = [
   { key: 'none', label: 'Baseline', icon: 'fa-chart-line', description: 'Continue current savings and spending', impact: 0 },
-  { key: 'car', label: 'Buy Car', icon: 'fa-car', description: '₹12L car purchase + ₹15K/month EMI for 5 years', impact: -1200000 },
-  { key: 'house', label: 'Buy House', icon: 'fa-house', description: '₹50L home + ₹35K/month EMI for 20 years', impact: -5000000 },
-  { key: 'business', label: 'Start Business', icon: 'fa-briefcase', description: '₹8L startup capital, 40% income drop for 2 years', impact: -800000 },
-  { key: 'sabbatical', label: '1-Year Sabbatical', icon: 'fa-plane', description: 'No income for 12 months, ₹8L expenses', impact: -800000 },
+  { key: 'car', label: 'Buy a Car', icon: 'fa-car', description: '₹12L car purchase + ₹15K/month EMI for 5 years', impact: -1200000 },
+  { key: 'house', label: 'Buy a House', icon: 'fa-house', description: '₹50L home + ₹35K/month EMI for 20 years', impact: -5000000 },
+  { key: 'business', label: 'Start a Business', icon: 'fa-briefcase', description: '₹8L startup capital, 40% income drop for 2 years', impact: -800000 },
+  { key: 'sabbatical', label: 'Take a Sabbatical', icon: 'fa-plane', description: 'No income for 12 months, ₹8L expenses', impact: -800000 },
 ];
 
 function runMonteCarlo(
@@ -68,6 +69,7 @@ function formatCr(n: number) {
 }
 
 export default function MonteCarloSimulator() {
+  const { t } = useTranslation();
   const user = useWealthStore((s) => s.user);
   const netWorth = useWealthStore((s) => s.assets.reduce((sum, a) => sum + a.value, 0));
   const [activeScenario, setActiveScenario] = useState('none');
@@ -103,9 +105,9 @@ export default function MonteCarloSimulator() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <i className="fas fa-dice text-primary" /> Monte Carlo Life Simulator
+            <i className="fas fa-dice text-primary" aria-hidden="true" /> {t('monteTitle')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">10,000 simulated futures. See every version of your financial life.</p>
+          <p className="text-xs text-slate-500 mt-0.5">{t('monteSubtitle')}</p>
         </div>
       </div>
 
@@ -121,7 +123,7 @@ export default function MonteCarloSimulator() {
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
-            <i className={`fas ${s.icon}`} />
+            <i className={`fas ${s.icon}`} aria-hidden="true" />
             {s.label}
           </button>
         ))}
@@ -139,7 +141,7 @@ export default function MonteCarloSimulator() {
           <strong>{scenario.label}:</strong> {scenario.description}
           {scenario.impact !== 0 && (
             <span className="ml-2 font-bold text-rose-500">
-              Impact: {formatCr(scenario.impact)}
+              {t('monteImpact')} {formatCr(scenario.impact)}
             </span>
           )}
         </motion.div>
@@ -148,15 +150,15 @@ export default function MonteCarloSimulator() {
       {/* Probability Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Best Case (90th)', value: final.p90, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-          { label: 'Good Case (75th)', value: final.p75, color: 'text-teal-500', bg: 'bg-teal-50 dark:bg-teal-900/20' },
-          { label: 'Median (50th)', value: final.p50, color: 'text-primary', bg: 'bg-primary/5' },
-          { label: 'Worst Case (10th)', value: final.p10, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+          { label: t('monteBestCase'), value: final.p90, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+          { label: t('monteGoodCase'), value: final.p75, color: 'text-teal-500', bg: 'bg-teal-50 dark:bg-teal-900/20' },
+          { label: t('monteMedian'), value: final.p50, color: 'text-primary', bg: 'bg-primary/5' },
+          { label: t('monteWorstCase'), value: final.p10, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20' },
         ].map((stat) => (
           <div key={stat.label} className={`${stat.bg} p-3 rounded-xl`}>
             <p className="text-[10px] text-slate-500 font-bold uppercase">{stat.label}</p>
             <p className={`text-lg font-extrabold ${stat.color}`}>{formatCr(stat.value)}</p>
-            <p className="text-[9px] text-slate-400">at age {endAge}</p>
+            <p className="text-[10px] text-slate-400">{t('monteAtAge')} {endAge}</p>
           </div>
         ))}
       </div>
@@ -164,12 +166,12 @@ export default function MonteCarloSimulator() {
       {/* Chart */}
       <div className="card">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Probability Cone — Net Worth Over Time</h4>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('monteChartTitle')}</h4>
           <button
             onClick={() => setShowDetail(!showDetail)}
             className="text-[10px] px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300"
           >
-            {showDetail ? 'Hide' : 'Show'} Milestones
+            {showDetail ? t('monteHideMilestones') : t('monteShowMilestones')}
           </button>
         </div>
         <div className="h-80">
@@ -210,11 +212,11 @@ export default function MonteCarloSimulator() {
         </div>
         <div className="flex flex-wrap gap-3 mt-2 justify-center">
           {[
-            { label: '90th Percentile', color: '#10b981', dash: '4 4' },
-            { label: '75th Percentile', color: '#14b8a6', dash: '3 3' },
-            { label: 'Median (50th)', color: '#1976d2', dash: '0' },
-            { label: '25th Percentile', color: '#f59e0b', dash: '3 3' },
-            { label: '10th Percentile', color: '#f43f5e', dash: '4 4' },
+            { label: t('monte90th'), color: '#10b981', dash: '4 4' },
+            { label: t('monte75th'), color: '#14b8a6', dash: '3 3' },
+            { label: t('monteMedian'), color: '#1976d2', dash: '0' },
+            { label: t('monte25th'), color: '#f59e0b', dash: '3 3' },
+            { label: t('monte10th'), color: '#f43f5e', dash: '4 4' },
           ].map((l) => (
             <div key={l.label} className="flex items-center gap-1.5">
               <div className="w-4 h-0.5 rounded" style={{ backgroundColor: l.color, borderStyle: 'dashed', borderWidth: l.dash !== '0' ? '1px' : 0, borderColor: l.color }} />
@@ -228,43 +230,41 @@ export default function MonteCarloSimulator() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
-            <i className="fas fa-bullseye text-primary text-sm" />
-            <h4 className="text-sm font-bold text-slate-800 dark:text-white">Median Outcome</h4>
+            <i className="fas fa-bullseye text-primary text-sm" aria-hidden="true" />
+            <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('monteMedianOutcome')}</h4>
           </div>
           <p className="text-2xl font-extrabold text-primary">{formatCr(final.p50)}</p>
           <p className="text-xs text-slate-500 mt-1">
             {diff < 0
-              ? `₹${Math.abs(Math.round(diff / 1e5) / 10).toFixed(1)}L less than baseline`
+              ? `₹${Math.abs(Math.round(diff / 1e5) / 10).toFixed(1)}L ${t('monteLessThanBaseline')}`
               : diff > 0
-              ? `₹${Math.abs(Math.round(diff / 1e5) / 10).toFixed(1)}L more than baseline`
-              : 'Same as baseline'}
+              ? `₹${Math.abs(Math.round(diff / 1e5) / 10).toFixed(1)}L ${t('monteMoreThanBaseline')}`
+              : t('monteSameAsBaseline')}
           </p>
         </div>
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
-            <i className="fas fa-shield-halved text-emerald-500 text-sm" />
-            <h4 className="text-sm font-bold text-slate-800 dark:text-white">Downside Risk</h4>
+            <i className="fas fa-shield-halved text-emerald-500 text-sm" aria-hidden="true" />
+            <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('monteDownsideRisk')}</h4>
           </div>
           <p className="text-2xl font-extrabold text-rose-500">{formatCr(final.p10)}</p>
-          <p className="text-xs text-slate-500 mt-1">10th percentile — 90% chance you do better than this</p>
+          <p className="text-xs text-slate-500 mt-1">{t('monteDownsideDesc')}</p>
         </div>
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
-            <i className="fas fa-rocket text-amber-500 text-sm" />
-            <h4 className="text-sm font-bold text-slate-800 dark:text-white">Upside Potential</h4>
+            <i className="fas fa-rocket text-amber-500 text-sm" aria-hidden="true" />
+            <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('monteUpside')}</h4>
           </div>
           <p className="text-2xl font-extrabold text-emerald-500">{formatCr(final.p90)}</p>
-          <p className="text-xs text-slate-500 mt-1">90th percentile — best realistic case</p>
+          <p className="text-xs text-slate-500 mt-1">{t('monteUpsideDesc')}</p>
         </div>
       </div>
 
       {/* Formula Disclosure */}
       <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Methodology</p>
+        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">{t('monteMethodology')}</p>
         <p className="text-xs text-slate-600 dark:text-slate-300 font-mono">
-          500 Monte Carlo runs per scenario. Annual return = {Math.round(annualReturn * 100)}% ± 6% volatility.
-          Monthly savings = ₹{monthlySavings.toLocaleString()}. Compounding applied annually.
-          Formula: W<sub>t+1</sub> = W<sub>t</sub> × (1 + r<sub>random</sub>) + 12 × savings
+          {t('monteMethodDesc').replace('{rate}', String(Math.round(annualReturn * 100))).replace('{savings}', monthlySavings.toLocaleString())}<sub>t+1</sub> = W<sub>t</sub> × (1 + r<sub>random</sub>) + 12 × savings
         </p>
       </div>
     </div>

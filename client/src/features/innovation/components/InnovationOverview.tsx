@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
@@ -49,6 +50,7 @@ function AnimatedCounter({ target, prefix = '', suffix = '' }: { target: string;
 }
 
 export default function InnovationOverview({ onSelect }: { onSelect: (key: string) => void }) {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState<string | null>(null);
 
   return (
@@ -59,30 +61,29 @@ export default function InnovationOverview({ onSelect }: { onSelect: (key: strin
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/20 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-3">
-            <span className="px-2 py-0.5 bg-amber-400 text-slate-900 text-[9px] font-extrabold rounded-full uppercase tracking-wider">PSB Hackathon 2026</span>
-            <span className="text-[9px] text-white/50">SecureWealth Twin</span>
+            <span className="px-2 py-0.5 bg-amber-400 text-slate-900 text-[10px] font-extrabold rounded-full uppercase tracking-wider">{t('innovationOverviewBadge')}</span>
+            <span className="text-[10px] text-white/50">{t('innovationOverviewSecureWealth')}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold mb-2">
-            10 Features <span className="text-amber-400">No Bank Has Ever Built</span>
+            {t('innovationOverviewHeroTitlePrefix')} <span className="text-amber-400">{t('innovationOverviewHeroTitleHighlight')}</span>
           </h2>
           <p className="text-sm text-white/70 max-w-xl">
-            From neuro-biometric spending guards to community fraud immune systems — every feature 
-            below is a world-first in Indian banking. Click any card to experience it.
+            {t('innovationOverviewHeroDesc')}
           </p>
           <div className="flex flex-wrap gap-4 mt-5">
             {[
-              { value: '10', label: 'World-Firsts', icon: 'fa-globe' },
-              { value: '5', label: 'Patent-Pending', icon: 'fa-certificate' },
-              { value: '2.8M+', label: 'Users Protected', icon: 'fa-users' },
-              { value: '₹6,725', label: 'Agent Savings', icon: 'fa-piggy-bank' },
+              { value: '10', label: t('innovationOverviewWorldFirsts'), icon: 'fa-globe' },
+              { value: '5', label: t('innovationOverviewPatents'), icon: 'fa-certificate' },
+              { value: '2.8M+', label: t('innovationOverviewProtected'), icon: 'fa-users' },
+              { value: '₹6,725', label: t('innovationOverviewAgentSavings'), icon: 'fa-piggy-bank' },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
-                  <i className={`fas ${s.icon} text-xs text-amber-400`} />
+                  <i className={`fas ${s.icon} text-xs text-amber-400`} aria-hidden="true" />
                 </div>
                 <div>
                   <p className="text-sm font-extrabold"><AnimatedCounter target={s.value} /></p>
-                  <p className="text-[9px] text-white/50">{s.label}</p>
+                  <p className="text-[10px] text-white/50">{s.label}</p>
                 </div>
               </div>
             ))}
@@ -101,6 +102,9 @@ export default function InnovationOverview({ onSelect }: { onSelect: (key: strin
             onMouseEnter={() => setHovered(f.key)}
             onMouseLeave={() => setHovered(null)}
             onClick={() => onSelect(f.key)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(f.key); } }}
+            role="button"
+            tabIndex={0}
             className="cursor-pointer group"
           >
             <div className={`relative h-full p-4 rounded-2xl border transition-all duration-300 ${
@@ -109,22 +113,22 @@ export default function InnovationOverview({ onSelect }: { onSelect: (key: strin
                 : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/50'
             }`}>
               {f.badge === 'WORLD FIRST' && (
-                <span className="absolute top-3 right-3 text-[8px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-extrabold">
+                <span className="absolute top-3 right-3 text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-extrabold">
                   {f.badge}
                 </span>
               )}
               <div className={`w-12 h-12 ${f.bg} rounded-xl flex items-center justify-center ${f.color} mb-3 transition-transform duration-300 group-hover:scale-110`}>
-                <i className={`fas ${f.icon} text-lg`} />
+                <i className={`fas ${f.icon} text-lg`} aria-hidden="true" />
               </div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">{f.label}</h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">{f.desc}</p>
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-lg font-extrabold text-slate-800 dark:text-white">{f.stat}</p>
-                  <p className="text-[9px] text-slate-400">{f.statLabel}</p>
+                  <p className="text-[10px] text-slate-400">{f.statLabel}</p>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-colors">
-                  <i className="fas fa-arrow-right text-xs" />
+                  <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
                 </div>
               </div>
             </div>
@@ -135,14 +139,14 @@ export default function InnovationOverview({ onSelect }: { onSelect: (key: strin
       {/* Innovation Pipeline */}
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
-          <i className="fas fa-rocket text-primary text-sm" />
-          <h3 className="text-sm font-bold text-slate-800 dark:text-white">Innovation Pipeline</h3>
+          <i className="fas fa-rocket text-primary text-sm" aria-hidden="true" />
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('innovationOverviewPipeline')}</h3>
         </div>
         <div className="space-y-3">
           {[
-            { stage: 'Live', items: ['Neuro-Friction Banking', 'Monte Carlo Simulator', 'Collective Immune System', 'Autonomous Agent', 'Sovereign Data Vault'] },
-            { stage: 'Beta', items: ['Parametric Insurance', 'Ghost Mode', "Dead Man's Switch", 'Income Smoother', 'Social Loans'] },
-            { stage: 'Research', items: ['Quantum-Resistant Vaults', 'Brain-Computer Payment Interfaces', 'AI-Generated Financial Instruments'] },
+            { stage: t('innovationOverviewLive'), items: ['Neuro-Friction Banking', 'Monte Carlo Simulator', 'Collective Immune System', 'Autonomous Agent', 'Sovereign Data Vault'] },
+            { stage: t('innovationOverviewBeta'), items: ['Parametric Insurance', 'Ghost Mode', "Dead Man's Switch", 'Income Smoother', 'Social Loans'] },
+            { stage: t('innovationOverviewResearch'), items: ['Quantum-Resistant Vaults', 'Brain-Computer Payment Interfaces', 'AI-Generated Financial Instruments'] },
           ].map((section) => (
             <div key={section.stage} className="flex items-start gap-3">
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 mt-0.5 ${

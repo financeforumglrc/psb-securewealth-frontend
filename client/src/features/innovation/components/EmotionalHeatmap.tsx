@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
@@ -40,14 +41,15 @@ function generateYearData(): DayData[][] {
 const YEAR_DATA = generateYearData();
 
 const EMOTION_LEGEND = [
-  { label: 'Joyful (80-100)', color: '#10B981' },
-  { label: 'Happy (60-80)', color: '#34D399' },
-  { label: 'Calm (40-60)', color: '#6EE7B7' },
-  { label: 'Stressed (20-40)', color: '#FBBF24' },
-  { label: 'Anxious (0-20)', color: '#F87171' },
+  { label: 'Joyful (80-100)', emotion: 'Joyful', color: '#10B981' },
+  { label: 'Happy (60-80)', emotion: 'Happy', color: '#34D399' },
+  { label: 'Calm (40-60)', emotion: 'Calm', color: '#6EE7B7' },
+  { label: 'Stressed (20-40)', emotion: 'Stressed', color: '#FBBF24' },
+  { label: 'Anxious (0-20)', emotion: 'Anxious', color: '#F87171' },
 ];
 
 export default function EmotionalHeatmap() {
+  const { t } = useTranslation();
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
 
   const totalSpend = YEAR_DATA.flat().reduce((s, d) => s + d.spend, 0);
@@ -59,10 +61,10 @@ export default function EmotionalHeatmap() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Days Tracked', value: '365', icon: 'fa-calendar-check', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Avg Mood', value: `${avgMood}%`, icon: 'fa-face-smile', color: 'bg-green-50 text-green-600' },
-          { label: 'Total Spend', value: `₹${(totalSpend / 100000).toFixed(1)}L`, icon: 'fa-wallet', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Mood-Spend Corr', value: '-0.74', icon: 'fa-link', color: 'bg-rose-50 text-rose-600' },
+          { label: t('emotionalHeatmapDaysTracked'), value: '365', icon: 'fa-calendar-check', color: 'bg-blue-50 text-blue-600' },
+          { label: t('emotionalHeatmapAvgMood'), value: `${avgMood}%`, icon: 'fa-face-smile', color: 'bg-green-50 text-green-600' },
+          { label: t('emotionalHeatmapTotalSpend'), value: `₹${(totalSpend / 100000).toFixed(1)}L`, icon: 'fa-wallet', color: 'bg-amber-50 text-amber-600' },
+          { label: t('emotionalHeatmapMoodSpendCorr'), value: '-0.74', icon: 'fa-link', color: 'bg-rose-50 text-rose-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -72,7 +74,7 @@ export default function EmotionalHeatmap() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -86,10 +88,10 @@ export default function EmotionalHeatmap() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-fire text-rose-500" /> Emotional Spending Heatmap
+              <i className="fas fa-fire text-rose-500" aria-hidden="true" /> {t('emotionalHeatmapTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              365-day visualization of your emotional state and spending patterns — discover your hidden triggers
+              {t('emotionalHeatmapSubtitle')}
             </p>
           </div>
         </div>
@@ -98,7 +100,8 @@ export default function EmotionalHeatmap() {
         <div className="flex flex-wrap gap-3 mb-4">
           {EMOTION_LEGEND.map((item) => (
             <div key={item.label} className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} aria-hidden="true" />
+              <span className="sr-only">{item.emotion}:</span>
               <span className="text-[10px] text-gray-500">{item.label}</span>
             </div>
           ))}
@@ -142,8 +145,8 @@ export default function EmotionalHeatmap() {
               </div>
               <div>
                 <p className="font-bold">{hoveredDay.month} {hoveredDay.day}</p>
-                <p className="text-gray-300">Mood: {hoveredDay.mood}% · {hoveredDay.emotion}</p>
-                <p className="text-gray-300">Spend: ₹{hoveredDay.spend.toLocaleString()}</p>
+                <p className="text-gray-300">{t('emotionalHeatmapMood')}: {hoveredDay.mood}% · {hoveredDay.emotion}</p>
+                <p className="text-gray-300">{t('emotionalHeatmapSpend')}: ₹{hoveredDay.spend.toLocaleString()}</p>
               </div>
             </div>
           </motion.div>
@@ -156,21 +159,21 @@ export default function EmotionalHeatmap() {
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">😄</span>
             <div>
-              <p className="text-sm font-bold text-green-800">Best Financial Day</p>
+              <p className="text-sm font-bold text-green-800">{t('emotionalHeatmapBestDay')}</p>
               <p className="text-[11px] text-green-600">{bestDay.month} {bestDay.day} · Mood: {bestDay.mood}%</p>
             </div>
           </div>
-          <p className="text-[11px] text-gray-600">You made your best decisions on this day. Replicate the conditions.</p>
+          <p className="text-[11px] text-gray-600">{t('emotionalHeatmapBestDesc')}</p>
         </div>
         <div className="p-4 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-100">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">😰</span>
             <div>
-              <p className="text-sm font-bold text-rose-800">Worst Financial Day</p>
+              <p className="text-sm font-bold text-rose-800">{t('emotionalHeatmapWorstDay')}</p>
               <p className="text-[11px] text-rose-600">{worstDay.month} {worstDay.day} · Mood: {worstDay.mood}%</p>
             </div>
           </div>
-          <p className="text-[11px] text-gray-600">You spent ₹{worstDay.spend.toLocaleString()} while stressed. Set a stress-lock for similar days.</p>
+          <p className="text-[11px] text-gray-600">{t('emotionalHeatmapWorstDescPrefix')}₹{worstDay.spend.toLocaleString()}{t('emotionalHeatmapWorstDescSuffix')}</p>
         </div>
       </div>
     </div>

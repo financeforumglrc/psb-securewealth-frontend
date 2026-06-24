@@ -1,5 +1,7 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 
 interface DreamScene {
   id: number;
@@ -70,25 +72,28 @@ const DREAMS: DreamScene[] = [
 ];
 
 export default function DreamVisualizer() {
+  const { t } = useTranslation();
   const [activeDream, setActiveDream] = useState(0);
   const [floating, setFloating] = useState(true);
   const dream = DREAMS[activeDream];
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   useEffect(() => {
+    if (prefersReducedMotion) return;
     const interval = setInterval(() => {
       setFloating(f => !f);
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [prefersReducedMotion]);
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Dreams Visualized', value: DREAMS.length, icon: 'fa-cloud-moon', color: 'bg-violet-50 text-violet-600' },
-          { label: 'Years Ahead', value: '29', icon: 'fa-hourglass-half', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Confidence', value: '89%', icon: 'fa-wand-magic-sparkles', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Visualization Power', value: '4K', icon: 'fa-eye', color: 'bg-rose-50 text-rose-600' },
+          { label: t('dreamsVisualized'), value: DREAMS.length, icon: 'fa-cloud-moon', color: 'bg-violet-50 text-violet-600' },
+          { label: t('dreamYearsAhead'), value: '29', icon: 'fa-hourglass-half', color: 'bg-blue-50 text-blue-600' },
+          { label: t('dreamConfidence'), value: '89%', icon: 'fa-wand-magic-sparkles', color: 'bg-amber-50 text-amber-600' },
+          { label: t('dreamVisualizationPower'), value: '4K', icon: 'fa-eye', color: 'bg-rose-50 text-rose-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -98,7 +103,7 @@ export default function DreamVisualizer() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -112,10 +117,10 @@ export default function DreamVisualizer() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-cloud-moon text-violet-600" /> AI Dream Visualizer
+              <i className="fas fa-cloud-moon text-violet-600" aria-hidden="true" /> {t('dreamTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              What BHAVISHYA's AI "dreams" about your future — visual manifestations of predicted milestones
+              {t('dreamSubtitle')}
             </p>
           </div>
         </div>
@@ -160,11 +165,11 @@ export default function DreamVisualizer() {
                   left: `${Math.random() * 100}%`,
                   top: `${Math.random() * 100}%`,
                 }}
-                animate={{
+                animate={prefersReducedMotion ? false : {
                   y: [0, -20, 0],
                   opacity: [0.2, 0.8, 0.2],
                 }}
-                transition={{
+                transition={prefersReducedMotion ? undefined : {
                   duration: 3 + Math.random() * 2,
                   repeat: Infinity,
                   delay: Math.random() * 2,
@@ -182,11 +187,11 @@ export default function DreamVisualizer() {
                   top: `${el.y}%`,
                   transform: 'translate(-50%, -50%)',
                 }}
-                animate={{
+                animate={prefersReducedMotion ? false : {
                   y: floating ? [0, -8, 0] : [0, 5, 0],
                   scale: [1, 1.05, 1],
                 }}
-                transition={{
+                transition={prefersReducedMotion ? undefined : {
                   duration: 3 + idx * 0.5,
                   repeat: Infinity,
                   delay: idx * 0.3,
@@ -194,7 +199,7 @@ export default function DreamVisualizer() {
                 whileHover={{ scale: 1.2, zIndex: 10 }}
               >
                 <span className="text-4xl filter drop-shadow-lg">{el.emoji}</span>
-                <span className="text-[9px] text-gray-500 mt-1 bg-white/80 px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                <span className="text-[10px] text-gray-500 mt-1 bg-white/80 px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                   {el.label}
                 </span>
               </motion.div>
@@ -225,7 +230,7 @@ export default function DreamVisualizer() {
       {/* Dream Frequency Analysis */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-chart-pie text-primary" /> Recurring Dream Themes
+          <i className="fas fa-chart-pie text-primary" aria-hidden="true" /> {t('dreamThemesTitle')}
         </h4>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
@@ -246,7 +251,7 @@ export default function DreamVisualizer() {
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden mt-2">
                 <div className="h-full rounded-full" style={{ width: theme.frequency, backgroundColor: theme.color }} />
               </div>
-              <p className="text-[10px] text-gray-500 mt-1">{theme.frequency} of AI dreams</p>
+              <p className="text-[10px] text-gray-500 mt-1">{theme.frequency} {t('dreamThemesOf')}</p>
             </motion.div>
           ))}
         </div>

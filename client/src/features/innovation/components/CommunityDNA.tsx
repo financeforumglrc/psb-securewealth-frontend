@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -37,16 +38,17 @@ const LOCAL_ECONOMY = [
 ];
 
 export default function CommunityDNA() {
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-5">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Peers Analyzed', value: '2.4M', icon: 'fa-users', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Your Percentile', value: '87th', icon: 'fa-ranking-star', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Local Insights', value: '12', icon: 'fa-lightbulb', color: 'bg-green-50 text-green-600' },
-          { label: 'Crowd Accuracy', value: '74%', icon: 'fa-bullseye', color: 'bg-violet-50 text-violet-600' },
+          { label: t('communityDnaPeersAnalyzed'), value: '2.4M', icon: 'fa-users', color: 'bg-blue-50 text-blue-600' },
+          { label: t('communityDnaPercentile'), value: '87th', icon: 'fa-ranking-star', color: 'bg-amber-50 text-amber-600' },
+          { label: t('communityDnaLocalInsights'), value: '12', icon: 'fa-lightbulb', color: 'bg-green-50 text-green-600' },
+          { label: t('communityDnaCrowdAccuracy'), value: '74%', icon: 'fa-bullseye', color: 'bg-violet-50 text-violet-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -56,7 +58,7 @@ export default function CommunityDNA() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -71,10 +73,10 @@ export default function CommunityDNA() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-users text-blue-600" /> Peer Benchmark Analysis
+              <i className="fas fa-users text-blue-600" aria-hidden="true" /> {t('communityDnaChartTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              How you compare to 2.4M Indians in your age, income, and location cohort
+              {t('communityDnaChartSubtitle')}
             </p>
           </div>
         </div>
@@ -96,16 +98,16 @@ export default function CommunityDNA() {
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500">
-          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-gray-200" /> Peer Avg</span>
-          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-primary" /> You</span>
-          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-amber-400" /> Top 10%</span>
+          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-gray-200" aria-hidden="true" /><span className="sr-only">Gray</span>{t('communityDnaPeerAvg')}</span>
+          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-primary" aria-hidden="true" /><span className="sr-only">Green</span>{t('communityDnaYou')}</span>
+          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-amber-400" aria-hidden="true" /><span className="sr-only">Amber</span>{t('communityDnaTop10')}</span>
         </div>
       </div>
 
       {/* Community Insights Grid */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-lightbulb text-amber-500" /> Hyper-Local Community Intelligence
+          <i className="fas fa-lightbulb text-amber-500" aria-hidden="true" /> {t('communityDnaInsightsTitle')}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {COMMUNITY_INSIGHTS.map((insight, idx) => (
@@ -117,7 +119,7 @@ export default function CommunityDNA() {
               className="p-3 rounded-xl border border-gray-100 hover:border-amber-200 hover:shadow-sm transition-all"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                   insight.trend === 'up' ? 'bg-green-50 text-green-700' : insight.trend === 'down' ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
                 }`}>
                   {insight.category}
@@ -135,7 +137,7 @@ export default function CommunityDNA() {
       {/* Crowd Predictions */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-users-viewfinder text-violet-600" /> Crowd-Sourced Financial Predictions
+          <i className="fas fa-users-viewfinder text-violet-600" aria-hidden="true" /> {t('communityDnaPredictionsTitle')}
         </h4>
         <div className="space-y-3">
           {CROWD_PREDICTIONS.map((pred, idx) => (
@@ -150,7 +152,7 @@ export default function CommunityDNA() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[11px] font-bold text-gray-800">{pred.event}</span>
-                    <span className="text-[9px] text-gray-400">{pred.voters.toLocaleString()} voters</span>
+                    <span className="text-[10px] text-gray-400">{pred.voters.toLocaleString()} {t('communityDnaVoters')}</span>
                   </div>
                   <p className="text-[10px] text-gray-500 mb-2">{pred.financialImpact}</p>
                   <div className="flex items-center gap-2">
@@ -164,10 +166,10 @@ export default function CommunityDNA() {
                   </div>
                 </div>
                 <div className="ml-3">
-                  <span className={`text-[9px] px-2 py-1 rounded-full font-bold ${
+                  <span className={`text-[10px] px-2 py-1 rounded-full font-bold ${
                     pred.yourVote === 'agree' ? 'bg-green-50 text-green-700' : pred.yourVote === 'disagree' ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
                   }`}>
-                    You: {pred.yourVote}
+                    {t('communityDnaYouVote')} {pred.yourVote}
                   </span>
                 </div>
               </div>
@@ -179,7 +181,7 @@ export default function CommunityDNA() {
       {/* Local Economy Heatmap */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-map-location-dot text-primary" /> Your Pincode Economic Health
+          <i className="fas fa-map-location-dot text-primary" aria-hidden="true" /> {t('communityDnaPincodeTitle')}
         </h4>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {LOCAL_ECONOMY.map((item, idx) => (
@@ -194,9 +196,9 @@ export default function CommunityDNA() {
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-sm font-extrabold text-gray-900">{item.yourArea}</p>
-                  <p className="text-[9px] text-gray-400">City avg: {item.cityAvg}</p>
+                  <p className="text-[10px] text-gray-400">{t('communityDnaCityAvg')} {item.cityAvg}</p>
                 </div>
-                <i className={`fas fa-arrow-${item.trend} ${item.trend === 'up' ? 'text-green-500' : 'text-rose-500'} text-xs`} />
+                <i className={`fas fa-arrow-${item.trend} ${item.trend === 'up' ? 'text-green-500' : 'text-rose-500'} text-xs`} aria-hidden="true" />
               </div>
             </motion.div>
           ))}

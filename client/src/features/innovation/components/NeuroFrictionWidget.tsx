@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
@@ -14,6 +15,7 @@ interface NeuroTransaction {
 }
 
 export default function NeuroFrictionWidget() {
+  const { t } = useTranslation();
   const [enabled, setEnabled] = useState(true);
   const [currentStress, setCurrentStress] = useState(42);
   const [currentHRV, setCurrentHRV] = useState(65);
@@ -48,12 +50,14 @@ export default function NeuroFrictionWidget() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <i className="fas fa-heart-pulse text-rose-500" /> Neuro-Friction Banking
+            <i className="fas fa-heart-pulse text-rose-500" aria-hidden="true" /> {t('neuroTitle')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">Your body guards your wallet. No bank has ever done this.</p>
+          <p className="text-xs text-slate-500 mt-0.5">{t('neuroSubtitle')}</p>
         </div>
         <button
           onClick={() => setEnabled(!enabled)}
+          aria-label={enabled ? t('neuroDisable') : t('neuroEnable')}
+          aria-pressed={enabled}
           className={`relative w-14 h-7 rounded-full transition-colors ${enabled ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}
         >
           <motion.div
@@ -73,10 +77,10 @@ export default function NeuroFrictionWidget() {
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-rose-50 dark:bg-rose-900/20 rounded-xl flex items-center justify-center text-rose-500">
-              <i className="fas fa-heart-pulse" />
+              <i className="fas fa-heart-pulse" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-[10px] text-slate-500 uppercase font-bold">Stress Level</p>
+              <p className="text-[10px] text-slate-500 uppercase font-bold">{t('neuroStress')}</p>
               <p className={`text-2xl font-extrabold ${stressColor}`}>{Math.round(currentStress)}%</p>
             </div>
           </div>
@@ -95,10 +99,10 @@ export default function NeuroFrictionWidget() {
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-violet-50 dark:bg-violet-900/20 rounded-xl flex items-center justify-center text-violet-500">
-              <i className="fas fa-wave-square" />
+              <i className="fas fa-wave-square" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-[10px] text-slate-500 uppercase font-bold">Heart Rate Variability</p>
+              <p className="text-[10px] text-slate-500 uppercase font-bold">{t('neuroHrv')}</p>
               <p className={`text-2xl font-extrabold ${currentHRV < 55 ? 'text-rose-500' : currentHRV < 65 ? 'text-amber-500' : 'text-emerald-500'}`}>{Math.round(currentHRV)} ms</p>
             </div>
           </div>
@@ -121,10 +125,10 @@ export default function NeuroFrictionWidget() {
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-sky-50 dark:bg-sky-900/20 rounded-xl flex items-center justify-center text-sky-500">
-              <i className="fas fa-moon" />
+              <i className="fas fa-moon" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-[10px] text-slate-500 uppercase font-bold">Sleep Score</p>
+              <p className="text-[10px] text-slate-500 uppercase font-bold">{t('neuroSleep')}</p>
               <p className={`text-2xl font-extrabold ${currentSleep < 60 ? 'text-rose-500' : currentSleep < 75 ? 'text-amber-500' : 'text-emerald-500'}`}>{Math.round(currentSleep)}</p>
             </div>
           </div>
@@ -149,15 +153,15 @@ export default function NeuroFrictionWidget() {
           className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-3"
         >
           <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-300 flex-shrink-0">
-            <i className="fas fa-hand" />
+            <i className="fas fa-hand" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-sm font-bold text-amber-800 dark:text-amber-200">Neuro-Friction is ACTIVE</p>
+            <p className="text-sm font-bold text-amber-800 dark:text-amber-200">{t('neuroActive')}</p>
             <p className="text-xs text-amber-700 dark:text-amber-300">
               {currentStress > 60 && `Stress at ${Math.round(currentStress)}%. `}
               {currentHRV < 55 && `HRV low at ${Math.round(currentHRV)}ms. `}
               {currentSleep < 60 && `Sleep score poor at ${Math.round(currentSleep)}. `}
-              Non-essential purchases will face intelligent delays.
+              {t('neuroActiveDesc')}
             </p>
           </div>
         </motion.div>
@@ -166,9 +170,9 @@ export default function NeuroFrictionWidget() {
       {/* Friction Log */}
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
-          <i className="fas fa-list-ul text-primary text-sm" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Recent Neuro-Friction Events</h4>
-          <span className="ml-auto text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full">{frictionLog.length} events</span>
+          <i className="fas fa-list-ul text-primary text-sm" aria-hidden="true" />
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('neuroEvents')}</h4>
+          <span className="ml-auto text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full">{frictionLog.length} {t('neuroEventsCount')}</span>
         </div>
         <div className="space-y-3">
           {frictionLog.map((tx) => (
@@ -182,7 +186,7 @@ export default function NeuroFrictionWidget() {
                   tx.action === 'delayed' ? 'bg-amber-100 text-amber-600' :
                   'bg-emerald-100 text-emerald-600'
                 }`}>
-                  <i className={`fas ${tx.action === 'blocked' ? 'fa-ban' : tx.action === 'delayed' ? 'fa-clock' : 'fa-check'}`} />
+                  <i className={`fas ${tx.action === 'blocked' ? 'fa-ban' : tx.action === 'delayed' ? 'fa-clock' : 'fa-check'}`} aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{tx.merchant}</p>
@@ -195,10 +199,10 @@ export default function NeuroFrictionWidget() {
                     tx.action === 'delayed' ? 'bg-amber-100 text-amber-700' :
                     'bg-emerald-100 text-emerald-700'
                   }`}>
-                    {tx.action === 'blocked' ? 'BLOCKED' : tx.action === 'delayed' ? 'DELAYED' : 'APPROVED'}
+                    {tx.action === 'blocked' ? t('neuroBlocked') : tx.action === 'delayed' ? t('neuroDelayed') : t('neuroApproved')}
                   </span>
                 </div>
-                <i className={`fas fa-chevron-down text-slate-400 text-xs transition-transform ${showDetail === tx.id ? 'rotate-180' : ''}`} />
+                <i className={`fas fa-chevron-down text-slate-400 text-xs transition-transform ${showDetail === tx.id ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
               {showDetail === tx.id && (
                 <motion.div
@@ -207,7 +211,7 @@ export default function NeuroFrictionWidget() {
                   className="px-3 pb-3"
                 >
                   <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs text-slate-600 dark:text-slate-300">
-                    <p className="font-bold text-primary mb-1"><i className="fas fa-brain mr-1" />AI Reasoning</p>
+                    <p className="font-bold text-primary mb-1"><i className="fas fa-brain mr-1" aria-hidden="true" />{t('neuroReasoning')}</p>
                     <p>{tx.reason}</p>
                     <div className="flex gap-3 mt-2">
                       <span className="text-[10px] px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">Stress: {tx.stressLevel}%</span>
@@ -225,8 +229,8 @@ export default function NeuroFrictionWidget() {
       {/* Science Section */}
       <div className="card bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
         <div className="flex items-center gap-2 mb-2">
-          <i className="fas fa-flask text-primary text-sm" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">The Science Behind It</h4>
+          <i className="fas fa-flask text-primary text-sm" aria-hidden="true" />
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('neuroScience')}</h4>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
@@ -237,7 +241,7 @@ export default function NeuroFrictionWidget() {
             <div key={s.label} className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700">
               <p className="text-lg font-extrabold text-primary">{s.stat}</p>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">{s.label}</p>
-              <p className="text-[9px] text-slate-400 mt-1">{s.source}</p>
+              <p className="text-[10px] text-slate-400 mt-1">{s.source}</p>
             </div>
           ))}
         </div>

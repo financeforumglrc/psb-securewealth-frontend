@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
@@ -48,7 +49,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       ))}
       {data?.milestone && (
         <div className="mt-1.5 pt-1.5 border-t border-gray-100 text-violet-600 font-semibold">
-          <i className={`fas ${data.icon} mr-1`} />{data.milestone}
+          <i className={`fas ${data.icon} mr-1`} aria-hidden="true" />{data.milestone}
         </div>
       )}
     </div>
@@ -56,6 +57,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function FutureSelfSimulator() {
+  const { t } = useTranslation();
   const [selectedYear, setSelectedYear] = useState(2030);
   const [showAvatar, setShowAvatar] = useState(true);
 
@@ -74,18 +76,18 @@ export default function FutureSelfSimulator() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <i className="fas fa-user-clock text-amber-600" /> Future Self Simulator
+            <i className="fas fa-user-clock text-amber-600" aria-hidden="true" /> {t('futureSelfTitle')}
           </h3>
           <p className="text-[11px] text-gray-500 mt-0.5">
-            See your future financial self based on current trajectory vs. optimized path
+            {t('futureSelfSubtitle')}
           </p>
         </div>
         <button
           onClick={() => setShowAvatar(!showAvatar)}
           className="px-2.5 py-1 bg-amber-50 rounded-lg text-[10px] font-bold text-amber-700 hover:bg-amber-100 transition-colors"
         >
-          <i className={`fas ${showAvatar ? 'fa-eye' : 'fa-eye-slash'} mr-1`} />
-          {showAvatar ? 'Avatar On' : 'Avatar Off'}
+          <i className={`fas ${showAvatar ? 'fa-eye' : 'fa-eye-slash'} mr-1`} aria-hidden="true" />
+          {showAvatar ? t('futureSelfAvatarOn') : t('futureSelfAvatarOff')}
         </button>
       </div>
 
@@ -122,7 +124,7 @@ export default function FutureSelfSimulator() {
                 <Area
                   type="monotone"
                   dataKey="currentPath"
-                  name="Current Path"
+                  name={t('futureSelfCurrentPath')}
                   stroke="#9CA3AF"
                   strokeWidth={2}
                   fill="url(#currentGrad)"
@@ -131,7 +133,7 @@ export default function FutureSelfSimulator() {
                 <Area
                   type="monotone"
                   dataKey="optimizedPath"
-                  name="Optimized Path"
+                  name={t('futureSelfOptimizedPath')}
                   stroke="#1B5E20"
                   strokeWidth={2.5}
                   fill="url(#optGrad)"
@@ -163,9 +165,10 @@ export default function FutureSelfSimulator() {
               step={1}
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
+              aria-label="Select projected year"
               className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-primary"
             />
-            <div className="flex justify-between text-[9px] text-gray-400 mt-1">
+            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
               <span>2026</span>
               <span>2031</span>
               <span>2036</span>
@@ -192,18 +195,18 @@ export default function FutureSelfSimulator() {
 
           {/* Wealth Gap */}
           <div className="p-3 bg-gradient-to-br from-primary/5 to-amber-50 rounded-xl border border-primary/10">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Wealth Gap Analysis</p>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">{t('futureSelfGapTitle')}</p>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-gray-600">Current trajectory</span>
+              <span className="text-[11px] text-gray-600">{t('futureSelfCurrentTrajectory')}</span>
               <span className="text-[11px] font-bold text-gray-400">₹{currentData.currentPath}L</span>
             </div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-gray-600">Optimized path</span>
+              <span className="text-[11px] text-gray-600">{t('futureSelfOptimized')}</span>
               <span className="text-[11px] font-bold text-primary">₹{currentData.optimizedPath}L</span>
             </div>
             <div className="h-px bg-gray-200 my-2" />
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-primary">Potential Gain</span>
+              <span className="text-[11px] font-bold text-primary">{t('futureSelfPotentialGain')}</span>
               <span className="text-sm font-extrabold text-primary">
                 +₹{wealthGap}L <span className="text-[10px]">({gapPercent}%)</span>
               </span>
@@ -212,11 +215,11 @@ export default function FutureSelfSimulator() {
 
           {/* Milestones */}
           <div className="space-y-2">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Upcoming Milestones</p>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">{t('futureSelfMilestones')}</p>
             {PROJECTION_DATA.filter(d => d.milestone && d.year >= selectedYear).slice(0, 3).map(m => (
               <div key={m.year} className="flex items-center gap-2 text-[11px]">
                 <div className="w-6 h-6 bg-amber-50 rounded-full flex items-center justify-center flex-shrink-0">
-                  <i className={`fas ${m.icon} text-amber-600 text-[10px]`} />
+                  <i className={`fas ${m.icon} text-amber-600 text-[10px]`} aria-hidden="true" />
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-gray-700">{m.milestone}</p>

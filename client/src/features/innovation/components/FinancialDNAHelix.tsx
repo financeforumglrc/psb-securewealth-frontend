@@ -1,5 +1,7 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 
 interface DNAStrand {
   trait: string;
@@ -43,13 +45,16 @@ const COGNITIVE_PATTERNS = [
 ];
 
 export default function FinancialDNAHelix() {
+  const { t } = useTranslation();
   const [hoveredTrait, setHoveredTrait] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: true });
 
   useEffect(() => {
+    if (prefersReducedMotion) return;
     let animId: number;
     const animate = () => {
       setRotation((r) => (r + 0.3) % 360);
@@ -57,7 +62,7 @@ export default function FinancialDNAHelix() {
     };
     animId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animId);
-  }, []);
+  }, [prefersReducedMotion]);
 
   const getHelixPoint = (index: number, strand: 'left' | 'right', total: number) => {
     const angle = (index / total) * Math.PI * 4 + (rotation * Math.PI) / 180;
@@ -77,11 +82,11 @@ export default function FinancialDNAHelix() {
   [activeCategory]);
 
   const categories = [
-    { key: 'all', label: 'All Traits', count: DNA_TRAITS.length },
-    { key: 'behavioral', label: 'Behavioral', count: DNA_TRAITS.filter(t => t.category === 'behavioral').length },
-    { key: 'cognitive', label: 'Cognitive', count: DNA_TRAITS.filter(t => t.category === 'cognitive').length },
-    { key: 'emotional', label: 'Emotional', count: DNA_TRAITS.filter(t => t.category === 'emotional').length },
-    { key: 'social', label: 'Social', count: DNA_TRAITS.filter(t => t.category === 'social').length },
+    { key: 'all', label: t('financialDnaAllTraits'), count: DNA_TRAITS.length },
+    { key: 'behavioral', label: t('financialDnaBehavioral'), count: DNA_TRAITS.filter(t => t.category === 'behavioral').length },
+    { key: 'cognitive', label: t('financialDnaCognitive'), count: DNA_TRAITS.filter(t => t.category === 'cognitive').length },
+    { key: 'emotional', label: t('financialDnaEmotional'), count: DNA_TRAITS.filter(t => t.category === 'emotional').length },
+    { key: 'social', label: t('financialDnaSocial'), count: DNA_TRAITS.filter(t => t.category === 'social').length },
   ];
 
   const avgScore = Math.round(DNA_TRAITS.reduce((s, t) => s + t.value, 0) / DNA_TRAITS.length);
@@ -93,16 +98,16 @@ export default function FinancialDNAHelix() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-dna text-primary" /> Financial DNA Helix
+              <i className="fas fa-dna text-primary" aria-hidden="true" /> {t('financialDnaTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">Your unique financial genome — 12 behavioral dimensions mapped in real-time</p>
+            <p className="text-[11px] text-gray-500 mt-0.5">{t('financialDnaSubtitle')}</p>
           </div>
           <div className="flex gap-2">
             <div className="px-2.5 py-1 bg-primary/10 rounded-full text-[10px] font-bold text-primary">
-              Gen 3.0 AI
+              {t('financialDnaGen')}
             </div>
             <div className="px-2.5 py-1 bg-amber-50 rounded-full text-[10px] font-bold text-amber-700">
-              Avg: {avgScore}%
+              {t('financialDnaAvg')}: {avgScore}%
             </div>
           </div>
         </div>
@@ -173,12 +178,12 @@ export default function FinancialDNAHelix() {
                 })}
               </svg>
             </div>
-            <div className="absolute bottom-3 left-3 right-3 flex justify-between text-[9px] text-gray-400">
-              <span>Behavioral Genotype v3.0</span>
-              <span>Updated: Live</span>
+            <div className="absolute bottom-3 left-3 right-3 flex justify-between text-[10px] text-gray-400">
+              <span>{t('financialDnaGenotype')}</span>
+              <span>{t('financialDnaUpdated')}</span>
             </div>
             <div className="absolute top-3 right-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-100">
-              <p className="text-[9px] text-gray-500">Uniqueness</p>
+              <p className="text-[10px] text-gray-500">{t('financialDnaUniqueness')}</p>
               <p className="text-sm font-extrabold text-primary">94.2%</p>
             </div>
           </div>
@@ -202,9 +207,10 @@ export default function FinancialDNAHelix() {
                     <div 
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: trait.color }}
+                      aria-hidden="true"
                     />
                     <span className="text-[11px] font-semibold text-gray-700">{trait.trait}</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 capitalize">{trait.category}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 capitalize">{trait.category}</span>
                   </div>
                   <span className="text-[11px] font-bold" style={{ color: trait.color }}>
                     {trait.value}%
@@ -239,14 +245,14 @@ export default function FinancialDNAHelix() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-fingerprint text-violet-600" /> Behavioral Biometric DNA
+              <i className="fas fa-fingerprint text-violet-600" aria-hidden="true" /> {t('financialDnaBiometricTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              6 unique biometric signatures create an unforgeable financial identity
+              {t('financialDnaBiometricSubtitle')}
             </p>
           </div>
           <div className="px-2.5 py-1 bg-violet-50 rounded-full text-[10px] font-bold text-violet-700">
-            Continuous Auth
+            {t('financialDnaContinuousAuth')}
           </div>
         </div>
 
@@ -261,7 +267,7 @@ export default function FinancialDNAHelix() {
             >
               <div className="flex items-center gap-2.5 mb-2">
                 <div className="w-9 h-9 bg-violet-50 rounded-lg flex items-center justify-center group-hover:bg-violet-100 transition-colors">
-                  <i className={`fas ${bio.icon} text-violet-600 text-xs`} />
+                  <i className={`fas ${bio.icon} text-violet-600 text-xs`} aria-hidden="true" />
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-gray-800">{bio.name}</p>
@@ -289,10 +295,10 @@ export default function FinancialDNAHelix() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-brain text-rose-500" /> Cognitive Spending Patterns
+              <i className="fas fa-brain text-rose-500" aria-hidden="true" /> {t('financialDnaCognitiveTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              How your brain makes financial decisions — decoded by AI
+              {t('financialDnaCognitiveSubtitle')}
             </p>
           </div>
         </div>
@@ -331,15 +337,15 @@ export default function FinancialDNAHelix() {
         <div className="p-4 bg-gradient-to-r from-primary/5 to-amber-50 rounded-xl border border-primary/10">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-              <i className="fas fa-fingerprint text-primary text-lg" />
+              <i className="fas fa-fingerprint text-primary text-lg" aria-hidden="true" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-gray-800">Financial DNA Uniqueness Score</p>
-              <p className="text-[11px] text-gray-500">Your profile matches 0.003% of Indian banking customers</p>
+              <p className="text-sm font-bold text-gray-800">{t('financialDnaUniquenessTitle')}</p>
+              <p className="text-[11px] text-gray-500">{t('financialDnaUniquenessDesc')}</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-extrabold text-primary">94.2</p>
-              <p className="text-[9px] text-gray-500 uppercase tracking-wide">Percentile</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">{t('financialDnaPercentile')}</p>
             </div>
           </div>
         </div>
@@ -347,15 +353,15 @@ export default function FinancialDNAHelix() {
         <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
-              <i className="fas fa-shield-halved text-violet-600 text-lg" />
+              <i className="fas fa-shield-halved text-violet-600 text-lg" aria-hidden="true" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-gray-800">Biometric Authentication</p>
-              <p className="text-[11px] text-gray-500">Continuous behavioral verification active — 99.7% accuracy</p>
+              <p className="text-sm font-bold text-gray-800">{t('financialDnaAuthTitle')}</p>
+              <p className="text-[11px] text-gray-500">{t('financialDnaAuthDesc')}</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-extrabold text-violet-600">99.7%</p>
-              <p className="text-[9px] text-gray-500 uppercase tracking-wide">Accuracy</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">{t('financialDnaAccuracy')}</p>
             </div>
           </div>
         </div>

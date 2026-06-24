@@ -60,7 +60,7 @@ export default function WealthWeather() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -75,7 +75,7 @@ export default function WealthWeather() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-cloud-sun text-blue-600" /> Wealth Weather Forecast
+              <i className="fas fa-cloud-sun text-blue-600" aria-hidden="true" /> Wealth Weather Forecast
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
               AI predicts your financial climate 7 days ahead — like weather, but for your money
@@ -101,7 +101,7 @@ export default function WealthWeather() {
                 <p className="text-[9px] text-gray-400">{day.day}</p>
                 <p className="text-[10px] font-bold text-gray-600">{day.date}</p>
                 <div className="my-1.5">
-                  <i className={`fas ${dc.icon} text-lg`} style={{ color: dc.color }} />
+                  <i className={`fas ${dc.icon} text-lg`} style={{ color: dc.color }} aria-hidden="true" />
                 </div>
                 <p className="text-[11px] font-extrabold" style={{ color: dc.color }}>{day.temp}°</p>
               </button>
@@ -124,7 +124,7 @@ export default function WealthWeather() {
                   animate={animating ? { rotate: [0, 10, -10, 0], scale: [1, 1.2, 1] } : {}}
                   transition={{ duration: 0.5 }}
                 >
-                  <i className={`fas ${cfg.icon} text-5xl`} style={{ color: cfg.color }} />
+                  <i className={`fas ${cfg.icon} text-5xl`} style={{ color: cfg.color }} aria-hidden="true" />
                 </motion.div>
                 <div>
                   <p className="text-2xl font-extrabold text-gray-900">{current.temp}°W</p>
@@ -149,7 +149,7 @@ export default function WealthWeather() {
                 <div className="space-y-1">
                   {current.events.map((evt, i) => (
                     <div key={i} className="flex items-center gap-2 text-[11px] text-gray-700">
-                      <i className="fas fa-circle text-[4px]" style={{ color: cfg.color }} />
+                      <i className="fas fa-circle text-[4px]" style={{ color: cfg.color }} aria-hidden="true" />
                       {evt}
                     </div>
                   ))}
@@ -167,7 +167,7 @@ export default function WealthWeather() {
       {/* Monthly Climate Trend */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-calendar-days text-primary" /> 90-Day Financial Climate Outlook
+          <i className="fas fa-calendar-days text-primary" aria-hidden="true" /> 90-Day Financial Climate Outlook
         </h4>
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: 90 }).map((_, idx) => {
@@ -184,7 +184,7 @@ export default function WealthWeather() {
                 style={{ backgroundColor: cc.color + '20' }}
                 title={`Day ${idx + 1}: ${cc.desc}`}
               >
-                <i className={`fas ${cc.icon} text-[8px]`} style={{ color: cc.color }} />
+                <i className={`fas ${cc.icon} text-[8px]`} style={{ color: cc.color }} aria-hidden="true" />
               </motion.div>
             );
           })}
@@ -192,7 +192,7 @@ export default function WealthWeather() {
         <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500">
           {Object.entries(CONDITION_CONFIG).map(([key, val]) => (
             <span key={key} className="flex items-center gap-1">
-              <i className={`fas ${val.icon}`} style={{ color: val.color }} />
+              <i className={`fas ${val.icon}`} style={{ color: val.color }} aria-hidden="true" />
               {val.desc}
             </span>
           ))}

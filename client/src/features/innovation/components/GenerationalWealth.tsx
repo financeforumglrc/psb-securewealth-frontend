@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
@@ -38,6 +39,7 @@ const TIMELINE_EVENTS = [
 ];
 
 export default function GenerationalWealth() {
+  const { t } = useTranslation();
   const [selectedYear, setSelectedYear] = useState('2056');
 
   return (
@@ -45,10 +47,10 @@ export default function GenerationalWealth() {
       {/* Header Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Generations', value: '3', icon: 'fa-people-roof', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Wealth Horizon', value: '55 Years', icon: 'fa-hourglass-half', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Legacy Corpus', value: '₹8.5Cr+', icon: 'fa-vault', color: 'bg-violet-50 text-violet-600' },
-          { label: 'Smart Will Status', value: 'Active', icon: 'fa-file-signature', color: 'bg-green-50 text-green-600' },
+          { label: t('generationalGenerations'), value: '3', icon: 'fa-people-roof', color: 'bg-amber-50 text-amber-600' },
+          { label: t('generationalHorizon'), value: '55 Years', icon: 'fa-hourglass-half', color: 'bg-blue-50 text-blue-600' },
+          { label: t('generationalCorpus'), value: '₹8.5Cr+', icon: 'fa-vault', color: 'bg-violet-50 text-violet-600' },
+          { label: t('generationalWillStatus'), value: t('generationalActive'), icon: 'fa-file-signature', color: 'bg-green-50 text-green-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -58,7 +60,7 @@ export default function GenerationalWealth() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -73,10 +75,10 @@ export default function GenerationalWealth() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-people-roof text-amber-600" /> Multi-Generational Wealth Projection
+              <i className="fas fa-people-roof text-amber-600" aria-hidden="true" /> {t('generationalTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              Track wealth creation across 3 generations — You, Child, Grandchild — with inheritance milestones
+              {t('generationalSubtitle')}
             </p>
           </div>
         </div>
@@ -102,17 +104,17 @@ export default function GenerationalWealth() {
               <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}L`} />
               <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: '11px' }} />
               <ReferenceLine x={selectedYear} stroke="#8B5CF6" strokeDasharray="4 4" strokeWidth={1.5} />
-              <Area type="monotone" dataKey="you" name="You" stroke="#1B5E20" strokeWidth={2.5} fill="url(#youGrad)" />
-              <Area type="monotone" dataKey="child" name="Child" stroke="#2196F3" strokeWidth={2} fill="url(#childGrad)" />
-              <Area type="monotone" dataKey="grandchild" name="Grandchild" stroke="#FFD700" strokeWidth={2} fill="url(#grandGrad)" />
+              <Area type="monotone" dataKey="you" name={t('generationalYou')} stroke="#1B5E20" strokeWidth={2.5} fill="url(#youGrad)" />
+              <Area type="monotone" dataKey="child" name={t('generationalChild')} stroke="#2196F3" strokeWidth={2} fill="url(#childGrad)" />
+              <Area type="monotone" dataKey="grandchild" name={t('generationalGrandchild')} stroke="#FFD700" strokeWidth={2} fill="url(#grandGrad)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500">
-          <span className="flex items-center gap-1.5"><div className="w-3 h-1 bg-primary rounded-full" /> You</span>
-          <span className="flex items-center gap-1.5"><div className="w-3 h-1 bg-blue-500 rounded-full" /> Child</span>
-          <span className="flex items-center gap-1.5"><div className="w-3 h-1 bg-amber-400 rounded-full" /> Grandchild</span>
+          <span className="flex items-center gap-1.5"><div className="w-3 h-1 bg-primary rounded-full" /> {t('generationalYou')}</span>
+          <span className="flex items-center gap-1.5"><div className="w-3 h-1 bg-blue-500 rounded-full" /> {t('generationalChild')}</span>
+          <span className="flex items-center gap-1.5"><div className="w-3 h-1 bg-amber-400 rounded-full" /> {t('generationalGrandchild')}</span>
         </div>
 
         {/* Year slider */}
@@ -124,12 +126,13 @@ export default function GenerationalWealth() {
             step={5}
             value={parseInt(selectedYear)}
             onChange={(e) => setSelectedYear(e.target.value)}
+            aria-label="Select projected year"
             className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-primary"
           />
-          <div className="flex justify-between text-[9px] text-gray-400 mt-1">
-            <span>2026 (You)</span>
+          <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <span>2026 ({t('generationalYou')})</span>
             <span>2056</span>
-            <span>2081 (Legacy)</span>
+            <span>2081 ({t('generationalLegacy')})</span>
           </div>
         </div>
       </div>
@@ -137,7 +140,7 @@ export default function GenerationalWealth() {
       {/* Inheritance Plan */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-file-signature text-primary" /> Smart Inheritance Allocation Plan
+          <i className="fas fa-file-signature text-primary" aria-hidden="true" /> {t('generationalInheritanceTitle')}
         </h4>
         <div className="space-y-2">
           {INHERITANCE_PLAN.map((item, idx) => (
@@ -149,22 +152,22 @@ export default function GenerationalWealth() {
               className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-all"
             >
               <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                <i className={`fas ${item.icon} text-gray-500 text-sm`} />
+                <i className={`fas ${item.icon} text-gray-500 text-sm`} aria-hidden="true" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-[11px] font-bold text-gray-800">{item.asset}</p>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                     item.status === 'active' ? 'bg-green-50 text-green-700' : item.status === 'setup' ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-500'
                   }`}>
                     {item.status}
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-500">To: {item.to}</p>
+                <p className="text-[10px] text-gray-500">{t('generationalTo')} {item.to}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-extrabold text-gray-900">{item.value}</p>
-                <p className="text-[9px] text-gray-400">{item.type}</p>
+                <p className="text-[10px] text-gray-400">{item.type}</p>
               </div>
             </motion.div>
           ))}
@@ -174,7 +177,7 @@ export default function GenerationalWealth() {
       {/* Life Timeline */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i className="fas fa-clock-rotate-left text-primary" /> Generational Wealth Timeline
+          <i className="fas fa-clock-rotate-left text-primary" aria-hidden="true" /> {t('generationalTimelineTitle')}
         </h4>
         <div className="relative">
           <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-amber-300 to-amber-500" />
@@ -192,9 +195,9 @@ export default function GenerationalWealth() {
                 }`} />
                 <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[10px] font-bold text-gray-400">Age {evt.age} · {evt.year}</span>
-                    {evt.type === 'critical' && <span className="text-[9px] px-1.5 py-0.5 bg-rose-50 text-rose-600 rounded-full font-bold">Critical</span>}
-                    {evt.type === 'legacy' && <span className="text-[9px] px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded-full font-bold">Legacy</span>}
+                    <span className="text-[10px] font-bold text-gray-400">{t('generationalAge')} {evt.age} · {evt.year}</span>
+                    {evt.type === 'critical' && <span className="text-[10px] px-1.5 py-0.5 bg-rose-50 text-rose-600 rounded-full font-bold">{t('generationalCritical')}</span>}
+                    {evt.type === 'legacy' && <span className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded-full font-bold">{t('generationalLegacy')}</span>}
                   </div>
                   <p className="text-[11px] font-semibold text-gray-800">{evt.event}</p>
                 </div>

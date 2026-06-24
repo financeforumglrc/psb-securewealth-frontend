@@ -1,5 +1,7 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 
 interface ChatMessage {
   id: string;
@@ -64,10 +66,12 @@ function randomFrom(arr: string[]): string {
 }
 
 export default function AIFutureTwin() {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -100,11 +104,11 @@ export default function AIFutureTwin() {
   };
 
   const quickQuestions = [
-    "Should I start an SIP?",
-    "Will I afford a house?",
-    "Am I saving enough?",
-    "Is my retirement on track?",
-    "Should I buy a car now?",
+    t('aiFutureTwinQuestionSip'),
+    t('aiFutureTwinQuestionHouse'),
+    t('aiFutureTwinQuestionSaving'),
+    t('aiFutureTwinQuestionRetirement'),
+    t('aiFutureTwinQuestionCar'),
   ];
 
   return (
@@ -112,10 +116,10 @@ export default function AIFutureTwin() {
       {/* Header */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Conversations', value: messages.length - 1, icon: 'fa-comments', color: 'bg-violet-50 text-violet-600' },
-          { label: 'Wisdom Score', value: '94%', icon: 'fa-star', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Future Year', value: '2035', icon: 'fa-calendar', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Hindsight Value', value: '₹42L', icon: 'fa-gem', color: 'bg-emerald-50 text-emerald-600' },
+          { label: t('aiFutureTwinConversations'), value: messages.length - 1, icon: 'fa-comments', color: 'bg-violet-50 text-violet-600' },
+          { label: t('aiFutureTwinWisdomScore'), value: '94%', icon: 'fa-star', color: 'bg-amber-50 text-amber-600' },
+          { label: t('aiFutureTwinFutureYear'), value: '2035', icon: 'fa-calendar', color: 'bg-blue-50 text-blue-600' },
+          { label: t('aiFutureTwinHindsightValue'), value: '₹42L', icon: 'fa-gem', color: 'bg-emerald-50 text-emerald-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -125,7 +129,7 @@ export default function AIFutureTwin() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -142,12 +146,12 @@ export default function AIFutureTwin() {
             👑
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-900">Your Future Self (Age 42)</h3>
-            <p className="text-[11px] text-gray-500">Speaking from 2035 with 10 years of financial hindsight</p>
+            <h3 className="text-base font-bold text-gray-900">{t('aiFutureTwinTitle')}</h3>
+            <p className="text-[11px] text-gray-500">{t('aiFutureTwinSubtitle')}</p>
           </div>
           <div className="ml-auto px-2.5 py-1 bg-green-50 rounded-full text-[10px] font-bold text-green-700 flex items-center gap-1">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-            Online
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" aria-label="Online" />
+            {t('aiFutureTwinOnline')}
           </div>
         </div>
 
@@ -178,7 +182,7 @@ export default function AIFutureTwin() {
                       {msg.text}
                     </div>
                   </div>
-                  <p className={`text-[9px] text-gray-400 mt-1 ${msg.role === 'user' ? 'text-right mr-1' : 'ml-10'}`}>
+                  <p className={`text-[10px] text-gray-400 mt-1 ${msg.role === 'user' ? 'text-right mr-1' : 'ml-10'}`}>
                     {msg.timestamp}
                   </p>
                 </div>
@@ -197,9 +201,9 @@ export default function AIFutureTwin() {
               </div>
               <div className="px-4 py-3 bg-gray-100 rounded-2xl rounded-tl-sm">
                 <div className="flex gap-1">
-                  <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-2 h-2 bg-gray-400 rounded-full" />
-                  <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.15 }} className="w-2 h-2 bg-gray-400 rounded-full" />
-                  <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.3 }} className="w-2 h-2 bg-gray-400 rounded-full" />
+                  <motion.div animate={prefersReducedMotion ? false : { y: [0, -4, 0] }} transition={prefersReducedMotion ? undefined : { repeat: Infinity, duration: 0.6 }} className="w-2 h-2 bg-gray-400 rounded-full" />
+                  <motion.div animate={prefersReducedMotion ? false : { y: [0, -4, 0] }} transition={prefersReducedMotion ? undefined : { repeat: Infinity, duration: 0.6, delay: 0.15 }} className="w-2 h-2 bg-gray-400 rounded-full" />
+                  <motion.div animate={prefersReducedMotion ? false : { y: [0, -4, 0] }} transition={prefersReducedMotion ? undefined : { repeat: Infinity, duration: 0.6, delay: 0.3 }} className="w-2 h-2 bg-gray-400 rounded-full" />
                 </div>
               </div>
             </motion.div>
@@ -227,7 +231,7 @@ export default function AIFutureTwin() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder="Ask your Future Self anything..."
+            placeholder={t('aiFutureTwinPlaceholder')}
             className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all"
           />
           <button
@@ -235,8 +239,8 @@ export default function AIFutureTwin() {
             disabled={!input.trim() || isTyping}
             className="px-4 py-2.5 bg-primary text-white rounded-xl text-[12px] font-bold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
-            <i className="fas fa-paper-plane" />
-            Ask
+            <i className="fas fa-paper-plane" aria-hidden="true" />
+            {t('aiFutureTwinAsk')}
           </button>
         </div>
       </div>
@@ -244,7 +248,7 @@ export default function AIFutureTwin() {
       {/* Future Self Insights */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-lightbulb text-amber-500" /> Wisdom from Your Future Self
+          <i className="fas fa-lightbulb text-amber-500" aria-hidden="true" /> {t('aiFutureTwinWisdomTitle')}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
@@ -263,8 +267,8 @@ export default function AIFutureTwin() {
               className="p-3 rounded-xl border border-gray-100 hover:border-amber-200 hover:shadow-sm transition-all"
             >
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded-full">{insight.category}</span>
-                <span className="text-[9px] text-gray-400">Year {insight.year}</span>
+                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full">{insight.category}</span>
+                <span className="text-[10px] text-gray-400">Year {insight.year}</span>
               </div>
               <p className="text-[11px] text-gray-700 leading-relaxed italic">"{insight.quote}"</p>
             </motion.div>

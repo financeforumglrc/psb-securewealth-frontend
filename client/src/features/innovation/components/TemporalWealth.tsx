@@ -89,7 +89,7 @@ export default function TemporalWealth() {
               scenario === s.key ? `${s.color} text-white shadow-lg` : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
             }`}
           >
-            <i className={`fas ${s.icon}`} />
+            <i className={`fas ${s.icon}`} aria-hidden="true" />
             {s.label}
           </button>
         ))}
@@ -116,7 +116,7 @@ export default function TemporalWealth() {
             </div>
             {selectedPoint.milestone && (
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
-                <i className={`fas ${selectedPoint.milestoneIcon} text-amber-500`} />
+                <i className={`fas ${selectedPoint.milestoneIcon} text-amber-500`} aria-hidden="true" />
                 <span className="text-xs font-bold text-amber-700 dark:text-amber-300">{selectedPoint.milestone}</span>
               </motion.div>
             )}
@@ -136,6 +136,7 @@ export default function TemporalWealth() {
                 max={30}
                 value={sliderYear}
                 onChange={(e) => setSliderYear(Number(e.target.value))}
+                aria-label="Select projected year"
                 className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-primary"
               />
               <div className="flex justify-between mt-1">
@@ -209,7 +210,7 @@ export default function TemporalWealth() {
             <CosmosCard variant={sliderYear >= i * 5 ? 'gradient' : 'default'} padding="sm">
               <div className="text-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-1 ${sliderYear >= i * 5 ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'}`}>
-                  <i className={`fas ${d.milestoneIcon}`} />
+                  <i className={`fas ${d.milestoneIcon}`} aria-hidden="true" />
                 </div>
                 <p className="text-[9px] font-bold text-slate-400">{d.year}</p>
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{d.milestone}</p>
@@ -232,7 +233,7 @@ export default function TemporalWealth() {
               return (
                 <div key={goal.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${onTrack ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
-                    <i className={`fas fa-${onTrack ? 'check' : 'triangle-exclamation'}`} />
+                    <i className={`fas fa-${onTrack ? 'check' : 'triangle-exclamation'}`} aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{goal.name}</p>

@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
@@ -31,6 +32,7 @@ const getScoreLabel = (score: number) => {
 };
 
 export default function PreparednessScore() {
+  const { t } = useTranslation();
   const [selectedDim, setSelectedDim] = useState<number | null>(null);
   const overall = getScoreLabel(OVERALL_SCORE);
 
@@ -39,10 +41,10 @@ export default function PreparednessScore() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <i className="fas fa-shield-halved text-primary" /> Life Preparedness Score
+            <i className="fas fa-shield-halved text-primary" aria-hidden="true" /> {t('preparednessTitle')}
           </h3>
           <p className="text-[11px] text-gray-500 mt-0.5">
-            India's first holistic life-readiness metric — like CIBIL but for your future
+            {t('preparednessSubtitle')}
           </p>
         </div>
         <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${overall.bg}`} style={{ color: overall.color }}>
@@ -82,14 +84,14 @@ export default function PreparednessScore() {
           <div className="w-full mt-3 space-y-1.5">
             {DIMENSIONS.map((dim) => (
               <div key={dim.name} className="flex items-center gap-2">
-                <span className="text-[9px] text-gray-500 w-20 truncate">{dim.name}</span>
+                <span className="text-[10px] text-gray-500 w-20 truncate">{dim.name}</span>
                 <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${dim.score}%`, backgroundColor: dim.color }}
                   />
                 </div>
-                <span className="text-[9px] font-bold text-gray-600 w-6 text-right">{dim.score}</span>
+                <span className="text-[10px] font-bold text-gray-600 w-6 text-right">{dim.score}</span>
               </div>
             ))}
           </div>
@@ -108,7 +110,10 @@ export default function PreparednessScore() {
                   ? 'border-gray-300 shadow-md bg-white'
                   : 'border-gray-100 hover:border-gray-200 hover:shadow-sm bg-white'
               }`}
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedDim(selectedDim === idx ? null : idx)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedDim(selectedDim === idx ? null : idx); } }}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2.5">
@@ -116,11 +121,11 @@ export default function PreparednessScore() {
                     className="w-9 h-9 rounded-lg flex items-center justify-center"
                     style={{ backgroundColor: dim.color + '12' }}
                   >
-                    <i className={`fas ${dim.icon}`} style={{ color: dim.color, fontSize: '13px' }} />
+                    <i className={`fas ${dim.icon}`} style={{ color: dim.color, fontSize: '13px' }} aria-hidden="true" />
                   </div>
                   <div>
                     <p className="text-[11px] font-bold text-gray-800">{dim.name}</p>
-                    <p className="text-[9px] text-gray-400">Weight: {dim.weight}%</p>
+                    <p className="text-[10px] text-gray-400">{t('preparednessWeight')} {dim.weight}%</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -145,11 +150,11 @@ export default function PreparednessScore() {
                   className="mt-2 pt-2 border-t border-dashed border-gray-100"
                 >
                   <div className="flex items-start gap-2">
-                    <i className="fas fa-lightbulb text-amber-500 text-[10px] mt-0.5" />
+                    <i className="fas fa-lightbulb text-amber-500 text-[10px] mt-0.5" aria-hidden="true" />
                     <p className="text-[10px] text-gray-600 leading-relaxed">{dim.insight}</p>
                   </div>
                   <button className="mt-2 w-full py-1.5 bg-primary/5 text-primary text-[10px] font-bold rounded-lg hover:bg-primary/10 transition-colors">
-                    <i className="fas fa-wand-magic-sparkles mr-1" /> Fix This Now
+                    <i className="fas fa-wand-magic-sparkles mr-1" aria-hidden="true" /> {t('preparednessFix')}
                   </button>
                 </motion.div>
               )}
@@ -162,13 +167,12 @@ export default function PreparednessScore() {
       <div className="mt-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <i className="fas fa-chart-simple text-amber-600 text-sm" />
+            <i className="fas fa-chart-simple text-amber-600 text-sm" aria-hidden="true" />
           </div>
           <div className="flex-1">
-            <p className="text-[11px] font-bold text-gray-800">India Average: 41/100</p>
+            <p className="text-[11px] font-bold text-gray-800">{t('preparednessIndiaAvg')}</p>
             <p className="text-[10px] text-gray-600">
-              You're {OVERALL_SCORE > 41 ? '+' : ''}{OVERALL_SCORE - 41} points ahead of the national average. 
-              Top 10% of Indians score 72+. Aim for 75+ to be "Future-Ready".
+              {t('preparednessAhead').replace('{points}', `${OVERALL_SCORE > 41 ? '+' : ''}${OVERALL_SCORE - 41}`)}
             </p>
           </div>
         </div>

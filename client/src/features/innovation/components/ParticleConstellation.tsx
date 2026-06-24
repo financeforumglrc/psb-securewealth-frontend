@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Particle {
   x: number;
@@ -11,6 +11,11 @@ interface Particle {
 
 export default function ParticleConstellation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -46,6 +51,16 @@ export default function ParticleConstellation() {
           opacity: Math.random() * 0.5 + 0.2,
         });
       }
+    };
+
+    const drawStatic = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 215, 0, ${p.opacity})`;
+        ctx.fill();
+      });
     };
 
     const draw = () => {
@@ -115,11 +130,16 @@ export default function ParticleConstellation() {
 
     resize();
     createParticles();
-    draw();
 
-    window.addEventListener('resize', () => { resize(); createParticles(); });
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
+    if (reducedMotion) {
+      drawStatic();
+      window.addEventListener('resize', () => { resize(); createParticles(); drawStatic(); });
+    } else {
+      draw();
+      window.addEventListener('resize', () => { resize(); createParticles(); });
+      canvas.addEventListener('mousemove', handleMouseMove);
+      canvas.addEventListener('mouseleave', handleMouseLeave);
+    }
 
     return () => {
       cancelAnimationFrame(animationId);
@@ -134,6 +154,8 @@ export default function ParticleConstellation() {
       ref={canvasRef}
       className="absolute inset-0 w-full h-full pointer-events-auto"
       style={{ opacity: 0.6 }}
+      role="img"
+      aria-label="Particle constellation background"
     />
   );
 }

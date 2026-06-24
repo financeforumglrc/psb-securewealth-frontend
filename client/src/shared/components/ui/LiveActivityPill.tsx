@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 
 interface Activity {
   id: string;
@@ -24,13 +25,16 @@ const ACTIVITIES: Activity[] = [
 export default function LiveActivityPill() {
   const [index, setIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   useEffect(() => {
+    if (prefersReducedMotion || paused) return;
     const interval = setInterval(() => {
       setIndex((i) => (i + 1) % ACTIVITIES.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [prefersReducedMotion, paused]);
 
   const current = ACTIVITIES[index];
 
@@ -44,11 +48,13 @@ export default function LiveActivityPill() {
       >
         <button
           onClick={() => setExpanded(!expanded)}
+          aria-label="Toggle live activity feed"
+          aria-expanded={expanded}
           className="flex items-center gap-3 px-4 py-2.5 bg-white dark:bg-slate-800 rounded-full shadow-xl border border-slate-100 dark:border-slate-700 hover:shadow-2xl transition-shadow group"
         >
           <div className="relative">
-            <div className={`w-2.5 h-2.5 rounded-full ${current.bg} animate-pulse`} />
-            <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${current.bg} animate-ping opacity-40`} />
+            <div className={`w-2.5 h-2.5 rounded-full ${current.bg} ${paused || prefersReducedMotion ? '' : 'animate-pulse'}`} aria-hidden="true" />
+            <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${current.bg} ${paused || prefersReducedMotion ? 'hidden' : 'animate-ping'} opacity-40`} aria-hidden="true" />
           </div>
           <AnimatePresence mode="wait">
             <motion.div
@@ -58,14 +64,27 @@ export default function LiveActivityPill() {
               exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.3 }}
               className="flex items-center gap-2"
+              aria-live="polite"
+              aria-atomic="true"
             >
-              <i className={`fas ${current.icon} ${current.color} text-xs`} />
-              <span className="text-xs text-slate-700 dark:text-slate-200 font-medium max-w-[280px] truncate">
+              <i className={`fas ${current.icon} ${current.color} text-xs`} aria-hidden="true" />
+              <span className="text-xs text-slate-700 dark:text-slate-200 font-medium max-w-[320px] whitespace-normal text-left">
                 {current.text}
               </span>
             </motion.div>
           </AnimatePresence>
-          <i className={`fas fa-chevron-up text-[10px] text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPaused((p) => !p);
+            }}
+            aria-label={paused ? 'Resume live activity rotation' : 'Pause live activity rotation'}
+            className="w-6 h-6 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
+          >
+            <i className={`fas ${paused ? 'fa-play' : 'fa-pause'} text-[10px] text-slate-400`} aria-hidden="true" />
+          </button>
+          <i className={`fas fa-chevron-up text-[10px] text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
         </button>
 
         {/* Expanded Activity Log */}
@@ -90,11 +109,11 @@ export default function LiveActivityPill() {
                     }`}
                   >
                     <div className={`w-6 h-6 ${a.bg}/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                      <i className={`fas ${a.icon} ${a.color} text-[9px]`} />
+                      <i className={`fas ${a.icon} ${a.color} text-[10px]`} aria-hidden="true" />
                     </div>
                     <div>
                       <p className="text-[11px] text-slate-700 dark:text-slate-200 leading-snug">{a.text}</p>
-                      <p className="text-[9px] text-slate-400">{a.source}</p>
+                      <p className="text-[10px] text-slate-400">{a.source}</p>
                     </div>
                   </div>
                 ))}

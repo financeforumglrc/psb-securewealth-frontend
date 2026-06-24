@@ -1,5 +1,7 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 
 interface AgentAction {
   id: string;
@@ -19,15 +21,17 @@ interface AgentToggle {
 }
 
 export default function AutonomousAgent() {
+  const { t } = useTranslation();
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [toggles, setToggles] = useState<AgentToggle[]>([
-    { id: 'auto-fd', label: 'Auto FD Hunter', description: 'Automatically move idle savings to highest FD rate across all banks', enabled: true, icon: 'fa-building-columns' },
-    { id: 'auto-bill', label: 'Bill Negotiator', description: 'Auto-negotiate credit card fees, insurance premiums, subscription rates', enabled: true, icon: 'fa-file-invoice-dollar' },
-    { id: 'auto-tax', label: 'Tax Optimizer', description: 'Auto-purchase ELSS/PPF in March if 80C limit not exhausted', enabled: false, icon: 'fa-receipt' },
-    { id: 'auto-sip', label: 'SIP Booster', description: 'Auto-increase SIP by 10% every year on your birthday', enabled: true, icon: 'fa-chart-line' },
-    { id: 'auto-claim', label: 'Claim Hunter', description: 'Auto-file claims for flight delays, price drops, warranty issues', enabled: false, icon: 'fa-hand-holding-dollar' },
-    { id: 'auto-switch', label: 'Loan Refinancer', description: 'Monitor home loan rates and auto-refinance when savings > ₹50K', enabled: false, icon: 'fa-house' },
-    { id: 'auto-donate', label: 'Smart Charity', description: 'Round up transactions and auto-donate to 80G-certified causes', enabled: true, icon: 'fa-hand-holding-heart' },
-    { id: 'auto-insure', label: 'Insurance Auditor', description: 'Annual audit of all policies — cancel duplicates, upgrade coverage gaps', enabled: false, icon: 'fa-shield-halved' },
+    { id: 'auto-fd', label: t('autonomousAgentAutoFdHunter'), description: t('autonomousAgentAutoFdDesc'), enabled: true, icon: 'fa-building-columns' },
+    { id: 'auto-bill', label: t('autonomousAgentBillNegotiator'), description: t('autonomousAgentBillDesc'), enabled: true, icon: 'fa-file-invoice-dollar' },
+    { id: 'auto-tax', label: t('autonomousAgentTaxOptimizer'), description: t('autonomousAgentTaxDesc'), enabled: false, icon: 'fa-receipt' },
+    { id: 'auto-sip', label: t('autonomousAgentSipBooster'), description: t('autonomousAgentSipDesc'), enabled: true, icon: 'fa-chart-line' },
+    { id: 'auto-claim', label: t('autonomousAgentClaimHunter'), description: t('autonomousAgentClaimDesc'), enabled: false, icon: 'fa-hand-holding-dollar' },
+    { id: 'auto-switch', label: t('autonomousAgentLoanRefinancer'), description: t('autonomousAgentLoanDesc'), enabled: false, icon: 'fa-house' },
+    { id: 'auto-donate', label: t('autonomousAgentSmartCharity'), description: t('autonomousAgentCharityDesc'), enabled: true, icon: 'fa-hand-holding-heart' },
+    { id: 'auto-insure', label: t('autonomousAgentInsuranceAuditor'), description: t('autonomousAgentInsuranceDesc'), enabled: false, icon: 'fa-shield-halved' },
   ]);
 
   const [guardrails, setGuardrails] = useState({
@@ -48,10 +52,10 @@ export default function AutonomousAgent() {
   ]);
 
   const totalSavings = actions.filter((a) => a.status === 'completed').reduce((s, a) => s + a.savings, 0);
-  const activeCount = toggles.filter((t) => t.enabled).length;
+  const activeCount = toggles.filter((toggle) => toggle.enabled).length;
 
   const toggleAction = (id: string) => {
-    setToggles((prev) => prev.map((t) => t.id === id ? { ...t, enabled: !t.enabled } : t));
+    setToggles((prev) => prev.map((toggle) => toggle.id === id ? { ...toggle, enabled: !toggle.enabled } : toggle));
   };
 
   return (
@@ -59,12 +63,12 @@ export default function AutonomousAgent() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <i className="fas fa-robot text-primary" /> Autonomous Financial Agent
+            <i className="fas fa-robot text-primary" aria-hidden="true" /> {t('autonomousAgentTitle')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">Your personal CFO that never sleeps. Negotiates, switches, and optimizes 24/7.</p>
+          <p className="text-xs text-slate-500 mt-0.5">{t('autonomousAgentSubtitle')}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-slate-500">Active Tasks</p>
+          <p className="text-xs text-slate-500">{t('autonomousAgentActiveTasks')}</p>
           <p className="text-2xl font-extrabold text-primary">{activeCount}<span className="text-sm text-slate-400">/{toggles.length}</span></p>
         </div>
       </div>
@@ -74,13 +78,13 @@ export default function AutonomousAgent() {
         <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <p className="text-xs text-white/70 font-medium uppercase tracking-wider">Money Saved by Agent</p>
+            <p className="text-xs text-white/70 font-medium uppercase tracking-wider">{t('autonomousAgentMoneySaved')}</p>
             <p className="text-3xl font-extrabold mt-1">₹{totalSavings.toLocaleString()}</p>
-            <p className="text-xs text-white/70 mt-1">This month • {actions.filter((a) => a.status === 'completed').length} actions completed</p>
+            <p className="text-xs text-white/70 mt-1">{t('autonomousAgentThisMonth')} • {actions.filter((a) => a.status === 'completed').length} {t('autonomousAgentActionsCompleted')}</p>
           </div>
           <div className="hidden sm:block">
             <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center">
-              <i className="fas fa-robot text-3xl text-white/80" />
+              <i className="fas fa-robot text-3xl text-white/80" aria-hidden="true" />
             </div>
           </div>
         </div>
@@ -89,31 +93,33 @@ export default function AutonomousAgent() {
       {/* Agent Toggles */}
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
-          <i className="fas fa-sliders text-primary text-sm" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Agent Capabilities</h4>
+          <i className="fas fa-sliders text-primary text-sm" aria-hidden="true" />
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('autonomousAgentCapabilities')}</h4>
         </div>
         <div className="space-y-3">
-          {toggles.map((t) => (
-            <div key={t.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+          {toggles.map((toggle) => (
+            <div key={toggle.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                t.enabled ? 'bg-primary/10 text-primary' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                toggle.enabled ? 'bg-primary/10 text-primary' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
               }`}>
-                <i className={`fas ${t.icon}`} />
+                <i className={`fas ${toggle.icon}`} aria-hidden="true" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-bold ${t.enabled ? 'text-slate-800 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>{t.label}</p>
-                <p className="text-[10px] text-slate-500 truncate">{t.description}</p>
+                <p className={`text-sm font-bold ${toggle.enabled ? 'text-slate-800 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>{toggle.label}</p>
+                <p className="text-[10px] text-slate-500 truncate">{toggle.description}</p>
               </div>
               <button
-                onClick={() => toggleAction(t.id)}
+                onClick={() => toggleAction(toggle.id)}
+                aria-label={`${toggle.enabled ? t('autonomousAgentDisable') : t('autonomousAgentEnable')} ${toggle.label}`}
+                aria-pressed={toggle.enabled}
                 className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
-                  t.enabled ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
+                  toggle.enabled ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >
                 <motion.div
                   className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow"
-                  animate={{ left: t.enabled ? '25px' : '2px' }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  animate={{ left: toggle.enabled ? '25px' : '2px' }}
+                  transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 30 }}
                 />
               </button>
             </div>
@@ -124,12 +130,12 @@ export default function AutonomousAgent() {
       {/* Guardrails */}
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
-          <i className="fas fa-shield-halved text-emerald-500 text-sm" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Guardrails & Limits</h4>
+          <i className="fas fa-shield-halved text-emerald-500 text-sm" aria-hidden="true" />
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('autonomousAgentGuardrails')}</h4>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] text-slate-500 font-bold uppercase">Max Auto-Move Amount</label>
+            <label className="text-[10px] text-slate-500 font-bold uppercase">{t('autonomousAgentMaxAutoMove')}</label>
             <div className="flex items-center gap-2 mt-1">
               <input
                 type="range"
@@ -138,13 +144,14 @@ export default function AutonomousAgent() {
                 step={10000}
                 value={guardrails.maxAutoMove}
                 onChange={(e) => setGuardrails((g) => ({ ...g, maxAutoMove: parseInt(e.target.value) }))}
+                aria-label="Max auto-move amount"
                 className="flex-1 accent-primary"
               />
               <span className="text-xs font-bold text-slate-800 dark:text-white w-20 text-right">₹{(guardrails.maxAutoMove / 1000).toFixed(0)}K</span>
             </div>
           </div>
           <div>
-            <label className="text-[10px] text-slate-500 font-bold uppercase">Minimum Liquid Balance</label>
+            <label className="text-[10px] text-slate-500 font-bold uppercase">{t('autonomousAgentMinBalance')}</label>
             <div className="flex items-center gap-2 mt-1">
               <input
                 type="range"
@@ -153,25 +160,26 @@ export default function AutonomousAgent() {
                 step={50000}
                 value={guardrails.minBalance}
                 onChange={(e) => setGuardrails((g) => ({ ...g, minBalance: parseInt(e.target.value) }))}
+                aria-label="Minimum liquid balance"
                 className="flex-1 accent-primary"
               />
               <span className="text-xs font-bold text-slate-800 dark:text-white w-20 text-right">₹{(guardrails.minBalance / 100000).toFixed(1)}L</span>
             </div>
           </div>
           <div>
-            <label className="text-[10px] text-slate-500 font-bold uppercase">Preferred Bank Type</label>
+            <label className="text-[10px] text-slate-500 font-bold uppercase">{t('autonomousAgentPreferredBank')}</label>
             <select
               value={guardrails.preferredBankType}
               onChange={(e) => setGuardrails((g) => ({ ...g, preferredBankType: e.target.value }))}
               className="mt-1 w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-xs dark:text-white"
             >
-              <option value="psu">PSU Banks (SBI, PNB, Bank of Baroda)</option>
-              <option value="private">Private Banks (HDFC, ICICI, Axis)</option>
-              <option value="any">Any RBI-Regulated Bank</option>
+              <option value="psu">{t('autonomousAgentPsuBanks')}</option>
+              <option value="private">{t('autonomousAgentPrivateBanks')}</option>
+              <option value="any">{t('autonomousAgentAnyBank')}</option>
             </select>
           </div>
           <div>
-            <label className="text-[10px] text-slate-500 font-bold uppercase">Max Monthly Donation</label>
+            <label className="text-[10px] text-slate-500 font-bold uppercase">{t('autonomousAgentMaxDonation')}</label>
             <div className="flex items-center gap-2 mt-1">
               <input
                 type="range"
@@ -180,6 +188,7 @@ export default function AutonomousAgent() {
                 step={100}
                 value={guardrails.maxMonthlyDonation}
                 onChange={(e) => setGuardrails((g) => ({ ...g, maxMonthlyDonation: parseInt(e.target.value) }))}
+                aria-label="Max monthly donation"
                 className="flex-1 accent-primary"
               />
               <span className="text-xs font-bold text-slate-800 dark:text-white w-20 text-right">₹{guardrails.maxMonthlyDonation}</span>
@@ -195,7 +204,7 @@ export default function AutonomousAgent() {
             className="w-4 h-4 accent-primary"
           />
           <label htmlFor="notify-before" className="text-xs text-slate-700 dark:text-slate-300">
-            Notify me 24 hours before any auto-action above ₹{guardrails.maxAutoMove.toLocaleString()}
+            {t('autonomousAgentNotifyBefore')}{guardrails.maxAutoMove.toLocaleString()}
           </label>
         </div>
       </div>
@@ -203,8 +212,8 @@ export default function AutonomousAgent() {
       {/* Activity Log */}
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
-          <i className="fas fa-clock-rotate-left text-primary text-sm" />
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">Agent Activity Log</h4>
+          <i className="fas fa-clock-rotate-left text-primary text-sm" aria-hidden="true" />
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('autonomousAgentActivityLog')}</h4>
         </div>
         <div className="space-y-2">
           <AnimatePresence>
@@ -220,7 +229,7 @@ export default function AutonomousAgent() {
                   a.status === 'pending' ? 'bg-amber-100 text-amber-600' :
                   'bg-rose-100 text-rose-600'
                 }`}>
-                  <i className={`fas ${a.status === 'completed' ? 'fa-check' : a.status === 'pending' ? 'fa-clock' : 'fa-xmark'}`} />
+                  <i className={`fas ${a.status === 'completed' ? 'fa-check' : a.status === 'pending' ? 'fa-clock' : 'fa-xmark'}`} aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-slate-800 dark:text-white">{a.action}</p>

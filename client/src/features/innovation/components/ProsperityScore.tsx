@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CosmosCard from '@/shared/components/ui/CosmosCard';
@@ -92,11 +93,11 @@ function RadialScore({ score, size = 80, stroke = 6, color, label, icon }: {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-lg font-extrabold" style={{ color }}>{score}</span>
-          <span className="text-[9px] font-bold text-slate-400">{grade}</span>
+          <span className="text-[10px] font-bold text-slate-400">{grade}</span>
         </div>
       </div>
       <div className="flex items-center gap-1.5">
-        <i className={`fas ${icon} text-[10px]`} style={{ color }} />
+        <i className={`fas ${icon} text-[10px]`} style={{ color }} aria-hidden="true" />
         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{label}</span>
       </div>
     </div>
@@ -104,11 +105,12 @@ function RadialScore({ score, size = 80, stroke = 6, color, label, icon }: {
 }
 
 export default function ProsperityScore() {
+  const { t } = useTranslation();
   const [selectedDim, setSelectedDim] = useState<number | null>(null);
 
   const overall = Math.round(DIMENSIONS.reduce((s, d) => s + d.score, 0) / DIMENSIONS.length);
   const overallColor = overall >= 75 ? '#10b981' : overall >= 50 ? '#f59e0b' : '#ef4444';
-  const overallLabel = overall >= 75 ? 'Flourishing' : overall >= 50 ? 'Growing' : 'Needs Care';
+  const overallLabel = overall >= 75 ? t('prosperityFlourishing') : overall >= 50 ? t('prosperityGrowing') : t('prosperityNeedsCare');
 
   return (
     <div className="space-y-6">
@@ -131,7 +133,7 @@ export default function ProsperityScore() {
                 <motion.span className="text-4xl font-extrabold" style={{ color: overallColor }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
                   {overall}
                 </motion.span>
-                <span className="text-[10px] font-bold text-slate-400">PROSPERITY</span>
+                <span className="text-[10px] font-bold text-slate-400">{t('prosperityLabel')}</span>
               </div>
             </div>
             <motion.span
@@ -147,8 +149,7 @@ export default function ProsperityScore() {
 
           <div className="lg:col-span-2 space-y-3">
             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Your Prosperity Score synthesizes four dimensions of financial wellness —
-              not just how much you have, but how balanced, prepared, and emotionally aligned you are with wealth.
+              {t('prosperityDesc')}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {DIMENSIONS.map((dim, i) => (
@@ -174,7 +175,7 @@ export default function ProsperityScore() {
       <AnimatePresence>
         {selectedDim !== null && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-            <CosmosCard variant="default" header={{ icon: DIMENSIONS[selectedDim].icon, iconColor: DIMENSIONS[selectedDim].color, title: `${DIMENSIONS[selectedDim].name} Breakdown` }}>
+            <CosmosCard variant="default" header={{ icon: DIMENSIONS[selectedDim].icon, iconColor: DIMENSIONS[selectedDim].color, title: `${DIMENSIONS[selectedDim].name} ${t('prosperityBreakdown')}` }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {DIMENSIONS[selectedDim].subscores.map((sub) => (
                   <div key={sub.label}>
@@ -200,7 +201,7 @@ export default function ProsperityScore() {
       </AnimatePresence>
 
       {/* Improvement Roadmap */}
-      <CosmosCard variant="default" header={{ icon: 'fa-route', iconColor: '#f59e0b', title: 'Prosperity Roadmap', subtitle: '5 steps to holistic financial wellness' }}>
+      <CosmosCard variant="default" header={{ icon: 'fa-route', iconColor: '#f59e0b', title: t('prosperityRoadmap'), subtitle: t('prosperityRoadmapSubtitle') }}>
         <div className="space-y-3">
           {ROADMAP.map((step, i) => (
             <motion.div
@@ -217,14 +218,15 @@ export default function ProsperityScore() {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
                 step.done ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
               }`}>
-                {step.done ? <i className="fas fa-check" /> : step.step}
+                {step.done ? <i className="fas fa-check" aria-hidden="true" /> : step.step}
+                <span className="sr-only">{step.done ? t('prosperityCompleted') : t('prosperityNotCompleted')}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <p className={`text-xs font-bold ${step.done ? 'text-emerald-700 dark:text-emerald-300 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
                     {step.title}
                   </p>
-                  <span className="text-[9px] font-bold text-amber-600 flex-shrink-0">{step.impact}</span>
+                  <span className="text-[10px] font-bold text-amber-600 flex-shrink-0">{step.impact}</span>
                 </div>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400">{step.desc}</p>
               </div>
@@ -233,8 +235,8 @@ export default function ProsperityScore() {
         </div>
         <div className="mt-4 p-3 rounded-xl bg-primary/5 border border-primary/10">
           <p className="text-xs text-primary font-bold text-center">
-            <i className="fas fa-seedling mr-1" />
-            Complete all 5 steps to reach Prosperity Score 85+ (Grade A)
+            <i className="fas fa-seedling mr-1" aria-hidden="true" />
+            {t('prosperityAllSteps')}
           </p>
         </div>
       </CosmosCard>
@@ -242,11 +244,11 @@ export default function ProsperityScore() {
       {/* Wisdom Quote */}
       <CosmosCard variant="glass">
         <div className="text-center py-4">
-          <i className="fas fa-quote-left text-slate-300 text-lg mb-2" />
+          <i className="fas fa-quote-left text-slate-300 text-lg mb-2" aria-hidden="true" />
           <p className="text-sm font-medium text-slate-600 dark:text-slate-300 italic">
-            "Prosperity is not just the accumulation of wealth, but the harmonious alignment of purpose, preparedness, and peace."
+            "{t('prosperityQuote')}"
           </p>
-          <p className="text-[10px] text-slate-400 mt-2">— BHAVISHYA Financial Philosophy</p>
+          <p className="text-[10px] text-slate-400 mt-2">{t('prosperityAttribution')}</p>
         </div>
       </CosmosCard>
     </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -39,6 +40,7 @@ const DEADMANS_TRIGGERS = [
 ];
 
 export default function DigitalInheritance() {
+  const { t } = useTranslation();
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 
   const securedCount = DIGITAL_ASSETS.filter(a => a.status === 'secured').length;
@@ -49,10 +51,10 @@ export default function DigitalInheritance() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Digital Assets', value: DIGITAL_ASSETS.length, icon: 'fa-laptop', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Secured', value: securedCount, icon: 'fa-lock', color: 'bg-green-50 text-green-600' },
-          { label: 'Total Value', value: totalValue, icon: 'fa-coins', color: 'bg-amber-50 text-amber-600' },
-          { label: 'Will Status', value: 'Smart', icon: 'fa-file-contract', color: 'bg-violet-50 text-violet-600' },
+          { label: t('digitalInheritanceAssets'), value: DIGITAL_ASSETS.length, icon: 'fa-laptop', color: 'bg-blue-50 text-blue-600' },
+          { label: t('digitalInheritanceSecured'), value: securedCount, icon: 'fa-lock', color: 'bg-green-50 text-green-600' },
+          { label: t('digitalInheritanceTotalValue'), value: totalValue, icon: 'fa-coins', color: 'bg-amber-50 text-amber-600' },
+          { label: t('digitalInheritanceWillStatus'), value: 'Smart', icon: 'fa-file-contract', color: 'bg-violet-50 text-violet-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -62,7 +64,7 @@ export default function DigitalInheritance() {
             className="card-psb flex items-center gap-3"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
-              <i className={`fas ${stat.icon}`} />
+              <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
               <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
@@ -77,10 +79,10 @@ export default function DigitalInheritance() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-vault text-violet-600" /> Digital Inheritance Vault
+              <i className="fas fa-vault text-violet-600" aria-hidden="true" /> {t('digitalInheritanceTitle')}
             </h3>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              All your digital assets mapped, valued, and secured for seamless generational transfer
+              {t('digitalInheritanceSubtitle')}
             </p>
           </div>
         </div>
@@ -95,26 +97,29 @@ export default function DigitalInheritance() {
               className={`p-3 rounded-xl border cursor-pointer transition-all ${
                 selectedAsset === asset.id ? 'border-violet-300 shadow-md' : 'border-gray-100 hover:border-gray-200'
               }`}
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedAsset(selectedAsset === asset.id ? null : asset.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedAsset(selectedAsset === asset.id ? null : asset.id); } }}
             >
               <div className="flex items-center gap-2.5 mb-2">
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: asset.color + '12' }}>
-                  <i className={`fab ${asset.icon} text-sm`} style={{ color: asset.color }} />
+                  <i className={`fab ${asset.icon} text-sm`} style={{ color: asset.color }} aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-bold text-gray-800 truncate">{asset.name}</p>
-                  <p className="text-[9px] text-gray-400 capitalize">{asset.type}</p>
+                  <p className="text-[10px] text-gray-400 capitalize">{asset.type}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-extrabold text-gray-900">{asset.value}</span>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                   asset.status === 'secured' ? 'bg-green-50 text-green-700' : asset.status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'
                 }`}>
                   {asset.status}
                 </span>
               </div>
-              <p className="text-[9px] text-gray-400 mt-1">Last accessed: {asset.lastAccessed}</p>
+              <p className="text-[10px] text-gray-400 mt-1">{t('digitalInheritanceLastAccessed')} {asset.lastAccessed}</p>
 
               <AnimatePresence>
                 {selectedAsset === asset.id && (
@@ -130,10 +135,10 @@ export default function DigitalInheritance() {
                     </div>
                     <div className="mt-2 flex gap-2">
                       <button className="flex-1 py-1.5 bg-violet-600 text-white text-[10px] font-bold rounded-lg hover:bg-violet-700 transition-colors">
-                        <i className="fas fa-pen mr-1" /> Edit Nominee
+                        <i className="fas fa-pen mr-1" aria-hidden="true" /> {t('digitalInheritanceEditNominee')}
                       </button>
                       <button className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-50 transition-colors">
-                        <i className="fas fa-download mr-1" /> Backup
+                        <i className="fas fa-download mr-1" aria-hidden="true" /> {t('digitalInheritanceBackup')}
                       </button>
                     </div>
                   </motion.div>
@@ -147,7 +152,7 @@ export default function DigitalInheritance() {
       {/* Smart Will Clauses */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-file-contract text-primary" /> Smart Will Clauses
+          <i className="fas fa-file-contract text-primary" aria-hidden="true" /> {t('digitalInheritanceWillClauses')}
         </h4>
         <div className="space-y-2">
           {WILL_CLAUSES.map((clause, idx) => (
@@ -159,12 +164,12 @@ export default function DigitalInheritance() {
               className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:shadow-sm transition-all"
             >
               <div className="w-9 h-9 bg-primary/5 rounded-lg flex items-center justify-center flex-shrink-0">
-                <i className={`fas ${clause.icon} text-primary text-xs`} />
+                <i className={`fas ${clause.icon} text-primary text-xs`} aria-hidden="true" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <p className="text-[11px] font-bold text-gray-800">{clause.clause}</p>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                     clause.status === 'notarized' ? 'bg-green-50 text-green-700' : clause.status === 'smart-contract' ? 'bg-violet-50 text-violet-700' : clause.status === 'active' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'
                   }`}>
                     {clause.status}
@@ -180,7 +185,7 @@ export default function DigitalInheritance() {
       {/* Dead Man's Switch */}
       <div className="card-psb">
         <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-hourglass-half text-rose-500" /> Inheritance Triggers (Dead Man's Switch)
+          <i className="fas fa-hourglass-half text-rose-500" aria-hidden="true" /> {t('digitalInheritanceTriggers')}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {DEADMANS_TRIGGERS.map((trig, idx) => (
@@ -193,15 +198,15 @@ export default function DigitalInheritance() {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-bold text-gray-800">{trig.trigger}</span>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                   trig.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-rose-50 text-rose-700'
                 }`}>
                   {trig.status}
                 </span>
               </div>
               <div className="space-y-1 text-[10px] text-gray-500">
-                <p><i className="fas fa-clock mr-1" />Duration: {trig.duration}</p>
-                <p><i className="fas fa-bolt mr-1" />Action: {trig.action}</p>
+                <p><i className="fas fa-clock mr-1" aria-hidden="true" />{t('digitalInheritanceDuration')} {trig.duration}</p>
+                <p><i className="fas fa-bolt mr-1" aria-hidden="true" />{t('digitalInheritanceAction')} {trig.action}</p>
               </div>
             </motion.div>
           ))}

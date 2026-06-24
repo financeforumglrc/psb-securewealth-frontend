@@ -20,57 +20,64 @@ const TOUR_STEPS: TourStep[] = [
     delay: 3000,
   },
   {
+    id: 'bhavishya',
+    title: '2. BHAVISHYA AI — Predictive Life-Cycle Intelligence',
+    description: 'India’s first predictive engine that anticipates life events, crises, market moves, and emotional spending before they happen.',
+    targetView: 'bhavishya',
+    delay: 4000,
+  },
+  {
     id: 'wealth-twin',
-    title: '2. Wealth Twin AI — Explainable Finance',
+    title: '3. Wealth Twin AI — Explainable Finance',
     description: 'Ask anything in natural language. The AI answers with reasoning chains, evidence cards, formulas, and RBI/SEBI citations.',
     targetView: 'wealth-twin',
     delay: 4000,
   },
   {
     id: 'innovation-lab',
-    title: '3. Innovation Lab — 10 World-First Features',
+    title: '4. Innovation Lab — 10 World-First Features',
     description: 'Features no Indian bank has ever built: Neuro-Friction Banking, Monte Carlo Simulator, Collective Immune System, Autonomous Agent, Sovereign Vault.',
     targetView: 'innovation-lab',
     delay: 5000,
   },
   {
     id: 'neuro',
-    title: '4. Neuro-Friction Banking',
+    title: '5. Neuro-Friction Banking',
     description: 'Wearable biometrics detect stress and fatigue. The bank introduces intelligent friction to block emotional spending before it happens.',
     targetView: 'innovation-lab',
     delay: 4000,
   },
   {
     id: 'monte',
-    title: '5. Monte Carlo Life Simulator',
+    title: '6. Monte Carlo Life Simulator',
     description: 'Run 500 simulations of your financial future. See probability cones for every major life decision — buy a house, start a business, take a sabbatical.',
     targetView: 'innovation-lab',
     delay: 4000,
   },
   {
     id: 'immune',
-    title: '6. Collective Immune System',
+    title: '7. Collective Immune System',
     description: '2.8M+ users anonymously share fraud signals. When 5 people in your city report a scam, you are auto-protected before you even see it.',
     targetView: 'innovation-lab',
     delay: 4000,
   },
   {
     id: 'agent',
-    title: '7. Autonomous Financial Agent',
+    title: '8. Autonomous Financial Agent',
     description: 'Your personal CFO works 24/7 — auto-negotiating credit card fees, hunting highest FD rates, boosting SIPs, and filing claims.',
     targetView: 'innovation-lab',
     delay: 4000,
   },
   {
     id: 'vault',
-    title: '8. Sovereign Data Vault',
+    title: '9. Sovereign Data Vault',
     description: 'Your financial history never leaves your device. The bank only receives zero-knowledge proofs. Mathematically impossible to reverse-engineer.',
     targetView: 'innovation-lab',
     delay: 4000,
   },
   {
     id: 'protection',
-    title: '9. Security & Privacy',
+    title: '10. Security & Privacy',
     description: '6-dimension behavioral fraud detection, duress mode, ghost accounts, biometric auth, and RBI-compliant consent management.',
     targetView: 'protection',
     delay: 4000,
@@ -197,11 +204,11 @@ export default function JudgeTour() {
             className="pl-4 pr-5 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-2xl shadow-lg shadow-primary/25 flex items-center gap-2.5 font-bold text-xs hover:shadow-xl transition-shadow"
           >
             <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
-              <i className="fas fa-play text-[10px]" />
+              <i className="fas fa-play text-[10px]" aria-hidden="true" />
             </div>
             <div className="text-left">
               <p className="text-[11px] font-bold leading-tight">Judge Demo Tour</p>
-              <p className="text-[9px] text-white/70">60-second walkthrough</p>
+              <p className="text-[10px] text-white/70">60-second walkthrough</p>
             </div>
           </motion.button>
           <button
@@ -209,7 +216,7 @@ export default function JudgeTour() {
             aria-label="Dismiss demo tour prompt"
             className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 text-slate-500 shadow-md border border-slate-100 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
           >
-            <i className="fas fa-times text-xs" />
+            <i className="fas fa-times text-xs" aria-hidden="true" />
           </button>
         </motion.div>
       )}
@@ -226,7 +233,7 @@ export default function JudgeTour() {
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 p-5">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary flex-shrink-0">
-                  <i className="fas fa-route text-sm" />
+                  <i className="fas fa-route text-sm" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
@@ -252,13 +259,13 @@ export default function JudgeTour() {
                         disabled={stepIndex === 0}
                         className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-medium disabled:opacity-40 hover:bg-slate-200 transition-colors"
                       >
-                        <i className="fas fa-arrow-left mr-1" />Prev
+                        <i className="fas fa-arrow-left mr-1" aria-hidden="true" />Prev
                       </button>
                       <button
                         onClick={nextStep}
                         className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
                       >
-                        {stepIndex === TOUR_STEPS.length - 1 ? 'Finish' : 'Next'}<i className="fas fa-arrow-right ml-1" />
+                        {stepIndex === TOUR_STEPS.length - 1 ? 'Finish' : 'Next'}<i className="fas fa-arrow-right ml-1" aria-hidden="true" />
                       </button>
                     </div>
                     <button
