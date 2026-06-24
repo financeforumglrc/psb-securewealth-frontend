@@ -36,6 +36,12 @@ interface FraudEvent {
     lon: number;
     isp: string;
   } | null;
+  destination?: {
+    country: string;
+    city: string;
+    lat: number;
+    lon: number;
+  } | null;
   parsedNewValue: any;
 }
 
@@ -76,6 +82,19 @@ const GLOBAL_ORIGINS = [
   { name: 'Middle East', lat: 25.2, lon: 55.3 },
 ];
 
+const CROSS_BORDER_DESTINATIONS = [
+  { country: 'Singapore', city: 'Singapore', lat: 1.3521, lon: 103.8198 },
+  { country: 'Hong Kong', city: 'Hong Kong', lat: 22.3193, lon: 114.1694 },
+  { country: 'UAE', city: 'Dubai', lat: 25.2048, lon: 55.2708 },
+  { country: 'UK', city: 'London', lat: 51.5074, lon: -0.1278 },
+  { country: 'USA', city: 'New York', lat: 40.7128, lon: -74.0060 },
+  { country: 'Switzerland', city: 'Zurich', lat: 47.3769, lon: 8.5417 },
+  { country: 'China', city: 'Shanghai', lat: 31.2304, lon: 121.4737 },
+  { country: 'Netherlands', city: 'Amsterdam', lat: 52.3676, lon: 4.9041 },
+  { country: 'Russia', city: 'Moscow', lat: 55.7558, lon: 37.6173 },
+  { country: 'Cayman Islands', city: 'George Town', lat: 19.3138, lon: -81.2546 },
+];
+
 const USER_NAMES = [
   'Rajesh Kumar', 'Priya Sharma', 'Amit Singh', 'Deepika Patel',
   'Vikram Reddy', 'Anjali Verma', 'Suresh Iyer', 'Neha Gupta',
@@ -92,6 +111,14 @@ const USER_NAMES = [
 const ACTIONS = ['UPI Transfer', 'NEFT Payment', 'RTGS Transfer', 'IMPS Transfer', 'Card Payment', 'Wallet Withdrawal', 'Account Login', 'Beneficiary Add'];
 const ENTITY_TYPES = ['transaction', 'auth', 'beneficiary', 'account'];
 
+function pickCrossBorderDestination(action: string, riskScore: number) {
+  const moneyActions = ['UPI Transfer', 'NEFT Payment', 'RTGS Transfer', 'IMPS Transfer', 'Card Payment', 'Wallet Withdrawal'];
+  const isMoneyAction = moneyActions.includes(action);
+  const probability = riskScore >= 80 ? 0.35 : riskScore >= 60 ? 0.2 : isMoneyAction ? 0.12 : 0.04;
+  if (Math.random() > probability) return null;
+  return CROSS_BORDER_DESTINATIONS[Math.floor(Math.random() * CROSS_BORDER_DESTINATIONS.length)];
+}
+
 function generateMockFraudData(count = 150): FraudEvent[] {
   const events: FraudEvent[] = [];
   const now = Date.now();
@@ -104,6 +131,7 @@ function generateMockFraudData(count = 150): FraudEvent[] {
     const riskScore = Math.floor(Math.random() * 100);
     const hoursAgo = Math.floor(Math.random() * 168);
     const minutesAgo = Math.floor(Math.random() * 60);
+    const destination = pickCrossBorderDestination(action, riskScore);
 
     events.push({
       id: 1000 + i,
@@ -121,10 +149,12 @@ function generateMockFraudData(count = 150): FraudEvent[] {
         lon: cityData.lon + (Math.random() - 0.5) * 0.1,
         isp: cityData.isp,
       },
+      destination,
       parsedNewValue: {
         amount: Math.floor(Math.random() * 500000) + 1000,
         status: riskScore >= 80 ? 'BLOCKED' : riskScore >= 50 ? 'FLAGGED' : 'ALLOWED',
         method: riskScore >= 60 ? 'SUSPICIOUS' : 'NORMAL',
+        crossBorder: !!destination,
       },
     });
   }
@@ -138,6 +168,7 @@ function generateSingleEvent(id: number): FraudEvent {
   const action = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
   const entityType = ENTITY_TYPES[Math.floor(Math.random() * ENTITY_TYPES.length)];
   const riskScore = Math.floor(Math.random() * 100);
+  const destination = pickCrossBorderDestination(action, riskScore);
   return {
     id,
     user_name: userName,
@@ -154,10 +185,12 @@ function generateSingleEvent(id: number): FraudEvent {
       lon: cityData.lon + (Math.random() - 0.5) * 0.1,
       isp: cityData.isp,
     },
+    destination,
     parsedNewValue: {
       amount: Math.floor(Math.random() * 500000) + 1000,
       status: riskScore >= 80 ? 'BLOCKED' : riskScore >= 50 ? 'FLAGGED' : 'ALLOWED',
       method: riskScore >= 60 ? 'SUSPICIOUS' : 'NORMAL',
+      crossBorder: !!destination,
     },
   };
 }
@@ -415,6 +448,49 @@ export default function FraudHeatmap() {
       layersRef.current.vectors.push(threatDot);
     });
 
+    // Cross-border money trails (event location → foreign destination)
+    const crossBorderEvents = filteredEvents.filter(e => e.destination && e.location).slice(0, 15);
+    crossBorderEvents.forEach((e) => {
+      if (!e.location || !e.destination) return;
+      const latlngs = [
+        [e.location.lat, e.location.lon],
+        [e.destination.lat, e.destination.lon],
+      ];
+      const trail = L.polyline(latlngs, {
+        color: '#f59e0b',
+        weight: 2,
+        opacity: 0.85,
+        dashArray: '5, 5',
+        className: 'fraud-money-trail',
+      }).addTo(map);
+      layersRef.current.vectors.push(trail);
+
+      // Destination marker
+      const destMarker = L.circleMarker([e.destination.lat, e.destination.lon], {
+        radius: 6,
+        fillColor: '#f59e0b',
+        color: '#ffffff',
+        weight: 2,
+        fillOpacity: 1,
+        className: 'fraud-destination-pulse',
+        interactive: false,
+      }).addTo(map);
+      layersRef.current.vectors.push(destMarker);
+
+      // Animated money packet traveling the trail
+      const moneyDot = L.circleMarker([e.location.lat, e.location.lon], {
+        radius: 4,
+        fillColor: '#f59e0b',
+        color: '#ffffff',
+        weight: 1.5,
+        fillOpacity: 1,
+        opacity: 0,
+        className: 'fraud-money-dot',
+        interactive: false,
+      }).addTo(map);
+      layersRef.current.vectors.push(moneyDot);
+    });
+
     // Event markers
     filteredEvents.forEach(e => {
       if (!e.location) return;
@@ -456,6 +532,11 @@ export default function FraudHeatmap() {
                 <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Amount</div>
                 <div style="font-size:12px;font-weight:700;color:#334155;margin-top:2px">₹${(parsed.amount || 0).toLocaleString('en-IN')}</div>
               </div>
+              ${e.destination ? `
+              <div style="background:#fffbeb;padding:8px 10px;border-radius:8px;grid-column:1/-1;border:1px solid #fef3c7">
+                <div style="font-size:9px;font-weight:600;color:#d97706;text-transform:uppercase;letter-spacing:0.5px">Cross-border Transfer To</div>
+                <div style="font-size:12px;font-weight:700;color:#92400e;margin-top:2px">${e.destination.city}, ${e.destination.country}</div>
+              </div>` : ''}
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px">
               <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;background:${parsed.status === 'BLOCKED' ? '#fef2f2' : parsed.status === 'FLAGGED' ? '#fffbeb' : '#f0fdf4'};color:${parsed.status === 'BLOCKED' ? '#dc2626' : parsed.status === 'FLAGGED' ? '#d97706' : '#16a34a'}">${parsed.status || 'UNKNOWN'}</span>
@@ -606,6 +687,19 @@ export default function FraudHeatmap() {
           10% { opacity: 1; }
           90% { opacity: 1; }
           100% { opacity: 0; }
+        }
+        .fraud-money-trail { animation: dash-flow 1.4s linear infinite; filter: drop-shadow(0 0 3px rgba(245,158,11,0.5)); }
+        .fraud-money-dot { animation: travel-money 2.8s ease-in-out infinite; }
+        @keyframes travel-money {
+          0% { opacity: 0; }
+          15% { opacity: 1; }
+          85% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        .fraud-destination-pulse { animation: dest-pulse 2s ease-in-out infinite; }
+        @keyframes dest-pulse {
+          0%, 100% { stroke-width: 2; r: 6; }
+          50% { stroke-width: 4; r: 8; }
         }
         .fraud-radar-scan {
           background: linear-gradient(180deg, transparent 0%, rgba(16,185,129,0.06) 50%, transparent 100%);
@@ -780,6 +874,10 @@ export default function FraudHeatmap() {
                 <span className="text-[10px] text-slate-600 font-medium">{l.label}</span>
               </div>
             ))}
+            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+              <div className="w-6 h-0.5 border-t-2 border-dashed border-amber-500" />
+              <span className="text-[10px] text-slate-600 font-medium">Money Trail Abroad</span>
+            </div>
           </div>
 
           {/* Bottom-right timestamp */}
