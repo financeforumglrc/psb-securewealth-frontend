@@ -135,7 +135,8 @@ function computeRiskScore(category: string, factors: string[], pathHasSanctioned
 
 export function generateMockCase(index = 0): FraudCase {
   const now = new Date();
-  const secondsAgo = randInt(0, 3600 * 24 * 30);
+  // Spread synthetic history across the last 10 years so all time-range filters have data
+  const secondsAgo = randInt(0, 3600 * 24 * 365 * 10);
   const createdAt = new Date(now.getTime() - secondsAgo * 1000);
   const month = String(createdAt.getMonth() + 1).padStart(2, '0');
   const caseRef = `FC-${createdAt.getFullYear()}-${month}-${String(index + 1).padStart(5, '0')}`;

@@ -1051,7 +1051,7 @@ export default function AdminDashboard() {
       return 'free';
     }
 
-    return DEMO_ACCOUNTS.map((demo, idx) => ({
+    const fromDemoAccounts = DEMO_ACCOUNTS.map((demo, idx) => ({
       id: demo.id,
       email: demo.email,
       name: demo.profile.name,
@@ -1066,6 +1066,37 @@ export default function AdminDashboard() {
       api_usage_total: Math.floor(rnd(demo.id, 1000) * 500),
       is_active: 1,
     }));
+
+    // Generate additional synthetic account holders so the admin list looks populated
+    const firstNames = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Krishna', 'Ayaan', 'Ishaan', 'Rohan', 'Karan', 'Priya', 'Neha', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Navya', 'Kavya', 'Pooja', 'Ritu', 'Amit', 'Vikram', 'Rahul', 'Sneha', 'Meera', 'Tanya', 'Divya', 'Yash', 'Ravi'];
+    const lastNames = ['Sharma', 'Kumar', 'Singh', 'Patel', 'Gupta', 'Reddy', 'Nair', 'Iyer', 'Verma', 'Yadav', 'Mehta', 'Joshi', 'Desai', 'Shah', 'Bhat', 'Rao', 'Kapoor', 'Malhotra', 'Choudhary', 'Menon', 'Jain', 'Agarwal', 'Banerjee', 'Das', 'Ghosh', 'Mishra', 'Pandey', 'Tiwari', 'Chauhan', 'Kaur'];
+    const tiers: ('free' | 'premium' | 'enterprise')[] = ['free', 'free', 'free', 'premium', 'premium', 'enterprise'];
+    const synthetic: UserRecord[] = [];
+    for (let i = 0; i < 30; i++) {
+      const idx = DEMO_ACCOUNTS.length + i;
+      const fname = firstNames[i % firstNames.length];
+      const lname = lastNames[(i * 3) % lastNames.length];
+      const id = `${fname.toLowerCase()}-${lname.toLowerCase()}-${i + 1}`;
+      const seed = id;
+      const phoneBase = 9876500000 + idx;
+      synthetic.push({
+        id,
+        email: `${fname.toLowerCase()}.${lname.toLowerCase()}${i + 1}@example.com`,
+        name: `${fname} ${lname}`,
+        phone: `+91-${String(phoneBase).slice(0, 5)}-${String(phoneBase).slice(5)}`,
+        role: 'user',
+        tier: tiers[idx % tiers.length],
+        pan_number: generatePan(seed),
+        aadhar: generateAadhaar(seed),
+        created_at: new Date(Date.now() - (idx + 1) * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        last_login: new Date(Date.now() - idx * 2 * 24 * 60 * 60 * 1000).toISOString(),
+        face_registered: idx % 3 === 0 ? 1 : 0,
+        api_usage_total: Math.floor(rnd(seed, 1000) * 500),
+        is_active: 1,
+      });
+    }
+
+    return [...fromDemoAccounts, ...synthetic];
   }, []);
 
   const loadData = async (page = usersPage, opts: { q?: string; sort?: SortKey; order?: SortDir } = {}) => {

@@ -997,6 +997,20 @@ const fraudDb = {
         if (filters.userId) { sql += ' AND c.user_id = ?'; params.push(filters.userId); }
         if (filters.dateFrom) { sql += ' AND c.created_at >= ?'; params.push(filters.dateFrom); }
         if (filters.dateTo) { sql += ' AND c.created_at <= ?'; params.push(filters.dateTo); }
+        if (filters.timeRange && filters.timeRange !== 'all') {
+            const now = new Date().toISOString();
+            let seconds = 0;
+            switch (filters.timeRange) {
+                case 'live': seconds = 60; break;
+                case '7d': seconds = 7 * 24 * 60 * 60; break;
+                case '1m': seconds = 30 * 24 * 60 * 60; break;
+                case '1y': seconds = 365 * 24 * 60 * 60; break;
+                case '10y': seconds = 10 * 365 * 24 * 60 * 60; break;
+            }
+            if (seconds > 0) {
+                sql += " AND c.created_at >= datetime('now', '-" + seconds + " seconds')";
+            }
+        }
         if (filters.minRisk !== undefined) { sql += ' AND c.risk_score >= ?'; params.push(filters.minRisk); }
         if (filters.maxRisk !== undefined) { sql += ' AND c.risk_score <= ?'; params.push(filters.maxRisk); }
         if (filters.q) {

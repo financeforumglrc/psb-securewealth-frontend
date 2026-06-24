@@ -52,6 +52,7 @@ router.get('/cases', adminApiAuth, (req, res) => {
             userId: req.query.userId,
             dateFrom: req.query.dateFrom,
             dateTo: req.query.dateTo,
+            timeRange: req.query.timeRange,
             minRisk: req.query.minRisk !== undefined ? parseFloat(req.query.minRisk) : undefined,
             maxRisk: req.query.maxRisk !== undefined ? parseFloat(req.query.maxRisk) : undefined,
             q: req.query.q,

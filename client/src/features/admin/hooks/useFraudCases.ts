@@ -38,6 +38,19 @@ function isBackendMissingError(err: any): boolean {
   );
 }
 
+function getTimeRangeMs(range?: string): number | null {
+  if (!range || range === 'all') return null;
+  const msPerDay = 24 * 60 * 60 * 1000;
+  switch (range) {
+    case 'live': return 60 * 1000; // last 60 seconds
+    case '7d': return 7 * msPerDay;
+    case '1m': return 30 * msPerDay;
+    case '1y': return 365 * msPerDay;
+    case '10y': return 10 * 365 * msPerDay;
+    default: return null;
+  }
+}
+
 function applyLocalFilters(cases: FraudCase[], filters: FraudCaseFilters): FraudCase[] {
   let result = [...cases];
 
@@ -48,6 +61,13 @@ function applyLocalFilters(cases: FraudCase[], filters: FraudCaseFilters): Fraud
   if (filters.userId) result = result.filter(c => c.userId === filters.userId || c.user?.id === filters.userId);
   if (filters.minRisk !== undefined) result = result.filter(c => c.riskScore >= filters.minRisk!);
   if (filters.maxRisk !== undefined) result = result.filter(c => c.riskScore <= filters.maxRisk!);
+  if (filters.timeRange && filters.timeRange !== 'all') {
+    const windowMs = getTimeRangeMs(filters.timeRange);
+    if (windowMs !== null) {
+      const cutoff = Date.now() - windowMs;
+      result = result.filter(c => new Date(c.createdAt).getTime() >= cutoff);
+    }
+  }
   if (filters.dateFrom) {
     const from = new Date(filters.dateFrom).getTime();
     result = result.filter(c => new Date(c.createdAt).getTime() >= from);

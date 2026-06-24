@@ -11,16 +11,30 @@ const { generateCase, persistCase } = require('../lib/fraudGenerator');
 
 const DEMO_PASSWORD = 'password123';
 
-const demoUsers = [
-    { id: 'deepanshu-sharma', name: 'Deepanshu Sharma', email: 'deepanshu@example.com', phone: '9876543210', tier: 'premium', role: 'user' },
-    { id: 'priya-patel', name: 'Priya Patel', email: 'priya@example.com', phone: '9876543211', tier: 'premium', role: 'user' },
-    { id: 'arjun-iyer', name: 'Arjun Iyer', email: 'arjun@example.com', phone: '9876543212', tier: 'free', role: 'user' },
-    { id: 'riya-gupta', name: 'Riya Gupta', email: 'riya@example.com', phone: '9876543213', tier: 'enterprise', role: 'user' },
-    { id: 'vikram-rao', name: 'Vikram Rao', email: 'vikram@example.com', phone: '9876543214', tier: 'free', role: 'user' },
-    { id: 'ananya-menon', name: 'Ananya Menon', email: 'ananya@example.com', phone: '9876543215', tier: 'premium', role: 'user' },
-    { id: 'karan-malik', name: 'Karan Malik', email: 'karan@example.com', phone: '9876543216', tier: 'enterprise', role: 'user' },
-    { id: 'neha-shah', name: 'Neha Shah', email: 'neha@example.com', phone: '9876543217', tier: 'free', role: 'user' },
-];
+const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Krishna', 'Ayaan', 'Ishaan', 'Rohan', 'Karan', 'Priya', 'Neha', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Navya', 'Kavya', 'Pooja', 'Ritu', 'Amit', 'Vikram', 'Rahul', 'Sneha', 'Meera', 'Tanya', 'Divya', 'Yash', 'Ravi'];
+const LAST_NAMES = ['Sharma', 'Kumar', 'Singh', 'Patel', 'Gupta', 'Reddy', 'Nair', 'Iyer', 'Verma', 'Yadav', 'Mehta', 'Joshi', 'Desai', 'Shah', 'Bhat', 'Rao', 'Kapoor', 'Malhotra', 'Choudhary', 'Menon', 'Jain', 'Agarwal', 'Banerjee', 'Das', 'Ghosh', 'Mishra', 'Pandey', 'Tiwari', 'Chauhan', 'Kaur'];
+const TIERS = ['free', 'free', 'free', 'premium', 'premium', 'enterprise'];
+
+function generateDemoUsers(count = 30) {
+    const users = [];
+    for (let i = 0; i < count; i++) {
+        const fname = FIRST_NAMES[i % FIRST_NAMES.length];
+        const lname = LAST_NAMES[(i * 3) % LAST_NAMES.length];
+        const id = `${fname.toLowerCase()}-${lname.toLowerCase()}-${i + 1}`;
+        const phone = String(9876500000 + i);
+        users.push({
+            id,
+            name: `${fname} ${lname}`,
+            email: `${fname.toLowerCase()}.${lname.toLowerCase()}${i + 1}@example.com`,
+            phone: `${phone.slice(0, 5)}-${phone.slice(5)}`,
+            tier: TIERS[i % TIERS.length],
+            role: 'user',
+        });
+    }
+    return users;
+}
+
+const demoUsers = generateDemoUsers(30);
 
 const panFor = (idx) => `ABCDE${String(idx).padStart(4, '0')}F`;
 const aadhaarFor = (idx) => `XXXX XXXX ${String(1000 + idx).slice(-4)}`;

@@ -9,7 +9,7 @@ import { useFraudCases } from '@/features/admin/hooks/useFraudCases';
 import { fraudService } from '@/features/admin/services/fraudService';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { generateLiveMockCase } from '@/features/admin/lib/fraudDataGenerator';
-import type { FraudCase } from '@/features/admin/lib/fraudTypes';
+import type { FraudCase, FraudTimeRange } from '@/features/admin/lib/fraudTypes';
 import FraudCaseExplorer from './FraudCaseExplorer';
 import FraudCaseDetail from './FraudCaseDetail';
 import FraudMapView from './FraudMapView';
@@ -37,6 +37,20 @@ export default function FraudIntelligenceCenter() {
   const { cases, loading, error, filters, setFilters, pagination, setPage, refresh, stats, statsLoading, isLocalMock, mutateLocalCase } = useFraudCases({ limit: 25 });
   const liveIntervalRef = useRef<number | null>(null);
 
+  const TIME_RANGES: { key: FraudTimeRange; label: string }[] = [
+    { key: 'live', label: 'Live' },
+    { key: '7d', label: '7D' },
+    { key: '1m', label: '1M' },
+    { key: '1y', label: '1Y' },
+    { key: '10y', label: '10Y' },
+    { key: 'all', label: 'All' },
+  ];
+
+  const setTimeRange = (range: FraudTimeRange) => {
+    setFilters(prev => ({ ...prev, timeRange: range, page: 1 }));
+    setLiveMode(range === 'live');
+  };
+
   const allCases = useCallback(() => {
     // Merge live injected cases on top of paginated cases, dedupe by id
     const map = new Map<number, FraudCase>();
@@ -49,6 +63,14 @@ export default function FraudIntelligenceCenter() {
     const entry = { id: `${Date.now()}-${Math.random()}`, caseRef, message, time: new Date().toLocaleTimeString('en-IN') };
     setLiveLog(prev => [entry, ...prev].slice(0, 20));
   }, []);
+
+  // Auto-start live feed when the Map tab is opened
+  useEffect(() => {
+    if (activeTab === 'map' && filters.timeRange !== 'live') {
+      setTimeRange('live');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   useEffect(() => {
     if (!liveMode) {
@@ -189,6 +211,26 @@ export default function FraudIntelligenceCenter() {
               </span>
             )}
           </div>
+        </div>
+
+        {/* Time range filters */}
+        <div className="flex flex-wrap gap-2">
+          {TIME_RANGES.map((r) => {
+            const active = filters.timeRange === r.key || (r.key === 'all' && !filters.timeRange);
+            return (
+              <button
+                key={r.key}
+                onClick={() => setTimeRange(r.key)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  active
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                {r.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Live ticker */}

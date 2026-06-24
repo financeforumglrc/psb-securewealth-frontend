@@ -111,6 +111,8 @@ export interface FraudCasesResponse {
   pages: number;
 }
 
+export type FraudTimeRange = 'live' | '7d' | '1m' | '1y' | '10y' | 'all';
+
 export interface FraudCaseFilters {
   status?: FraudStatus;
   priority?: FraudPriority;
@@ -126,6 +128,7 @@ export interface FraudCaseFilters {
   order?: 'asc' | 'desc';
   page?: number;
   limit?: number;
+  timeRange?: FraudTimeRange;
 }
 
 export interface FraudStats {

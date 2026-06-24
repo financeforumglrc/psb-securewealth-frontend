@@ -63,7 +63,6 @@ export default function FraudMapView({ cases, loading, highlightCases = [] }: Pr
     layersRef.current = [];
 
     const renderedCases = cases.slice(0, 100);
-    const bounds: any[] = [];
 
     renderedCases.forEach(c => {
       const hops = (c.hops || []).filter((h): h is FraudHop => typeof h.lat === 'number' && typeof h.lon === 'number');
@@ -72,7 +71,6 @@ export default function FraudMapView({ cases, loading, highlightCases = [] }: Pr
       const isCritical = c.riskScore >= 80;
       const color = isCritical ? '#ef4444' : c.riskScore >= 60 ? '#f97316' : '#6366f1';
       const latlngs = hops.map(h => [h.lat, h.lon]);
-      latlngs.forEach(([lat, lon]) => bounds.push([lat, lon]));
 
       const polyline = L.polyline(latlngs, {
         color,
@@ -98,9 +96,6 @@ export default function FraudMapView({ cases, loading, highlightCases = [] }: Pr
       });
     });
 
-    if (bounds.length) {
-      try { map.fitBounds(bounds, { padding: [40, 40] }); } catch { /* ignore */ }
-    }
   }, [leafletReady, cases]);
 
   // Pulse animation for live/highlighted cases
