@@ -8,11 +8,14 @@ import { backendApi } from '@/shared/lib/backendApi';
 import { useWealthStore } from '@/shared/store/wealthStore';
 
 function loadLeaflet(): Promise<any> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if ((window as any).L) return resolve((window as any).L);
     const s = document.createElement('script');
     s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    s.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+    s.crossOrigin = 'anonymous';
     s.onload = () => resolve((window as any).L);
+    s.onerror = () => reject(new Error('Failed to load Leaflet'));
     document.body.appendChild(s);
   });
 }
@@ -229,6 +232,7 @@ export default function FraudHeatmap() {
   const [countryFilter, setCountryFilter] = useState<string>('all');
   const [isLive, setIsLive] = useState(true);
   const [flashCount, setFlashCount] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const idCounterRef = useRef(2000);
   const darkMode = useWealthStore((s) => s.darkMode);
 
@@ -262,7 +266,9 @@ export default function FraudHeatmap() {
         const newReal = real.filter(e => !existingKeys.has(`${e.ip_address}-${e.created_at}`));
         merged = [...newReal, ...base];
       }
-    } catch {}
+    } catch {
+      /* backend unavailable — fall back to generated mock data */
+    }
     setEvents(merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 250));
     setLoading(false);
     setLastRefresh(new Date());
@@ -272,29 +278,43 @@ export default function FraudHeatmap() {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
     let cancelled = false;
-    loadLeaflet().then(L => {
-      if (cancelled || !mapRef.current) return;
-      const map = L.map(mapRef.current, {
-        center: [22.5, 78.9629],
-        zoom: 5,
-        minZoom: 4,
-        maxZoom: 8,
-        zoomControl: false,
-        attributionControl: false,
+    let resizeHandler: (() => void) | null = null;
+    loadLeaflet()
+      .then(L => {
+        if (cancelled || !mapRef.current) return;
+        const map = L.map(mapRef.current, {
+          center: [22.5, 78.9629],
+          zoom: 5,
+          minZoom: 4,
+          maxZoom: 8,
+          zoomControl: false,
+          attributionControl: false,
+        });
+        const tileUrl = darkMode
+          ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+          : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+        tileLayerRef.current = L.tileLayer(tileUrl, {
+          maxZoom: 18,
+          subdomains: 'abcd',
+        }).addTo(map);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        mapInstanceRef.current = map;
+        // Ensure Leaflet recalculates container size after render / tab switches
+        requestAnimationFrame(() => map.invalidateSize());
+        const timer = setTimeout(() => map.invalidateSize(), 250);
+        resizeHandler = () => map.invalidateSize();
+        window.addEventListener('resize', resizeHandler);
+        fetchEvents();
+        return () => clearTimeout(timer);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        setLoadError(err?.message || 'Map library failed to load');
+        setLoading(false);
       });
-      const tileUrl = darkMode
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-      tileLayerRef.current = L.tileLayer(tileUrl, {
-        maxZoom: 18,
-        subdomains: 'abcd',
-      }).addTo(map);
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-      mapInstanceRef.current = map;
-      fetchEvents();
-    });
     return () => {
       cancelled = true;
+      if (resizeHandler) window.removeEventListener('resize', resizeHandler);
       if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; }
     };
   }, [fetchEvents]);
@@ -642,11 +662,21 @@ export default function FraudHeatmap() {
         <div className="flex-1 relative rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 fraud-light-frame shadow-sm" style={{ minHeight: 420 }}>
           <div ref={mapRef} className="absolute inset-0 rounded-2xl" />
 
-          {loading && (
+          {loading && !loadError && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-[999]">
               <div className="flex flex-col items-center gap-3">
                 <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
                 <p className="text-sm text-slate-600 font-medium">Loading fraud intelligence...</p>
+              </div>
+            </div>
+          )}
+
+          {loadError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/90 z-[999]">
+              <div className="flex flex-col items-center gap-3 text-center px-6">
+                <AlertTriangle className="w-10 h-10 text-rose-500" />
+                <p className="text-sm font-medium text-slate-700">Map could not load</p>
+                <p className="text-xs text-slate-500 max-w-xs">{loadError}. Please check your network and refresh the page.</p>
               </div>
             </div>
           )}

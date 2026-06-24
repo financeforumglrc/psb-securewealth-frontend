@@ -1101,6 +1101,8 @@ export const translations = {
     twinDnaCapitalPreserverDesc: 'Prefer safety over growth.',
     twinDnaSafetyFirstDesc: 'No blocked transactions. Clean history.',
     twinDnaRiskAwareDesc: '{count} high-risk events detected & blocked.',
+    twinYearsSuffix: 'years',
+    twinPerYearSuffix: '/year',
 },
   hi: {
     // Common
@@ -2202,6 +2204,8 @@ export const translations = {
     twinDnaCapitalPreserverDesc: 'वृद्धि से अधिक सुरक्षा पसंद करें।',
     twinDnaSafetyFirstDesc: 'कोई अवरुद्ध लेनदेन नहीं। स्वच्छ इतिहास।',
     twinDnaRiskAwareDesc: '{count} उच्च-जोखिम घटनाएँ पता लगाईं और अवरुद्ध की गईं।',
+    twinYearsSuffix: 'वर्ष',
+    twinPerYearSuffix: '/वर्ष',
 },
 } as const;
 
