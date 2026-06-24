@@ -88,7 +88,13 @@ export default function JudgeTour() {
   const [active, setActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [showToast, setShowToast] = useState(false);
+  const [dismissed, setDismissed] = useState(() => localStorage.getItem('sw-judge-tour-dismissed') === '1');
   const setView = useWealthStore((s) => s.setView);
+
+  const dismissTourPrompt = useCallback(() => {
+    localStorage.setItem('sw-judge-tour-dismissed', '1');
+    setDismissed(true);
+  }, []);
 
   const currentStep = TOUR_STEPS[stepIndex];
 
@@ -178,23 +184,34 @@ export default function JudgeTour() {
   return (
     <>
       {/* Floating Start Button */}
-      {!active && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={startTour}
-          className="fixed bottom-6 right-6 z-[60] px-5 py-3 bg-gradient-to-r from-primary to-primary-dark text-white rounded-2xl shadow-xl shadow-primary/30 flex items-center gap-3 font-bold text-sm hover:shadow-2xl transition-shadow"
+      {!active && !dismissed && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="fixed bottom-5 right-5 z-[60] flex items-center gap-2"
         >
-          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-            <i className="fas fa-play text-xs" />
-          </div>
-          <div className="text-left">
-            <p className="text-xs font-bold">Judge Demo Tour</p>
-            <p className="text-[10px] text-white/70">60-second feature walkthrough</p>
-          </div>
-        </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={startTour}
+            className="pl-4 pr-5 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-2xl shadow-lg shadow-primary/25 flex items-center gap-2.5 font-bold text-xs hover:shadow-xl transition-shadow"
+          >
+            <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
+              <i className="fas fa-play text-[10px]" />
+            </div>
+            <div className="text-left">
+              <p className="text-[11px] font-bold leading-tight">Judge Demo Tour</p>
+              <p className="text-[9px] text-white/70">60-second walkthrough</p>
+            </div>
+          </motion.button>
+          <button
+            onClick={dismissTourPrompt}
+            aria-label="Dismiss demo tour prompt"
+            className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 text-slate-500 shadow-md border border-slate-100 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          >
+            <i className="fas fa-times text-xs" />
+          </button>
+        </motion.div>
       )}
 
       {/* Tour Toast */}

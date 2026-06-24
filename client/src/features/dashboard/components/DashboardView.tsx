@@ -43,11 +43,16 @@ export default function DashboardView() {
   const { t, language, setLanguage } = useTranslation();
   const { cashbackBalance } = useRewards();
   const streak = getStreak();
+  const kycVerified = useWealthStore((s) => s.kycVerified);
 
   const rawNetWorth = assets.reduce((sum, a) => sum + a.value, 0);
   const healthScore = coercedMode ? 15 : Math.min(Math.round((user.monthlySavings / user.monthlyIncome) * 200 + 40), 100);
   const activeGoals = goals.filter((g) => g.currentAmount < g.targetAmount).length;
   const savingsRate = user.monthlyIncome > 0 ? ((user.monthlySavings / user.monthlyIncome) * 100).toFixed(1) : '0';
+  const netWorthChangePct = rawNetWorth > 0 ? ((user.monthlySavings / rawNetWorth) * 100).toFixed(1) : '0.0';
+  const isCashbackPositive = cashbackBalance > 0;
+  const isStreakHot = streak.days > 5;
+  const isHealthGood = healthScore > 70;
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -57,11 +62,58 @@ export default function DashboardView() {
   }, [t]);
 
   const statCards = [
-    { label: t('netWorth'), value: coercedMode ? '₹5,000' : formatCroreMask(rawNetWorth, duressModeActive), icon: 'fa-wallet', color: 'from-primary/20 to-primary/5', text: 'text-primary', trend: '+2.4%', trendUp: true },
-    { label: t('monthlySavings'), value: coercedMode ? '₹500' : formatCurrencyMask(user.monthlySavings, duressModeActive), icon: 'fa-piggy-bank', color: 'from-emerald-500/20 to-emerald-500/5', text: 'text-emerald-600', trend: '+' + savingsRate + '%', trendUp: true },
-    { label: t('healthScore'), value: `${healthScore}/100`, icon: 'fa-heart-pulse', color: 'from-amber-500/20 to-amber-500/5', text: 'text-amber-600', trend: healthScore > 70 ? 'Good' : 'Needs work', trendUp: healthScore > 70 },
-    { label: t('cashback'), value: formatCurrencyMask(cashbackBalance, duressModeActive), icon: 'fa-gift', color: 'from-pink-500/20 to-pink-500/5', text: 'text-pink-500', trend: 'Available', trendUp: true },
-    { label: t('streak'), value: `${streak.days} days`, icon: 'fa-fire', color: 'from-orange-500/20 to-orange-500/5', text: 'text-orange-500', trend: streak.days > 5 ? 'On fire!' : 'Keep going', trendUp: streak.days > 5 },
+    {
+      label: t('netWorth'),
+      value: coercedMode ? '₹5,000' : formatCroreMask(rawNetWorth, duressModeActive),
+      icon: 'fa-wallet',
+      color: 'from-primary/20 to-primary/5',
+      text: 'text-primary',
+      trend: `+${netWorthChangePct}%`,
+      trendIcon: 'fa-arrow-up',
+      trendColorClass: 'text-emerald-500',
+      trendPeriod: t('vsLastMonth'),
+    },
+    {
+      label: t('monthlySavings'),
+      value: coercedMode ? '₹500' : formatCurrencyMask(user.monthlySavings, duressModeActive),
+      icon: 'fa-piggy-bank',
+      color: 'from-emerald-500/20 to-emerald-500/5',
+      text: 'text-emerald-600',
+      trend: `+${savingsRate}%`,
+      trendIcon: 'fa-arrow-up',
+      trendColorClass: 'text-emerald-500',
+      trendPeriod: t('ofIncome'),
+    },
+    {
+      label: t('healthScore'),
+      value: `${healthScore}/100`,
+      icon: 'fa-heart-pulse',
+      color: 'from-amber-500/20 to-amber-500/5',
+      text: 'text-amber-600',
+      trend: isHealthGood ? t('healthGood') : t('needsWork'),
+      trendIcon: isHealthGood ? 'fa-check' : 'fa-triangle-exclamation',
+      trendColorClass: isHealthGood ? 'text-emerald-500' : 'text-amber-500',
+    },
+    {
+      label: t('cashback'),
+      value: formatCurrencyMask(cashbackBalance, duressModeActive),
+      icon: 'fa-gift',
+      color: 'from-pink-500/20 to-pink-500/5',
+      text: 'text-pink-500',
+      trend: isCashbackPositive ? t('available') : t('noCashbackYet'),
+      trendIcon: isCashbackPositive ? 'fa-arrow-up' : 'fa-minus',
+      trendColorClass: isCashbackPositive ? 'text-emerald-500' : 'text-slate-400',
+    },
+    {
+      label: t('streak'),
+      value: `${streak.days} days`,
+      icon: 'fa-fire',
+      color: 'from-orange-500/20 to-orange-500/5',
+      text: 'text-orange-500',
+      trend: isStreakHot ? t('onFire') : t('keepGoing'),
+      trendIcon: 'fa-fire',
+      trendColorClass: 'text-amber-500',
+    },
   ];
 
   const isSimple = dashboardDensity === 'simple';
@@ -100,13 +152,33 @@ export default function DashboardView() {
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{user.name || t('welcome')}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center bg-white dark:bg-slate-900 border border-psb-border dark:border-slate-700 rounded-xl p-1">
-              <button onClick={() => setLanguage('en')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${language === 'en' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>EN</button>
-              <button onClick={() => setLanguage('hi')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${language === 'hi' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>हिं</button>
+            <div className="flex items-center bg-white dark:bg-slate-900 border border-psb-border dark:border-slate-700 rounded-xl p-1" role="group" aria-label="Language">
+              <button
+                onClick={() => setLanguage('en')}
+                aria-pressed={language === 'en'}
+                aria-label="English"
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${language === 'en' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+              >EN</button>
+              <button
+                onClick={() => setLanguage('hi')}
+                aria-pressed={language === 'hi'}
+                aria-label="Hindi"
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${language === 'hi' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+              >हिं</button>
             </div>
-            <div className="flex items-center bg-white dark:bg-slate-900 border border-psb-border dark:border-slate-700 rounded-xl p-1">
-              <button onClick={() => setDashboardDensity('simple')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>{t('simpleMode')}</button>
-              <button onClick={() => setDashboardDensity('comprehensive')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${!isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>{t('comprehensiveMode')}</button>
+            <div className="flex items-center bg-white dark:bg-slate-900 border border-psb-border dark:border-slate-700 rounded-xl p-1" role="group" aria-label="Dashboard density">
+              <button
+                onClick={() => setDashboardDensity('simple')}
+                aria-pressed={isSimple}
+                aria-label={t('simpleMode')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+              >{t('simpleMode')}</button>
+              <button
+                onClick={() => setDashboardDensity('comprehensive')}
+                aria-pressed={!isSimple}
+                aria-label={t('comprehensiveMode')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${!isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+              >{t('comprehensiveMode')}</button>
             </div>
           </div>
         </div>
@@ -121,6 +193,15 @@ export default function DashboardView() {
             </motion.div>
           ))}
         </div>
+
+        {/* Contextual Quick Actions */}
+        <QuickActionBar
+          kycVerified={kycVerified}
+          onKyc={() => setView('profile')}
+          onPay={() => setView('payments')}
+          onGoal={() => setView('goals')}
+          onPortfolio={() => setView('portfolio')}
+        />
 
         {/* Hero */}
         <WealthTwinHero />
@@ -214,7 +295,7 @@ export default function DashboardView() {
 }
 
 function StatCardV2({
-  label, value, icon, color, text, trend, trendUp,
+  label, value, icon, color, text, trend, trendUp, trendIcon, trendColorClass, trendPeriod,
 }: {
   label: string;
   value: string;
@@ -223,7 +304,12 @@ function StatCardV2({
   text: string;
   trend?: string;
   trendUp?: boolean;
+  trendIcon?: string;
+  trendColorClass?: string;
+  trendPeriod?: string;
 }) {
+  const iconClass = trendIcon ?? `fa-arrow-${trendUp ? 'up' : 'down'}`;
+  const colorClass = trendColorClass ?? (trendUp ? 'text-emerald-500' : 'text-rose-500');
   return (
     <div className="card-stat group relative overflow-hidden">
       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
@@ -237,8 +323,9 @@ function StatCardV2({
         <p className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">{value}</p>
         {trend && (
           <div className="flex items-center gap-1 mt-1.5">
-            <i className={`fas fa-arrow-${trendUp ? 'up' : 'down'} text-[9px] ${trendUp ? 'text-emerald-500' : 'text-rose-500'}`} />
-            <span className={`text-[10px] font-semibold ${trendUp ? 'text-emerald-500' : 'text-rose-500'}`}>{trend}</span>
+            <i className={`fas ${iconClass} text-[9px] ${colorClass}`} />
+            <span className={`text-[10px] font-semibold ${colorClass}`}>{trend}</span>
+            {trendPeriod && <span className="text-[9px] text-slate-400 dark:text-slate-500">{trendPeriod}</span>}
           </div>
         )}
       </div>
@@ -256,6 +343,46 @@ function SectionHeader({ icon, title, subtitle }: { icon: string; title: string;
           <p className="text-[10px] text-slate-500 dark:text-slate-400">{subtitle}</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function QuickActionBar({
+  kycVerified,
+  onKyc,
+  onPay,
+  onGoal,
+  onPortfolio,
+}: {
+  kycVerified: boolean;
+  onKyc: () => void;
+  onPay: () => void;
+  onGoal: () => void;
+  onPortfolio: () => void;
+}) {
+  const { t } = useTranslation();
+  const actions = [
+    ...(!kycVerified ? [{ label: t('completeKyc'), icon: 'fa-id-card', onClick: onKyc, variant: 'amber' as const }] : []),
+    { label: t('sendMoney'), icon: 'fa-paper-plane', onClick: onPay, variant: 'primary' as const },
+    { label: t('addGoal'), icon: 'fa-bullseye', onClick: onGoal, variant: 'neutral' as const },
+    { label: t('viewPortfolio'), icon: 'fa-layer-group', onClick: onPortfolio, variant: 'neutral' as const },
+  ];
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {actions.map((a) => {
+        const base = 'flex items-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50';
+        const styles = {
+          primary: 'bg-primary text-white hover:bg-primary-dark shadow-sm shadow-primary/20',
+          amber: 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300',
+          neutral: 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700',
+        };
+        return (
+          <button key={a.label} onClick={a.onClick} className={`${base} ${styles[a.variant]}`}>
+            <i className={`fas ${a.icon}`} /> {a.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

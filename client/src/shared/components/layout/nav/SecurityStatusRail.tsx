@@ -16,8 +16,9 @@ export default function SecurityStatusRail() {
   const state = security?.state;
   const score = state?.trustScore ?? 50;
   const [activeSignal, setActiveSignal] = useState<string | null>(null);
+  const [showRegInfo, setShowRegInfo] = useState(false);
 
-  let decision = { label: 'Allow', color: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' };
+  let decision = { label: 'Session Clear', color: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' };
   if (score < 35) {
     decision = { label: 'Block / Delay', color: 'bg-rose-500', text: 'text-rose-700', bg: 'bg-rose-50' };
   } else if (score < 70) {
@@ -36,20 +37,42 @@ export default function SecurityStatusRail() {
       <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-1.5">
         <div className="flex items-center gap-3 sm:gap-5 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {/* Regulatory */}
-          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-            <span className="flex items-center gap-1" title="DICGC insured up to ₹5 Lakhs">
-              <i className="fas fa-shield-check text-secondary" />
-              <span className="hidden sm:inline"><strong>DICGC</strong></span>
-            </span>
-            <span className="flex items-center gap-1" title="256-bit SSL">
-              <i className="fas fa-lock text-secondary" />
-              <span className="hidden sm:inline">SSL</span>
-            </span>
-            <span className="flex items-center gap-1" title="RBI Regulated">
-              <i className="fas fa-building-columns text-secondary" />
-              <span className="hidden sm:inline"><strong>RBI</strong></span>
-            </span>
-          </div>
+          <button
+            onClick={() => setShowRegInfo((s) => !s)}
+            aria-expanded={showRegInfo}
+            className="relative flex items-center gap-1.5 shrink-0 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/15 transition-colors"
+          >
+            <i className="fas fa-shield-check text-secondary" />
+            <span className="hidden sm:inline font-bold">Regulated & Insured</span>
+            <AnimatePresence>
+              {showRegInfo && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-3 text-left"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <p className="text-[10px] font-bold text-slate-700 mb-2">Regulatory Safeguards</p>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                      <i className="fas fa-shield-check text-emerald-500" />
+                      DICGC insured up to ₹5 Lakhs
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                      <i className="fas fa-lock text-emerald-500" />
+                      256-bit SSL encryption
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                      <i className="fas fa-building-columns text-emerald-500" />
+                      RBI regulated
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
 
           <span className="hidden sm:inline w-px h-3 bg-white/20 shrink-0" />
 
@@ -94,6 +117,8 @@ export default function SecurityStatusRail() {
                 <button
                   key={s.key}
                   onClick={() => setActiveSignal(open ? null : s.key)}
+                  aria-expanded={open}
+                  aria-controls={`${s.key}-tooltip`}
                   className={`relative flex items-center gap-1 px-1.5 py-0.5 rounded-md transition-colors ${
                     s.ok ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30' : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
                   } ${open ? 'ring-1 ring-white/30' : ''}`}
@@ -103,6 +128,7 @@ export default function SecurityStatusRail() {
                   <AnimatePresence>
                     {open && (
                       <motion.div
+                        id={`${s.key}-tooltip`}
                         initial={{ opacity: 0, y: 6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.96 }}

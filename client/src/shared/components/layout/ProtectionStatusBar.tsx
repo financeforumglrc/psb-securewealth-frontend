@@ -14,8 +14,9 @@ export default function ProtectionStatusBar() {
   const state = security?.state;
   const score = state?.trustScore ?? 50;
   const [activeSignal, setActiveSignal] = useState<string | null>(null);
+  const [showRegInfo, setShowRegInfo] = useState(false);
 
-  let decision = { label: 'Allow', color: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' };
+  let decision = { label: 'Session Clear', color: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' };
   if (score < 35) {
     decision = { label: 'Block / Delay', color: 'bg-rose-500', text: 'text-rose-700', bg: 'bg-rose-50' };
   } else if (score < 70) {
@@ -36,17 +37,49 @@ export default function ProtectionStatusBar() {
 
       <div className="relative max-w-[1440px] mx-auto px-4 lg:px-6 py-1.5">
         <div className="flex items-center gap-3 sm:gap-5 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {/* Shield + status */}
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="relative w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-              <i className="fas fa-shield-halved text-primary text-xs" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse" />
+          {/* Regulatory & Protection */}
+          <button
+            onClick={() => setShowRegInfo((s) => !s)}
+            aria-expanded={showRegInfo}
+            className="relative flex items-center gap-2 shrink-0 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors"
+          >
+            <div className="relative w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <i className="fas fa-shield-halved text-primary text-[10px]" />
+              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 rounded-full border border-white animate-pulse" />
             </div>
-            <div>
-              <p className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider">Wealth Protection</p>
-              <p className="text-[9px] text-slate-500">Layer Active</p>
+            <div className="text-left">
+              <p className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider">Regulated & Insured</p>
+              <p className="text-[9px] text-slate-500">Protection Layer Active</p>
             </div>
-          </div>
+            <AnimatePresence>
+              {showRegInfo && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-3 text-left"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <p className="text-[10px] font-bold text-slate-700 mb-2">Regulatory Safeguards</p>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                      <i className="fas fa-shield-check text-emerald-500" />
+                      DICGC insured up to ₹5 Lakhs
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                      <i className="fas fa-lock text-emerald-500" />
+                      256-bit SSL encryption
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                      <i className="fas fa-building-columns text-emerald-500" />
+                      RBI regulated
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
 
           <span className="hidden sm:inline w-px h-6 bg-slate-200 shrink-0" />
 
@@ -83,6 +116,8 @@ export default function ProtectionStatusBar() {
                 <button
                   key={s.key}
                   onClick={() => setActiveSignal(open ? null : s.key)}
+                  aria-expanded={open}
+                  aria-controls={`${s.key}-tooltip`}
                   className={`relative flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-bold border transition-all ${
                     s.ok
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
@@ -94,6 +129,7 @@ export default function ProtectionStatusBar() {
                   <AnimatePresence>
                     {open && (
                       <motion.div
+                        id={`${s.key}-tooltip`}
                         initial={{ opacity: 0, y: 6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.96 }}

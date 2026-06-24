@@ -199,6 +199,18 @@ function RailFlyout({
   );
 }
 
+function TooltipButton({ children, label }: { children: React.ReactNode; label: string }) {
+  return (
+    <div className="relative group">
+      {children}
+      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
+        {label}
+        <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-slate-800 rotate-45" />
+      </div>
+    </div>
+  );
+}
+
 export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMobile }: SidebarProps) {
   const [flyout, setFlyout] = useState<string | null>(null);
   const user = useWealthStore((s) => s.user);
@@ -220,9 +232,11 @@ export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMo
         </div>
 
         {/* User */}
-        <button onClick={() => onNavigate('profile')} className="mx-auto mt-3 w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm hover:ring-2 ring-primary/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" title="Profile" aria-label="Open profile">
-          {initials}
-        </button>
+        <TooltipButton label="Profile">
+          <button onClick={() => onNavigate('profile')} className="mx-auto mt-3 w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm hover:ring-2 ring-primary/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Open profile">
+            {initials}
+          </button>
+        </TooltipButton>
 
         <div className="px-3 py-2">
           <div className="h-px bg-slate-100" />
@@ -254,27 +268,32 @@ export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMo
 
         {/* Trust score mini */}
         <div className="p-2 border-t border-slate-100">
-          <button
-            onClick={() => onNavigate('security-beast')}
-            className="w-full flex flex-col items-center gap-1 p-1.5 rounded-xl hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            title={`Trust score ${trustScore}`}
-            aria-label={`Trust score ${trustScore}`}
-          >
-            <div className="relative w-8 h-8">
-              <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
-                <path className="text-slate-200" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" />
-                <path className={trustScore >= 70 ? 'text-emerald-500' : trustScore >= 35 ? 'text-amber-500' : 'text-rose-500'} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray={`${trustScore}, 100`} strokeLinecap="round" />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-slate-700">{trustScore}</span>
-            </div>
-            <span className="text-[7px] font-bold text-slate-500 uppercase">Trust</span>
-          </button>
+          <TooltipButton label={`Trust score ${trustScore}`}>
+            <button
+              onClick={() => onNavigate('security-beast')}
+              className="w-full flex flex-col items-center gap-1 p-1.5 rounded-xl hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              aria-label={`Trust score ${trustScore}`}
+            >
+              <div className="relative w-8 h-8">
+                <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+                  <path className="text-slate-200" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" />
+                  <path className={trustScore >= 70 ? 'text-emerald-500' : trustScore >= 35 ? 'text-amber-500' : 'text-rose-500'} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray={`${trustScore}, 100`} strokeLinecap="round" />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-slate-700">{trustScore}</span>
+              </div>
+              <span className="text-[7px] font-bold text-slate-500 uppercase">Trust</span>
+            </button>
+          </TooltipButton>
         </div>
 
         {/* Bottom actions */}
         <div className="p-2 border-t border-slate-100 space-y-1">
-          <button onClick={() => onNavigate('accessibility')} className="w-full aspect-square rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" title="Accessibility" aria-label="Accessibility settings"><i className="fas fa-universal-access" /></button>
-          <button onClick={() => { clearAuth(); window.location.reload(); }} className="w-full aspect-square rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50" title="Logout" aria-label="Logout"><i className="fas fa-sign-out-alt" /></button>
+          <TooltipButton label="Accessibility">
+            <button onClick={() => onNavigate('accessibility')} className="w-full aspect-square rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" aria-label="Accessibility settings"><i className="fas fa-universal-access" /></button>
+          </TooltipButton>
+          <TooltipButton label="Logout">
+            <button onClick={() => { clearAuth(); window.location.reload(); }} className="w-full aspect-square rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50" aria-label="Logout"><i className="fas fa-sign-out-alt" /></button>
+          </TooltipButton>
         </div>
 
         {/* Flyout */}

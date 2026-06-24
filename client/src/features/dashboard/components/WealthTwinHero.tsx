@@ -19,6 +19,7 @@ interface RiskSignal {
   status: 'safe' | 'warn' | 'danger';
   icon: string;
   detail: string;
+  tooltip: string;
 }
 
 export default function WealthTwinHero() {
@@ -77,6 +78,11 @@ export default function WealthTwinHero() {
 
   // Animated score
   const [displayScore, setDisplayScore] = useState(0);
+  const [openSignal, setOpenSignal] = useState<string | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, []);
   useEffect(() => {
     const duration = 1000;
     const start = performance.now();
@@ -100,12 +106,16 @@ export default function WealthTwinHero() {
         status: 'safe',
         icon: 'fa-mobile-screen-button',
         detail: 'Trusted device verified',
+        tooltip: 'Your current device is recognised and trusted. New or unknown devices raise the protection risk score.',
       },
       {
         label: 'Behavior Pattern',
         status: savingsRate < 15 ? 'warn' : 'safe',
         icon: 'fa-fingerprint',
         detail: savingsRate < 15 ? `Savings rate low (${savingsRate.toFixed(1)}%)` : 'Spending pattern normal',
+        tooltip: savingsRate < 15
+          ? 'Your savings rate is below 15%. Increasing it improves long-term resilience.'
+          : 'Your spending and saving pattern is within a healthy range.',
       },
       {
         label: 'Market Risk',
@@ -114,12 +124,16 @@ export default function WealthTwinHero() {
         detail: marketData.niftyPe > 26
           ? `NIFTY P/E elevated (${marketData.niftyPe})`
           : `Markets stable (P/E ${marketData.niftyPe})`,
+        tooltip: marketData.niftyPe > 26 || marketData.inflation > 6
+          ? 'Market valuations or inflation are elevated. Review exposure to high-risk assets.'
+          : 'Market indicators are stable. Continue periodic rebalancing.',
       },
       {
         label: 'Transaction History',
         status: 'safe',
         icon: 'fa-receipt',
         detail: `${transactions.length} transactions analyzed`,
+        tooltip: 'Recent transactions are screened for anomalies, large deviations, and fraud patterns.',
       },
     ];
     return list;
@@ -146,18 +160,18 @@ export default function WealthTwinHero() {
 
         <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* LEFT: Twin Visual */}
-          <div className="lg:col-span-4 flex flex-col items-center">
+          <div className="lg:col-span-4 flex flex-col items-center justify-center min-h-[260px] py-6">
             {/* Twin Avatar Circle */}
             <motion.div
               className={`relative w-40 h-40 rounded-full flex items-center justify-center ring-4 ${riskRing} ${riskGlow} shadow-2xl`}
-              animate={{ scale: [1, 1.02, 1] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              animate={reducedMotion ? undefined : { scale: [1, 1.02, 1] }}
+              transition={reducedMotion ? undefined : { duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
               {/* Outer rotating ring */}
               <motion.div
                 className="absolute inset-0 rounded-full border-2 border-dashed border-slate-300/50 dark:border-slate-600/50"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                animate={reducedMotion ? undefined : { rotate: 360 }}
+                transition={reducedMotion ? undefined : { duration: 20, repeat: Infinity, ease: 'linear' }}
               />
               {/* Inner gradient */}
               <div className={`w-32 h-32 rounded-full bg-gradient-to-br ${rs.gradient} flex flex-col items-center justify-center`}>
@@ -200,35 +214,50 @@ export default function WealthTwinHero() {
 
             {/* Signal Grid */}
             <div className="grid grid-cols-2 gap-3">
-              {signals.map((sig, i) => (
-                <motion.div
-                  key={sig.label}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + i * 0.1 }}
-                  className={`p-3 rounded-xl border flex items-start gap-2.5 ${
-                    sig.status === 'safe'
-                      ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/30'
-                      : sig.status === 'warn'
-                      ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800/30'
-                      : 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800/30'
-                  }`}
-                >
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${
-                    sig.status === 'safe'
-                      ? 'bg-emerald-100 text-emerald-600'
-                      : sig.status === 'warn'
-                      ? 'bg-amber-100 text-amber-600'
-                      : 'bg-rose-100 text-rose-600'
-                  }`}>
-                    <i className={`fas ${sig.icon}`} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{sig.label}</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{sig.detail}</p>
-                  </div>
-                </motion.div>
-              ))}
+              {signals.map((sig, i) => {
+                const open = openSignal === sig.label;
+                return (
+                  <motion.div
+                    key={sig.label}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={open}
+                    onClick={() => setOpenSignal(open ? null : sig.label)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenSignal(open ? null : sig.label); } }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + i * 0.1 }}
+                    className={`group relative p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                      sig.status === 'safe'
+                        ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/30'
+                        : sig.status === 'warn'
+                        ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800/30'
+                        : 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800/30'
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${
+                      sig.status === 'safe'
+                        ? 'bg-emerald-100 text-emerald-600'
+                        : sig.status === 'warn'
+                        ? 'bg-amber-100 text-amber-600'
+                        : 'bg-rose-100 text-rose-600'
+                    }`}>
+                      <i className={`fas ${sig.icon}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{sig.label}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{sig.detail}</p>
+                    </div>
+                    {/* Tooltip */}
+                    <div
+                      className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-52 px-2.5 py-1.5 bg-slate-800 text-white text-[9px] rounded-lg shadow-lg z-10 transition-opacity pointer-events-none ${open ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                    >
+                      {sig.tooltip}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 rotate-45" />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* AI Strategic Rec */}
@@ -298,7 +327,7 @@ export default function WealthTwinHero() {
 
             <button
               onClick={() => setView('protection')}
-              className="w-full py-2.5 bg-slate-800 dark:bg-slate-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-900 transition-all"
+              className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all"
             >
               <i className="fas fa-shield-halved" />
               Open Protection Center
