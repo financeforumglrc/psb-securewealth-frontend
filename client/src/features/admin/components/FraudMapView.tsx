@@ -97,7 +97,8 @@ export default function FraudMapView({
   const [leafletReady, setLeafletReady] = useState(false);
   const [mapStyle, setMapStyle] = useState<MapStyle>('roads');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [zoom, setZoom] = useState(5);
+  const [zoom, setZoom] = useState(2);
+  const [introFlying, setIntroFlying] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showTrails, setShowTrails] = useState(true);
   const [showNodes, setShowNodes] = useState(true);
@@ -127,9 +128,10 @@ export default function FraudMapView({
   // Initialize Leaflet with retina tiles for crisp 4K rendering
   useEffect(() => {
     let mounted = true;
+    let introTimer: number | null = null;
     loadLeaflet().then((L) => {
       if (!mounted || !containerRef.current) return;
-      const map = L.map(containerRef.current, { zoomControl: false }).setView([22.5, 80.5], 5);
+      const map = L.map(containerRef.current, { zoomControl: false }).setView([20, 0], 2);
       mapRef.current = map;
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       L.control.scale({ position: 'bottomright', imperial: false }).addTo(map);
@@ -143,10 +145,17 @@ export default function FraudMapView({
       map.on('zoomend', () => setZoom(map.getZoom()));
       setLeafletReady(true);
       setTimeout(() => map.invalidateSize(), 200);
+
+      // Cinematic intro: world map → India
+      introTimer = window.setTimeout(() => {
+        map.flyTo([22.5, 80.5], 5, { duration: 2.5, easeLinearity: 0.25 });
+        window.setTimeout(() => setIntroFlying(false), 2600);
+      }, 800);
     }).catch(err => console.error(err));
 
     return () => {
       mounted = false;
+      if (introTimer) window.clearTimeout(introTimer);
       if (mapRef.current) { try { mapRef.current.remove(); } catch { /* ignore */ } mapRef.current = null; }
     };
   }, []);
@@ -351,16 +360,23 @@ export default function FraudMapView({
     return () => window.clearTimeout(timer);
   }, [leafletReady, highlightCases]);
 
-  // Fly to selected case
+  // Fly to / fit selected case so the full India → destination trace is visible
   useEffect(() => {
     if (!leafletReady || !mapRef.current || !selectedCase) return;
-    if (selectedByMapRef.current === selectedCase.id) {
-      selectedByMapRef.current = null;
-      return;
-    }
-    const hop = selectedCase.hops?.find(h => typeof h.lat === 'number' && typeof h.lon === 'number');
-    if (hop) {
-      mapRef.current.flyTo([hop.lat, hop.lon], 9, { duration: 1.5, easeLinearity: 0.25 });
+    const L = (window as any).L;
+    const coords = selectedCase.hops
+      ?.filter(h => typeof h.lat === 'number' && typeof h.lon === 'number')
+      .map(h => [h.lat, h.lon]) as [number, number][] | undefined;
+
+    if (coords && coords.length > 1) {
+      mapRef.current.fitBounds(L.latLngBounds(coords), {
+        padding: [80, 80],
+        maxZoom: 10,
+        animate: true,
+        duration: 1.8,
+      });
+    } else if (coords?.length) {
+      mapRef.current.flyTo(coords[0], 9, { duration: 1.5, easeLinearity: 0.25 });
     }
   }, [leafletReady, selectedCase]);
 
@@ -464,6 +480,24 @@ export default function FraudMapView({
             </div>
           </div>
         )}
+
+        {/* Cinematic intro overlay */}
+        <AnimatePresence>
+          {leafletReady && introFlying && (
+            <motion.div
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="absolute inset-0 z-[25] flex flex-col items-center justify-center pointer-events-none bg-gradient-to-b from-transparent via-white/30 to-transparent dark:via-slate-950/30"
+            >
+              <div className="flex flex-col items-center px-6 py-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-2xl">
+                <Globe className="w-10 h-10 text-indigo-600 animate-spin mb-3" />
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Scanning global network...</p>
+                <p className="text-[10px] text-slate-400 mt-1">Focusing on India</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Search overlay */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[500] w-[min(420px,92%)]">
