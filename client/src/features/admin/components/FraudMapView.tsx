@@ -1,8 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import { Map as MapIcon, Loader2 } from 'lucide-react';
-import { useWealthStore } from '@/shared/store/wealthStore';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import {
+  Loader2, Globe, Satellite, Sun, Moon, Maximize2, Minimize2,
+  Zap, Activity, AlertTriangle, ShieldAlert, Radio, TrendingUp, Clock
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { priorityColor } from '@/features/admin/services/fraudService';
 import type { FraudCase, FraudHop } from '@/features/admin/lib/fraudTypes';
+
+type MapStyle = 'dark' | 'light' | 'satellite';
 
 function loadLeaflet(): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -17,6 +23,38 @@ function loadLeaflet(): Promise<any> {
   });
 }
 
+function curveBetween(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+  segments = 48,
+  bend = 0.25
+): [number, number][] {
+  const midLat = (lat1 + lat2) / 2;
+  const midLon = (lon1 + lon2) / 2;
+  const dLat = lat2 - lat1;
+  const dLon = lon2 - lon1;
+  const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+  const factor = bend + Math.min(0.3, dist * 0.02);
+  const ctrlLat = midLat - dLon * factor;
+  const ctrlLon = midLon + dLat * factor;
+  const points: [number, number][] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const mt = 1 - t;
+    const lat = mt * mt * lat1 + 2 * mt * t * ctrlLat + t * t * lat2;
+    const lon = mt * mt * lon1 + 2 * mt * t * ctrlLon + t * t * lon2;
+    points.push([lat, lon]);
+  }
+  return points;
+}
+
+function formatAmount(amount: number, currency = 'INR') {
+  if (currency === 'INR') return `₹${(amount / 100000).toFixed(1)}L`;
+  return `${amount.toLocaleString('en-IN')} ${currency}`;
+}
+
 interface Props {
   cases: FraudCase[];
   loading: boolean;
@@ -26,23 +64,49 @@ interface Props {
 export default function FraudMapView({ cases, loading, highlightCases = [] }: Props) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const tileLayerRef = useRef<any>(null);
   const layersRef = useRef<any[]>([]);
   const pulseRef = useRef<any[]>([]);
   const [leafletReady, setLeafletReady] = useState(false);
-  const darkMode = useWealthStore(s => s.darkMode);
+  const [mapStyle, setMapStyle] = useState<MapStyle>('dark');
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+
+  const tileUrls: Record<MapStyle, string> = {
+    dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  };
+
+  const stats = useMemo(() => {
+    const rendered = cases.slice(0, 100);
+    let critical = 0;
+    let sanctioned = 0;
+    let totalInr = 0;
+    rendered.forEach(c => {
+      if (c.riskScore >= 80) critical++;
+      if (c.countryRiskTags.some(t => ['Russia', 'Iran', 'North Korea', 'Belize', 'Panama', 'Myanmar'].includes(t))) sanctioned++;
+      const origin = c.hops?.find(h => h.hopType === 'origin');
+      if (origin) totalInr += origin.amount || 0;
+    });
+    return { plotted: rendered.length, total: cases.length, critical, sanctioned, totalInr };
+  }, [cases]);
+
+  // Initialize Leaflet
   useEffect(() => {
     let mounted = true;
     loadLeaflet().then((L) => {
       if (!mounted || !containerRef.current) return;
-      const map = L.map(containerRef.current).setView([20.5937, 78.9629], 4);
+      const map = L.map(containerRef.current, { zoomControl: false }).setView([22.5, 80.5], 5);
       mapRef.current = map;
-      L.tileLayer(darkMode
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-        { attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19 }
-      ).addTo(map);
+      L.control.zoom({ position: 'topright' }).addTo(map);
+      tileLayerRef.current = L.tileLayer(tileUrls.dark, {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(map);
       setLeafletReady(true);
       setTimeout(() => map.invalidateSize(), 200);
     }).catch(err => console.error(err));
@@ -51,14 +115,26 @@ export default function FraudMapView({ cases, loading, highlightCases = [] }: Pr
       mounted = false;
       if (mapRef.current) { try { mapRef.current.remove(); } catch { /* ignore */ } mapRef.current = null; }
     };
-  }, [darkMode]);
+  }, []);
 
+  // Swap tile layer when style changes
+  useEffect(() => {
+    if (!leafletReady || !mapRef.current || !tileLayerRef.current) return;
+    const L = (window as any).L;
+    mapRef.current.removeLayer(tileLayerRef.current);
+    tileLayerRef.current = L.tileLayer(tileUrls[mapStyle], {
+      attribution: mapStyle === 'satellite' ? '&copy; Esri' : '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: mapStyle === 'satellite' ? undefined : 'abcd',
+      maxZoom: 19,
+    }).addTo(mapRef.current);
+  }, [mapStyle, leafletReady]);
+
+  // Render trails & nodes
   useEffect(() => {
     if (!leafletReady || !mapRef.current || !cases.length) return;
     const L = (window as any).L;
     const map = mapRef.current;
 
-    // clear previous layers
     layersRef.current.forEach(l => { try { map.removeLayer(l); } catch { /* ignore */ } });
     layersRef.current = [];
 
@@ -70,41 +146,60 @@ export default function FraudMapView({ cases, loading, highlightCases = [] }: Pr
 
       const isCritical = c.riskScore >= 80;
       const color = isCritical ? '#ef4444' : c.riskScore >= 60 ? '#f97316' : '#6366f1';
-      const latlngs = hops.map(h => [h.lat, h.lon]);
 
-      const polyline = L.polyline(latlngs, {
-        color,
-        weight: isCritical ? 3 : 2,
-        opacity: 0.8,
-        dashArray: isCritical ? undefined : '6, 6',
-        className: 'fraud-hop-vector'
-      }).addTo(map);
-      layersRef.current.push(polyline);
+      // Draw curved arcs between consecutive hops
+      for (let i = 0; i < hops.length - 1; i++) {
+        const a = hops[i];
+        const b = hops[i + 1];
+        const curve = curveBetween(a.lat!, a.lon!, b.lat!, b.lon!);
+        const arc = L.polyline(curve, {
+          color,
+          weight: isCritical ? 3 : 2,
+          opacity: 0.85,
+          dashArray: isCritical ? undefined : '8, 10',
+          className: isCritical ? 'fraud-arc-glow fraud-flow-line' : 'fraud-flow-line',
+        }).addTo(map);
+        layersRef.current.push(arc);
+      }
 
+      // Nodes
       hops.forEach((h) => {
         const isOrigin = h.hopType === 'origin';
         const isDestination = h.hopType === 'destination';
-        const marker = L.circleMarker([h.lat!, h.lon!], {
-          radius: isOrigin || isDestination ? 6 : 4,
-          fillColor: h.isSanctioned ? '#ef4444' : isOrigin ? '#10b981' : isDestination ? '#6366f1' : '#f59e0b',
-          color: '#fff',
-          weight: 1,
-          fillOpacity: 0.9
+        const isSanctioned = h.isSanctioned;
+        const baseColor = isSanctioned ? '#ef4444' : isOrigin ? '#10b981' : isDestination ? '#6366f1' : '#f59e0b';
+        const pulseClass = isSanctioned ? 'fraud-node-pulse-red' : isOrigin ? 'fraud-node-pulse-green' : isDestination ? 'fraud-node-pulse-blue' : 'fraud-node-pulse-amber';
+        const iconHtml = `
+          <div class="relative flex items-center justify-center" style="width:28px;height:28px;">
+            <span class="${pulseClass} absolute inline-flex h-full w-full rounded-full opacity-75"></span>
+            <span class="relative inline-flex rounded-full border-2 border-white shadow-lg" style="width:12px;height:12px;background:${baseColor};"></span>
+          </div>`;
+        const marker = L.marker([h.lat!, h.lon!], {
+          icon: L.divIcon({
+            html: iconHtml,
+            className: 'bg-transparent',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          }),
         }).addTo(map);
-        marker.bindTooltip(`<b>${h.nodeName}</b><br/>${h.institution || h.entityType}<br/>${h.amount.toLocaleString('en-IN')} ${h.currency}<br/>Case: ${c.caseRef}`, { direction: 'top' });
+        marker.bindTooltip(`
+          <div class="text-xs">
+            <div class="font-bold text-slate-800 dark:text-slate-100">${h.nodeName}</div>
+            <div class="text-slate-500 dark:text-slate-400">${h.institution || h.entityType}</div>
+            <div class="font-semibold mt-0.5">${h.amount.toLocaleString('en-IN')} ${h.currency}</div>
+            <div class="text-[10px] text-slate-400">Case: ${c.caseRef}</div>
+          </div>`, { direction: 'top', className: 'fraud-tooltip' });
         layersRef.current.push(marker);
       });
     });
-
   }, [leafletReady, cases]);
 
-  // Pulse animation for live/highlighted cases
+  // Highlight live cases
   useEffect(() => {
     if (!leafletReady || !mapRef.current) return;
     const L = (window as any).L;
     const map = mapRef.current;
 
-    // clear old pulse markers
     pulseRef.current.forEach(m => { try { map.removeLayer(m); } catch { /* ignore */ } });
     pulseRef.current = [];
 
@@ -113,23 +208,18 @@ export default function FraudMapView({ cases, loading, highlightCases = [] }: Pr
       const dest = c.hops?.slice().reverse().find(h => h.hopType === 'destination');
       if (origin?.lat && origin?.lon) {
         const m = L.circleMarker([origin.lat, origin.lon], {
-          radius: 12, fillColor: '#10b981', color: '#fff', weight: 2, fillOpacity: 0.4, opacity: 0.8
+          radius: 16, fillColor: '#10b981', color: '#fff', weight: 2, fillOpacity: 0.25, opacity: 0,
         }).addTo(map);
         const el = m.getElement?.();
-        if (el) {
-          el.style.transition = 'r 1s ease-out, opacity 1s ease-out';
-          el.style.animation = 'fraud-pulse 2s infinite';
-        }
+        if (el) el.classList.add('fraud-live-origin');
         pulseRef.current.push(m);
       }
       if (dest?.lat && dest?.lon) {
         const m = L.circleMarker([dest.lat, dest.lon], {
-          radius: 12, fillColor: '#ef4444', color: '#fff', weight: 2, fillOpacity: 0.4, opacity: 0.8
+          radius: 16, fillColor: '#ef4444', color: '#fff', weight: 2, fillOpacity: 0.25, opacity: 0,
         }).addTo(map);
         const el = m.getElement?.();
-        if (el) {
-          el.style.animation = 'fraud-pulse 2s infinite';
-        }
+        if (el) el.classList.add('fraud-live-dest');
         pulseRef.current.push(m);
       }
     });
@@ -142,40 +232,169 @@ export default function FraudMapView({ cases, loading, highlightCases = [] }: Pr
     return () => window.clearTimeout(timer);
   }, [leafletReady, highlightCases]);
 
+  const toggleFullscreen = () => {
+    if (!wrapperRef.current) return;
+    if (!document.fullscreenElement) {
+      wrapperRef.current.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
+    }
+  };
+
+  const recentCases = cases.slice(0, 6);
+
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-      <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <h3 className="font-semibold flex items-center gap-2">
-          <MapIcon className="w-4 h-4 text-indigo-500" />
-          {t('fraudIntelMapTitle')}
-        </h3>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {cases.length > 100 ? 'Showing top 100 cases' : `${cases.length} cases plotted`}
-        </span>
+    <div ref={wrapperRef} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+      {/* Header overlay */}
+      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-gradient-to-r from-indigo-50/50 via-white to-rose-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/25">
+            <Globe className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg tracking-tight">{t('fraudIntelMapTitle')}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                <Radio className="w-3 h-3 animate-pulse" /> Live Tracing Active
+              </span>
+              <span>•</span>
+              <span>{stats.plotted} of {stats.total} trails plotted</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+            <button onClick={() => setMapStyle('dark')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'dark' ? 'bg-slate-800 text-white shadow' : 'text-slate-500'}`}><Moon className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setMapStyle('light')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'light' ? 'bg-white text-slate-900 shadow' : 'text-slate-500'}`}><Sun className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setMapStyle('satellite')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'satellite' ? 'bg-emerald-600 text-white shadow' : 'text-slate-500'}`}><Satellite className="w-3.5 h-3.5" /></button>
+          </div>
+          <button onClick={toggleFullscreen} className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
-      <div className="relative h-[500px] md:h-[650px]">
+
+      <div className="relative h-[520px] md:h-[680px]">
         <div ref={containerRef} className="absolute inset-0 z-0" />
+
         {(loading || !leafletReady) && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm">
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm">
             <div className="flex flex-col items-center text-slate-500 dark:text-slate-400">
-              <Loader2 className="w-8 h-8 animate-spin mb-2" />
-              <p className="text-sm">Loading map...</p>
+              <Loader2 className="w-10 h-10 animate-spin mb-3" />
+              <p className="text-sm font-medium">Initializing global threat radar...</p>
             </div>
           </div>
         )}
+
+        {/* Floating KPI cards */}
+        <div className="absolute top-3 left-3 z-[500] flex flex-col gap-2">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-lg min-w-[150px]">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1"><Activity className="w-3.5 h-3.5 text-indigo-500" /> Active Trails</div>
+            <div className="text-2xl font-bold">{stats.plotted}</div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-lg min-w-[150px]">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1"><AlertTriangle className="w-3.5 h-3.5 text-red-500" /> Critical Risk</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.critical}</div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-lg min-w-[150px]">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1"><ShieldAlert className="w-3.5 h-3.5 text-amber-500" /> Sanctioned Hops</div>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.sanctioned}</div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl p-3 shadow-lg min-w-[150px]">
+            <div className="flex items-center gap-2 text-xs text-emerald-100 mb-1"><TrendingUp className="w-3.5 h-3.5" /> INR Traced</div>
+            <div className="text-2xl font-bold">{formatAmount(stats.totalInr)}</div>
+          </motion.div>
+        </div>
+
+        {/* Recent traces panel */}
+        <div className="absolute top-3 right-3 z-[500] w-64 max-h-[calc(100%-1.5rem)] overflow-y-auto hidden md:block">
+          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-lg">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 mb-2">
+              <Zap className="w-3.5 h-3.5 text-amber-500" /> Recent Traces
+            </div>
+            <div className="space-y-2">
+              <AnimatePresence>
+                {recentCases.map((c, i) => {
+                  const origin = c.hops?.find(h => h.hopType === 'origin');
+                  const dest = c.hops?.slice().reverse().find(h => h.hopType === 'destination');
+                  return (
+                    <motion.div
+                      key={c.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 text-xs"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-indigo-600 dark:text-indigo-400">{c.caseRef}</span>
+                        <span className={`px-1.5 py-0.5 rounded border ${priorityColor(c.priority)}`}>{c.priority}</span>
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                        {origin?.country || '—'} <span className="text-slate-300">→</span> {dest?.country || '—'}
+                      </div>
+                      <div className="mt-1 flex items-center justify-between">
+                        <span className="font-medium">{formatAmount(c.hops?.[0]?.amount || 0)}</span>
+                        <span className="text-[10px] text-slate-400 flex items-center gap-0.5"><Clock className="w-3 h-3" /> {new Date(c.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="absolute bottom-3 left-3 z-[500] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-700 p-3 shadow-lg text-xs space-y-2">
+          <div className="font-semibold text-slate-700 dark:text-slate-200 mb-1">Legend</div>
+          <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]" /> {t('fraudIntelMapLegendOrigin')}</div>
+          <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.7)]" /> {t('fraudIntelMapLegendDestination')}</div>
+          <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)]" /> {t('fraudIntelMapLegendIntermediate')}</div>
+          <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]" /> {t('fraudIntelMapLegendSanctioned')}</div>
+        </div>
+
         <style>{`
-          @keyframes fraud-pulse {
-            0% { r: 6; opacity: 0.9; }
-            70% { r: 24; opacity: 0; }
-            100% { r: 6; opacity: 0; }
+          .fraud-flow-line {
+            animation: fraudFlowDash 1.4s linear infinite;
+          }
+          @keyframes fraudFlowDash {
+            to { stroke-dashoffset: -18; }
+          }
+          .fraud-arc-glow {
+            filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.8));
+          }
+          .fraud-node-pulse-green { animation: fraudNodePulse 2s infinite; background-color: rgba(16,185,129,0.5); }
+          .fraud-node-pulse-blue { animation: fraudNodePulse 2s infinite; background-color: rgba(99,102,241,0.5); }
+          .fraud-node-pulse-amber { animation: fraudNodePulse 2s infinite; background-color: rgba(245,158,11,0.5); }
+          .fraud-node-pulse-red { animation: fraudNodePulse 1.6s infinite; background-color: rgba(239,68,68,0.5); }
+          @keyframes fraudNodePulse {
+            0% { transform: scale(0.5); opacity: 0.9; }
+            70% { transform: scale(1.8); opacity: 0; }
+            100% { transform: scale(0.5); opacity: 0; }
+          }
+          .fraud-live-origin { animation: fraudLivePulse 2s infinite; }
+          .fraud-live-dest { animation: fraudLivePulse 2s infinite; }
+          @keyframes fraudLivePulse {
+            0% { r: 8; opacity: 0.8; }
+            70% { r: 28; opacity: 0; }
+            100% { r: 8; opacity: 0; }
+          }
+          .fraud-tooltip {
+            background: rgba(255,255,255,0.95) !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+            padding: 8px 12px !important;
+          }
+          .dark .fraud-tooltip {
+            background: rgba(15,23,42,0.95) !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
           }
         `}</style>
-        <div className="absolute bottom-3 left-3 z-[500] bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-lg border border-slate-200 dark:border-slate-800 p-2 text-xs space-y-1">
-          <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500" /> {t('fraudIntelMapLegendOrigin')}</div>
-          <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-indigo-500" /> {t('fraudIntelMapLegendDestination')}</div>
-          <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-500" /> {t('fraudIntelMapLegendIntermediate')}</div>
-          <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500" /> {t('fraudIntelMapLegendSanctioned')}</div>
-        </div>
       </div>
     </div>
   );
