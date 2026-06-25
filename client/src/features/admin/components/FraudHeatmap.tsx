@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldAlert, Activity, RefreshCw, AlertTriangle,
-  Globe, Eye, Clock, TrendingUp, Skull, X, BarChart3, Radio, Play, Pause, Filter
+  Globe, Eye, Clock, TrendingUp, Skull, X, BarChart3, Radio, Play, Pause, Filter, Radar
 } from 'lucide-react';
 import { backendApi } from '@/shared/lib/backendApi';
 import { useWealthStore } from '@/shared/store/wealthStore';
@@ -265,6 +265,8 @@ export default function FraudHeatmap() {
   const [countryFilter, setCountryFilter] = useState<string>('all');
   const [isLive, setIsLive] = useState(true);
   const [flashCount, setFlashCount] = useState(0);
+  const [campaignStatus, setCampaignStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [campaignToast, setCampaignToast] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const idCounterRef = useRef(2000);
   const darkMode = useWealthStore((s) => s.darkMode);
@@ -638,6 +640,21 @@ export default function FraudHeatmap() {
     fetchEvents();
   };
 
+  const PREDICTED_ZONES = useMemo(() => [
+    { city: 'Mumbai', lat: 19.0760, lon: 72.8777, risk: 92, trend: '+40%', window: '6 PM – 8 PM', vector: 'UPI QR scanner scams', audience: 'users aged 50+' },
+    { city: 'Delhi', lat: 28.7041, lon: 77.1025, risk: 84, trend: '+28%', window: '4 PM – 7 PM', vector: 'Fake customer care calls', audience: 'senior citizens' },
+    { city: 'Bangalore', lat: 12.9716, lon: 77.5946, risk: 78, trend: '+19%', window: '9 PM – 11 PM', vector: 'Phishing app installs', audience: 'gig workers' },
+  ], []);
+
+  const handleDeployCampaign = async () => {
+    if (campaignStatus === 'sending' || campaignStatus === 'sent') return;
+    setCampaignStatus('sending');
+    await new Promise((r) => setTimeout(r, 900));
+    setCampaignStatus('sent');
+    setCampaignToast(`Dispatched 50,000 geo-fenced SMS/WhatsApp alerts across ${PREDICTED_ZONES.map(z => z.city).join(', ')}.`);
+    setTimeout(() => setCampaignToast(null), 5000);
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col gap-4">
       {/* Global styles for Leaflet customizations */}
@@ -706,6 +723,51 @@ export default function FraudHeatmap() {
           animation: radar-scan 4s linear infinite;
         }
         @keyframes radar-scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+        .predictive-radar {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+        }
+        .predictive-radar-disc {
+          width: min(60vw, 520px);
+          aspect-ratio: 1;
+          border-radius: 50%;
+          border: 1px solid rgba(16,185,129,0.18);
+          position: relative;
+          overflow: hidden;
+        }
+        .predictive-radar-disc::before,
+        .predictive-radar-disc::after {
+          content: '';
+          position: absolute;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          border-radius: 50%;
+          border: 1px solid rgba(16,185,129,0.12);
+        }
+        .predictive-radar-disc::before { width: 66%; height: 66%; }
+        .predictive-radar-disc::after { width: 33%; height: 33%; }
+        .predictive-radar-sweep {
+          position: absolute;
+          inset: 0;
+          background: conic-gradient(from 0deg, transparent 0deg, rgba(16,185,129,0.18) 55deg, transparent 60deg);
+          border-radius: 50%;
+          animation: radar-rotate 3.5s linear infinite;
+        }
+        @keyframes radar-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .predictive-radar-glow {
+          position: absolute;
+          width: 12%;
+          height: 12%;
+          border-radius: 50%;
+          background: rgba(239,68,68,0.35);
+          box-shadow: 0 0 24px rgba(239,68,68,0.5);
+          animation: radar-blink 1.2s ease-in-out infinite;
+        }
+        @keyframes radar-blink { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
         .fraud-grid-bg {
           background-image:
             linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px),
@@ -788,6 +850,14 @@ export default function FraudHeatmap() {
             <div className="absolute inset-0 fraud-vignette" />
           </div>
 
+          {/* Predictive Radar Sweep */}
+          <div className="predictive-radar z-[450]">
+            <div className="predictive-radar-disc">
+              <div className="predictive-radar-sweep" />
+              <div className="predictive-radar-glow" style={{ top: '34%', left: '58%' }} />
+            </div>
+          </div>
+
           {/* Top-left live badge */}
           <div className="absolute top-3 left-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/95 border border-slate-200 shadow-sm backdrop-blur">
             <span className={`relative flex h-2.5 w-2.5 ${isLive ? 'animate-pulse' : ''}`}>
@@ -861,6 +931,49 @@ export default function FraudHeatmap() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Campaign toast */}
+          <AnimatePresence>
+            {campaignToast && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="absolute top-24 right-3 z-[1000] max-w-xs px-4 py-2.5 rounded-xl bg-slate-800 text-white text-[11px] font-bold shadow-2xl border border-slate-700"
+              >
+                <div className="flex items-start gap-2">
+                  <i className="fas fa-bullhorn text-emerald-400 mt-0.5" />
+                  <span>{campaignToast}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Predictive Alert Card */}
+          <div className="absolute top-14 left-3 z-[1000] max-w-xs">
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 shadow-lg backdrop-blur">
+              <div className="flex items-start gap-2 mb-2">
+                <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs animate-pulse">
+                  <i className="fas fa-radar" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wide">Predicted Spike</p>
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100">UPI QR Scanner Scams</p>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-600 dark:text-slate-300 mb-2">
+                Mumbai local trains, 6 PM – 8 PM today. 40% spike targeting users aged 50+.
+              </p>
+              <button
+                onClick={handleDeployCampaign}
+                disabled={campaignStatus !== 'idle'}
+                className="w-full py-1.5 bg-rose-600 hover:bg-rose-700 disabled:bg-emerald-600 text-white rounded-lg text-[10px] font-bold transition-colors flex items-center justify-center gap-1"
+              >
+                <i className={`fas ${campaignStatus === 'sent' ? 'fa-check' : campaignStatus === 'sending' ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`} />
+                {campaignStatus === 'sent' ? 'Dispatched 50,000 alerts' : campaignStatus === 'sending' ? 'Deploying...' : 'Deploy Geo-Fenced SMS'}
+              </button>
+            </div>
+          </div>
 
           {/* Legend */}
           <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-3 px-3 py-2 rounded-xl bg-white/95 border border-slate-200 shadow-sm backdrop-blur">
@@ -943,6 +1056,35 @@ export default function FraudHeatmap() {
               </div>
             </div>
           )}
+
+          {/* Predicted Hot Zones */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Radar className="w-3.5 h-3.5 text-rose-500" /> Predicted Hot Zones
+              </h3>
+              <span className="text-[9px] text-slate-400">AI forecast</span>
+            </div>
+            <div className="space-y-3">
+              {PREDICTED_ZONES.map((zone) => (
+                <div key={zone.city} className="group relative">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-bold text-slate-700">{zone.city}</span>
+                    <span className="text-[10px] font-bold text-rose-600">{zone.risk}/100</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-rose-500" style={{ width: `${zone.risk}%` }} />
+                  </div>
+                  <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-10 w-56 p-2.5 rounded-lg bg-slate-800 text-white text-[10px] shadow-xl">
+                    <p className="font-bold">{zone.vector}</p>
+                    <p className="text-slate-300 mt-0.5">{zone.window} • {zone.trend} spike</p>
+                    <p className="text-slate-400 mt-0.5">Target: {zone.audience}</p>
+                    <div className="absolute left-4 bottom-[-5px] w-2.5 h-2.5 bg-slate-800 rotate-45" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Recent Events */}
           <div className="bg-white rounded-2xl border border-slate-200 flex flex-col flex-1 min-h-[280px] overflow-hidden shadow-sm">

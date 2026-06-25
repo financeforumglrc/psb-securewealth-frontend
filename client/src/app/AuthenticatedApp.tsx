@@ -1,6 +1,7 @@
 import { useEffect, useState, Suspense, useTransition } from 'react';
 import { motion } from 'framer-motion';
 import PitchMode from '@/features/pitch/components/PitchMode';
+import PitchDeckView from '@/features/pitch/components/PitchDeckView';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { isJudgeMode } from '@/shared/utils/demoMode';
 import { usePanicMode } from '@/shared/hooks/usePanicMode';
@@ -387,6 +388,7 @@ export default function AuthenticatedApp() {
               {currentView === 'security-beast' && <SecurityBeastView />}
               {currentView === 'bhavishya' && <BhavishyaEngine />}
               {currentView === 'innovation-lab' && <InnovationLabView />}
+              {currentView === 'pitch-deck' && <PitchDeckView />}
               {currentView === 'payments' && <PaymentsPage />}
               {currentView === 'loan-center' && <LoanCenter />}
               {currentView === 'recurring-payments' && <RecurringPayments />}

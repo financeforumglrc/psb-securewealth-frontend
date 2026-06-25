@@ -38,11 +38,13 @@ interface Props {
 
 export default function GoalTracker({ asWidget = false }: Props) {
   const goals = useWealthStore((s) => s.goals);
+  const assets = useWealthStore((s) => s.assets);
   const user = useWealthStore((s) => s.user);
   const addGoal = useWealthStore((s) => s.addGoal);
   const editGoal = useWealthStore((s) => s.editGoal);
   const deleteGoal = useWealthStore((s) => s.deleteGoal);
   const monthlySavings = user.monthlySavings;
+  const currentNW = useMemo(() => assets.reduce((sum, a) => sum + a.value, 0), [assets]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConflictModal, setShowConflictModal] = useState(false);
@@ -217,6 +219,9 @@ export default function GoalTracker({ asWidget = false }: Props) {
         ))}
       </div>
 
+      {/* Generational Wealth Time-Travel */}
+      <GenerationalWealthSlider currentNW={currentNW} monthlySavings={monthlySavings} />
+
       {/* Health Ring */}
       {goals.length > 0 && (
         <CosmosCard variant="gradient">
@@ -376,5 +381,125 @@ export default function GoalTracker({ asWidget = false }: Props) {
       <AddGoalModal show={showAddModal} onClose={() => setShowAddModal(false)} onSave={handleSaveGoal} existingGoals={goals} monthlySavings={monthlySavings} onConflict={handleConflict} />
       <GoalConflictModal show={showConflictModal} onClose={() => setShowConflictModal(false)} newGoal={conflictGoal} existingGoals={goals} monthlySavings={monthlySavings} totalMonthlyNeed={conflictTotal} onResolve={handleResolve} />
     </div>
+  );
+}
+
+function GenerationalWealthSlider({ currentNW, monthlySavings }: { currentNW: number; monthlySavings: number }) {
+  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(currentYear + 30);
+  const [savedPlan, setSavedPlan] = useState(false);
+  const years = year - currentYear;
+  const rate = 0.12;
+
+  const futureValue = useMemo(() => {
+    const lumpsum = currentNW * Math.pow(1 + rate, years);
+    const sip = monthlySavings * 12 * ((Math.pow(1 + rate, years) - 1) / rate);
+    return Math.round(lumpsum + sip);
+  }, [currentNW, monthlySavings, years]);
+
+  const grandchildEducation = Math.round(futureValue * 0.08);
+  const legacyCorpus = Math.round(futureValue * 0.22);
+
+  const tree = useMemo(() => {
+    const funded = futureValue > 0;
+    const educationFullyFunded = grandchildEducation > 25_00_000;
+    const legacyStrong = legacyCorpus > 1_00_00_000;
+    return [
+      { id: 'you', label: 'You', icon: 'fa-user', funded, amount: currentNW },
+      { id: 'child', label: 'Child', icon: 'fa-child', funded: funded && years >= 18, amount: Math.round(futureValue * 0.15) },
+      { id: 'grandchild', label: 'Grandchild', icon: 'fa-baby', funded: educationFullyFunded, amount: grandchildEducation },
+      { id: 'legacy', label: 'Family Legacy', icon: 'fa-landmark', funded: legacyStrong, amount: legacyCorpus },
+    ];
+  }, [futureValue, grandchildEducation, legacyCorpus, currentNW, years]);
+
+  return (
+    <CosmosCard variant="default" header={{ icon: 'fa-people-roof', iconColor: '#7c3aed', title: 'Generational Time-Travel' }}>
+      <div className="space-y-4">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Drag the slider to see how today&apos;s SIP becomes tomorrow&apos;s family legacy.
+        </p>
+
+        <div>
+          <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+            <span>{currentYear}</span>
+            <span className="text-primary">{year}</span>
+            <span>2080</span>
+          </div>
+          <input
+            type="range"
+            min={currentYear}
+            max={2080}
+            step={1}
+            value={year}
+            onChange={(e) => setYear(parseInt(e.target.value))}
+            className="w-full accent-primary h-1.5"
+          />
+        </div>
+
+        <motion.div
+          key={futureValue}
+          initial={{ scale: 0.98, opacity: 0.8 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="p-4 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-slate-800 dark:to-slate-800 border border-violet-200 dark:border-slate-700"
+        >
+          <p className="text-[10px] text-slate-400 uppercase tracking-wide">Projected Family Corpus in {year}</p>
+          <p className="text-3xl font-black text-violet-700 dark:text-violet-300">₹{(futureValue / 1e7).toFixed(2)} Cr</p>
+          <p className="text-xs text-slate-500 mt-1">{years} years from now • 12% assumed CAGR</p>
+
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-violet-100 dark:border-slate-700">
+              <p className="text-[10px] text-slate-400">Grandchild Education</p>
+              <p className="text-sm font-bold text-violet-700 dark:text-violet-300">₹{(grandchildEducation / 1e7).toFixed(2)} Cr</p>
+            </div>
+            <div className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-violet-100 dark:border-slate-700">
+              <p className="text-[10px] text-slate-400">Legacy Inheritance</p>
+              <p className="text-sm font-bold text-violet-700 dark:text-violet-300">₹{(legacyCorpus / 1e7).toFixed(2)} Cr</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Family-tree visualization */}
+        <div className="rounded-xl border border-violet-100 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-3">Dynasty Funding Map</p>
+          <div className="relative h-28">
+            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+              <path d="M 60 24 C 60 60, 25 60, 25 96" fill="none" stroke="currentColor" strokeWidth="2" className="text-violet-200 dark:text-slate-700" />
+              <path d="M 60 24 C 60 60, 95 60, 95 96" fill="none" stroke="currentColor" strokeWidth="2" className="text-violet-200 dark:text-slate-700" />
+              <path d="M 95 96 C 95 120, 130 120, 130 140" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" className="text-violet-200 dark:text-slate-700" />
+            </svg>
+            <div className="relative flex justify-between items-start">
+              {tree.map((node) => (
+                <div key={node.id} className="flex flex-col items-center gap-1.5 w-16">
+                  <motion.div
+                    whileHover={{ scale: 1.08 }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-sm ${node.funded ? 'bg-violet-100 border-violet-500 dark:bg-violet-900/30 dark:border-violet-400' : 'bg-slate-50 border-slate-300 dark:bg-slate-800 dark:border-slate-600'}`}
+                    title={node.funded ? 'Funding goal met' : 'Not yet funded'}
+                  >
+                    <i className={`fas ${node.icon} ${node.funded ? 'text-violet-600 dark:text-violet-300' : 'text-slate-400'}`} />
+                  </motion.div>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">{node.label}</span>
+                  <span className="text-[9px] text-slate-400 text-center">₹{(node.amount / 1e7).toFixed(2)} Cr</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={() => setSavedPlan(true)}
+            disabled={savedPlan}
+            className="mt-3 w-full py-1.5 bg-violet-600 hover:bg-violet-700 disabled:bg-emerald-600 text-white rounded-lg text-[10px] font-bold transition-colors flex items-center justify-center gap-1"
+          >
+            <i className={`fas ${savedPlan ? 'fa-check' : 'fa-floppy-disk'}`} />
+            {savedPlan ? 'Dynasty plan saved' : 'Save this dynasty plan'}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+          <i className="fas fa-quote-left text-violet-400" />
+          <em>
+            If you continue this SIP, by {year} your corpus will be ₹{(futureValue / 1e7).toFixed(2)} Crores. That fully funds your grandchild&apos;s higher education and leaves a ₹{(legacyCorpus / 1e7).toFixed(2)} Crore legacy. You aren&apos;t just saving; you are building a dynasty.
+          </em>
+        </div>
+      </div>
+    </CosmosCard>
   );
 }

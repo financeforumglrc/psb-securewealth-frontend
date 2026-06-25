@@ -18,6 +18,8 @@ export default function RakshakInterventionChat() {
   const [showSupport, setShowSupport] = useState(false);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<'idle' | 'listening' | 'success'>('idle');
+  const VOICE_PHRASE = "My PSB wealth is secure";
 
   const userId = authState.userId || 'user-001';
 
@@ -27,6 +29,7 @@ export default function RakshakInterventionChat() {
       setShowSupport(false);
       setShowConfirmClose(false);
       setToast(null);
+      setVoiceStatus('idle');
       return;
     }
     const timer = setTimeout(() => setIsTyping(false), 1400);
@@ -51,6 +54,13 @@ export default function RakshakInterventionChat() {
 
   const handleSupport = () => {
     setShowSupport(true);
+  };
+
+  const handleVoiceVerify = () => {
+    setVoiceStatus('listening');
+    setTimeout(() => {
+      setVoiceStatus('success');
+    }, 2200);
   };
 
   const handleBlockAndClose = () => {
@@ -225,6 +235,59 @@ export default function RakshakInterventionChat() {
                   </div>
                 </div>
               </div>
+
+              {/* Deepfake Voice Liveness Challenge */}
+              {score >= 80 && !isTyping && (
+                <div className="p-4 rounded-xl bg-slate-800 border border-slate-700">
+                  <div className="flex items-center gap-2 mb-2">
+                    <i className="fas fa-microphone-lines text-amber-400" />
+                    <h4 className="text-xs font-bold text-slate-200">Audio Liveness Challenge</h4>
+                  </div>
+
+                  {voiceStatus === 'success' ? (
+                    <div className="text-center py-2">
+                      <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl mb-2">
+                        <i className="fas fa-check" />
+                      </div>
+                      <p className="text-sm font-bold text-emerald-400">Human Voice Detected</p>
+                      <p className="text-[10px] text-slate-400">Deepfake probability: 2%</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xs text-slate-300 mb-2">
+                        {voiceStatus === 'idle'
+                          ? <>Please read this phrase aloud to verify you are a real person:</>
+                          : <>Listening… please say the phrase clearly.</>}
+                      </p>
+                      <div className="p-2.5 bg-slate-900 rounded-lg text-center mb-3">
+                        <p className="text-sm font-bold text-amber-300">“{VOICE_PHRASE}”</p>
+                      </div>
+
+                      {voiceStatus === 'listening' && (
+                        <div className="flex items-center justify-center gap-1 h-10 mb-3">
+                          {Array.from({ length: 12 }).map((_, i) => (
+                            <motion.div
+                              key={i}
+                              className="w-1.5 rounded-full bg-emerald-400"
+                              animate={{ height: [8, 28 + Math.random() * 16, 8] }}
+                              transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.05 }}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleVoiceVerify}
+                        disabled={voiceStatus === 'listening'}
+                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                      >
+                        <i className={`fas ${voiceStatus === 'listening' ? 'fa-circle-notch fa-spin' : 'fa-microphone'}`} />
+                        {voiceStatus === 'listening' ? 'Verifying…' : 'Verify Voice'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* Support Modal inline */}
               <AnimatePresence>

@@ -79,7 +79,7 @@ export default function PitchMode() {
   const scene = SCENES[sceneIndex];
   const isLastScene = sceneIndex === SCENES.length - 1;
 
-  // Keyboard shortcut Shift+P
+  // Keyboard shortcut Shift+P + custom event from Pitch Deck
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.shiftKey && e.key.toLowerCase() === 'p') {
@@ -104,8 +104,13 @@ export default function PitchMode() {
         restart();
       }
     }
+    function onStartEvent() { if (!active) start(); }
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('sw-start-pitch-mode', onStartEvent);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('sw-start-pitch-mode', onStartEvent);
+    };
   }, [active, sceneIndex, paused]);
 
   const clearTimers = useCallback(() => {
