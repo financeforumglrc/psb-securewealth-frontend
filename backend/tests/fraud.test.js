@@ -49,6 +49,19 @@ describe('Fraud Intelligence Center API', () => {
         createdCaseId = res.body.id;
     });
 
+    test('should reject invalid fraud case body', async () => {
+        const res = await request(app)
+            .post('/api/v1/fraud/cases')
+            .set('Authorization', authHeader())
+            .send({
+                caseRef: '',
+                riskScore: 999,
+                priority: 'super-critical'
+            });
+        expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
+    });
+
     test('should retrieve a full fraud case', async () => {
         const res = await request(app)
             .get(`/api/v1/fraud/cases/${createdCaseId}`)

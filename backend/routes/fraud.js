@@ -8,6 +8,7 @@ const express = require('express');
 const ExcelJS = require('exceljs');
 const { db, fraudDb, bankingDb } = require('../services/database');
 const { adminApiAuth, getAdminIdFromToken } = require('../middleware/auth');
+const { validateBody, fraudSchemas } = require('../middleware/validate');
 const { generateLiveCase, persistCase } = require('../lib/fraudGenerator');
 
 const router = express.Router();
@@ -71,7 +72,7 @@ router.get('/cases', adminApiAuth, (req, res) => {
 });
 
 // POST /api/v1/fraud/cases — create a case manually
-router.post('/cases', adminApiAuth, (req, res) => {
+router.post('/cases', adminApiAuth, validateBody(fraudSchemas.createCase), (req, res) => {
     try {
         const data = req.body;
         if (!data.caseRef) return res.status(400).json({ success: false, error: 'caseRef is required' });
@@ -103,16 +104,10 @@ router.get('/cases/:id', adminApiAuth, (req, res) => {
 });
 
 // PATCH /api/v1/fraud/cases/:id — update status, priority, assignee, etc.
-router.patch('/cases/:id', adminApiAuth, (req, res) => {
+router.patch('/cases/:id', adminApiAuth, validateBody(fraudSchemas.updateCase), (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const data = req.body;
-        if (data.status && !VALID_STATUSES.includes(data.status)) {
-            return res.status(400).json({ success: false, error: 'Invalid status' });
-        }
-        if (data.priority && !VALID_PRIORITIES.includes(data.priority)) {
-            return res.status(400).json({ success: false, error: 'Invalid priority' });
-        }
         fraudDb.updateCase(id, data);
         audit(req, 'UPDATE', 'fraud_case', id, data);
         res.json({ success: true });
@@ -136,13 +131,10 @@ router.delete('/cases/:id', adminApiAuth, (req, res) => {
 });
 
 // POST /api/v1/fraud/cases/:id/actions — acknowledge / investigate / escalate / close / false_positive
-router.post('/cases/:id/actions', adminApiAuth, (req, res) => {
+router.post('/cases/:id/actions', adminApiAuth, validateBody(fraudSchemas.caseAction), (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const { action, note } = req.body;
-        if (!VALID_ACTIONS.includes(action)) {
-            return res.status(400).json({ success: false, error: 'Invalid action' });
-        }
         const statusMap = {
             acknowledge: 'open',
             investigate: 'investigating',
@@ -175,7 +167,7 @@ router.get('/cases/:id/hops', adminApiAuth, (req, res) => {
 });
 
 // POST /api/v1/fraud/cases/:id/hops
-router.post('/cases/:id/hops', adminApiAuth, (req, res) => {
+router.post('/cases/:id/hops', adminApiAuth, validateBody(fraudSchemas.createHop), (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const data = req.body;
@@ -190,7 +182,7 @@ router.post('/cases/:id/hops', adminApiAuth, (req, res) => {
 });
 
 // PATCH /api/v1/fraud/hops/:id
-router.patch('/hops/:id', adminApiAuth, (req, res) => {
+router.patch('/hops/:id', adminApiAuth, validateBody(fraudSchemas.updateHop), (req, res) => {
     try {
         const id = parseInt(req.params.id);
         fraudDb.updateHop(id, req.body);
@@ -228,7 +220,7 @@ router.get('/cases/:id/accounts', adminApiAuth, (req, res) => {
 });
 
 // POST /api/v1/fraud/cases/:id/accounts
-router.post('/cases/:id/accounts', adminApiAuth, (req, res) => {
+router.post('/cases/:id/accounts', adminApiAuth, validateBody(fraudSchemas.createAccount), (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const data = req.body;
@@ -255,13 +247,10 @@ router.get('/cases/:id/notes', adminApiAuth, (req, res) => {
 });
 
 // POST /api/v1/fraud/cases/:id/notes
-router.post('/cases/:id/notes', adminApiAuth, (req, res) => {
+router.post('/cases/:id/notes', adminApiAuth, validateBody(fraudSchemas.createNote), (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const { note } = req.body;
-        if (!note || typeof note !== 'string') {
-            return res.status(400).json({ success: false, error: 'note string required' });
-        }
         const result = fraudDb.createNote({ fraudCaseId: id, adminId: getAdminIdFromToken(req), note });
         audit(req, 'CREATE', 'fraud_note', result.lastInsertRowid, { fraudCaseId: id, note });
         res.status(201).json({ success: true, id: result.lastInsertRowid });
@@ -294,12 +283,9 @@ router.get('/rules', adminApiAuth, (req, res) => {
 });
 
 // POST /api/v1/fraud/rules
-router.post('/rules', adminApiAuth, (req, res) => {
+router.post('/rules', adminApiAuth, validateBody(fraudSchemas.createRule), (req, res) => {
     try {
         const data = req.body;
-        if (!data.name || !data.conditionJson) {
-            return res.status(400).json({ success: false, error: 'name and conditionJson required' });
-        }
         const result = fraudDb.createRule({ ...data, createdBy: getAdminIdFromToken(req) });
         audit(req, 'CREATE', 'fraud_rule', result.lastInsertRowid, { name: data.name });
         res.status(201).json({ success: true, id: result.lastInsertRowid });
@@ -310,7 +296,7 @@ router.post('/rules', adminApiAuth, (req, res) => {
 });
 
 // PATCH /api/v1/fraud/rules/:id
-router.patch('/rules/:id', adminApiAuth, (req, res) => {
+router.patch('/rules/:id', adminApiAuth, validateBody(fraudSchemas.updateRule), (req, res) => {
     try {
         const id = parseInt(req.params.id);
         fraudDb.updateRule(id, req.body);
@@ -487,7 +473,7 @@ router.get('/export/cases', adminApiAuth, async (req, res) => {
 });
 
 // POST /api/v1/fraud/simulate — create one or more live-style mock cases
-router.post('/simulate', adminApiAuth, (req, res) => {
+router.post('/simulate', adminApiAuth, validateBody(fraudSchemas.simulate), (req, res) => {
     try {
         const count = Math.min(100, Math.max(1, parseInt(req.body.count) || 1));
         const created = [];
@@ -508,7 +494,7 @@ router.post('/simulate', adminApiAuth, (req, res) => {
 router.get('/live', adminApiAuth, (req, res) => {
     try {
         const seconds = Math.min(300, Math.max(1, parseInt(req.query.seconds) || 5));
-        const rows = db.prepare(`SELECT * FROM fraud_cases WHERE created_at >= datetime('now', '-${seconds} seconds') ORDER BY created_at DESC LIMIT 100`).all();
+        const rows = db.prepare(`SELECT * FROM fraud_cases WHERE created_at >= datetime('now', ?) ORDER BY created_at DESC LIMIT 100`).all(`-${seconds} seconds`);
         const cases = rows.map(c => ({
             ...c,
             riskFactors: safeJsonParse(c.risk_factors, []),
@@ -542,7 +528,8 @@ router.get('/correlations', adminApiAuth, (req, res) => {
                 case '1y': seconds = 365 * 24 * 60 * 60; break;
                 case '10y': seconds = 10 * 365 * 24 * 60 * 60; break;
             }
-            caseSql += " AND created_at >= datetime('now', '-" + seconds + " seconds')";
+            caseSql += " AND created_at >= datetime('now', ?)";
+            caseParams.push(`-${seconds} seconds`);
         }
         caseSql += ' ORDER BY created_at DESC LIMIT ?';
         const cases = db.prepare(caseSql).all(...caseParams, limit);
