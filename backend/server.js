@@ -116,6 +116,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Request logging
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 
+// Lightweight keep-alive ping endpoint for Render free tier
+app.get('/ping', (_, res) => res.json({ ok: true, ts: Date.now(), uptime: process.uptime() }));
+
 // Frontend routes - serve HTML directly
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
@@ -298,12 +301,14 @@ if (require.main === module) {
                 logger.info(`DS Financial API Server running on port ${PORT}`);
                 logger.info(`Environment: ${process.env.NODE_ENV}`);
                 logger.info(`Patent Portfolio: 47 innovations ready`);
+                require('./scripts/keepAlive').start();
             });
         })
         .catch((err) => {
             logger.error('Demo seed failed, starting server anyway:', err);
             app.listen(PORT, () => {
                 logger.info(`DS Financial API Server running on port ${PORT}`);
+                require('./scripts/keepAlive').start();
             });
         });
 }

@@ -7,6 +7,14 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 
+// Demo mode support
+const DEMO_MODE = process.env.DEMO_MODE === 'true';
+const { DEMO_USER } = require('../services/demoData');
+
+function isDemoUser(req) {
+    return DEMO_MODE && req.user?.id === 'demo-001';
+}
+
 // AI Provider Configuration
 const AI_PROVIDERS = {
     openrouter: {

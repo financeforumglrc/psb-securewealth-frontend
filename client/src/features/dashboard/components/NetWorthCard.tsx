@@ -4,13 +4,17 @@ import { formatCurrency } from '@/shared/utils/demoMode';
 import { formatCurrencyMask, maskValue } from '@/shared/utils/duressMask';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { CosmosEmptyState } from '@/shared/components/ui/CosmosCard';
+import { SkeletonCard } from '@/shared/components/Skeleton';
 
 const COLORS = ['#0f766e', '#14b8a6', '#f59e0b', '#8b5cf6', '#64748b', '#ef4444'];
 
 export default function NetWorthCard() {
   const assets = useWealthStore((s) => s.assets);
   const duressModeActive = useWealthStore((s) => s.duressModeActive);
+  const isLoading = useWealthStore((s) => s.isLoading);
   const [copyFeedback, setCopyFeedback] = useState(false);
+
+  if (isLoading) return <SkeletonCard />;
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
   const liquid = assets.filter((a) => a.liquidity === 'high').reduce((s, a) => s + a.value, 0);
   const investments = assets.filter((a) => ['stock', 'mutualFund'].includes(a.type)).reduce((s, a) => s + a.value, 0);

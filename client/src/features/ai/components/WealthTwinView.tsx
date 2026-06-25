@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { useWealthStore } from '@/shared/store/wealthStore';
+import { SkeletonDashboard } from '@/shared/components/Skeleton';
 import WealthChat from '@/features/ai/components/WealthChat';
 import BehavioralEngine from '@/features/ai/components/BehavioralEngine';
 import DashboardWidget from '@/features/dashboard/components/DashboardWidget';
@@ -57,6 +59,15 @@ function TabContent({ activeTab }: { activeTab: TwinTab }) {
 function WealthTwinInner() {
   const [activeTab, setActiveTab] = useState<TwinTab>('overview');
   const { t } = useTranslation();
+  const isLoading = useWealthStore((s) => s.isLoading);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <SkeletonDashboard />
+      </div>
+    );
+  }
 
   return (
     <WealthTwinProvider activeTab={activeTab} setActiveTab={setActiveTab}>

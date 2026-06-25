@@ -1,18 +1,11 @@
 import { useNBA } from '@/shared/context/NBAContext';
+import { SkeletonCard } from '@/shared/components/Skeleton';
 
 export default function NBAInsights() {
   const { state, dispatch } = useNBA();
 
   if (state.loading) {
-    return (
-      <div className="card animate-pulse">
-        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-3" />
-        <div className="space-y-2">
-          <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />
-          <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />
-        </div>
-      </div>
-    );
+    return <SkeletonCard />;
   }
 
   if (state.insights.length === 0) {

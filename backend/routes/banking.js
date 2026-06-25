@@ -10,6 +10,14 @@ const { bankingDb, db, userDb } = require('../services/database');
 const { authMiddleware } = require('../middleware/auth');
 const { timingCheck } = require('../middleware/timingCheck');
 
+// Demo mode support
+const DEMO_MODE = process.env.DEMO_MODE === 'true';
+const { DEMO_USER } = require('../services/demoData');
+
+function isDemoUser(req) {
+    return DEMO_MODE && req.user?.id === 'demo-001';
+}
+
 // ========== VALIDATION HELPERS ==========
 function validateRequired(body, fields) {
     const missing = fields.filter(f => body[f] === undefined || body[f] === null || body[f] === '');
@@ -27,6 +35,7 @@ function validatePositiveNumber(value, name) {
 // ========== ACCOUNTS ==========
 router.get('/accounts', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: DEMO_USER.accounts });
         const accounts = bankingDb.getAccountsByUser(req.user.id);
         res.json({ success: true, data: accounts });
     } catch (err) {
@@ -58,6 +67,10 @@ router.post('/accounts', authMiddleware, (req, res) => {
 
 router.get('/accounts/:id/balance', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) {
+            const primary = DEMO_USER.accounts[0];
+            return res.json({ success: true, data: { balance: primary.balance, accountNumber: primary.account_number } });
+        }
         const account = bankingDb.getAccountById(req.params.id);
         if (!account || account.user_id !== req.user.id) {
             return res.status(404).json({ success: false, error: 'Account not found' });
@@ -104,6 +117,10 @@ router.delete('/accounts/:id', authMiddleware, (req, res) => {
 // ========== TRANSACTIONS ==========
 router.get('/transactions', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) {
+            const txns = DEMO_USER.transactions;
+            return res.json({ success: true, count: txns.length, data: txns });
+        }
         const { limit = 100, type, startDate, endDate, accountId } = req.query;
         const lim = parseInt(limit) || 100;
         let txns;
@@ -182,6 +199,7 @@ router.post('/transactions', authMiddleware, timingCheck, (req, res) => {
 // ========== BENEFICIARIES ==========
 router.get('/beneficiaries', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: [] });
         const data = bankingDb.getBeneficiariesByUser(req.user.id);
         res.json({ success: true, data });
     } catch (err) {
@@ -229,6 +247,7 @@ router.delete('/beneficiaries/:id', authMiddleware, (req, res) => {
 // ========== CARDS ==========
 router.get('/cards', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: [] });
         const data = bankingDb.getCardsByUser(req.user.id);
         res.json({ success: true, data });
     } catch (err) {
@@ -299,6 +318,7 @@ router.delete('/cards/:id', authMiddleware, (req, res) => {
 // ========== BILLS ==========
 router.get('/bills', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: [] });
         const data = bankingDb.getBillsByUser(req.user.id);
         res.json({ success: true, data });
     } catch (err) {
@@ -387,6 +407,7 @@ router.post('/bills/:id/pay', authMiddleware, (req, res) => {
 // ========== SUBSCRIPTIONS ==========
 router.get('/subscriptions', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: [] });
         const data = bankingDb.getSubscriptionsByUser(req.user.id);
         res.json({ success: true, data });
     } catch (err) {
@@ -434,6 +455,7 @@ router.delete('/subscriptions/:id', authMiddleware, (req, res) => {
 // ========== GOALS ==========
 router.get('/goals', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: DEMO_USER.goals });
         const data = bankingDb.getGoalsByUser(req.user.id);
         res.json({ success: true, data });
     } catch (err) {
@@ -513,6 +535,7 @@ router.delete('/goals/:id', authMiddleware, (req, res) => {
 // ========== ASSETS ==========
 router.get('/assets', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: DEMO_USER.assets });
         const data = bankingDb.getAssetsByUser(req.user.id);
         res.json({ success: true, data });
     } catch (err) {
@@ -560,6 +583,7 @@ router.delete('/assets/:id', authMiddleware, (req, res) => {
 // ========== LOANS ==========
 router.get('/loans', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: [] });
         const data = bankingDb.getLoansByUser(req.user.id);
         res.json({ success: true, data });
     } catch (err) {
@@ -629,6 +653,7 @@ router.patch('/loans/:id/pay', authMiddleware, (req, res) => {
 // ========== RECURRING PAYMENTS (SIPs / Auto-Debits) ==========
 router.get('/recurring', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: [] });
         const data = bankingDb.getRecurringByUser(req.user.id);
         res.json({ success: true, data });
     } catch (err) {
@@ -676,6 +701,7 @@ router.delete('/recurring/:id', authMiddleware, (req, res) => {
 // ========== AUDIT LOGS ==========
 router.get('/audit', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) return res.json({ success: true, data: [] });
         const limit = parseInt(req.query.limit) || 100;
         const rows = bankingDb.getAuditLogsByUser(req.user.id, limit);
         // Map DB columns to frontend expected shape (details = human-readable summary)
@@ -713,6 +739,24 @@ router.get('/audit', authMiddleware, (req, res) => {
 // ========== STATEMENTS ==========
 router.get('/statements/:accountId', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) {
+            const primary = DEMO_USER.accounts[0];
+            const txns = DEMO_USER.transactions;
+            const credits = txns.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
+            const debits = txns.filter(t => t.type !== 'credit').reduce((s, t) => s + t.amount, 0);
+            return res.json({
+                success: true,
+                data: {
+                    account: primary,
+                    period: { start: txns[0]?.date, end: txns[txns.length - 1]?.date },
+                    openingBalance: primary.balance + debits - credits,
+                    closingBalance: primary.balance,
+                    totalCredits: credits,
+                    totalDebits: debits,
+                    transactions: txns
+                }
+            });
+        }
         const account = bankingDb.getAccountById(req.params.accountId);
         if (!account || account.user_id !== req.user.id) {
             return res.status(404).json({ success: false, error: 'Account not found' });
@@ -749,6 +793,60 @@ router.get('/statements/:accountId', authMiddleware, (req, res) => {
 // ========== DASHBOARD SUMMARY ==========
 router.get('/dashboard', authMiddleware, (req, res) => {
     try {
+        if (isDemoUser(req)) {
+            const accounts = DEMO_USER.accounts;
+            const transactions = DEMO_USER.transactions.slice(0, 100);
+            const goals = DEMO_USER.goals;
+            const assets = DEMO_USER.assets;
+            const loans = [];
+            const bills = [];
+            const cards = [];
+            const subscriptions = [];
+            const beneficiaries = [];
+            const recurring = [];
+
+            const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+            const totalAssets = assets.reduce((sum, a) => sum + a.value, 0);
+            const netWorth = totalBalance + totalAssets;
+            const monthlySpend = transactions
+                .filter(t => ['debit', 'upi', 'transfer', 'neft', 'imps'].includes(t.type) && new Date(t.created_at) > new Date(Date.now() - 30 * 86400000))
+                .reduce((sum, t) => sum + t.amount, 0);
+            const monthlyIncome = transactions
+                .filter(t => t.type === 'credit' && new Date(t.created_at) > new Date(Date.now() - 30 * 86400000))
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            return res.json({
+                success: true,
+                data: {
+                    netWorth,
+                    totalBalance,
+                    totalAssets,
+                    monthlySpend,
+                    monthlyIncome,
+                    monthlyEmi: 0,
+                    totalLoanOutstanding: 0,
+                    accountCount: accounts.length,
+                    transactionCount: transactions.length,
+                    goalCount: goals.length,
+                    upcomingBills: 0,
+                    cards: 0,
+                    subscriptions: 0,
+                    beneficiaries: 0,
+                    loans: 0,
+                    recurringCount: 0,
+                    kycStatus: 'verified',
+                    recentTransactions: transactions.slice(0, 5),
+                    accounts,
+                    goals,
+                    bills,
+                    assets,
+                    cards,
+                    subscriptions,
+                    loans,
+                    recurring
+                }
+            });
+        }
         const accounts = bankingDb.getAccountsByUser(req.user.id);
         const transactions = bankingDb.getTransactionsByUser(req.user.id, 5);
         const goals = bankingDb.getGoalsByUser(req.user.id);

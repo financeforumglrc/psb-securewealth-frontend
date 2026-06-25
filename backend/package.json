@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
-    "seed:fraud": "node scripts/seedFraudCases.js"
+    "seed:fraud": "node scripts/seedFraudCases.js",
+    "demo:start": "DEMO_MODE=true node server.js"
   },
   "keywords": [
     "tax",

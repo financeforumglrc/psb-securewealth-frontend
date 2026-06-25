@@ -10,6 +10,7 @@ import CosmosCard from '@/shared/components/ui/CosmosCard';
 import ChartWidget from '@/shared/components/ui/ChartWidget';
 import VirtualCard from '@/shared/components/ui/VirtualCard';
 import DashboardWidget from './DashboardWidget';
+import { SkeletonDashboard } from '@/shared/components/Skeleton';
 
 import WealthTwinHero from '@/features/dashboard/components/WealthTwinHero';
 import FinancialPulse from '@/features/dashboard/components/FinancialPulse';
@@ -44,6 +45,15 @@ export default function DashboardView() {
   const { cashbackBalance } = useRewards();
   const streak = getStreak();
   const kycVerified = useWealthStore((s) => s.kycVerified);
+  const isLoading = useWealthStore((s) => s.isLoading);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <SkeletonDashboard />
+      </div>
+    );
+  }
 
   const rawNetWorth = assets.reduce((sum, a) => sum + a.value, 0);
   const healthScore = coercedMode ? 15 : Math.min(Math.round((user.monthlySavings / user.monthlyIncome) * 200 + 40), 100);

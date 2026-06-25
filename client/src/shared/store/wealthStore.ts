@@ -58,6 +58,7 @@ interface WealthState {
   onboardingComplete: boolean;
   dashboardDensity: 'simple' | 'comprehensive';
   behavioralDeviation: number;
+  isLoading: boolean;
   loginAt: number;
 
   setView: (view: ViewType) => void;
@@ -94,6 +95,7 @@ interface WealthState {
   dismissTrigger: (id: string) => void;
   fireTrigger: (id: string) => void;
   setCibilScore: (score: number) => void;
+  setIsLoading: (val: boolean) => void;
   authenticate: () => void;
   logout: () => void;
   incrementAuthAttempt: () => void;
@@ -205,6 +207,7 @@ export const useWealthStore = create<WealthState>()(
       currentView: 'dashboard',
       isJudgeMode: false,
       darkMode: false,
+      isLoading: false,
       hasConsent: false,
       pitchModeActive: false,
       familyMode: false,
@@ -315,6 +318,7 @@ export const useWealthStore = create<WealthState>()(
         triggers: s.triggers.map((t) => t.id === id ? { ...t, fired: true } : t)
       })),
       setCibilScore: (score) => set({ cibilScore: score }),
+      setIsLoading: (val) => set({ isLoading: val }),
       authenticate: () => set({ isAuthenticated: true, authAttempts: 0, authLockoutUntil: null }),
       logout: () => set({ isAuthenticated: false, currentView: 'dashboard' }),
       incrementAuthAttempt: () => set((s) => ({ authAttempts: s.authAttempts + 1 })),
@@ -389,6 +393,7 @@ export const useWealthStore = create<WealthState>()(
       }),
       // Load from backend API
       loadFromBackend: async () => {
+        set({ isLoading: true });
         try {
           const { ok, data } = await backendApi.getDashboard();
           if (!ok || !data?.data) return;
@@ -401,6 +406,7 @@ export const useWealthStore = create<WealthState>()(
             bills: d.bills?.map((b: any) => ({ id: String(b.id), name: b.name, category: b.category, amount: b.amount, dueDay: b.due_date ? parseInt(b.due_date.split('-')[2]) : 1, icon: 'fa-file-invoice', color: 'bg-primary', status: b.status, isRecurring: !!b.is_recurring, frequency: b.frequency || 'monthly' })) || current.bills,
           });
         } catch { /* backend optional */ }
+        finally { set({ isLoading: false }); }
       },
     }),
     {

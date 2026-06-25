@@ -179,6 +179,8 @@ export default function AuthenticatedApp() {
   usePanicMode();
   useDemoMode();
 
+  const loadFromBackend = useWealthStore((s) => s.loadFromBackend);
+
   useEffect(() => {
     if (isJudgeMode()) {
       initJudgeMode();
@@ -186,7 +188,9 @@ export default function AuthenticatedApp() {
     // Show the Account Aggregator fetch animation once per login session
     setAAFetchComplete(false);
     setLoginAt(Date.now());
-  }, []);
+    // Attempt to hydrate latest dashboard data from backend
+    void loadFromBackend();
+  }, [initJudgeMode, setAAFetchComplete, setLoginAt, loadFromBackend]);
 
   // Duress lock check — check only on mount and when view changes, not every second
   const [duressLocked, setDuressLocked] = useState(isDuressLocked());
