@@ -102,6 +102,70 @@ export default function AlertHistoryTab({ role = 'superadmin' }: { role?: AdminR
     return () => { unsub(); };
   }, []);
 
+  // Real-time WebSocket fraud alerts
+  useEffect(() => {
+    const token = sessionStorage.getItem('sw-admin-token');
+    if (!token) return;
+
+    const backendUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+    let host = import.meta.env.VITE_WS_HOST as string | undefined;
+    if (!host && backendUrl) {
+      try { host = new URL(backendUrl).host; } catch { /* ignore */ }
+    }
+    if (!host) host = window.location.host;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    const connect = () => {
+      if (attempts >= maxAttempts) return;
+      attempts++;
+      ws = new WebSocket(`${protocol}//${host}/ws/alerts?token=${token}`);
+
+      ws.onopen = () => { attempts = 0; };
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type !== 'FRAUD_ALERT') return;
+        const data = msg.data;
+        const severity = data.score >= 80 ? 'critical' : 'warning';
+        const alert: AlertEvent = {
+          id: Date.now(),
+          type: 'fraud',
+          severity,
+          title: `🚨 ${data.decision}: ₹${data.amount?.toLocaleString?.('en-IN') || data.amount} ${data.type}`,
+          message: `Risk score ${data.score}/100 • User ${data.userId}`,
+          timestamp: new Date(data.timestamp).toISOString(),
+          acknowledged: false,
+          status: 'open',
+          eventData: data
+        };
+        setAlerts(prev => [alert, ...prev].slice(0, 50));
+        setLivePulse(true);
+        setTimeout(() => setLivePulse(false), 800);
+        if (severity === 'critical') {
+          setToasts(prev => [...prev, { id: alert.id, title: alert.title, message: alert.message, severity }]);
+          setTimeout(() => setToasts(prev => prev.filter(t => t.id !== alert.id)), 6000);
+        }
+      };
+
+      ws.onclose = () => {
+        reconnectTimer = setTimeout(connect, Math.min(2000 * attempts, 10000));
+      };
+
+      ws.onerror = () => { ws?.close(); };
+    };
+
+    connect();
+    return () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      ws?.close();
+    };
+  }, []);
+
   useEffect(() => {
     if (feedRef.current && alerts.length > 0) {
       feedRef.current.scrollTop = 0;

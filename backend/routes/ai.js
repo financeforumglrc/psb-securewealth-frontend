@@ -5,7 +5,11 @@
 
 const express = require('express');
 const axios = require('axios');
+const crypto = require('crypto');
 const router = express.Router();
+
+// Database access for AI response cache
+const { db } = require('../services/database');
 
 // Demo mode support
 const DEMO_MODE = process.env.DEMO_MODE === 'true';
@@ -152,9 +156,13 @@ async function callLegacyAI(prompt, options = {}) {
  * @patent  PATENT #7: Multi-Provider AI Orchestrator
  * @access  Private
  */
+function getCacheKey(prompt, userId) {
+    return crypto.createHash('sha256').update(userId + '::' + prompt.slice(0, 500)).digest('hex');
+}
+
 router.post('/ask', async (req, res) => {
     try {
-        const { question, provider, model, context } = req.body;
+        const { question, provider, model, context, useCache = true } = req.body;
 
         if (!question) {
             return res.status(400).json({
@@ -170,19 +178,38 @@ router.post('/ask', async (req, res) => {
             enhancedPrompt = `Context: ${sanitizePromptInput(JSON.stringify(context))}\n\nQuestion: ${sanitizePromptInput(question)}`;
         }
 
+        const userId = req.user?.id || req.headers['x-device-id'] || 'anon';
+        const cacheKey = getCacheKey(enhancedPrompt, userId);
+        const ttlMinutes = /market|stock|price|nifty|sensex/i.test(question) ? 5 : 60;
+
+        if (useCache) {
+            const cached = db.prepare(
+                `SELECT response FROM ai_cache WHERE cache_key = ? AND created_at > datetime('now', '-${ttlMinutes} minutes')`
+            ).get(cacheKey);
+            if (cached) {
+                const parsed = JSON.parse(cached.response);
+                return res.json({ success: true, patent: 'PAT-007', data: parsed, cached: true });
+            }
+        }
+
         // Call AI with orchestration
         const result = await callLegacyAI(enhancedPrompt, { provider, model });
+        const responsePayload = {
+            answer: result.content,
+            provider: result.provider,
+            model: result.model,
+            usage: result.usage,
+            timestamp: result.timestamp
+        };
+
+        db.prepare(`INSERT OR REPLACE INTO ai_cache (cache_key, response) VALUES (?, ?)`)
+            .run(cacheKey, JSON.stringify(responsePayload));
 
         res.json({
             success: true,
             patent: 'PAT-007',
-            data: {
-                answer: result.content,
-                provider: result.provider,
-                model: result.model,
-                usage: result.usage,
-                timestamp: result.timestamp
-            }
+            data: responsePayload,
+            cached: false
         });
     } catch (error) {
         console.error('AI ask error:', error);
@@ -194,6 +221,7 @@ router.post('/ask', async (req, res) => {
         });
     }
 });
+
 
 /**
  * @route   POST /api/v1/ai/summarize

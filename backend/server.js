@@ -5,11 +5,14 @@
  */
 
 const path = require('path');
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const WebSocket = require('ws');
+const jwt = require('jsonwebtoken');
 const winston = require('winston');
 require('dotenv').config();
 
@@ -56,7 +59,11 @@ const logger = winston.createLogger({
 
 // Initialize Express app
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// Default no-op until server starts; banking.js fraud alerts call this safely
+global.broadcastFraudAlert = () => {};
 
 // Security middleware
 app.use(helmet({
@@ -295,9 +302,47 @@ app.use(errorHandler);
 
 // Start server only when run directly (not when imported by tests)
 if (require.main === module) {
+    // WebSocket alert server for real-time fraud notifications
+    const wss = new WebSocket.Server({ server: httpServer, path: '/ws/alerts' });
+
+    global.broadcastFraudAlert = (alert) => {
+        const payload = JSON.stringify({ type: 'FRAUD_ALERT', data: alert, ts: Date.now() });
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) client.send(payload);
+        });
+    };
+
+    wss.on('connection', (ws, req) => {
+        try {
+            const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+            const token = url.searchParams.get('token');
+            if (!token) {
+                ws.close(1008, 'Missing token');
+                return;
+            }
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+            if (decoded.role !== 'admin') {
+                ws.close(1008, 'Admin role required');
+                return;
+            }
+            ws.send(JSON.stringify({ type: 'CONNECTED', ts: Date.now() }));
+        } catch {
+            ws.close(1008, 'Invalid token');
+        }
+    });
+
+    // Cleanup AI cache once a day
+    setInterval(() => {
+        try {
+            require('./services/database').db.prepare(`DELETE FROM ai_cache WHERE created_at < datetime('now', '-24 hours')`).run();
+        } catch (e) {
+            console.error('[ai-cache] cleanup error:', e.message);
+        }
+    }, 24 * 60 * 60 * 1000);
+
     seedAll()
         .then(() => {
-            app.listen(PORT, () => {
+            httpServer.listen(PORT, () => {
                 logger.info(`DS Financial API Server running on port ${PORT}`);
                 logger.info(`Environment: ${process.env.NODE_ENV}`);
                 logger.info(`Patent Portfolio: 47 innovations ready`);
@@ -306,8 +351,10 @@ if (require.main === module) {
         })
         .catch((err) => {
             logger.error('Demo seed failed, starting server anyway:', err);
-            app.listen(PORT, () => {
+            httpServer.listen(PORT, () => {
                 logger.info(`DS Financial API Server running on port ${PORT}`);
+                logger.info(`Environment: ${process.env.NODE_ENV}`);
+                logger.info(`Patent Portfolio: 47 innovations ready`);
                 require('./scripts/keepAlive').start();
             });
         });

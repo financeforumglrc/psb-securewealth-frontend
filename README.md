@@ -79,50 +79,22 @@ Bas `PSB-Website-Clean` folder zip karo aur bhej do.
 
 ---
 
-## 🎨 PSB Features Included
+## 🗄️ Database Migration (SQLite → PostgreSQL)
 
-- ✅ Punjab & Sind Bank branding (Green/Yellow theme)
-- ✅ Internet Banking Portal login
-- ✅ Biometric lock screen
-- ✅ AI Recommendations
-- ✅ Account Aggregator (RBI AA)
-- ✅ Live Pulse dashboard
-- ✅ Security Beast, Privacy, Tax, Calculators
-- ✅ All 15+ innovation features
-# Auto-deploy enabled
-# Deployed with live backend
-
-
-## 🛡️ Fraud Intelligence Center (Admin)
-
-The admin portal includes a comprehensive **Fraud Intelligence Center** under the **Fraud Intel** tab:
-
-- **Case Explorer** — filterable table of synthetic fraud cases with status, priority, category, risk score, amount, and country route.
-- **Cross-Border Map** — Leaflet map rendering origin → intermediate → destination money trails with sanctioned/high-risk markers.
-- **Trace Network** — SVG network graph of accounts, mules, shell companies, and final destinations.
-- **Timeline** — chronological view of every money hop.
-- **Risk Explainer** — risk-score breakdown and top risk factors across the dataset.
-- **Rules & Alerts** — create thresholds that auto-flag or escalate cases.
-- **Reports** — download **Excel (.xlsx)**, **CSV (.csv)**, and **PDF summary** exports.
-- **Live Simulation** — toggle a live mock feed that injects new cross-border traces every few seconds, or simulate a burst of cases for load testing.
-
-> ⚠️ All fraud data is **synthetic and anonymized**. No real PII or bank account details are used. The architecture is API-ready to plug in an authorized real data source later.
-
-### Seed synthetic fraud data
+The backend ships with a one-line DB adapter:
 
 ```bash
-cd backend
-npm install
-npm run seed:fraud 500
+# Copy the example environment
+cp backend/.env.example backend/.env
+
+# Hackathon / demo — SQLite (default)
+DB_TYPE=sqlite
+
+# Production — provision a Postgres instance, then:
+DB_TYPE=postgres
+DATABASE_URL=postgresql://user:pass@host:5432/psb_securewealth
 ```
 
-### Backend fraud routes
+The adapter layer lives in `backend/services/db/index.js`. All existing route code continues to work unchanged; only the active adapter switches.
 
-Mounted at `/api/v1/fraud` and protected by admin Bearer token:
-
-- `GET /fraud/cases` — list/filter/paginate cases
-- `GET /fraud/cases/:id` — full case with hops, accounts, notes
-- `POST /fraud/cases/:id/actions` — acknowledge / investigate / escalate / close / false-positive
-- `GET /fraud/export/cases?format=xlsx|csv` — export workbook
-- `GET /fraud/stats/summary` — KPIs
-- `GET|POST|PATCH|DELETE /fraud/rules` — alerting rules engine
+> Note: The PostgreSQL adapter is currently a stub for demonstration. Migrating production data would require porting the 30-table SQLite schema to Postgres and updating the adapter implementation.

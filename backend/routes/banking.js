@@ -18,6 +18,20 @@ function isDemoUser(req) {
     return DEMO_MODE && req.user?.id === 'demo-001';
 }
 
+function maybeBroadcastFraudAlert(req, amount, type) {
+    const wp = req.wealthProtection;
+    if (!wp || wp.riskScore < 60) return;
+    global.broadcastFraudAlert?.({
+        userId: req.user.id,
+        amount,
+        decision: wp.riskScore >= 80 ? 'BLOCKED' : 'FLAGGED',
+        score: wp.riskScore,
+        signals: wp.signals,
+        type,
+        timestamp: Date.now()
+    });
+}
+
 // ========== VALIDATION HELPERS ==========
 function validateRequired(body, fields) {
     const missing = fields.filter(f => body[f] === undefined || body[f] === null || body[f] === '');
@@ -168,6 +182,7 @@ router.post('/transactions', authMiddleware, timingCheck, (req, res) => {
                 description: description || `${type.toUpperCase()} Transaction`
             });
 
+            maybeBroadcastFraudAlert(req, amountCheck.value, type);
             return res.json({ success: true, data: { id: result.transactionId, referenceId: result.referenceId }, wealthProtection: req.wealthProtection });
         }
 
@@ -186,6 +201,7 @@ router.post('/transactions', authMiddleware, timingCheck, (req, res) => {
                 description: description || 'Credit Transaction'
             });
 
+            maybeBroadcastFraudAlert(req, amountCheck.value, 'credit');
             return res.json({ success: true, data: { id: result.transactionId, referenceId: result.referenceId }, wealthProtection: req.wealthProtection });
         }
     } catch (err) {

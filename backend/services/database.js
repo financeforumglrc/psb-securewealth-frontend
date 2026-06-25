@@ -62,6 +62,13 @@ function initializeDatabase() {
         CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 
         -- Phase 2 v2: AI audit & quota tables
+        CREATE TABLE IF NOT EXISTS ai_cache (
+            cache_key TEXT PRIMARY KEY,
+            response TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_ai_cache_created ON ai_cache(created_at);
+
         CREATE TABLE IF NOT EXISTS ai_runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             device_id TEXT,
