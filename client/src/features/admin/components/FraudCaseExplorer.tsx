@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Search, Filter, ChevronLeft, ChevronRight, ArrowUpDown
+  Search, Filter, ChevronLeft, ChevronRight, ArrowUpDown, X, Share2
 } from 'lucide-react';
 import { statusColor, priorityColor, categoryLabel } from '@/features/admin/services/fraudService';
 import { useTranslation } from '@/shared/hooks/useTranslation';
@@ -84,6 +84,22 @@ export default function FraudCaseExplorer({
           )}
         </div>
       </div>
+
+      {filters.ids && filters.ids.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border border-indigo-200 dark:border-indigo-800">
+            <Share2 className="w-3.5 h-3.5" />
+            {t('fraudIntelCorrelateFilterChip')} · {filters.ids.length}
+            <button
+              onClick={() => setFilters(prev => { const { ids, ...rest } = prev; return { ...rest, page: 1 }; })}
+              className="ml-1 p-0.5 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-800"
+              aria-label={t('fraudIntelClear')}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* Filters */}
       {showFilters && (

@@ -124,6 +124,7 @@ export interface FraudCaseFilters {
   minRisk?: number;
   maxRisk?: number;
   q?: string;
+  ids?: number[];
   sort?: 'created_at' | 'updated_at' | 'risk_score' | 'priority' | 'status';
   order?: 'asc' | 'desc';
   page?: number;
@@ -150,6 +151,23 @@ export interface FraudRule {
   severity: FraudPriority;
   createdBy?: string;
   createdAt: string;
+}
+
+export interface FraudCorrelation {
+  id: string;
+  type: 'ip' | 'destination' | 'beneficiary' | 'origin' | 'category';
+  key: string;
+  caseIds: number[];
+  caseCount: number;
+  avgRisk: number;
+  maxRisk: number;
+  severity: FraudPriority;
+  sampleRefs: string[];
+}
+
+export interface FraudCorrelationResponse {
+  success: boolean;
+  clusters: FraudCorrelation[];
 }
 
 export type FraudExportFormat = 'xlsx' | 'csv';

@@ -1025,6 +1025,11 @@ const fraudDb = {
             const like = `%${filters.q}%`;
             params.push(like, like, like, like, like, like);
         }
+        if (filters.ids && filters.ids.length) {
+            const ph = filters.ids.map(() => '?').join(',');
+            sql += ` AND c.id IN (${ph})`;
+            params.push(...filters.ids);
+        }
         const countRow = db.prepare(`SELECT COUNT(*) as total FROM fraud_cases c LEFT JOIN users u ON c.user_id = u.id WHERE 1=1 ${sql.split('WHERE 1=1')[1] || ''}`).get(...params);
         const allowedSort = ['created_at', 'updated_at', 'risk_score', 'priority', 'status'].includes(filters.sort) ? filters.sort : 'created_at';
         const dir = filters.order && filters.order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';

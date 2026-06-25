@@ -130,6 +130,77 @@ describe('Fraud Intelligence Center API', () => {
         expect(res.headers['content-type']).toContain('spreadsheetml');
     });
 
+    test('should surface correlated clusters', async () => {
+        const sharedIp = '203.0.113.99';
+        const case2 = await request(app)
+            .post('/api/v1/fraud/cases')
+            .set('Authorization', authHeader())
+            .send({
+                caseRef: `FC-CORR-${Date.now()}`,
+                status: 'open',
+                priority: 'high',
+                riskScore: 75,
+                category: 'mule_transfer',
+                summary: 'Correlation test case',
+                riskFactors: ['shared_ip'],
+                countryRiskTags: ['India']
+            });
+        expect(case2.status).toBe(201);
+        const case2Id = case2.body.id;
+
+        await request(app)
+            .post(`/api/v1/fraud/cases/${createdCaseId}/hops`)
+            .set('Authorization', authHeader())
+            .send({
+                hopNumber: 2,
+                hopType: 'intermediate',
+                nodeName: 'Shared IP Hop',
+                country: 'India',
+                city: 'Mumbai',
+                entityType: 'ip',
+                entityValue: sharedIp,
+                amount: 0,
+                currency: 'INR',
+                confidence: 90,
+                evidenceJson: { ip: sharedIp }
+            });
+
+        await request(app)
+            .post(`/api/v1/fraud/cases/${case2Id}/hops`)
+            .set('Authorization', authHeader())
+            .send({
+                hopNumber: 1,
+                hopType: 'origin',
+                nodeName: 'Shared IP Hop',
+                country: 'India',
+                city: 'Delhi',
+                entityType: 'ip',
+                entityValue: sharedIp,
+                amount: 500000,
+                currency: 'INR',
+                confidence: 90,
+                evidenceJson: { ip: sharedIp }
+            });
+
+        const res = await request(app)
+            .get('/api/v1/fraud/correlations')
+            .set('Authorization', authHeader());
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(Array.isArray(res.body.clusters)).toBe(true);
+        const ipCluster = res.body.clusters.find(c =>
+            c.type === 'ip' &&
+            c.caseIds.includes(createdCaseId) &&
+            c.caseIds.includes(case2Id)
+        );
+        expect(ipCluster).toBeDefined();
+        expect(ipCluster.caseCount).toBeGreaterThanOrEqual(2);
+
+        await request(app)
+            .delete(`/api/v1/fraud/cases/${case2Id}`)
+            .set('Authorization', authHeader());
+    });
+
     test('should delete a fraud case', async () => {
         const res = await request(app)
             .delete(`/api/v1/fraud/cases/${createdCaseId}`)

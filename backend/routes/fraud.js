@@ -56,6 +56,7 @@ router.get('/cases', adminApiAuth, (req, res) => {
             minRisk: req.query.minRisk !== undefined ? parseFloat(req.query.minRisk) : undefined,
             maxRisk: req.query.maxRisk !== undefined ? parseFloat(req.query.maxRisk) : undefined,
             q: req.query.q,
+            ids: req.query.ids ? String(req.query.ids).split(',').map(id => parseInt(id)).filter(id => !isNaN(id) && id > 0) : undefined,
             sort: req.query.sort,
             order: req.query.order,
             page: parseInt(req.query.page) || 1,
@@ -522,6 +523,185 @@ router.get('/live', adminApiAuth, (req, res) => {
     } catch (error) {
         console.error('Fraud live feed error:', error);
         res.status(500).json({ success: false, error: 'Failed to load live feed' });
+    }
+});
+
+// GET /api/v1/fraud/correlations
+// Surface clusters of related fraud cases (shared IP, destination, beneficiary, origin, category)
+router.get('/correlations', adminApiAuth, (req, res) => {
+    try {
+        const limit = Math.min(parseInt(req.query.limit) || 500, 1000);
+        const timeRange = req.query.timeRange || '7d';
+        let caseSql = `SELECT id, case_ref, risk_score, category FROM fraud_cases WHERE 1=1`;
+        const caseParams = [];
+        if (timeRange !== 'all') {
+            let seconds = 7 * 24 * 60 * 60;
+            switch (timeRange) {
+                case 'live': seconds = 60; break;
+                case '1m': seconds = 30 * 24 * 60 * 60; break;
+                case '1y': seconds = 365 * 24 * 60 * 60; break;
+                case '10y': seconds = 10 * 365 * 24 * 60 * 60; break;
+            }
+            caseSql += " AND created_at >= datetime('now', '-" + seconds + " seconds')";
+        }
+        caseSql += ' ORDER BY created_at DESC LIMIT ?';
+        const cases = db.prepare(caseSql).all(...caseParams, limit);
+        if (!cases.length) {
+            return res.json({ success: true, clusters: [] });
+        }
+
+        const caseIds = cases.map(c => c.id);
+        const placeholders = caseIds.map(() => '?').join(',');
+
+        const hops = db.prepare(`
+            SELECT fraud_case_id, hop_number, node_name, country, evidence_json
+            FROM fraud_hops
+            WHERE fraud_case_id IN (${placeholders})
+        `).all(...caseIds);
+
+        const accounts = db.prepare(`
+            SELECT fraud_case_id, masked_account
+            FROM fraud_accounts
+            WHERE account_type = 'beneficiary' AND fraud_case_id IN (${placeholders})
+        `).all(...caseIds);
+
+        const caseMap = new Map();
+        cases.forEach(c => {
+            caseMap.set(c.id, {
+                id: c.id,
+                caseRef: c.case_ref,
+                riskScore: c.risk_score,
+                category: c.category,
+                hops: [],
+                accounts: []
+            });
+        });
+
+        hops.forEach(h => {
+            const c = caseMap.get(h.fraud_case_id);
+            if (c) {
+                c.hops.push({
+                    hopNumber: h.hop_number,
+                    nodeName: h.node_name,
+                    country: h.country,
+                    evidence: safeJsonParse(h.evidence_json, {})
+                });
+            }
+        });
+
+        accounts.forEach(a => {
+            const c = caseMap.get(a.fraud_case_id);
+            if (c) c.accounts.push(a.masked_account);
+        });
+
+        const allCases = Array.from(caseMap.values());
+
+        function extractIp(evidence) {
+            return evidence?.ip || null;
+        }
+
+        function buildCluster(type, key, matches) {
+            if (!matches || matches.length < 2) return null;
+            const riskScores = matches.map(c => c.riskScore || 0);
+            const avgRisk = Math.round(riskScores.reduce((a, b) => a + b, 0) / riskScores.length);
+            const maxRisk = Math.max(...riskScores);
+            return {
+                id: `${type}-${key}`.replace(/\s+/g, '-').toLowerCase(),
+                type,
+                key,
+                caseIds: matches.map(c => c.id),
+                caseCount: matches.length,
+                avgRisk,
+                maxRisk,
+                severity: avgRisk >= 80 ? 'critical' : avgRisk >= 60 ? 'high' : 'medium',
+                sampleRefs: matches.slice(0, 3).map(c => c.caseRef)
+            };
+        }
+
+        const ipMap = new Map();
+        const destMap = new Map();
+        const beneficiaryMap = new Map();
+        const originMap = new Map();
+        const categoryMap = new Map();
+
+        allCases.forEach(c => {
+            // IP from any hop evidence
+            c.hops.forEach(h => {
+                const ip = extractIp(h.evidence);
+                if (ip) {
+                    if (!ipMap.has(ip)) ipMap.set(ip, []);
+                    ipMap.get(ip).push(c);
+                }
+            });
+
+            // Destination = last hop
+            const sortedHops = [...c.hops].sort((a, b) => a.hopNumber - b.hopNumber);
+            if (sortedHops.length) {
+                const last = sortedHops[sortedHops.length - 1];
+                const destKey = `${last.nodeName} (${last.country})`;
+                if (!destMap.has(destKey)) destMap.set(destKey, []);
+                destMap.get(destKey).push(c);
+
+                const origin = sortedHops[0];
+                const originKey = origin.country || 'Unknown';
+                if (!originMap.has(originKey)) originMap.set(originKey, []);
+                originMap.get(originKey).push(c);
+            }
+
+            // Beneficiary accounts
+            c.accounts.forEach(acc => {
+                if (!beneficiaryMap.has(acc)) beneficiaryMap.set(acc, []);
+                beneficiaryMap.get(acc).push(c);
+            });
+
+            // Category
+            if (!categoryMap.has(c.category)) categoryMap.set(c.category, []);
+            categoryMap.get(c.category).push(c);
+        });
+
+        let clusters = [];
+        ipMap.forEach((matches, key) => {
+            const cluster = buildCluster('ip', key, matches);
+            if (cluster) clusters.push(cluster);
+        });
+        destMap.forEach((matches, key) => {
+            const cluster = buildCluster('destination', key, matches);
+            if (cluster) clusters.push(cluster);
+        });
+        beneficiaryMap.forEach((matches, key) => {
+            const cluster = buildCluster('beneficiary', key, matches);
+            if (cluster) clusters.push(cluster);
+        });
+        originMap.forEach((matches, key) => {
+            const cluster = buildCluster('origin', key, matches);
+            if (cluster) clusters.push(cluster);
+        });
+        categoryMap.forEach((matches, key) => {
+            const riskScores = matches.map(c => c.riskScore || 0);
+            const avgRisk = Math.round(riskScores.reduce((a, b) => a + b, 0) / riskScores.length);
+            if (matches.length >= 3 && avgRisk >= 60) {
+                const cluster = buildCluster('category', key, matches);
+                if (cluster) clusters.push(cluster);
+            }
+        });
+
+        // De-duplicate clusters that share the exact same set of caseIds, keeping the highest-risk one
+        const seen = new Map();
+        clusters.forEach(c => {
+            const sig = [...c.caseIds].sort((a, b) => a - b).join(',');
+            const existing = seen.get(sig);
+            if (!existing || c.avgRisk > existing.avgRisk) seen.set(sig, c);
+        });
+        clusters = Array.from(seen.values());
+
+        // Sort by max risk, then count
+        clusters.sort((a, b) => b.maxRisk - a.maxRisk || b.caseCount - a.caseCount);
+
+        audit(req, 'VIEW', 'fraud_correlations', 0, { clusterCount: clusters.length });
+        res.json({ success: true, clusters: clusters.slice(0, 50) });
+    } catch (error) {
+        console.error('Fraud correlations error:', error);
+        res.status(500).json({ success: false, error: 'Failed to load fraud correlations' });
     }
 });
 

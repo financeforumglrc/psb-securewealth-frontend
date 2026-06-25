@@ -76,6 +76,10 @@ function applyLocalFilters(cases: FraudCase[], filters: FraudCaseFilters): Fraud
     const to = new Date(filters.dateTo).getTime();
     result = result.filter(c => new Date(c.createdAt).getTime() <= to);
   }
+  if (filters.ids && filters.ids.length) {
+    const idSet = new Set(filters.ids);
+    result = result.filter(c => idSet.has(c.id));
+  }
   if (filters.q) {
     const q = filters.q.toLowerCase();
     result = result.filter(c =>

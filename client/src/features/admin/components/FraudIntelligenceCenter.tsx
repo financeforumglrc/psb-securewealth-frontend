@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Map as MapIcon, List, Share2, Clock, ShieldAlert, FileDown, ScrollText, BarChart3,
+  Map as MapIcon, List, Share2, Link2, Clock, ShieldAlert, FileDown, ScrollText, BarChart3,
   RefreshCw, AlertTriangle, Eye, HelpCircle, Radio, Zap,
   Activity, Sparkles, ChevronRight, Bell
 } from 'lucide-react';
@@ -18,6 +18,7 @@ import FraudTimeline from './FraudTimeline';
 import FraudRiskExplainer from './FraudRiskExplainer';
 import FraudExportPanel from './FraudExportPanel';
 import FraudRulesPanel from './FraudRulesPanel';
+import FraudCorrelationPanel from './FraudCorrelationPanel';
 
 interface LiveLogEntry {
   id: string;
@@ -28,7 +29,7 @@ interface LiveLogEntry {
 
 export default function FraudIntelligenceCenter() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'map' | 'cases' | 'trace' | 'timeline' | 'risk' | 'rules' | 'reports'>('cases');
+  const [activeTab, setActiveTab] = useState<'map' | 'cases' | 'correlate' | 'trace' | 'timeline' | 'risk' | 'rules' | 'reports'>('cases');
   const [selectedCase, setSelectedCase] = useState<FraudCase | null>(null);
   const [liveMode, setLiveMode] = useState(false);
   const [liveCases, setLiveCases] = useState<FraudCase[]>([]);
@@ -141,6 +142,7 @@ export default function FraudIntelligenceCenter() {
   const tabs = [
     { key: 'map', label: t('fraudIntelTabMap'), icon: MapIcon },
     { key: 'cases', label: t('fraudIntelTabCases'), icon: List },
+    { key: 'correlate', label: t('fraudIntelTabCorrelate'), icon: Link2 },
     { key: 'trace', label: t('fraudIntelTabTrace'), icon: Share2 },
     { key: 'timeline', label: t('fraudIntelTabTimeline'), icon: Clock },
     { key: 'risk', label: t('fraudIntelTabRisk'), icon: HelpCircle },
@@ -365,6 +367,15 @@ export default function FraudIntelligenceCenter() {
                 onPageChange={setPage}
                 onSelectCase={setSelectedCase}
                 selectedCase={selectedCase}
+              />
+            )}
+            {activeTab === 'correlate' && (
+              <FraudCorrelationPanel
+                timeRange={filters.timeRange || '7d'}
+                onViewCases={(ids) => {
+                  setFilters(prev => ({ ...prev, ids, page: 1 }));
+                  setActiveTab('cases');
+                }}
               />
             )}
             {activeTab === 'trace' && <FraudTraceGraph cases={displayCases} selectedCase={selectedCase} onSelectCase={setSelectedCase} />}

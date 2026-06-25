@@ -12,6 +12,8 @@ import type {
   FraudStatus,
   FraudPriority,
   FraudCategory,
+  FraudTimeRange,
+  FraudCorrelationResponse,
 } from '@/features/admin/lib/fraudTypes';
 
 function buildQueryString(filters: FraudCaseFilters & { format?: FraudExportFormat }) {
@@ -161,6 +163,15 @@ export const fraudService = {
     const res = await backendApi.fetchJson(`/fraud/live?seconds=${seconds}`, { timeoutMs: 10000 });
     if (!res.ok) throw new Error(res.data?.error || 'Failed to load live feed');
     return (res.data as { cases: FraudCase[] }).cases.map(c => ({ ...c, userName: (c as any).user_name, userEmail: (c as any).user_email }));
+  },
+
+  async getCorrelations(timeRange?: FraudTimeRange, limit = 500): Promise<FraudCorrelationResponse> {
+    const params = new URLSearchParams();
+    params.set('limit', String(limit));
+    if (timeRange) params.set('timeRange', timeRange);
+    const res = await backendApi.fetchJson(`/fraud/correlations?${params.toString()}`, { timeoutMs: 15000 });
+    if (!res.ok) throw new Error(res.data?.error || 'Failed to load correlations');
+    return res.data as FraudCorrelationResponse;
   },
 };
 
