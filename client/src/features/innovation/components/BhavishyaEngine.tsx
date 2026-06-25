@@ -7,6 +7,7 @@ import FutureSelfSimulator from '@/features/innovation/components/FutureSelfSimu
 import PreparednessScore from '@/features/innovation/components/PreparednessScore';
 import AutoInstrumentGenerator from '@/features/innovation/components/AutoInstrumentGenerator';
 import CrisisPredictor from '@/features/innovation/components/CrisisPredictor';
+import LifeShockSimulator from '@/features/innovation/components/LifeShockSimulator';
 import MarketIntelligence from '@/features/innovation/components/MarketIntelligence';
 import EmotionalResonance from '@/features/innovation/components/EmotionalResonance';
 import GenerationalWealth from '@/features/innovation/components/GenerationalWealth';
@@ -26,7 +27,7 @@ import EmotionalHeatmap from '@/features/innovation/components/EmotionalHeatmap'
 import TemporalWealth from '@/features/innovation/components/TemporalWealth';
 import ProsperityScore from '@/features/innovation/components/ProsperityScore';
 
-type TabId = 'overview' | 'dna' | 'predict' | 'future' | 'ready' | 'auto' | 'crisis' | 'market' | 'emotion' | 'generational' | 'inheritance' | 'community' | 'twin' | 'chakra' | 'festival' | 'weather' | 'neural' | 'timemachine' | 'quantum' | 'dreams' | 'heatmap' | 'temporal' | 'prosperity';
+type TabId = 'overview' | 'dna' | 'predict' | 'future' | 'ready' | 'auto' | 'crisis' | 'lifeShock' | 'market' | 'emotion' | 'generational' | 'inheritance' | 'community' | 'twin' | 'chakra' | 'festival' | 'weather' | 'neural' | 'timemachine' | 'quantum' | 'dreams' | 'heatmap' | 'temporal' | 'prosperity';
 
 const TAB_LABEL_KEYS: Record<TabId, string> = {
   overview: 'tabCommandCenter',
@@ -36,6 +37,7 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
   ready: 'tabPreparedness',
   auto: 'tabAutoBanking',
   crisis: 'tabCrisisShield',
+  lifeShock: 'tabLifeShock',
   market: 'tabMarketAI',
   emotion: 'tabEmotions',
   generational: 'tabGenerations',
@@ -62,6 +64,7 @@ const TABS: { id: TabId; icon: string; desc: string; badge?: string; alert?: boo
   { id: 'ready', icon: 'fa-shield-halved', desc: 'Life readiness score' },
   { id: 'auto', icon: 'fa-robot', desc: 'AI-created instruments' },
   { id: 'crisis', icon: 'fa-tower-broadcast', desc: 'Predict & auto-hedge', badge: '6 Signals' },
+  { id: 'lifeShock', icon: 'fa-bolt', desc: 'Real-life crisis simulator', badge: 'NEW' },
   { id: 'market', icon: 'fa-chart-line', desc: 'Predictive timing', badge: '47 Signals' },
   { id: 'emotion', icon: 'fa-brain', desc: 'Money-psyche mapping' },
   { id: 'generational', icon: 'fa-people-roof', desc: '3-gen wealth projection' },
@@ -80,7 +83,7 @@ const TABS: { id: TabId; icon: string; desc: string; badge?: string; alert?: boo
   { id: 'prosperity', icon: 'fa-gem', desc: 'Holistic wellness score', badge: 'NEW' },
 ];
 
-const PRIMARY_TAB_IDS: TabId[] = ['overview', 'dna', 'predict', 'future', 'ready', 'auto', 'crisis', 'market', 'emotion', 'generational'];
+const PRIMARY_TAB_IDS: TabId[] = ['overview', 'dna', 'predict', 'future', 'ready', 'auto', 'crisis', 'lifeShock', 'market', 'emotion', 'generational'];
 
 function OverviewTab({ onTabChange }: { onTabChange: (tab: TabId) => void }) {
   const { t } = useTranslation();
@@ -124,6 +127,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (tab: TabId) => void }) {
         {[
           { titleKey: 'overviewCardFinancialDnaTitle', descKey: 'overviewCardFinancialDnaDesc', icon: 'fa-dna', color: 'from-primary/10 to-green-50', tab: 'dna' as TabId },
           { titleKey: 'overviewCardCrisisShieldTitle', descKey: 'overviewCardCrisisShieldDesc', icon: 'fa-tower-broadcast', color: 'from-rose-50 to-orange-50', tab: 'crisis' as TabId, alert: true },
+          { titleKey: 'overviewCardLifeShockTitle', descKey: 'overviewCardLifeShockDesc', icon: 'fa-bolt', color: 'from-amber-50 to-yellow-50', tab: 'lifeShock' as TabId, badge: 'NEW' },
           { titleKey: 'overviewCardFutureTwinTitle', descKey: 'overviewCardFutureTwinDesc', icon: 'fa-comments', color: 'from-violet-50 to-purple-50', tab: 'twin' as TabId },
           { titleKey: 'overviewCardMarketAiTitle', descKey: 'overviewCardMarketAiDesc', icon: 'fa-chart-line', color: 'from-blue-50 to-cyan-50', tab: 'market' as TabId, alert: true },
           { titleKey: 'overviewCardEmotionEngineTitle', descKey: 'overviewCardEmotionEngineDesc', icon: 'fa-brain', color: 'from-pink-50 to-rose-50', tab: 'emotion' as TabId },
@@ -375,6 +379,7 @@ export default function BhavishyaEngine() {
         {activeTab === 'ready' && <PreparednessScore />}
         {activeTab === 'auto' && <AutoInstrumentGenerator />}
         {activeTab === 'crisis' && <CrisisPredictor />}
+        {activeTab === 'lifeShock' && <LifeShockSimulator />}
         {activeTab === 'market' && <MarketIntelligence />}
         {activeTab === 'emotion' && <EmotionalResonance />}
         {activeTab === 'generational' && <GenerationalWealth />}

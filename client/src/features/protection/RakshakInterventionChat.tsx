@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/shared/context/AuthContext';
 import { useWealthStore } from '@/shared/store/wealthStore';
+import { useFamilySafeWord } from '@/shared/hooks/useFamilySafeWord';
 import { useRakshakStore } from '@/shared/store/rakshakStore';
 import { logEmergencyLockdown } from '@/shared/utils/auditLogger';
 
@@ -11,6 +12,7 @@ export default function RakshakInterventionChat() {
   const { isRakshakActive, rakshakData, resolveRakshak } = useRakshakStore();
   const setLockdownActive = useWealthStore((s) => s.setLockdownActive);
   const { state: authState } = useAuth();
+  const { safeWord, hasSafeWord } = useFamilySafeWord();
 
   const [isTyping, setIsTyping] = useState(true);
   const [showSupport, setShowSupport] = useState(false);
@@ -189,6 +191,15 @@ export default function RakshakInterventionChat() {
                 <div className="flex-1">
                   <p className="text-xs font-bold text-slate-300 mb-1">Rakshak AI Guardian</p>
                   <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-none px-4 py-3">
+                    {hasSafeWord && !isTyping && (
+                      <div className="mb-3 p-2.5 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                        <p className="text-[11px] text-violet-200">
+                          <i className="fas fa-users-rectangle mr-1" />
+                          If a family member called in an emergency, ask them: <span className="font-bold text-white">“What’s our Safe Word?”</span>
+                        </p>
+                        <p className="text-xs font-black text-violet-300 mt-0.5">{safeWord}</p>
+                      </div>
+                    )}
                     {isTyping ? (
                       <div className="flex items-center gap-1.5 h-5">
                         <span className="text-xs text-slate-400">Rakshak is analyzing</span>

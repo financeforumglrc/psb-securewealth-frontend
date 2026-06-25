@@ -12,6 +12,7 @@ import StressTestSimulator from '@/features/protection/components/StressTestSimu
 import ScamCallerID from '@/features/protection/components/ScamCallerID';
 import BehavioralBiometrics from '@/features/protection/components/BehavioralBiometrics';
 import DuressPinSetup from '@/features/protection/components/DuressPinSetup';
+import FamilySafeWord from '@/features/protection/components/FamilySafeWord';
 import PaymentGuard from '@/features/protection/components/PaymentGuard';
 import SecurityLog from '@/features/protection/components/SecurityLog';
 import OTPSimulation from '@/features/protection/components/OTPSimulation';
@@ -347,25 +348,7 @@ export default function ProtectionView() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
           <BehavioralBiometrics />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <CosmosCard
-              variant="default"
-              header={{ icon: 'fa-shield-halved', iconColor: '#dc2626', title: 'Anti-Scam Shield' }}
-            >
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                DOM mutation monitoring detects overlay attacks, clickjacking, and iframe injection. A canvas watermark protects
-                screenshots.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-md">
-                  <i className="fas fa-eye mr-1" />
-                  MutationObserver
-                </span>
-                <span className="px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-md">
-                  <i className="fas fa-fingerprint mr-1" />
-                  Canvas Watermark
-                </span>
-              </div>
-            </CosmosCard>
+            <FamilySafeWord />
             <CosmosCard
               variant="default"
               header={{ icon: 'fa-microphone-lines', iconColor: '#0f766e', title: 'Voice Command Bar' }}
