@@ -23,6 +23,19 @@ const authLimiter = rateLimit({
     legacyHeaders: false
 });
 
+// Token refresh can happen legitimately in bursts (e.g., on app load), so allow more requests
+const refreshLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: {
+        success: false,
+        error: 'Too many refresh attempts, please try again later.',
+        code: 'RATE_LIMIT_EXCEEDED'
+    },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
 const { userDb, sessionDb } = require('../services/database');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -256,7 +269,7 @@ router.post('/login', authLimiter, async (req, res) => {
  * @desc    Refresh access token
  * @access  Public (with refresh token)
  */
-router.post('/refresh', (req, res) => {
+router.post('/refresh', refreshLimiter, (req, res) => {
     try {
         const { refreshToken } = req.body;
 

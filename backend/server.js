@@ -40,7 +40,8 @@ const { seedAll } = require('./scripts/seedDemoData');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
-const { authMiddleware, requireRole } = require('./middleware/auth');
+const { authMiddleware, requireRole, validateSecurityConfig } = require('./middleware/auth');
+const { auditMiddleware } = require('./middleware/auditLogger');
 
 // Initialize logger
 const logger = winston.createLogger({
@@ -61,6 +62,9 @@ const logger = winston.createLogger({
 const app = express();
 const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// Validate security-critical configuration before accepting traffic
+validateSecurityConfig();
 
 // Default no-op until server starts; banking.js fraud alerts call this safely
 global.broadcastFraudAlert = () => {};
@@ -90,7 +94,9 @@ app.use(cors({
         : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5500', 'https://dsfinancial-47556.surge.sh', 'https://psb-securewealth-2026-new.surge.sh'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-BYOK-Key', 'X-Device-Id', 'X-Dev-User-Email']
+    allowedHeaders: process.env.NODE_ENV === 'production'
+        ? ['Content-Type', 'Authorization', 'X-API-Key', 'X-BYOK-Key', 'X-Device-Id']
+        : ['Content-Type', 'Authorization', 'X-API-Key', 'X-BYOK-Key', 'X-Device-Id', 'X-Dev-User-Email']
 }));
 
 // Rate limiting
@@ -119,6 +125,9 @@ const aiLimiter = rateLimit({
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Audit logging: captures all authenticated mutations/views
+app.use(auditMiddleware);
 
 // Request logging
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
@@ -320,7 +329,12 @@ if (require.main === module) {
                 ws.close(1008, 'Missing token');
                 return;
             }
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+            const secret = process.env.JWT_SECRET;
+            if (!secret) {
+                ws.close(1011, 'Server JWT secret not configured');
+                return;
+            }
+            const decoded = jwt.verify(token, secret);
             if (decoded.role !== 'admin') {
                 ws.close(1008, 'Admin role required');
                 return;

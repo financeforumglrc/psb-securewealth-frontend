@@ -25,7 +25,8 @@ const authMiddleware = (req, res, next) => {
         // This is a convenience for local development and hackathon demos only.
         // SECURITY: Never enable in production — it bypasses all authentication.
         const devEmail = req.headers['x-dev-user-email'];
-        if (devEmail && process.env.NODE_ENV !== 'production') {
+        const devBypassEnabled = process.env.ALLOW_DEV_AUTH_BYPASS === 'true';
+        if (devBypassEnabled && devEmail && process.env.NODE_ENV !== 'production') {
             let user = userDb.findByEmail(devEmail);
             if (!user) {
                 const bcrypt = require('bcryptjs');
@@ -198,17 +199,38 @@ const apiKeyMiddleware = (req, res, next) => {
     });
 };
 
-// Admin dashboard credentials (must match routes/admin.js)
-// SECURITY: Override with env vars in production. Demo defaults are provided for hackathon deployments.
-const ADMIN_ID = process.env.ADMIN_ID || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+// Admin dashboard credentials (must be set via environment variables).
+// In non-production environments, defaults are allowed only for local development.
+const ADMIN_ID = process.env.ADMIN_ID;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+function isInsecureDefault() {
+    return ADMIN_ID === 'admin' && ADMIN_PASSWORD === 'admin123';
+}
+
+function validateSecurityConfig() {
+    if (process.env.NODE_ENV === 'production') {
+        if (!ADMIN_ID || !ADMIN_PASSWORD) {
+            throw new Error('ADMIN_ID and ADMIN_PASSWORD must be configured in production');
+        }
+        if (isInsecureDefault()) {
+            throw new Error('Default admin credentials (admin/admin123) are not allowed in production');
+        }
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret || jwtSecret.length < 32) {
+            throw new Error('JWT_SECRET must be at least 32 characters in production');
+        }
+    }
+}
 
 /**
  * Admin API token authentication
  * Frontend admin dashboard uses a base64(ADMIN_ID:ADMIN_PASSWORD) Bearer token.
  */
 const adminApiAuth = (req, res, next) => {
-    if (!ADMIN_ID || !ADMIN_PASSWORD) {
+    const id = ADMIN_ID || 'admin';
+    const password = ADMIN_PASSWORD || 'admin123';
+    if (!id || !password) {
         return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
     }
     const auth = req.headers.authorization;
@@ -216,11 +238,11 @@ const adminApiAuth = (req, res, next) => {
         return res.status(401).json({ success: false, error: 'Admin token required' });
     }
     const token = auth.substring(7);
-    const expected = Buffer.from(`${ADMIN_ID}:${ADMIN_PASSWORD}`).toString('base64');
-    const expectedDemo = Buffer.from('admin:admin123').toString('base64');
-    if (token !== expected && token !== expectedDemo) {
+    const expected = Buffer.from(`${id}:${password}`).toString('base64');
+    if (token !== expected) {
         return res.status(401).json({ success: false, error: 'Invalid admin token' });
     }
+    req.user = { id, role: 'admin' };
     next();
 };
 
@@ -243,5 +265,6 @@ module.exports = {
     requireTier,
     apiKeyMiddleware,
     adminApiAuth,
-    getAdminIdFromToken
+    getAdminIdFromToken,
+    validateSecurityConfig
 };

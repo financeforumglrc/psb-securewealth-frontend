@@ -11,16 +11,11 @@ const { adminApiAuth, getAdminIdFromToken } = require('../middleware/auth');
 const axios = require('axios');
 const router = express.Router();
 
-// SECURITY: Admin credentials MUST be set via environment variables.
-// Fail fast on startup if not configured.
-// SECURITY: Admin credentials SHOULD be set via environment variables.
-// For hackathon/demo deployments without env vars, default demo credentials are used.
+// Admin credentials are sourced from environment variables only.
+// Default credentials are intentionally NOT provided here; they are handled in middleware/auth.js
+// for non-production environments, but production requires explicit configuration.
 const ADMIN_ID = process.env.ADMIN_ID || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-
-if (!process.env.ADMIN_ID || !process.env.ADMIN_PASSWORD) {
-    console.warn('[ADMIN] WARNING: ADMIN_ID and/or ADMIN_PASSWORD environment variables are not set. Using default demo credentials (admin / admin123).');
-}
 
 function basicAuth(req, res, next) {
     if (!ADMIN_ID || !ADMIN_PASSWORD) {
@@ -225,17 +220,34 @@ router.get('/status', basicAuth, (req, res) => {
 });
 
 // Admin API endpoints for frontend dashboard
+function audit(req, action, entityType, entityId, details) {
+    try {
+        bankingDb.createAuditLog({
+            userId: getAdminIdFromToken(req) || 'admin',
+            action,
+            entityType,
+            entityId,
+            newValue: details ? JSON.stringify(details) : null,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+    } catch (e) {
+        console.error('[Admin] audit log failed', e.message);
+    }
+}
+
 router.post('/login', (req, res) => {
-    if (!ADMIN_ID || !ADMIN_PASSWORD) {
+    const id = ADMIN_ID;
+    const password = ADMIN_PASSWORD;
+    if (!id || !password) {
         return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
     }
-    const { adminId, password } = req.body;
-    // Accept configured env credentials OR default demo credentials for hackathon demos
-    const usingDefault = adminId === 'admin' && password === 'admin123';
-    if ((adminId !== ADMIN_ID || password !== ADMIN_PASSWORD) && !usingDefault) {
+    const { adminId, password: providedPassword } = req.body;
+    if (adminId !== id || providedPassword !== password) {
         return res.status(401).json({ success: false, error: 'Invalid admin credentials' });
     }
-    const token = Buffer.from(`${adminId}:${password}`).toString('base64');
+    audit(req, 'LOGIN', 'admin', null, { adminId });
+    const token = Buffer.from(`${adminId}:${providedPassword}`).toString('base64');
     res.json({ success: true, token });
 });
 
@@ -262,7 +274,10 @@ router.patch('/users/:id/status', adminApiAuth, (req, res) => {
         if (typeof isActive !== 'boolean') {
             return res.status(400).json({ success: false, error: 'isActive boolean required' });
         }
-        bankingDb.updateUserStatus(req.params.id, isActive);
+        const userId = req.params.id;
+        const before = db.prepare('SELECT is_active FROM users WHERE id = ?').get(userId);
+        bankingDb.updateUserStatus(userId, isActive);
+        audit(req, 'UPDATE', 'user', userId, { field: 'is_active', oldValue: before?.is_active ?? null, newValue: isActive ? 1 : 0 });
         res.json({ success: true });
     } catch (error) {
         console.error('Update user status error:', error);
@@ -272,8 +287,11 @@ router.patch('/users/:id/status', adminApiAuth, (req, res) => {
 
 router.patch('/users/:id', adminApiAuth, (req, res) => {
     try {
+        const userId = req.params.id;
         const { role, tier } = req.body;
-        bankingDb.updateUser(req.params.id, { role, tier });
+        const before = db.prepare('SELECT role, tier FROM users WHERE id = ?').get(userId);
+        bankingDb.updateUser(userId, { role, tier });
+        audit(req, 'UPDATE', 'user', userId, { fields: ['role', 'tier'], oldValue: before || null, newValue: { role, tier } });
         res.json({ success: true });
     } catch (error) {
         console.error('Update user error:', error);
@@ -392,6 +410,7 @@ router.post('/fraud-events/:id/acknowledge', adminApiAuth, (req, res) => {
         const id = parseInt(req.params.id);
         if (!id) return res.status(400).json({ success: false, error: 'Invalid event id' });
         bankingDb.acknowledgeFraudEvent(id, getAdminIdFromToken(req));
+        audit(req, 'ACKNOWLEDGE', 'fraud_event', id, {});
         res.json({ success: true });
     } catch (error) {
         console.error('Acknowledge fraud event error:', error);
@@ -405,7 +424,11 @@ router.post('/fraud-events/:id/block-user', adminApiAuth, async (req, res) => {
         if (!id) return res.status(400).json({ success: false, error: 'Invalid event id' });
         const log = db.prepare('SELECT user_id, ip_address FROM audit_logs WHERE id = ?').get(id);
         if (!log) return res.status(404).json({ success: false, error: 'Event not found' });
-        if (log.user_id) bankingDb.blockUser(log.user_id);
+        if (log.user_id) {
+            const before = db.prepare('SELECT is_active FROM users WHERE id = ?').get(log.user_id);
+            bankingDb.blockUser(log.user_id);
+            audit(req, 'BLOCK', 'user', log.user_id, { auditLogId: id, previousIsActive: before?.is_active ?? null });
+        }
         res.json({ success: true, blockedUserId: log.user_id || null });
     } catch (error) {
         console.error('Block user error:', error);
@@ -420,6 +443,7 @@ router.post('/fraud-events/:id/whitelist-ip', adminApiAuth, (req, res) => {
         const log = db.prepare('SELECT ip_address FROM audit_logs WHERE id = ?').get(id);
         if (!log?.ip_address) return res.status(404).json({ success: false, error: 'No IP address for event' });
         bankingDb.whitelistIp(log.ip_address);
+        audit(req, 'WHITELIST_IP', 'ip', null, { auditLogId: id, ip: log.ip_address });
         res.json({ success: true, ip: log.ip_address });
     } catch (error) {
         console.error('Whitelist IP error:', error);
@@ -432,6 +456,7 @@ router.post('/fraud-events/:id/false-positive', adminApiAuth, (req, res) => {
         const id = parseInt(req.params.id);
         if (!id) return res.status(400).json({ success: false, error: 'Invalid event id' });
         bankingDb.markFalsePositive(id, getAdminIdFromToken(req));
+        audit(req, 'FALSE_POSITIVE', 'fraud_event', id, {});
         res.json({ success: true });
     } catch (error) {
         console.error('False positive error:', error);
