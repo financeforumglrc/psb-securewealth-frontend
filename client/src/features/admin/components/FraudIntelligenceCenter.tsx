@@ -353,7 +353,7 @@ export default function FraudIntelligenceCenter() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}
           >
-            {activeTab === 'map' && <FraudMapView cases={displayCases} loading={loading} highlightCases={liveCases} />}
+            {activeTab === 'map' && <FraudMapView cases={displayCases} loading={loading} highlightCases={liveCases} selectedCase={selectedCase} onSelectCase={setSelectedCase} />}
             {activeTab === 'cases' && (
               <FraudCaseExplorer
                 cases={displayCases}
