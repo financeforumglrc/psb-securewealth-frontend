@@ -4,26 +4,41 @@ import { useWealthStore } from '@/shared/store/wealthStore';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import DashboardWidget from '@/features/dashboard/components/DashboardWidget';
 import CosmosCard from '@/shared/components/ui/CosmosCard';
+import EmptyState from '@/shared/components/EmptyState';
 import ESGScore from '@/features/portfolio/components/ESGScore';
+import {
+  PieChart as PieChartIcon,
+  TrendingUp,
+  RotateCw,
+  Percent,
+  Landmark,
+  ArrowLeft,
+  Lightbulb,
+  SlidersHorizontal
+} from 'lucide-react';
 
 const COLORS = ['#0f766e', '#14b8a6', '#f59e0b', '#8b5cf6', '#64748b'];
 
-const sips = [
-  { name: 'Axis Bluechip SIP', amount: 15000, frequency: 'Monthly', status: 'Active', startDate: '2024-01-15', nextDate: '2024-12-15' },
-  { name: 'Nifty 50 Index SIP', amount: 10000, frequency: 'Monthly', status: 'Active', startDate: '2024-03-01', nextDate: '2024-12-01' },
-  { name: 'PPF Contribution', amount: 12500, frequency: 'Monthly', status: 'Active', startDate: '2023-04-01', nextDate: '2024-12-05' },
-];
+const TYPE_META: Record<string, { label: string; returns: number; benchmark: number }> = {
+  equity: { label: 'Equity', returns: 12.4, benchmark: 12.5 },
+  debt: { label: 'Debt', returns: 3.5, benchmark: 3.2 },
+  gold: { label: 'Gold', returns: 8.1, benchmark: 7.8 },
+  realEstate: { label: 'Real Estate', returns: 7.0, benchmark: 7.0 },
+  other: { label: 'Other', returns: 0, benchmark: 0 },
+};
 
-const holdings = [
-  { name: 'Axis Bluechip Fund', type: 'equity', value: 280000, returns: 14.2, benchmark: 12.5 },
-  { name: 'Nifty 50 ETF', type: 'equity', value: 150000, returns: 12.8, benchmark: 12.5 },
-  { name: 'SBI Savings', type: 'debt', value: 450000, returns: 3.5, benchmark: 3.2 },
-  { name: 'HDFC Savings', type: 'debt', value: 320000, returns: 3.5, benchmark: 3.2 },
-  { name: 'Physical Gold', type: 'gold', value: 200000, returns: 8.1, benchmark: 7.8 },
-];
+function assetToCategory(asset: { type: string }) {
+  if (asset.type === 'stock' || asset.type === 'mutualFund') return 'equity';
+  if (asset.type === 'bank') return 'debt';
+  if (asset.type === 'gold') return 'gold';
+  if (asset.type === 'property') return 'realEstate';
+  return 'other';
+}
 
 export default function PortfolioView() {
   const assets = useWealthStore((s) => s.assets);
+  const goals = useWealthStore((s) => s.goals);
+  const setView = useWealthStore((s) => s.setView);
   const [showRebalance, setShowRebalance] = useState(false);
 
   const totalValue = assets.reduce((s, a) => s + a.value, 0);
@@ -31,22 +46,96 @@ export default function PortfolioView() {
   const allocation = useMemo(
     () =>
       [
-        { name: 'Equity', value: assets.filter((a) => a.type === 'stock' || a.type === 'mutualFund').reduce((s, a) => s + a.value, 0), ideal: 50 },
-        { name: 'Debt', value: assets.filter((a) => a.type === 'bank').reduce((s, a) => s + a.value, 0), ideal: 25 },
-        { name: 'Gold', value: assets.filter((a) => a.type === 'gold').reduce((s, a) => s + a.value, 0), ideal: 10 },
-        { name: 'Real Estate', value: assets.filter((a) => a.type === 'property').reduce((s, a) => s + a.value, 0), ideal: 10 },
-        { name: 'Other', value: assets.filter((a) => a.type === 'vehicle' || a.type === 'other').reduce((s, a) => s + a.value, 0), ideal: 5 },
+        { name: 'Equity', value: assets.filter((a) => assetToCategory(a) === 'equity').reduce((s, a) => s + a.value, 0), ideal: 50 },
+        { name: 'Debt', value: assets.filter((a) => assetToCategory(a) === 'debt').reduce((s, a) => s + a.value, 0), ideal: 25 },
+        { name: 'Gold', value: assets.filter((a) => assetToCategory(a) === 'gold').reduce((s, a) => s + a.value, 0), ideal: 10 },
+        { name: 'Real Estate', value: assets.filter((a) => assetToCategory(a) === 'realEstate').reduce((s, a) => s + a.value, 0), ideal: 10 },
+        { name: 'Other', value: assets.filter((a) => assetToCategory(a) === 'other').reduce((s, a) => s + a.value, 0), ideal: 5 },
       ]
         .filter((d) => d.value > 0)
         .map((d) => ({ ...d, pct: totalValue > 0 ? Math.round((d.value / totalValue) * 100) : 0 })),
     [assets, totalValue]
   );
 
+  const holdings = useMemo(
+    () =>
+      assets.map((a) => {
+        const category = assetToCategory(a);
+        const meta = TYPE_META[category];
+        return {
+          name: a.name,
+          type: category,
+          typeLabel: meta.label,
+          value: a.value,
+          returns: meta.returns,
+          benchmark: meta.benchmark,
+        };
+      }),
+    [assets]
+  );
+
+  const sips = useMemo(() => {
+    const now = new Date();
+    return goals.map((g) => {
+      const monthsLeft = Math.max(1, Math.ceil((new Date(g.deadline).getTime() - now.getTime()) / (30 * 24 * 60 * 60 * 1000)));
+      const monthly = Math.max(0, Math.round((g.targetAmount - g.currentAmount) / monthsLeft));
+      const next = new Date();
+      next.setMonth(next.getMonth() + 1);
+      next.setDate(1);
+      return {
+        id: g.id,
+        name: `${g.name} SIP`,
+        amount: monthly,
+        frequency: 'Monthly',
+        status: 'Active',
+        nextDate: next.toISOString().split('T')[0],
+      };
+    }).filter((s) => s.amount > 0);
+  }, [goals]);
+
   const benchmarkData = holdings.map((h) => ({
     name: h.name.split(' ').slice(0, 2).join(' '),
     portfolio: h.returns,
     benchmark: h.benchmark,
   }));
+
+  const activeSipCount = sips.length;
+
+  const headerStats = [
+    { label: 'Portfolio Value', value: totalValue > 0 ? `₹${(totalValue / 1e5).toFixed(1)}L` : '—', icon: PieChartIcon, color: 'text-primary' },
+    { label: 'Total Returns', value: '+12.4%', icon: TrendingUp, color: 'text-emerald-500' },
+    { label: 'Active SIPs', value: String(activeSipCount), icon: RotateCw, color: 'text-secondary' },
+    { label: 'XIRR', value: '14.2%', icon: Percent, color: 'text-accent' },
+  ];
+
+  if (assets.length === 0) {
+    return (
+      <div className="space-y-6 max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <PieChartIcon className="w-6 h-6 text-primary" />
+                Portfolio
+              </h1>
+              <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-extrabold border border-primary/20">
+                LIVE HOLDINGS
+              </span>
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Track allocation, SIPs, performance vs benchmark, and ESG alignment.
+            </p>
+          </div>
+        </div>
+        <EmptyState
+          icon={Landmark}
+          title="No portfolio data yet"
+          subtitle="Link an account or add a manual asset to see your allocation, SIPs, and performance."
+          action={{ label: 'Go to Assets', onClick: () => setView('assets') }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -55,7 +144,7 @@ export default function PortfolioView() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <i className="fas fa-chart-pie text-primary" />
+              <PieChartIcon className="w-6 h-6 text-primary" />
               Portfolio
             </h1>
             <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-extrabold border border-primary/20">
@@ -70,55 +159,59 @@ export default function PortfolioView() {
 
       {/* Hero Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Portfolio Value', value: `₹${(totalValue / 1e5).toFixed(1)}L`, icon: 'fa-chart-pie', color: 'text-primary' },
-          { label: 'Total Returns', value: '+12.4%', icon: 'fa-arrow-trend-up', color: 'text-emerald-500' },
-          { label: 'Active SIPs', value: '3', icon: 'fa-rotate', color: 'text-secondary' },
-          { label: 'XIRR', value: '14.2%', icon: 'fa-percent', color: 'text-accent' },
-        ].map((s, i) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <CosmosCard variant="stat" padding="md" hover>
-              <div className="flex items-center gap-2 mb-2">
-                <i className={`fas ${s.icon} ${s.color} text-xs`} />
-                <span className="text-[10px] font-bold text-slate-400 uppercase">{s.label}</span>
-              </div>
-              <p className="text-xl font-extrabold text-slate-800 dark:text-white">{s.value}</p>
-            </CosmosCard>
-          </motion.div>
-        ))}
+        {headerStats.map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <CosmosCard variant="stat" padding="md" hover>
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className={`w-4 h-4 ${s.color}`} />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">{s.label}</span>
+                </div>
+                <p className="text-xl font-extrabold text-slate-800 dark:text-white">{s.value}</p>
+              </CosmosCard>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Allocation + Benchmark */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <DashboardWidget title="Asset Allocation" icon="fa-chart-pie" subtitle="Current vs Ideal" className="lg:col-span-1">
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={allocation} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value">
-                  {allocation.map((_, i) => (
-                    <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} strokeWidth={0} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(val) => `₹${(Number(val) / 1e5).toFixed(1)}L`} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-2 space-y-2">
-            {allocation.map((d, i) => (
-              <div key={d.name} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                  <span className="text-slate-600 dark:text-slate-400 text-xs">{d.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-20 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${d.pct}%`, background: COLORS[i % COLORS.length] }} />
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 w-8 text-right">{d.pct}%</span>
-                </div>
+          {allocation.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-8">No allocation data available.</p>
+          ) : (
+            <>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={allocation} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value">
+                      {allocation.map((_, i) => (
+                        <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} strokeWidth={0} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(val) => `₹${(Number(val) / 1e5).toFixed(1)}L`} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
+              <div className="mt-2 space-y-2">
+                {allocation.map((d, i) => (
+                  <div key={d.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                      <span className="text-slate-600 dark:text-slate-400 text-xs">{d.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-20 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${d.pct}%`, background: COLORS[i % COLORS.length] }} />
+                      </div>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 w-8 text-right">{d.pct}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </DashboardWidget>
 
         <DashboardWidget title="Performance vs Benchmark" icon="fa-scale-balanced" subtitle="Trailing 1 year returns" className="lg:col-span-2">
@@ -141,44 +234,48 @@ export default function PortfolioView() {
       <DashboardWidget
         title="Active SIPs"
         icon="fa-rotate"
-        subtitle={`${sips.length} recurring investments`}
+        subtitle={`${activeSipCount} recurring investment${activeSipCount === 1 ? '' : 's'}`}
         action={
           <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
-            {sips.length} Active
+            {activeSipCount} Active
           </span>
         }
       >
-        <div className="space-y-3">
-          {sips.map((sip, i) => (
-            <motion.div
-              key={sip.name}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/30 rounded-xl border border-slate-100 dark:border-slate-700/50"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center text-primary">
-                  <i className="fas fa-rotate text-sm" />
+        {sips.length === 0 ? (
+          <p className="text-sm text-slate-500 text-center py-6">No active SIPs. Add a goal to generate a monthly SIP plan.</p>
+        ) : (
+          <div className="space-y-3">
+            {sips.map((sip, i) => (
+              <motion.div
+                key={sip.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/30 rounded-xl border border-slate-100 dark:border-slate-700/50"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center text-primary">
+                    <RotateCw className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-800 dark:text-white text-sm">{sip.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Next: {new Date(sip.nextDate).toLocaleDateString('en-IN')}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-slate-800 dark:text-white text-sm">{sip.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Next: {new Date(sip.nextDate).toLocaleDateString('en-IN')}</p>
+                <div className="text-right">
+                  <p className="font-bold text-slate-800 dark:text-white">₹{sip.amount.toLocaleString()}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{sip.frequency}</p>
                 </div>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-slate-800 dark:text-white">₹{sip.amount.toLocaleString()}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{sip.frequency}</p>
-              </div>
-              <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-bold">{sip.status}</span>
-            </motion.div>
-          ))}
-        </div>
+                <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-bold">{sip.status}</span>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </DashboardWidget>
 
       {/* Holdings Table + ESG */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <DashboardWidget title="Investment Holdings" icon="fa-list" subtitle={`${holdings.length} assets tracked`} className="lg:col-span-2">
+        <DashboardWidget title="Investment Holdings" icon="fa-list" subtitle={`${holdings.length} asset${holdings.length === 1 ? '' : 's'} tracked`} className="lg:col-span-2">
           <div className="overflow-x-auto -mx-4 -my-4">
             <table className="w-full text-sm">
               <thead>
@@ -196,7 +293,7 @@ export default function PortfolioView() {
                     <td className="py-3 px-5 font-medium text-slate-800 dark:text-white">{h.name}</td>
                     <td className="py-3">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${h.type === 'equity' ? 'bg-primary/10 text-primary' : h.type === 'gold' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-secondary/10 text-secondary'}`}>
-                        {h.type}
+                        {h.typeLabel}
                       </span>
                     </td>
                     <td className="py-3 text-right font-medium text-slate-700 dark:text-slate-300">₹{h.value.toLocaleString()}</td>
@@ -223,8 +320,9 @@ export default function PortfolioView() {
         action={
           <button
             onClick={() => setShowRebalance(!showRebalance)}
-            className="text-[10px] font-bold px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+            className="text-[10px] font-bold px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
           >
+            {showRebalance ? <ArrowLeft className="w-3 h-3" /> : <SlidersHorizontal className="w-3 h-3" />}
             {showRebalance ? 'Hide' : 'Show'} Simulation
           </button>
         }
@@ -257,9 +355,11 @@ export default function PortfolioView() {
               );
             })}
             <div className="mt-3 p-3 bg-primary/5 dark:bg-primary/10 rounded-lg border border-primary/10">
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                <i className="fas fa-lightbulb text-amber-500 mr-1" />
-                <strong>Recommendation:</strong> Consider increasing equity allocation by ₹{(totalValue * 0.05 / 1e5).toFixed(1)}L to reach your target 50% allocation.
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2">
+                <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Recommendation:</strong> Consider increasing equity allocation by ₹{(totalValue * 0.05 / 1e5).toFixed(1)}L to reach your target 50% allocation.
+                </span>
               </p>
             </div>
           </motion.div>

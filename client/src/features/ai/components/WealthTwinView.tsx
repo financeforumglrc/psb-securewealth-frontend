@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { SkeletonDashboard } from '@/shared/components/Skeleton';
+import { ShieldCheck, Lock } from 'lucide-react';
 import WealthChat from '@/features/ai/components/WealthChat';
 import BehavioralEngine from '@/features/ai/components/BehavioralEngine';
 import DashboardWidget from '@/features/dashboard/components/DashboardWidget';
@@ -78,12 +79,12 @@ function WealthTwinInner() {
             {t('wealthTwinSubtitle')}
           </p>
           <div className="flex items-center gap-2 text-xs">
-            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg font-medium">
-              <i className="fas fa-shield-halved mr-1" aria-hidden="true" />
+            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg font-medium inline-flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
               {t('wealthTwinBadgeProtectionFirst')}
             </span>
-            <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg">
-              <i className="fas fa-lock mr-1" aria-hidden="true" />
+            <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg inline-flex items-center gap-1">
+              <Lock className="w-3.5 h-3.5" />
               {t('wealthTwinBadgeOnDevice')}
             </span>
           </div>

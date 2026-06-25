@@ -11,6 +11,8 @@ import QrScannerSimulator from '@/features/payments/components/QrScannerSimulato
 import TransactionGuardModal from '@/features/protection/components/TransactionGuardModal';
 import CoolingVaultModal from '@/features/protection/components/CoolingVaultModal';
 import OTPSimulation from '@/features/protection/components/OTPSimulation';
+import EmptyState from '@/shared/components/EmptyState';
+import { Send, ScanLine, Building2, AtSign, History } from 'lucide-react';
 
 interface Transaction {
   id: string;
@@ -30,10 +32,10 @@ interface ContactManager {
 }
 
 const TAB_CONFIG = [
-  { id: 'send', label: 'Send Money', icon: 'fa-paper-plane' },
-  { id: 'scan', label: 'Scan QR', icon: 'fa-qrcode' },
-  { id: 'account', label: 'To Account', icon: 'fa-building-columns' },
-  { id: 'upi', label: 'UPI ID', icon: 'fa-at' },
+  { id: 'send', label: 'Send Money', icon: Send },
+  { id: 'scan', label: 'Scan QR', icon: ScanLine },
+  { id: 'account', label: 'To Account', icon: Building2 },
+  { id: 'upi', label: 'UPI ID', icon: AtSign },
 ];
 
 function getPayeeName(input: string): string {
@@ -409,20 +411,23 @@ export default function UPIPaymentSimulator() {
       <div className="card rounded-3xl shadow-xl p-6">
         {/* Tabs */}
         <div className="grid grid-cols-4 gap-2 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-          {TAB_CONFIG.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center py-3 px-1 rounded-xl text-xs font-medium transition-all ${
-                activeTab === tab.id
-                  ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
-            >
-              <i className={`fas ${tab.icon} text-lg mb-1`} />
-              {tab.label}
-            </button>
-          ))}
+          {TAB_CONFIG.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex flex-col items-center py-3 px-1 rounded-xl text-xs font-medium transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+              >
+                <Icon className="w-5 h-5 mb-1" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Amount Input */}
@@ -583,10 +588,17 @@ export default function UPIPaymentSimulator() {
       </div>
 
       {/* Recent Transactions */}
-      {transactions.length > 0 && (
+      {transactions.length === 0 ? (
+        <EmptyState
+          icon={History}
+          title="No payments yet"
+          subtitle="Send money, scan a QR, or pay a bill to see your transaction history here."
+          compact
+        />
+      ) : (
         <div className="card rounded-3xl shadow-xl p-6">
           <h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-            <i className="fas fa-clock-rotate-left text-primary" />
+            <History className="w-5 h-5 text-primary" />
             Recent Transactions
           </h3>
           <div className="space-y-3 max-h-80 overflow-y-auto">
