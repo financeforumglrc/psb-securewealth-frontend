@@ -6,6 +6,7 @@
 const sqlite3 = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
+const { maskEmail, maskPhone, maskPan, maskAadhaar } = require('../lib/pii');
 
 const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '..', 'data', 'ds_financial.db');
 const dbDir = path.dirname(dbPath);
@@ -882,7 +883,13 @@ const bankingDb = {
         }
         const countRow = db.prepare(`SELECT COUNT(*) as total FROM users ${where}`).get(...params);
         const sql = `SELECT id, email, name, phone, role, tier, pan_number, aadhar, created_at, last_login, face_descriptor IS NOT NULL as face_registered, api_usage_total, is_active FROM users ${where} ORDER BY ${allowedSort} ${dir} LIMIT ? OFFSET ?`;
-        const users = db.prepare(sql).all(...params, limit, offset);
+        const users = db.prepare(sql).all(...params, limit, offset).map(u => ({
+            ...u,
+            email: maskEmail(u.email),
+            phone: maskPhone(u.phone),
+            pan_number: maskPan(u.pan_number),
+            aadhar: maskAadhaar(u.aadhar)
+        }));
         return { users, total: countRow.total, page, limit, pages: Math.ceil(countRow.total / limit) };
     },
     updateUserStatus: (userId, isActive) => {

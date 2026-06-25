@@ -38,13 +38,14 @@ const refreshLimiter = rateLimit({
 
 const { userDb, sessionDb } = require('../services/database');
 const { authMiddleware } = require('../middleware/auth');
+const { maskEmail, maskPhone, maskPan, maskAadhaar } = require('../lib/pii');
 
 function formatUser(user) {
     return {
         id: user.id,
-        email: user.email,
+        email: maskEmail(user.email),
         name: user.name,
-        phone: user.phone,
+        phone: maskPhone(user.phone),
         role: user.role,
         tier: user.tier,
         createdAt: user.created_at,

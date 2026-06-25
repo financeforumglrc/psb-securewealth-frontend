@@ -9,6 +9,7 @@ const ExcelJS = require('exceljs');
 const { db, fraudDb, bankingDb } = require('../services/database');
 const { adminApiAuth, getAdminIdFromToken } = require('../middleware/auth');
 const { validateBody, fraudSchemas } = require('../middleware/validate');
+const { maskEmail } = require('../lib/pii');
 const { generateLiveCase, persistCase } = require('../lib/fraudGenerator');
 
 const router = express.Router();
@@ -366,7 +367,7 @@ router.get('/export/cases', adminApiAuth, async (req, res) => {
             riskScore: c.risk_score,
             summary: c.summary,
             userName: c.user_name || '',
-            userEmail: c.user_email || '',
+            userEmail: maskEmail(c.user_email) || '',
             assignedAdmin: c.assigned_admin_id || '',
             countryRiskTags: c.country_risk_tags || '',
             createdAt: c.created_at,

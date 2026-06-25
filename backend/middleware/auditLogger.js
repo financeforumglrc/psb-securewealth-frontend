@@ -5,6 +5,7 @@
  */
 
 const { bankingDb } = require('../services/database');
+const { redactBody } = require('../lib/pii');
 
 function captureMeta(req) {
     return {
@@ -55,16 +56,18 @@ const auditMiddleware = (req, res, next) => {
                 else if (method === 'DELETE') action = 'DELETE';
                 else action = method;
 
+                const safeBody = redactBody(req.body);
                 const details = {
                     path: req.path,
                     method,
                     status: res.statusCode,
                     duration: Date.now() - startTime,
-                    success
+                    success,
+                    body: safeBody
                 };
 
-                if (req.body?.amount) details.amount = req.body.amount;
-                if (req.body?.type) details.type = req.body.type;
+                if (safeBody?.amount) details.amount = safeBody.amount;
+                if (safeBody?.type) details.type = safeBody.type;
 
                 bankingDb.createAuditLog({
                     userId: req.user.id,
