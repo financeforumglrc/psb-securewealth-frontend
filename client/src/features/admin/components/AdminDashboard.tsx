@@ -1120,9 +1120,10 @@ export default function AdminDashboard() {
     }
 
     const backendStats = statsRes.ok ? (statsRes.data?.stats || null) : null;
-    if (backendStats) {
+    if (backendStats && backendStats.totalUsers > 0) {
       setStats(backendStats);
     } else {
+      const syntheticCount = demoUsers.length - DEMO_ACCOUNTS.length;
       const demoAccounts = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.assets.length, 0);
       const demoTxns = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.transactions.length, 0);
       const demoGoals = DEMO_ACCOUNTS.reduce((sum, d) => sum + d.goals.length, 0);
@@ -1130,11 +1131,11 @@ export default function AdminDashboard() {
         totalUsers: demoUsers.length,
         faceRegistered: demoUsers.filter(u => u.face_registered).length,
         activeToday: demoUsers.filter(u => u.is_active).length,
-        totalAccounts: demoAccounts,
-        totalTransactions: demoTxns,
-        totalBills: 0,
-        totalGoals: demoGoals,
-        totalLoans: 0,
+        totalAccounts: demoAccounts + syntheticCount,
+        totalTransactions: demoTxns + syntheticCount * 4,
+        totalBills: syntheticCount,
+        totalGoals: demoGoals + syntheticCount,
+        totalLoans: demoUsers.filter(u => u.tier === 'premium' || u.tier === 'enterprise').length,
       });
     }
 
