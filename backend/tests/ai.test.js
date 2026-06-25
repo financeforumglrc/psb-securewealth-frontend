@@ -3,6 +3,7 @@
  * Testing Patent PAT-007: Multi-Provider AI Orchestrator
  */
 
+process.env.JWT_SECRET = 'testsecret';
 process.env.GROQ_API_KEY = 'test_key';
 process.env.OPENAI_API_KEY = 'test_key';
 process.env.ANTHROPIC_API_KEY = 'test_key';

@@ -277,6 +277,11 @@ const GSTINValidatorPro = {
             result.isValid = false;
         }
 
+        // Checksum mismatch should always invalidate a GSTIN
+        if (result.checksPerformed[6] && result.checksPerformed[6].status === 'fail') {
+            result.isValid = false;
+        }
+
         // --- Structured Audit Logging for Patent Claims ---
         const auditLog = {
             timestamp: new Date().toISOString(),
@@ -328,7 +333,7 @@ const GSTINValidatorPro = {
                                 </div>
                             </div>
                             <span class="bm-risk-badge" style="margin-top: 0.5rem; display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; background: ${riskColors[result.riskLevel]}20; color: ${riskColors[result.riskLevel]}; text-transform: uppercase;">
-                                <i class="fas ${riskIcons[result.riskLevel]}"></i> ${result.riskLevel.replace('-', ' ')}
+                                <i class="fas ${riskIcons[result.riskLevel]}"></i> ${result.riskLevel}
                             </span>
                         </div>
                     </div>

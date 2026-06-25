@@ -110,7 +110,6 @@ const limiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false
 });
-app.use(limiter);
 
 // Stricter rate limiting for AI endpoints
 const aiLimiter = rateLimit({
@@ -121,6 +120,18 @@ const aiLimiter = rateLimit({
         error: 'AI request limit exceeded. Please try again in a minute.'
     }
 });
+
+// Per-route limiters for compute-heavy or external-data endpoints
+const chartLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60, message: { success: false, error: 'Chart request limit exceeded' } });
+const scenarioLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60, message: { success: false, error: 'Scenario request limit exceeded' } });
+const nlpLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, message: { success: false, error: 'NLP query limit exceeded' } });
+const marketLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, message: { success: false, error: 'Market data request limit exceeded' } });
+
+app.use(limiter);
+app.use('/api/v1/charts', chartLimiter);
+app.use('/api/v1/scenarios', scenarioLimiter);
+app.use('/api/v1/query', nlpLimiter);
+app.use('/api/v1/market', marketLimiter);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
