@@ -607,4 +607,96 @@ RULES:
     }
 });
 
+/**
+ * @route   POST /api/v1/ai/rakshak-intervention
+ * @desc    Generate a contextual intervention message for high-risk transactions
+ * @patent  PAT-007: Multi-Provider AI Orchestrator
+ * @access  Private
+ */
+function parseRakshakResponse(content) {
+    try {
+        const cleaned = content.trim();
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.message && Array.isArray(parsed.quickReplies)) {
+                return { message: parsed.message, quickReplies: parsed.quickReplies };
+            }
+        }
+    } catch {
+        // fallthrough to heuristic extraction
+    }
+    const lines = content.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    const message = lines.find(l => l.length > 20 && !l.startsWith('-') && !l.startsWith('*')) || lines[0] || '';
+    const quickReplies = lines
+        .filter(l => l.startsWith('-') || l.startsWith('*') || /^\d+\./.test(l))
+        .map(l => l.replace(/^[-*\d.\s]+/, '').trim())
+        .filter(Boolean)
+        .slice(0, 3);
+    return { message, quickReplies };
+}
+
+router.post('/rakshak-intervention', async (req, res) => {
+    try {
+        const { riskScore, signals, amount, beneficiaryName } = req.body;
+
+        if (typeof riskScore !== 'number' || riskScore < 0 || riskScore > 100) {
+            return res.status(400).json({ success: false, error: 'riskScore must be a number between 0 and 100' });
+        }
+
+        const safeSignals = Array.isArray(signals) ? signals : [];
+        const safeAmount = typeof amount === 'number' ? amount : 0;
+        const safeBeneficiary = typeof beneficiaryName === 'string' && beneficiaryName.trim() ? beneficiaryName.trim() : 'this beneficiary';
+        const signalText = safeSignals.length > 0 ? safeSignals.join(', ') : 'unusual activity';
+
+        const systemPrompt = `You are Rakshak, a compassionate but firm AI security guardian for Punjab & Sind Bank. Your goal is to detect if the user is being coerced or scammed.
+
+RULES:
+- Generate a short, 2-sentence intervention message.
+- Mention the specific red flags provided.
+- Ask a direct question to check for coercion (e.g., "Is someone on a call telling you to do this?").
+- Provide exactly 3 quick-reply options for the user.
+- Return ONLY valid JSON in this exact format:
+{
+  "message": "string",
+  "quickReplies": ["option 1", "option 2", "option 3"]
+}`;
+
+        const userPrompt = `Risk Score: ${riskScore}/100. Red flags: ${signalText}. Amount: ₹${safeAmount.toLocaleString('en-IN')}. Beneficiary: ${safeBeneficiary}. Generate the intervention JSON.`;
+        const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+
+        let message = `We noticed ${signalText.toLowerCase()} for a transfer of ₹${safeAmount.toLocaleString('en-IN')} to ${safeBeneficiary}. Please take a moment — is someone on a call or chat instructing you to make this payment?`;
+        let quickReplies = [
+            '🚨 SOS - I am being scammed',
+            '✅ I AM SAFE - Proceed',
+            '📞 Call PSB Support'
+        ];
+
+        try {
+            const result = await callLegacyAI(fullPrompt, { maxTokens: 500, temperature: 0.4, provider: 'groq' });
+            const parsed = parseRakshakResponse(result.content);
+            if (parsed.message) message = parsed.message;
+            if (parsed.quickReplies.length === 3) quickReplies = parsed.quickReplies;
+        } catch (aiError) {
+            console.warn('Rakshak AI call failed, using fallback intervention:', aiError.message);
+        }
+
+        const tone = riskScore >= 90 ? 'critical' : 'urgent';
+
+        res.json({
+            success: true,
+            patent: 'PAT-007',
+            data: { message, quickReplies, tone }
+        });
+    } catch (error) {
+        console.error('Rakshak intervention error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Intervention service temporarily unavailable',
+            code: 'RAKSHAK_ERROR',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;

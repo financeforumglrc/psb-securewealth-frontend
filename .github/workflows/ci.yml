@@ -33,7 +33,8 @@ jobs:
         run: npm ci
 
       - name: Run backend tests
-        run: npm test
+        # Run sequentially because the SQLite database file is shared across test files
+        run: npx jest --runInBand --coverage
 
   client-tests:
     name: Client Tests & Build

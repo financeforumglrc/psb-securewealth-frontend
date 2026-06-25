@@ -521,4 +521,13 @@ export const backendApi = {
   async discoverAaAccounts(consentId: number | string) {
     return fetchJson(`/aa/consents/${consentId}/discover`, { method: 'POST' });
   },
+
+  // Rakshak AI intervention for high-risk transactions
+  async rakshakIntervention(payload: { riskScore: number; signals: string[]; amount: number; beneficiaryName: string }) {
+    return fetchJson('/ai/rakshak-intervention', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 15000,
+    });
+  },
 };

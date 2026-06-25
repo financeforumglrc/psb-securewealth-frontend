@@ -92,3 +92,47 @@ export function analyzeTransactions(transactions: TransactionLike[]): FraudAnaly
 
   return { signals, riskScore, reasons };
 }
+
+export interface RiskAssessmentInput {
+  newDevice?: boolean;
+  rushedAction?: boolean;
+  unusualAmount?: boolean;
+  otpRetries?: boolean;
+  firstTimeInvest?: boolean;
+  abnormalBehavior?: boolean;
+}
+
+/**
+ * Quick signal-based risk scoring used by the Rakshak intervention layer.
+ */
+export function assessRisk(signals: RiskAssessmentInput): { riskScore: number; reasons: string[] } {
+  let riskScore = 0;
+  const reasons: string[] = [];
+
+  if (signals.newDevice) {
+    riskScore += 15;
+    reasons.push('New or untrusted device');
+  }
+  if (signals.rushedAction) {
+    riskScore += 10;
+    reasons.push('Rushed action detected');
+  }
+  if (signals.unusualAmount) {
+    riskScore += 25;
+    reasons.push('Unusual amount compared to your history');
+  }
+  if (signals.otpRetries) {
+    riskScore += 15;
+    reasons.push('Repeated OTP retries');
+  }
+  if (signals.firstTimeInvest) {
+    riskScore += 15;
+    reasons.push('First-time payee or investment');
+  }
+  if (signals.abnormalBehavior) {
+    riskScore += 20;
+    reasons.push('Abnormal behaviour pattern');
+  }
+
+  return { riskScore: Math.min(100, riskScore), reasons };
+}

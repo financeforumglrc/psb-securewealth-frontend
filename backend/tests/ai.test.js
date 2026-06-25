@@ -72,5 +72,35 @@ describe('AI API Tests', () => {
             expect(res.body.success).toBe(false);
             expect(res.body.code).toBe('QUESTION_MISSING');
         });
+
+        test('should generate Rakshak intervention for high-risk transaction', async () => {
+            const res = await request(app)
+                .post('/api/v1/ai/rakshak-intervention')
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({
+                    riskScore: 85,
+                    signals: ['New device', 'High amount', 'Unusual payee'],
+                    amount: 200000,
+                    beneficiaryName: 'Unknown Merchant'
+                });
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.message).toBeDefined();
+            expect(res.body.data.message.length).toBeGreaterThan(0);
+            expect(Array.isArray(res.body.data.quickReplies)).toBe(true);
+            expect(res.body.data.quickReplies.length).toBe(3);
+            expect(['urgent', 'critical']).toContain(res.body.data.tone);
+        });
+
+        test('should reject invalid riskScore for Rakshak intervention', async () => {
+            const res = await request(app)
+                .post('/api/v1/ai/rakshak-intervention')
+                .set('Authorization', `Bearer ${authToken}`)
+                .send({ riskScore: 'high' });
+
+            expect(res.status).toBe(400);
+            expect(res.body.success).toBe(false);
+        });
     });
 });

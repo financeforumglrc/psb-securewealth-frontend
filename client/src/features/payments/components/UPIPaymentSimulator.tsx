@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRewards } from '@/shared/context/RewardsContext';
 import { computeCashback } from '@/shared/services/cashbackEngine';
 import { getStreak } from '@/shared/services/streakService';
 import { addTransactionToChain } from '@/shared/services/blockchainService';
+import { assessRisk } from '@/shared/services/fraudDetectionService';
 import { backendApi } from '@/shared/lib/backendApi';
 import { loadRazorpayScript, isRazorpayAvailable } from '@/shared/services/razorpayService';
 import type { RazorpayOptions } from '@/shared/types/razorpay';
@@ -10,8 +11,11 @@ import MPINInput from '@/features/payments/components/MPINInput';
 import QrScannerSimulator from '@/features/payments/components/QrScannerSimulator';
 import TransactionGuardModal from '@/features/protection/components/TransactionGuardModal';
 import CoolingVaultModal from '@/features/protection/components/CoolingVaultModal';
+import RakshakInterventionChat from '@/features/protection/RakshakInterventionChat';
 import OTPSimulation from '@/features/protection/components/OTPSimulation';
 import EmptyState from '@/shared/components/EmptyState';
+import { useWealthStore } from '@/shared/store/wealthStore';
+import { useRakshakStore } from '@/shared/store/rakshakStore';
 import { Send, ScanLine, Building2, AtSign, History } from 'lucide-react';
 
 interface Transaction {
@@ -24,6 +28,8 @@ interface Transaction {
   upiId?: string;
   accountNo?: string;
   remark?: string;
+  description?: string;
+  type?: 'credit' | 'debit';
 }
 
 interface ContactManager {
@@ -75,9 +81,61 @@ export default function UPIPaymentSimulator() {
   const [isPickingContact, setIsPickingContact] = useState(false);
   const [isPaymentRequesting, setIsPaymentRequesting] = useState(false);
   const [isRazorpayLoading, setIsRazorpayLoading] = useState(false);
+  const [resumeAfterRakshak, setResumeAfterRakshak] = useState(false);
+  const [isRakshakLoading, setIsRakshakLoading] = useState(false);
+
+  const wealthTransactions = useWealthStore((s) => s.transactions);
+  const { isRakshakActive, outcome: rakshakOutcome, resetRakshak } = useRakshakStore();
 
   const { addCashback } = useRewards();
   const streak = getStreak();
+
+  // Resume to Transaction Guard after user confirms they are safe in Rakshak
+  useEffect(() => {
+    if (!isRakshakActive && rakshakOutcome === 'SAFE' && resumeAfterRakshak && pendingTx) {
+      setResumeAfterRakshak(false);
+      resetRakshak();
+      setShowGuard(true);
+    }
+  }, [isRakshakActive, rakshakOutcome, resumeAfterRakshak, pendingTx, resetRakshak]);
+
+  // Cancel transaction when user chooses SOS or Support in Rakshak
+  useEffect(() => {
+    if (!isRakshakActive && (rakshakOutcome === 'SOS' || rakshakOutcome === 'SUPPORT')) {
+      if (rakshakOutcome === 'SUPPORT') {
+        showToast('error', 'Transaction cancelled. Contact PSB Support if you need help.');
+      }
+      setAmount('');
+      setUpiId('');
+      setAccountNo('');
+      setIfsc('');
+      setBeneficiary('');
+      setRemark('');
+      setPendingTx(null);
+      setResumeAfterRakshak(false);
+      resetRakshak();
+    }
+  }, [isRakshakActive, rakshakOutcome, resetRakshak]);
+
+  const computeRiskSignals = useCallback((amt: number, payee: string) => {
+    const debitTxs = wealthTransactions.filter((t) => t.type === 'debit');
+    const avgTxn = debitTxs.length > 0
+      ? debitTxs.reduce((s, t) => s + t.amount, 0) / Math.max(1, debitTxs.length)
+      : 5000;
+    const maxTxn = debitTxs.length > 0
+      ? Math.max(...debitTxs.map((t) => t.amount), 0)
+      : 10000;
+    const isKnownPayee = transactions.some((t) => t.description?.toLowerCase().includes(payee.toLowerCase()));
+
+    return {
+      newDevice: amt > 100000 && !isKnownPayee,
+      rushedAction: amt > 100000,
+      unusualAmount: amt > avgTxn * 2.5 || amt > maxTxn * 1.5,
+      otpRetries: amt > 200000,
+      firstTimeInvest: !isKnownPayee && amt > 50000,
+      abnormalBehavior: amt > 300000 && !isKnownPayee,
+    };
+  }, [wealthTransactions]);
 
   const canPickContacts = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window;
   const canUsePaymentRequest = typeof window !== 'undefined' && 'PaymentRequest' in window;
@@ -121,10 +179,48 @@ export default function UPIPaymentSimulator() {
     return { amt, payee, upi, acc };
   };
 
-  const handlePay = () => {
+  const handlePay = async () => {
     const data = validateAndPrepare();
     if (!data) return;
-    setPendingTx({ amount: data.amt, payee: data.payee, upiId: data.upi, accountNo: data.acc, remark });
+
+    const tx: Partial<Transaction> = { amount: data.amt, payee: data.payee, upiId: data.upi, accountNo: data.acc, remark };
+    setPendingTx(tx);
+
+    const signals = computeRiskSignals(data.amt, data.payee);
+    const { riskScore, reasons } = assessRisk(signals);
+
+    if (riskScore > 70) {
+      setIsRakshakLoading(true);
+      try {
+        const signalLabels = reasons.length > 0 ? reasons : ['High-risk transaction pattern'];
+        const intervention = await backendApi.rakshakIntervention({
+          riskScore,
+          signals: signalLabels,
+          amount: data.amt,
+          beneficiaryName: data.payee,
+        });
+
+        if (intervention.ok && intervention.data?.data) {
+          const { message, quickReplies } = intervention.data.data;
+          useRakshakStore.getState().triggerRakshak({
+            message,
+            quickReplies,
+            riskScore,
+            pendingTransaction: tx,
+          });
+          setResumeAfterRakshak(true);
+        } else {
+          // Backend unavailable — fall back to built-in guard behaviour
+          setShowGuard(true);
+        }
+      } catch {
+        setShowGuard(true);
+      } finally {
+        setIsRakshakLoading(false);
+      }
+      return;
+    }
+
     setShowGuard(true);
   };
 
@@ -569,11 +665,11 @@ export default function UPIPaymentSimulator() {
             )}
             <button
               onClick={handlePay}
-              disabled={isRazorpayLoading}
+              disabled={isRazorpayLoading || isRakshakLoading}
               className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-base hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-60"
             >
-              <i className={`fas ${isRazorpayLoading ? 'fa-spinner fa-spin' : 'fa-shield-halved'}`} />
-              {isRazorpayLoading ? 'Loading Checkout…' : 'Demo Payment'}
+              <i className={`fas ${isRazorpayLoading || isRakshakLoading ? 'fa-spinner fa-spin' : 'fa-shield-halved'}`} />
+              {isRakshakLoading ? 'Checking Safety…' : isRazorpayLoading ? 'Loading Checkout…' : 'Demo Payment'}
             </button>
           </div>
         )}
@@ -665,6 +761,7 @@ export default function UPIPaymentSimulator() {
         />
       )}
       {showQR && <QrScannerSimulator onScan={handleQRScan} onClose={() => setShowQR(false)} />}
+      <RakshakInterventionChat />
 
       {/* Toast */}
       {toast && (
