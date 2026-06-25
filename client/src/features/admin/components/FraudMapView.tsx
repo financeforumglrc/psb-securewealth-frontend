@@ -2,14 +2,14 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   Loader2, Globe, Satellite, Sun, Moon, Maximize2, Minimize2,
   Zap, Activity, AlertTriangle, ShieldAlert, Radio, TrendingUp, Clock,
-  Crosshair, Expand, RotateCcw
+  Crosshair, Expand, RotateCcw, Search, X, Layers, Eye, EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { priorityColor } from '@/features/admin/services/fraudService';
 import type { FraudCase, FraudHop } from '@/features/admin/lib/fraudTypes';
 
-type MapStyle = 'dark' | 'light' | 'satellite';
+type MapStyle = 'roads' | 'dark' | 'light' | 'satellite';
 
 function loadLeaflet(): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -95,10 +95,16 @@ export default function FraudMapView({
   const pulseRef = useRef<any[]>([]);
   const selectedByMapRef = useRef<number | null>(null);
   const [leafletReady, setLeafletReady] = useState(false);
-  const [mapStyle, setMapStyle] = useState<MapStyle>('dark');
+  const [mapStyle, setMapStyle] = useState<MapStyle>('roads');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoom, setZoom] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showTrails, setShowTrails] = useState(true);
+  const [showNodes, setShowNodes] = useState(true);
+  const [focusMode, setFocusMode] = useState(false);
 
   const tileUrls: Record<MapStyle, string> = {
+    roads: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -127,13 +133,14 @@ export default function FraudMapView({
       mapRef.current = map;
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       L.control.scale({ position: 'bottomright', imperial: false }).addTo(map);
-      tileLayerRef.current = L.tileLayer(tileUrls.dark, {
+      tileLayerRef.current = L.tileLayer(tileUrls.roads, {
         attribution: '&copy; OpenStreetMap &copy; CARTO',
         subdomains: 'abcd',
         maxZoom: 19,
         detectRetina: true,
         tileSize: 256,
       }).addTo(map);
+      map.on('zoomend', () => setZoom(map.getZoom()));
       setLeafletReady(true);
       setTimeout(() => map.invalidateSize(), 200);
     }).catch(err => console.error(err));
@@ -179,8 +186,8 @@ export default function FraudMapView({
         if (l.setStyle) l.setStyle({ opacity: 1, fillOpacity: 1, weight: (l._fraudOriginalStyle?.weight || 2) + 2 });
         if (el) el.style.opacity = '1';
       } else {
-        if (l.setStyle) l.setStyle({ opacity: 0.12, fillOpacity: 0.12 });
-        if (el) el.style.opacity = '0.15';
+        if (l.setStyle) l.setStyle({ opacity: 0.1, fillOpacity: 0.1 });
+        if (el) el.style.opacity = '0.12';
       }
     });
   }, []);
@@ -195,9 +202,10 @@ export default function FraudMapView({
     layersRef.current = [];
     caseLayerMapRef.current.clear();
 
-    const renderedCases = cases.slice(0, 100);
+    const zoomDetail = zoom >= 6;
+    const sourceCases = focusMode && selectedCase ? [selectedCase] : cases.slice(0, 100);
 
-    renderedCases.forEach(c => {
+    sourceCases.forEach(c => {
       const hops = (c.hops || []).filter((h): h is FraudHop => typeof h.lat === 'number' && typeof h.lon === 'number');
       if (hops.length < 2) return;
 
@@ -206,69 +214,104 @@ export default function FraudMapView({
       const color = isCritical ? '#ef4444' : c.riskScore >= 60 ? '#f97316' : '#6366f1';
       const caseLayers: any[] = [];
 
-      // Draw curved arcs between consecutive hops
-      for (let i = 0; i < hops.length - 1; i++) {
-        const a = hops[i];
-        const b = hops[i + 1];
-        const curve = curveBetween(a.lat!, a.lon!, b.lat!, b.lon!);
+      if (zoomDetail) {
+        // Full precision multi-hop curved arcs
+        for (let i = 0; i < hops.length - 1; i++) {
+          const a = hops[i];
+          const b = hops[i + 1];
+          const curve = curveBetween(a.lat!, a.lon!, b.lat!, b.lon!);
+          const weight = isSelected ? 4 : isCritical ? 3 : 2;
+          if (showTrails) {
+            const arc = L.polyline(curve, {
+              color,
+              weight,
+              opacity: isSelected ? 1 : 0.85,
+              dashArray: isCritical ? undefined : '10, 12',
+              className: isCritical ? 'fraud-arc-glow fraud-flow-line' : 'fraud-flow-line',
+            }).addTo(map);
+            arc._fraudOriginalStyle = { color, weight, opacity: isSelected ? 1 : 0.85, fillOpacity: 0 };
+            arc.on('mouseover', () => highlightCaseLayers(c.id));
+            arc.on('mouseout', () => highlightCaseLayers(null));
+            arc.on('click', () => { selectedByMapRef.current = c.id; onSelectCase?.(c); });
+            caseLayers.push(arc);
+            layersRef.current.push(arc);
+          }
+        }
+        // Unique nodes only — no duplicate markers at shared segment endpoints
+        if (showNodes) {
+          const seen = new Set<string>();
+          hops.forEach(h => {
+            const key = `${c.id}-${h.lat}-${h.lon}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+            createNodeMarker(h, c, caseLayers, isSelected);
+          });
+        }
+      } else {
+        // Clean simplified view: origin → destination only
+        const origin = hops.find(h => h.hopType === 'origin') || hops[0];
+        const dest = hops.slice().reverse().find(h => h.hopType === 'destination') || hops[hops.length - 1];
+        if (!origin || !dest) return;
+        const line = curveBetween(origin.lat!, origin.lon!, dest.lat!, dest.lon!, 40, 0.18);
         const weight = isSelected ? 4 : isCritical ? 3 : 2;
-        const arc = L.polyline(curve, {
-          color,
-          weight,
-          opacity: isSelected ? 1 : 0.9,
-          dashArray: isCritical ? undefined : '10, 12',
-          className: isCritical ? 'fraud-arc-glow fraud-flow-line' : 'fraud-flow-line',
-        }).addTo(map);
-        arc._fraudOriginalStyle = { color, weight, opacity: isSelected ? 1 : 0.9, fillOpacity: 0 };
-        arc.on('mouseover', () => highlightCaseLayers(c.id));
-        arc.on('mouseout', () => highlightCaseLayers(null));
-        arc.on('click', () => {
-          selectedByMapRef.current = c.id;
-          onSelectCase?.(c);
-        });
-        caseLayers.push(arc);
-        layersRef.current.push(arc);
+        if (showTrails) {
+          const arc = L.polyline(line, {
+            color,
+            weight,
+            opacity: isSelected ? 1 : 0.55,
+            dashArray: isCritical ? undefined : '8, 10',
+            className: isCritical ? 'fraud-arc-glow fraud-flow-line' : 'fraud-flow-line',
+          }).addTo(map);
+          arc._fraudOriginalStyle = { color, weight, opacity: isSelected ? 1 : 0.55, fillOpacity: 0 };
+          arc.on('mouseover', () => highlightCaseLayers(c.id));
+          arc.on('mouseout', () => highlightCaseLayers(null));
+          arc.on('click', () => { selectedByMapRef.current = c.id; onSelectCase?.(c); });
+          caseLayers.push(arc);
+          layersRef.current.push(arc);
+        }
+        if (showNodes) {
+          createNodeMarker(origin, c, caseLayers, isSelected);
+          createNodeMarker(dest, c, caseLayers, isSelected);
+        }
       }
-
-      // Nodes
-      hops.forEach((h) => {
-        const baseColor = nodeColor(h);
-        const radius = h.hopType === 'origin' || h.hopType === 'destination' ? (isSelected ? 22 : 18) : (isSelected ? 14 : 10);
-        const iconHtml = `
-          <div class="relative flex items-center justify-center" style="width:${radius}px;height:${radius}px;">
-            <span class="${nodePulseClass(h)} absolute inline-flex h-full w-full rounded-full opacity-75"></span>
-            <span class="relative inline-flex rounded-full border-2 border-white shadow-lg" style="width:${radius * 0.55}px;height:${radius * 0.55}px;background:${baseColor};"></span>
-          </div>`;
-        const marker = L.marker([h.lat!, h.lon!], {
-          icon: L.divIcon({
-            html: iconHtml,
-            className: 'bg-transparent',
-            iconSize: [radius, radius],
-            iconAnchor: [radius / 2, radius / 2],
-          }),
-        }).addTo(map);
-        marker._fraudOriginalStyle = { opacity: 1, fillOpacity: 1, weight: 1 };
-        marker.bindTooltip(`
-          <div class="text-xs">
-            <div class="font-bold text-slate-800 dark:text-slate-100">${h.nodeName}</div>
-            <div class="text-slate-500 dark:text-slate-400">${h.institution || h.entityType}</div>
-            <div class="font-semibold mt-0.5">${h.amount.toLocaleString('en-IN')} ${h.currency}</div>
-            <div class="text-[10px] text-slate-400">Case: ${c.caseRef}</div>
-            <div class="text-[10px] text-indigo-500 mt-0.5">Click to open details</div>
-          </div>`, { direction: 'top', className: 'fraud-tooltip' });
-        marker.on('mouseover', () => highlightCaseLayers(c.id));
-        marker.on('mouseout', () => highlightCaseLayers(null));
-        marker.on('click', () => {
-          selectedByMapRef.current = c.id;
-          onSelectCase?.(c);
-        });
-        caseLayers.push(marker);
-        layersRef.current.push(marker);
-      });
 
       caseLayerMapRef.current.set(c.id, caseLayers);
     });
-  }, [leafletReady, cases, selectedCase, highlightCaseLayers, onSelectCase]);
+
+    function createNodeMarker(h: FraudHop, c: FraudCase, caseLayers: any[], isSelected: boolean) {
+      const baseColor = nodeColor(h);
+      const isKeyNode = h.hopType === 'origin' || h.hopType === 'destination' || h.isSanctioned;
+      const radius = isSelected ? (isKeyNode ? 22 : 14) : (isKeyNode ? 16 : 10);
+      const iconHtml = `
+        <div class="relative flex items-center justify-center" style="width:${radius}px;height:${radius}px;">
+          ${isKeyNode ? `<span class="${nodePulseClass(h)} absolute inline-flex h-full w-full rounded-full opacity-60"></span>` : ''}
+          <span class="relative inline-flex rounded-full border-2 border-white shadow-md" style="width:${radius * 0.55}px;height:${radius * 0.55}px;background:${baseColor};"></span>
+        </div>`;
+      const marker = L.marker([h.lat!, h.lon!], {
+        icon: L.divIcon({
+          html: iconHtml,
+          className: 'bg-transparent',
+          iconSize: [radius, radius],
+          iconAnchor: [radius / 2, radius / 2],
+        }),
+      }).addTo(map);
+      marker._fraudOriginalStyle = { opacity: 1, fillOpacity: 1, weight: 1 };
+      marker._fraudHopKey = `${c.id}-${h.lat}-${h.lon}`;
+      marker.bindTooltip(`
+        <div class="text-xs">
+          <div class="font-bold text-slate-800 dark:text-slate-100">${h.nodeName}</div>
+          <div class="text-slate-500 dark:text-slate-400">${h.institution || h.entityType}</div>
+          <div class="font-semibold mt-0.5">${h.amount.toLocaleString('en-IN')} ${h.currency}</div>
+          <div class="text-[10px] text-slate-400">Case: ${c.caseRef}</div>
+          <div class="text-[10px] text-indigo-500 mt-0.5">Click to inspect case</div>
+        </div>`, { direction: 'top', className: 'fraud-tooltip', offset: [0, -8] });
+      marker.on('mouseover', () => highlightCaseLayers(c.id));
+      marker.on('mouseout', () => highlightCaseLayers(null));
+      marker.on('click', () => { selectedByMapRef.current = c.id; onSelectCase?.(c); });
+      caseLayers.push(marker);
+      layersRef.current.push(marker);
+    }
+  }, [leafletReady, cases, zoom, selectedCase, focusMode, showTrails, showNodes, highlightCaseLayers, onSelectCase]);
 
   // Highlight live cases
   useEffect(() => {
@@ -317,7 +360,7 @@ export default function FraudMapView({
     }
     const hop = selectedCase.hops?.find(h => typeof h.lat === 'number' && typeof h.lon === 'number');
     if (hop) {
-      mapRef.current.flyTo([hop.lat, hop.lon], 8, { duration: 1.5, easeLinearity: 0.25 });
+      mapRef.current.flyTo([hop.lat, hop.lon], 9, { duration: 1.5, easeLinearity: 0.25 });
     }
   }, [leafletReady, selectedCase]);
 
@@ -347,6 +390,20 @@ export default function FraudMapView({
     if (coords.length) mapRef.current.fitBounds(L.latLngBounds(coords), { padding: [60, 60], maxZoom: 10, animate: true, duration: 1.2 });
   };
 
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return cases.slice(0, 100).filter(c =>
+      c.caseRef.toLowerCase().includes(q) ||
+      c.hops?.some(h =>
+        (h.city?.toLowerCase().includes(q)) ||
+        (h.country?.toLowerCase().includes(q)) ||
+        (h.nodeName?.toLowerCase().includes(q)) ||
+        (h.institution?.toLowerCase().includes(q))
+      )
+    ).slice(0, 8);
+  }, [searchQuery, cases]);
+
   const recentCases = cases.slice(0, 6);
 
   return (
@@ -364,17 +421,26 @@ export default function FraudMapView({
                 <Radio className="w-3 h-3 animate-pulse" /> Live Tracing Active
               </span>
               <span>•</span>
-              <span>{stats.plotted} of {stats.total} trails plotted</span>
+              <span>{focusMode && selectedCase ? '1 trail focused' : `${stats.plotted} of ${stats.total} trails plotted`}</span>
+              <span>•</span>
+              <span>Zoom {zoom >= 6 ? 'full detail' : 'summary view'}</span>
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+            <button title="Roads" onClick={() => setMapStyle('roads')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'roads' ? 'bg-white text-slate-900 shadow' : 'text-slate-500'}`}><Globe className="w-3.5 h-3.5" /></button>
             <button title="Dark" onClick={() => setMapStyle('dark')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'dark' ? 'bg-slate-800 text-white shadow' : 'text-slate-500'}`}><Moon className="w-3.5 h-3.5" /></button>
             <button title="Light" onClick={() => setMapStyle('light')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'light' ? 'bg-white text-slate-900 shadow' : 'text-slate-500'}`}><Sun className="w-3.5 h-3.5" /></button>
             <button title="Satellite" onClick={() => setMapStyle('satellite')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'satellite' ? 'bg-emerald-600 text-white shadow' : 'text-slate-500'}`}><Satellite className="w-3.5 h-3.5" /></button>
           </div>
+          <button onClick={() => setShowTrails(v => !v)} title="Toggle trails" className={`p-2 rounded-lg border text-xs font-semibold ${showTrails ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}>
+            {showTrails ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          </button>
+          <button onClick={() => setShowNodes(v => !v)} title="Toggle nodes" className={`p-2 rounded-lg border text-xs font-semibold ${showNodes ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}>
+            <Layers className="w-4 h-4" />
+          </button>
           <button onClick={fitAll} title="Fit all trails" className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
             <Expand className="w-3.5 h-3.5" /> Fit
           </button>
@@ -387,7 +453,7 @@ export default function FraudMapView({
         </div>
       </div>
 
-      <div className="relative h-[620px] md:h-[780px]">
+      <div className="relative h-[650px] md:h-[820px]">
         <div ref={containerRef} className="absolute inset-0 z-0" />
 
         {(loading || !leafletReady) && (
@@ -398,6 +464,49 @@ export default function FraudMapView({
             </div>
           </div>
         )}
+
+        {/* Search overlay */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[500] w-[min(420px,92%)]">
+          <div className="relative">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-lg">
+              <Search className="w-4 h-4 text-slate-400" />
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search case, city, bank or country..."
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800 dark:text-slate-100"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            {searchResults.length > 0 && (
+              <div className="absolute top-full mt-2 w-full max-h-64 overflow-y-auto rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl">
+                {searchResults.map(c => {
+                  const origin = c.hops?.find(h => h.hopType === 'origin');
+                  const dest = c.hops?.slice().reverse().find(h => h.hopType === 'destination');
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => { setSearchQuery(''); onSelectCase?.(c); }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-indigo-600 dark:text-indigo-400">{c.caseRef}</span>
+                        <span className={`px-1.5 py-0.5 rounded border ${priorityColor(c.priority)}`}>{c.priority}</span>
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 mt-0.5">
+                        {origin?.city || origin?.country} → {dest?.city || dest?.country} · {formatAmount(c.hops?.[0]?.amount || 0)}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Floating KPI cards */}
         <div className="absolute top-3 left-3 z-[500] flex flex-col gap-2">
@@ -419,22 +528,35 @@ export default function FraudMapView({
           </motion.div>
         </div>
 
-        {/* Selected case indicator */}
-        <AnimatePresence>
-          {selectedCase && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute top-3 left-1/2 -translate-x-1/2 z-[500]"
-            >
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-600 text-white text-xs font-bold shadow-lg shadow-indigo-500/30 border border-indigo-400/40">
-                <Crosshair className="w-3.5 h-3.5" />
-                Tracking {selectedCase.caseRef} · Risk {selectedCase.riskScore}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Selected case indicator & focus toggle */}
+        <div className="absolute top-[4.5rem] left-1/2 -translate-x-1/2 z-[500] flex items-center gap-2">
+          <AnimatePresence>
+            {selectedCase && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-600 text-white text-xs font-bold shadow-lg shadow-indigo-500/30 border border-indigo-400/40">
+                  <Crosshair className="w-3.5 h-3.5" />
+                  Tracking {selectedCase.caseRef} · Risk {selectedCase.riskScore}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <div className="absolute top-[7.5rem] left-1/2 -translate-x-1/2 z-[500]">
+          <button
+            onClick={() => setFocusMode(v => !v)}
+            className={`px-3 py-1.5 rounded-full text-[10px] font-bold border backdrop-blur shadow-sm transition-all ${
+              focusMode
+                ? 'bg-indigo-600 text-white border-indigo-400'
+                : 'bg-white/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            {focusMode ? 'Exit Focus Mode' : 'Focus Selected Trail'}
+          </button>
+        </div>
 
         {/* Recent traces panel */}
         <div className="absolute top-3 right-3 z-[500] w-72 max-h-[calc(100%-1.5rem)] overflow-y-auto hidden md:block">
@@ -487,12 +609,12 @@ export default function FraudMapView({
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.7)]" /> {t('fraudIntelMapLegendDestination')}</div>
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)]" /> {t('fraudIntelMapLegendIntermediate')}</div>
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]" /> {t('fraudIntelMapLegendSanctioned')}</div>
-          <div className="pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400">Hover a trail to isolate. Click to inspect.</div>
+          <div className="pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400">Hover isolates · Click inspects · Zoom for full detail</div>
         </div>
 
         <style>{`
           .fraud-flow-line {
-            animation: fraudFlowDash 1.2s linear infinite;
+            animation: fraudFlowDash 1.6s linear infinite;
             stroke-linecap: round;
           }
           @keyframes fraudFlowDash {
