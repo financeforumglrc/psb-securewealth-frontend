@@ -211,7 +211,6 @@ export default function FraudMapView({
     layersRef.current = [];
     caseLayerMapRef.current.clear();
 
-    const zoomDetail = zoom >= 6;
     const sourceCases = focusMode && selectedCase ? [selectedCase] : cases.slice(0, 100);
 
     sourceCases.forEach(c => {
@@ -220,10 +219,11 @@ export default function FraudMapView({
 
       const isCritical = c.riskScore >= 80;
       const isSelected = selectedCase?.id === c.id;
+      const renderDetail = isSelected || focusMode || zoom >= 6;
       const color = isCritical ? '#ef4444' : c.riskScore >= 60 ? '#f97316' : '#6366f1';
       const caseLayers: any[] = [];
 
-      if (zoomDetail) {
+      if (renderDetail) {
         // Full precision multi-hop curved arcs
         for (let i = 0; i < hops.length - 1; i++) {
           const a = hops[i];
