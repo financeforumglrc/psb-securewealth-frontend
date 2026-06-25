@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { isChunkError } from '@/shared/utils/lazyWithRetry';
+import { AlertTriangle, RotateCcw, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -9,16 +10,17 @@ interface State {
   hasError: boolean;
   error?: Error;
   errorInfo?: string | null;
+  showDetails: boolean;
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, showDetails: false };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { hasError: true, error, showDetails: false };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -28,7 +30,6 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (isChunkError(error)) {
       const alreadyReloaded = sessionStorage.getItem('sw-chunk-reload') === '1';
       if (!alreadyReloaded) {
-        // Auto-recover from stale chunk URLs after a fresh deploy.
         sessionStorage.setItem('sw-chunk-reload', '1');
         this.clearStorageAndReload();
       }
@@ -47,7 +48,6 @@ export default class ErrorBoundary extends Component<Props, State> {
       sessionStorage.removeItem('sw-cleared');
     } catch { /* ignore */ }
 
-    // Clear Cache Storage & unregister service workers when available.
     if ('caches' in window) {
       try {
         caches.keys().then((names) => names.forEach((name) => caches.delete(name)));
@@ -60,54 +60,80 @@ export default class ErrorBoundary extends Component<Props, State> {
       });
     }
 
-    // Hard reload with a cache-busting query string to bypass stale CDN/edge caches.
     const url = new URL(window.location.href);
     url.searchParams.set('r', String(Date.now()));
     window.location.href = url.toString();
   };
 
   handleReset = () => {
-    this.clearStorageAndReload();
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined, showDetails: false });
+  };
+
+  toggleDetails = () => {
+    this.setState((s) => ({ showDetails: !s.showDetails }));
   };
 
   render() {
     if (this.state.hasError) {
-      const { error, errorInfo } = this.state;
+      const { error, errorInfo, showDetails } = this.state;
       const chunkError = isChunkError(error);
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
-          <div className="max-w-lg w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center">
-            <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fas fa-triangle-exclamation text-rose-500 text-2xl" />
+        <div className="min-h-screen flex items-center justify-center bg-psb-bg dark:bg-slate-950 p-4">
+          <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+            <div className="px-8 pt-8 pb-6 text-center">
+              <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <AlertTriangle className="w-10 h-10 text-rose-500" />
+              </div>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+                {chunkError ? 'App update in progress' : 'Something went wrong'}
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                {chunkError
+                  ? 'A new version of the app was just published. We are refreshing you with the latest build.'
+                  : 'An unexpected error occurred. You can try reloading the current view, or clear cached data and restart.'}
+              </p>
             </div>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
-              Something went wrong
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              {chunkError
-                ? 'A part of the app failed to load, usually because a new version was just published. We are reloading with a fresh copy.'
-                : 'The app encountered an unexpected error. This can happen when cached data is out of date.'}
-            </p>
 
             {error && (
-              <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-left dark:border-rose-800 dark:bg-rose-900/20">
-                <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">Error:</p>
-                <p className="break-all text-xs text-rose-600 dark:text-rose-400">{error.name}: {error.message}</p>
-                {errorInfo && (
-                  <pre className="mt-2 max-h-32 overflow-auto rounded bg-white p-2 text-[10px] text-slate-600 dark:bg-slate-950 dark:text-slate-400">
-                    {errorInfo}
-                  </pre>
+              <div className="px-6 mb-4">
+                <button
+                  onClick={this.toggleDetails}
+                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <span>Technical details</span>
+                  {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+                {showDetails && (
+                  <div className="mt-2 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 p-3 text-left">
+                    <p className="text-xs font-semibold text-rose-700 dark:text-rose-300 mb-1">Error:</p>
+                    <p className="break-all text-xs text-rose-600 dark:text-rose-400">{error.name}: {error.message}</p>
+                    {errorInfo && (
+                      <pre className="mt-2 max-h-40 overflow-auto rounded-lg bg-white dark:bg-slate-950 p-3 text-[10px] text-slate-600 dark:text-slate-400">
+                        {errorInfo}
+                      </pre>
+                    )}
+                  </div>
                 )}
               </div>
             )}
 
-            <button
-              onClick={this.handleReset}
-              className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors"
-            >
-              <i className="fas fa-rotate-right mr-2" /> Clear cache & Reload
-            </button>
+            <div className="px-6 pb-8 space-y-3">
+              {!chunkError && (
+                <button
+                  onClick={this.handleReset}
+                  className="w-full py-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" /> Try again
+                </button>
+              )}
+              <button
+                onClick={this.clearStorageAndReload}
+                className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" /> Clear cache & Reload
+              </button>
+            </div>
           </div>
         </div>
       );

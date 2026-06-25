@@ -1,4 +1,5 @@
 import { useEffect, useState, Suspense, useTransition } from 'react';
+import { motion } from 'framer-motion';
 import PitchMode from '@/features/pitch/components/PitchMode';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { isJudgeMode } from '@/shared/utils/demoMode';
@@ -53,6 +54,8 @@ import { ToastProvider } from '@/shared/components/ui/ToastProvider';
 import AppShell from '@/shared/components/layout/AppShell';
 import JudgeTour from '@/features/demo/components/JudgeTour';
 import LiveActivityPill from '@/shared/components/ui/LiveActivityPill';
+import EmptyState from '@/shared/components/EmptyState';
+import { Link2, Landmark, House, Coins, Car, ChartPie } from 'lucide-react';
 
 // Lazy load heavy view components for code splitting
 const DashboardView = lazyWithRetry(() => import('@/features/dashboard/components/DashboardView'));
@@ -86,22 +89,40 @@ import { RewardsProvider } from '@/shared/context/RewardsContext';
 function ViewLoader() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center bg-psb-bg dark:bg-slate-950">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative w-14 h-14">
+      <div className="flex flex-col items-center gap-5">
+        <div className="relative w-16 h-16">
           <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
-          <div className="absolute inset-0 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+            className="absolute inset-0 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent"
+          />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-lg font-black text-primary">PSB</span>
+            <span className="text-sm font-black text-primary">PSB</span>
           </div>
         </div>
         <div className="space-y-1 text-center">
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Loading your secure workspace</p>
-          <p className="text-xs text-slate-400">Please wait…</p>
+          <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Loading your secure workspace</p>
+          <motion.p
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="text-xs text-slate-400"
+          >
+            Please wait…
+          </motion.p>
         </div>
       </div>
     </div>
   );
 }
+
+const assetTypeIcons: Record<string, React.ElementType> = {
+  bank: Landmark,
+  property: House,
+  gold: Coins,
+  vehicle: Car,
+  other: ChartPie,
+};
 
 function AssetsView() {
   const assets = useWealthStore((s) => s.assets);
@@ -115,33 +136,45 @@ function AssetsView() {
             onClick={() => setShowLinkModal(true)}
             className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2"
           >
-            <i className="fas fa-link" /> Link Account
+            <Link2 className="w-4 h-4" /> Link Account
           </button>
           <ManualAssetForm />
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {assets.map((asset) => (
-          <div key={asset.id} className="card relative">
-            {asset.linkedViaAA && (
-              <span className="absolute top-3 right-3 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[10px] font-medium rounded-full">
-                <i className="fas fa-link mr-1" />Linked via AA
-              </span>
-            )}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                <i className={`fas fa-${asset.type === 'bank' ? 'building-columns' : asset.type === 'property' ? 'house' : asset.type === 'gold' ? 'coins' : asset.type === 'vehicle' ? 'car' : 'chart-pie'}`} />
+      {assets.length === 0 ? (
+        <EmptyState
+          icon={Landmark}
+          title="No assets linked yet"
+          subtitle="Add a manual asset or link an account via RBI Account Aggregator to build your net worth view."
+          action={{ label: 'Link Account', onClick: () => setShowLinkModal(true) }}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {assets.map((asset) => {
+            const AssetIcon = assetTypeIcons[asset.type] || ChartPie;
+            return (
+              <div key={asset.id} className="card relative">
+                {asset.linkedViaAA && (
+                  <span className="absolute top-3 right-3 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[10px] font-medium rounded-full flex items-center gap-1">
+                    <Link2 className="w-3 h-3" />Linked via AA
+                  </span>
+                )}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                    <AssetIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm text-slate-800 dark:text-white">{asset.name}</p>
+                    <p className="text-xs text-slate-500 capitalize">{asset.type}</p>
+                  </div>
+                </div>
+                <p className="text-lg font-bold text-slate-800 dark:text-white">₹{asset.value.toLocaleString()}</p>
+                <p className="text-xs text-slate-400 mt-1">Liquidity: {asset.liquidity}</p>
               </div>
-              <div>
-                <p className="font-medium text-sm text-slate-800 dark:text-white">{asset.name}</p>
-                <p className="text-xs text-slate-500 capitalize">{asset.type}</p>
-              </div>
-            </div>
-            <p className="text-lg font-bold text-slate-800 dark:text-white">₹{asset.value.toLocaleString()}</p>
-            <p className="text-xs text-slate-400 mt-1">Liquidity: {asset.liquidity}</p>
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
       <LinkAccountModal show={showLinkModal} onClose={() => setShowLinkModal(false)} />
       <PhysicalAssetIntelligence />
     </div>
@@ -383,7 +416,7 @@ export default function AuthenticatedApp() {
       <Suspense fallback={null}>
         <DemoMode />
       </Suspense>
-      <JudgeTour />
+      <JudgeTour onNavigate={navigateToView} />
       <LiveActivityPill />
     </RewardsProvider>
     </NBAProvider>

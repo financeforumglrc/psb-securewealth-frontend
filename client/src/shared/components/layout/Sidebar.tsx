@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { useSecurity } from '@/shared/context/SecurityContext';
 import { clearAuth } from '@/shared/services/authService';
+import { Map } from 'lucide-react';
 import { SIDEBAR_GROUPS, MEGA_MENU, findGroupForView, VIEW_DESCRIPTIONS } from '@/shared/config/navigation';
 import type { NavGroup, NavItem } from '@/shared/config/navigation';
 
@@ -290,6 +291,9 @@ export default function Sidebar({ currentView, onNavigate, mobileOpen, onCloseMo
         <div className="p-2 border-t border-slate-100 space-y-1">
           <TooltipButton label="Accessibility">
             <button onClick={() => onNavigate('accessibility')} className="w-full aspect-square rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" aria-label="Accessibility settings"><i className="fas fa-universal-access" /></button>
+          </TooltipButton>
+          <TooltipButton label="Replay Judge Tour">
+            <button onClick={() => { window.dispatchEvent(new CustomEvent('sw-replay-judge-tour')); }} className="w-full aspect-square rounded-xl flex items-center justify-center text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" aria-label="Replay judge tour"><Map className="w-4 h-4" /></button>
           </TooltipButton>
           <TooltipButton label="Logout">
             <button onClick={() => { clearAuth(); window.location.reload(); }} className="w-full aspect-square rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50" aria-label="Logout"><i className="fas fa-sign-out-alt" /></button>

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { backendApi } from '@/shared/lib/backendApi';
 import { mockLoans } from '@/shared/data/mockBankingData';
 import { useToast } from '@/shared/components/ui/ToastProvider';
+import EmptyState from '@/shared/components/EmptyState';
+import { FileText } from 'lucide-react';
 
 interface Loan {
   id: number;
@@ -209,13 +211,12 @@ export default function LoanCenter() {
       </AnimatePresence>
 
       {loans.length === 0 ? (
-        <div className="card text-center py-12">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-file-contract text-slate-400 text-2xl" />
-          </div>
-          <h3 className="font-bold text-slate-700 dark:text-slate-300">No Loans Found</h3>
-          <p className="text-sm text-slate-500 mt-1">Apply for a loan to get started</p>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="No Loans Found"
+          subtitle="Apply for a personal, home, car, education, or business loan to get started."
+          action={{ label: 'Apply Now', onClick: () => setShowApplyForm(true) }}
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {loans.map(loan => {
