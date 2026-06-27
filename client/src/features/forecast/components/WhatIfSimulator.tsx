@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
+import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
 
 export default function WhatIfSimulator() {
   const [open, setOpen] = useState(false);
@@ -86,6 +87,7 @@ export default function WhatIfSimulator() {
 
   return (
     <>
+      <RegulatoryDisclaimer compact className="mb-3" />
       <button onClick={() => setOpen(true)} className="card text-left hover:shadow-lg transition-shadow">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center text-accent">

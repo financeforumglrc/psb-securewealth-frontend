@@ -1,6 +1,8 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useWealthStore } from '@/shared/store/wealthStore';
+import { useToast } from '@/shared/components/ui/ToastProvider';
 
 interface CrisisSignal {
   id: string;
@@ -99,12 +101,14 @@ const CRISIS_SIGNALS: CrisisSignal[] = [
 
 export default function CrisisPredictor() {
   const { t } = useTranslation();
+  const addGoal = useWealthStore((s) => s.addGoal);
+  const { showToast } = useToast();
 
   const SEVERITY_CONFIG = {
-    low: { label: t('crisisLowRisk'), bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', bar: 'bg-green-500' },
-    medium: { label: t('crisisModerate'), bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', bar: 'bg-amber-500' },
-    high: { label: t('crisisHighRisk'), bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', bar: 'bg-orange-500' },
-    critical: { label: t('crisisCritical'), bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', bar: 'bg-rose-500' },
+    low: { label: t('crisisLowRisk'), bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-300', border: 'border-green-200 dark:border-green-800', bar: 'bg-green-500' },
+    medium: { label: t('crisisModerate'), bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-800', bar: 'bg-amber-500' },
+    high: { label: t('crisisHighRisk'), bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-200 dark:border-orange-800', bar: 'bg-orange-500' },
+    critical: { label: t('crisisCritical'), bg: 'bg-rose-50 dark:bg-rose-900/20', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-200 dark:border-rose-800', bar: 'bg-rose-500' },
   };
   const [selected, setSelected] = useState<string | null>(null);
   const [showAutoHedge, setShowAutoHedge] = useState(false);
@@ -117,10 +121,10 @@ export default function CrisisPredictor() {
       {/* Header Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('crisisSignals'), value: CRISIS_SIGNALS.length, icon: 'fa-tower-broadcast', color: 'bg-rose-50 text-rose-600' },
-          { label: t('crisisActiveHedges'), value: activeHedges, icon: 'fa-shield-halved', color: 'bg-green-50 text-green-600' },
-          { label: t('crisisMonthlyCost'), value: `₹${totalHedgeCommitment.toLocaleString()}`, icon: 'fa-wallet', color: 'bg-amber-50 text-amber-600' },
-          { label: t('crisisProtectedValue'), value: '₹42L', icon: 'fa-vault', color: 'bg-violet-50 text-violet-600' },
+          { label: t('crisisSignals'), value: CRISIS_SIGNALS.length, icon: 'fa-tower-broadcast', color: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300' },
+          { label: t('crisisActiveHedges'), value: activeHedges, icon: 'fa-shield-halved', color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' },
+          { label: t('crisisMonthlyCost'), value: `₹${totalHedgeCommitment.toLocaleString()}`, icon: 'fa-wallet', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300' },
+          { label: t('crisisProtectedValue'), value: '₹42L', icon: 'fa-vault', color: 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -133,8 +137,8 @@ export default function CrisisPredictor() {
               <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -144,10 +148,10 @@ export default function CrisisPredictor() {
       <div className="card-psb">
         <div className="flex items-center justify-between mb-1">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-tower-broadcast text-rose-600" aria-hidden="true" /> {t('crisisTitle')}
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <i className="fas fa-tower-broadcast text-rose-600 dark:text-rose-300" aria-hidden="true" /> {t('crisisTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('crisisSubtitle')}
             </p>
           </div>
@@ -155,7 +159,7 @@ export default function CrisisPredictor() {
             <button
               onClick={() => setShowAutoHedge(!showAutoHedge)}
               className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                showAutoHedge ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                showAutoHedge ? 'bg-rose-600 text-white' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 hover:bg-rose-100'
               }`}
             >
               <i className={`fas ${showAutoHedge ? 'fa-check' : 'fa-robot'} mr-1`} aria-hidden="true" />
@@ -178,7 +182,7 @@ export default function CrisisPredictor() {
                   exit={{ opacity: 0, scale: 0.97 }}
                   transition={{ delay: idx * 0.05 }}
                   className={`rounded-xl border cursor-pointer transition-all duration-200 ${
-                    isOpen ? 'border-rose-200 bg-rose-50/30 shadow-md' : 'border-gray-100 bg-white hover:border-gray-200'
+                    isOpen ? 'border-rose-200 dark:border-rose-800 bg-rose-50/30 shadow-md' : 'border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-200'
                   }`}
                   role="button"
                   tabIndex={0}
@@ -196,15 +200,15 @@ export default function CrisisPredictor() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[12px] font-bold text-gray-800">{crisis.name}</span>
+                            <span className="text-[12px] font-bold text-gray-800 dark:text-slate-200">{crisis.name}</span>
                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${sev.bg} ${sev.text} border ${sev.border}`}>
                               {sev.label}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-[10px] text-gray-500 mt-1">
+                          <div className="flex items-center gap-3 text-[10px] text-gray-500 dark:text-slate-400 mt-1">
                             <span><i className="fas fa-clock mr-1" aria-hidden="true" />{crisis.timeframe}</span>
                             <span><i className="fas fa-percent mr-1" aria-hidden="true" />{crisis.probability}% {t('crisisProbability')}</span>
-                            <span className="font-semibold text-gray-700">{crisis.financialImpact}</span>
+                            <span className="font-semibold text-gray-700 dark:text-slate-300">{crisis.financialImpact}</span>
                           </div>
                         </div>
                       </div>
@@ -214,18 +218,18 @@ export default function CrisisPredictor() {
                             <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E5E7EB" strokeWidth="3" />
                             <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={crisis.color} strokeWidth="3" strokeDasharray={`${crisis.probability}, 100`} strokeLinecap="round" />
                           </svg>
-                          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-700">{crisis.probability}</span>
+                          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-700 dark:text-slate-300">{crisis.probability}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Severity bar */}
                     <div className="mt-2.5">
-                      <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1">
+                      <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-slate-500 mb-1">
                         <span>{t('crisisRiskLevel')}</span>
                         <span>{crisis.severity.toUpperCase()}</span>
                       </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full ${sev.bar}`}
                           style={{ width: `${crisis.probability}%` }}
@@ -240,27 +244,27 @@ export default function CrisisPredictor() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="border-t border-dashed border-gray-200"
+                        className="border-t border-dashed border-gray-200 dark:border-slate-600"
                       >
                         <div className="p-3 space-y-3">
                           <div className="flex items-start gap-2">
-                            <div className="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 bg-rose-50 dark:bg-rose-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
                               <i className="fas fa-wand-magic-sparkles text-rose-500 text-xs" aria-hidden="true" />
                             </div>
                             <div>
-                              <p className="text-[10px] font-bold text-gray-700 mb-0.5">{t('crisisAutoHedgeStrategy')}</p>
-                              <p className="text-[11px] text-gray-600 leading-relaxed">{crisis.autoHedge}</p>
+                              <p className="text-[10px] font-bold text-gray-700 dark:text-slate-300 mb-0.5">{t('crisisAutoHedgeStrategy')}</p>
+                              <p className="text-[11px] text-gray-600 dark:text-slate-400 leading-relaxed">{crisis.autoHedge}</p>
                             </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-2">
-                            <div className="p-2 bg-gray-50 rounded-lg">
-                              <p className="text-[10px] text-gray-400 uppercase">{t('crisisInstrument')}</p>
-                              <p className="text-[10px] font-semibold text-gray-700">{crisis.hedgeInstrument}</p>
+                            <div className="p-2 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                              <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase">{t('crisisInstrument')}</p>
+                              <p className="text-[10px] font-semibold text-gray-700 dark:text-slate-300">{crisis.hedgeInstrument}</p>
                             </div>
-                            <div className="p-2 bg-gray-50 rounded-lg">
-                              <p className="text-[10px] text-gray-400 uppercase">{t('crisisMonthlyCostLabel')}</p>
-                              <p className="text-[10px] font-semibold text-gray-700">₹{crisis.hedgeAmount.toLocaleString()}</p>
+                            <div className="p-2 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                              <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase">{t('crisisMonthlyCostLabel')}</p>
+                              <p className="text-[10px] font-semibold text-gray-700 dark:text-slate-300">₹{crisis.hedgeAmount.toLocaleString()}</p>
                             </div>
                           </div>
 
@@ -270,10 +274,27 @@ export default function CrisisPredictor() {
                               animate={{ opacity: 1 }}
                               className="flex gap-2"
                             >
-                              <button className="flex-1 py-2 bg-rose-600 text-white text-[11px] font-bold rounded-lg hover:bg-rose-700 transition-colors">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addGoal({
+                                    id: `goal-crisis-${crisis.id}-${Date.now()}`,
+                                    name: `Hedge: ${crisis.name}`,
+                                    type: 'other',
+                                    targetAmount: crisis.hedgeAmount * 12,
+                                    currentAmount: 0,
+                                    deadline: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                  });
+                                  showToast(`Crisis hedge activated for ${crisis.name}`, 'success');
+                                }}
+                                className="flex-1 py-2 bg-rose-600 text-white text-[11px] font-bold rounded-lg hover:bg-rose-700 transition-colors"
+                              >
                                 <i className="fas fa-shield-halved mr-1" aria-hidden="true" /> {t('crisisActivate')}
                               </button>
-                              <button className="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-[11px] font-bold rounded-lg hover:bg-gray-50 transition-colors">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); showToast(`Customization for ${crisis.name} opened`, 'info'); }}
+                                className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 text-[11px] font-bold rounded-lg hover:bg-gray-50 transition-colors"
+                              >
                                 {t('crisisCustomize')}
                               </button>
                             </motion.div>
@@ -291,7 +312,7 @@ export default function CrisisPredictor() {
 
       {/* Macro Signal Dashboard */}
       <div className="card-psb">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
           <i className="fas fa-satellite-dish text-primary" aria-hidden="true" /> {t('crisisMacroFeed')}
         </h4>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -310,13 +331,13 @@ export default function CrisisPredictor() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: idx * 0.04 }}
-              className="p-2.5 bg-gray-50 rounded-lg border border-gray-100"
+              className="p-2.5 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700"
             >
-              <p className="text-[10px] text-gray-400 font-medium">{sig.signal}</p>
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 font-medium">{sig.signal}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[11px] font-bold text-gray-800">{sig.value}</span>
+                <span className="text-[11px] font-bold text-gray-800 dark:text-slate-200">{sig.value}</span>
                 <span className={`text-[10px] px-1 py-0.5 rounded-full font-bold ${
-                  sig.trend === 'up' ? 'bg-rose-50 text-rose-600' : sig.trend === 'down' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500'
+                  sig.trend === 'up' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300' : sig.trend === 'down' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
                 }`}>
                   <i className={`fas fa-arrow-${sig.trend === 'up' ? 'up' : sig.trend === 'down' ? 'down' : 'right'} mr-0.5 text-[7px]`} aria-hidden="true" />
                   {sig.status}

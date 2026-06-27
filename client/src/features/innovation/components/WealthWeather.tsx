@@ -1,5 +1,5 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface DayForecast {
@@ -24,16 +24,46 @@ const FORECAST: DayForecast[] = [
 ];
 
 const CONDITION_CONFIG = {
-  sunny: { icon: 'fa-sun', color: '#F59E0B', bg: 'from-amber-50 to-yellow-50', text: 'text-amber-700', desc: 'Bright & Prosperous' },
-  cloudy: { icon: 'fa-cloud', color: '#6B7280', bg: 'from-gray-50 to-slate-50', text: 'text-gray-700', desc: 'Cautious & Steady' },
-  rainy: { icon: 'fa-cloud-rain', color: '#3B82F6', bg: 'from-blue-50 to-indigo-50', text: 'text-blue-700', desc: 'Drain Alert' },
-  stormy: { icon: 'fa-bolt', color: '#DC2626', bg: 'from-rose-50 to-red-50', text: 'text-rose-700', desc: 'High Risk Zone' },
-  rainbow: { icon: 'fa-rainbow', color: '#8B5CF6', bg: 'from-violet-50 to-purple-50', text: 'text-violet-700', desc: 'Wealth Multiplier' },
+  sunny: { icon: 'fa-sun', color: '#F59E0B', bg: 'from-amber-50 to-yellow-50', text: 'text-amber-700 dark:text-amber-300', desc: 'Bright & Prosperous' },
+  cloudy: { icon: 'fa-cloud', color: '#6B7280', bg: 'from-gray-50 to-slate-50', text: 'text-gray-700 dark:text-slate-300', desc: 'Cautious & Steady' },
+  rainy: { icon: 'fa-cloud-rain', color: '#3B82F6', bg: 'from-blue-50 to-indigo-50', text: 'text-blue-700 dark:text-blue-300', desc: 'Drain Alert' },
+  stormy: { icon: 'fa-bolt', color: '#DC2626', bg: 'from-rose-50 to-red-50', text: 'text-rose-700 dark:text-rose-300', desc: 'High Risk Zone' },
+  rainbow: { icon: 'fa-rainbow', color: '#8B5CF6', bg: 'from-violet-50 to-purple-50', text: 'text-violet-700 dark:text-violet-300', desc: 'Wealth Multiplier' },
 };
 
 export default function WealthWeather() {
   const { t } = useTranslation();
   const [selectedDay, setSelectedDay] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState(0);
+
+  const outlookDays = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const conditions = ['sunny', 'sunny', 'cloudy', 'cloudy', 'rainy', 'stormy', 'rainbow'] as const;
+    const start = selectedMonth * 30;
+    return Array.from({ length: Math.min(90 - start, 30) }).map((_, idx) => {
+      const dayOffset = start + idx;
+      const d = new Date(today.getTime() + dayOffset * 24 * 60 * 60 * 1000);
+      const c = conditions[Math.floor(Math.abs(Math.sin(dayOffset * 7.3) * 7))];
+      return {
+        date: `${d.getDate()}`,
+        dayName: d.toLocaleDateString('en-IN', { weekday: 'narrow' }),
+        condition: c,
+        label: d.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' }),
+      };
+    });
+  }, [selectedMonth]);
+
+  const monthOptions = useMemo(() => {
+    const today = new Date();
+    return [0, 1, 2].map((offset) => {
+      const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+      return {
+        value: offset,
+        label: d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }),
+      };
+    });
+  }, []);
   const [animating, setAnimating] = useState(false);
   const current = FORECAST[selectedDay];
   const cfg = CONDITION_CONFIG[current.condition];
@@ -49,10 +79,10 @@ export default function WealthWeather() {
       {/* Header Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('weatherClimate'), value: 'Sunny', icon: 'fa-sun', color: 'bg-amber-50 text-amber-600' },
-          { label: t('weatherOutlook'), value: '+₹8.5K', icon: 'fa-chart-line', color: 'bg-green-50 text-green-600' },
-          { label: t('weatherStormDays'), value: '1', icon: 'fa-bolt', color: 'bg-rose-50 text-rose-600' },
-          { label: t('weatherAccuracy'), value: '91%', icon: 'fa-bullseye', color: 'bg-blue-50 text-blue-600' },
+          { label: t('weatherClimate'), value: 'Sunny', icon: 'fa-sun', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300' },
+          { label: t('weatherOutlook'), value: '+₹8.5K', icon: 'fa-chart-line', color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' },
+          { label: t('weatherStormDays'), value: '1', icon: 'fa-bolt', color: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300' },
+          { label: t('weatherAccuracy'), value: '91%', icon: 'fa-bullseye', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -65,8 +95,8 @@ export default function WealthWeather() {
               <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -76,10 +106,10 @@ export default function WealthWeather() {
       <div className={`card-psb bg-gradient-to-br ${cfg.bg} overflow-hidden`}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-cloud-sun text-blue-600" aria-hidden="true" /> {t('weatherTitle')}
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <i className="fas fa-cloud-sun text-blue-600 dark:text-blue-300" aria-hidden="true" /> {t('weatherTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('weatherSubtitle')}
             </p>
           </div>
@@ -96,12 +126,12 @@ export default function WealthWeather() {
                 onClick={() => setSelectedDay(idx)}
                 className={`flex-shrink-0 p-2.5 rounded-xl border transition-all text-center min-w-[80px] ${
                   isSelected
-                    ? 'border-primary bg-white shadow-md scale-105'
-                    : 'border-gray-100 bg-white/60 hover:bg-white hover:shadow-sm'
+                    ? 'border-primary bg-white dark:bg-slate-900 shadow-md scale-105'
+                    : 'border-gray-100 dark:border-slate-700 bg-white/60 hover:bg-white hover:shadow-sm'
                 }`}
               >
-                <p className="text-[10px] text-gray-400">{day.day}</p>
-                <p className="text-[10px] font-bold text-gray-600">{day.date}</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-500">{day.day}</p>
+                <p className="text-[10px] font-bold text-gray-600 dark:text-slate-400">{day.date}</p>
                 <div className="my-1.5">
                   <i className={`fas ${dc.icon} text-lg`} style={{ color: dc.color }} aria-hidden="true" />
                 </div>
@@ -129,16 +159,16 @@ export default function WealthWeather() {
                   <i className={`fas ${cfg.icon} text-5xl`} style={{ color: cfg.color }} aria-hidden="true" />
                 </motion.div>
                 <div>
-                  <p className="text-2xl font-extrabold text-gray-900">{current.temp}°W</p>
+                  <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{current.temp}°W</p>
                   <p className="text-sm font-bold" style={{ color: cfg.color }}>{cfg.desc}</p>
-                  <p className="text-[11px] text-gray-500">{current.day}, {current.date} · Cashflow: {current.cashflow >= 0 ? '+' : ''}₹{current.cashflow.toLocaleString()}</p>
+                  <p className="text-[11px] text-gray-500 dark:text-slate-400">{current.day}, {current.date} · Cashflow: {current.cashflow >= 0 ? '+' : ''}₹{current.cashflow.toLocaleString()}</p>
                 </div>
               </div>
               <div className="text-right">
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                  current.risk === 'low' ? 'bg-green-100 text-green-700' :
-                  current.risk === 'medium' ? 'bg-amber-100 text-amber-700' :
-                  'bg-rose-100 text-rose-700'
+                  current.risk === 'low' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                  current.risk === 'medium' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                  'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
                 }`}>
                   {current.risk.toUpperCase()} {t('weatherRiskSuffix')}
                 </span>
@@ -147,10 +177,10 @@ export default function WealthWeather() {
 
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3 bg-white/70 rounded-lg">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{t('weatherExpectedEvents')}</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">{t('weatherExpectedEvents')}</p>
                 <div className="space-y-1">
                   {current.events.map((evt, i) => (
-                    <div key={i} className="flex items-center gap-2 text-[11px] text-gray-700">
+                    <div key={i} className="flex items-center gap-2 text-[11px] text-gray-700 dark:text-slate-300">
                       <i className="fas fa-circle text-[4px]" style={{ color: cfg.color }} aria-hidden="true" />
                       {evt}
                     </div>
@@ -158,8 +188,8 @@ export default function WealthWeather() {
                 </div>
               </div>
               <div className="p-3 bg-white/70 rounded-lg">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{t('weatherAiAdvice')}</p>
-                <p className="text-[11px] text-gray-700 leading-relaxed">{current.advice}</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">{t('weatherAiAdvice')}</p>
+                <p className="text-[11px] text-gray-700 dark:text-slate-300 leading-relaxed">{current.advice}</p>
               </div>
             </div>
           </motion.div>
@@ -168,30 +198,41 @@ export default function WealthWeather() {
 
       {/* Monthly Climate Trend */}
       <div className="card-psb">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-calendar-days text-primary" aria-hidden="true" /> {t('weather90DayOutlook')}
-        </h4>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 flex items-center gap-2">
+            <i className="fas fa-calendar-days text-primary" aria-hidden="true" /> {t('weather90DayOutlook')}
+          </h4>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="px-3 py-1.5 text-xs font-bold rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {monthOptions.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
         <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: 90 }).map((_, idx) => {
-            const conditions = ['sunny', 'sunny', 'cloudy', 'cloudy', 'rainy', 'stormy', 'rainbow'] as const;
-            const c = conditions[Math.floor(Math.abs(Math.sin(idx * 7.3) * 7))];
-            const cc = CONDITION_CONFIG[c];
+          {outlookDays.map((d, idx) => {
+            const cc = CONDITION_CONFIG[d.condition];
             return (
               <motion.div
                 key={idx}
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.003 }}
-                className="aspect-square rounded-md flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                className="aspect-square rounded-md flex flex-col items-center justify-center cursor-pointer hover:scale-110 transition-transform p-0.5"
                 style={{ backgroundColor: cc.color + '20' }}
-                title={`Day ${idx + 1}: ${cc.desc}`}
+                title={`${d.label}: ${cc.desc}`}
               >
-                <i className={`fas ${cc.icon} text-[10px]`} style={{ color: cc.color }} aria-hidden="true" />
+                <span className="text-[8px] text-gray-500 dark:text-slate-400 leading-none">{d.date}</span>
+                <i className={`fas ${cc.icon} text-[10px] my-0.5`} style={{ color: cc.color }} aria-hidden="true" />
+                <span className="text-[7px] font-bold" style={{ color: cc.color }}>{d.dayName}</span>
               </motion.div>
             );
           })}
         </div>
-        <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500">
+        <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500 dark:text-slate-400">
           {Object.entries(CONDITION_CONFIG).map(([key, val]) => (
             <span key={key} className="flex items-center gap-1">
               <i className={`fas ${val.icon}`} style={{ color: val.color }} aria-hidden="true" />

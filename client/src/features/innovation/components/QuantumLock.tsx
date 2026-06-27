@@ -68,10 +68,10 @@ export default function QuantumLock() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('quantumQubits'), value: '16', icon: 'fa-atom', color: 'bg-blue-50 text-blue-600' },
-          { label: t('quantumEntropy'), value: '99.9%', icon: 'fa-shuffle', color: 'bg-violet-50 text-violet-600' },
-          { label: t('quantumEncryption'), value: 'PQ-Lattice', icon: 'fa-lock', color: 'bg-green-50 text-green-600' },
-          { label: t('quantumThreat'), value: '0', icon: 'fa-shield-halved', color: 'bg-rose-50 text-rose-600' },
+          { label: t('quantumQubits'), value: '16', icon: 'fa-atom', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300' },
+          { label: t('quantumEntropy'), value: '99.9%', icon: 'fa-shuffle', color: 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300' },
+          { label: t('quantumEncryption'), value: 'PQ-Lattice', icon: 'fa-lock', color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' },
+          { label: t('quantumThreat'), value: '0', icon: 'fa-shield-halved', color: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -84,8 +84,8 @@ export default function QuantumLock() {
               <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -94,10 +94,10 @@ export default function QuantumLock() {
       <div className="card-psb">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-atom text-blue-600" aria-hidden="true" /> {t('quantumTitle')}
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <i className="fas fa-atom text-blue-600 dark:text-blue-300" aria-hidden="true" /> {t('quantumTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('quantumSubtitle')}
             </p>
           </div>
@@ -127,7 +127,7 @@ export default function QuantumLock() {
               </motion.div>
             ))}
           </div>
-          <div className="flex items-center justify-between text-[10px] text-gray-400">
+          <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-slate-500">
             <span><i className="fas fa-circle text-violet-400 mr-1 text-[6px]" aria-hidden="true" /> {t('quantumSuperposition')}</span>
             <span><i className="fas fa-circle text-blue-400 mr-1 text-[6px]" aria-hidden="true" /> {t('quantumState0')}</span>
             <span><i className="fas fa-circle text-rose-400 mr-1 text-[6px]" aria-hidden="true" /> {t('quantumState1')}</span>
@@ -142,9 +142,9 @@ export default function QuantumLock() {
             disabled={lockStatus !== 'unlocked'}
             className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
               lockStatus === 'locked'
-                ? 'bg-green-100 text-green-700 cursor-default'
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 cursor-default'
                 : lockStatus === 'locking'
-                ? 'bg-amber-100 text-amber-700 cursor-wait'
+                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 cursor-wait'
                 : 'bg-primary text-white hover:bg-primary-dark shadow-lg shadow-primary/20'
             }`}
           >
@@ -154,7 +154,7 @@ export default function QuantumLock() {
           {lockStatus === 'locked' && (
             <button
               onClick={resetLock}
-              className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
+              className="px-4 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
             >
               <i className="fas fa-rotate-left mr-1" aria-hidden="true" /> {t('quantumReset')}
             </button>
@@ -164,14 +164,14 @@ export default function QuantumLock() {
         {/* Progress */}
         {lockStatus !== 'unlocked' && (
           <div className="mb-4">
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-blue-500 via-violet-500 to-green-500"
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.3 }}
               />
             </div>
-            <p className="text-[10px] text-gray-400 mt-1 text-right">{Math.round(progress)}% {t('quantumEncrypted')}</p>
+            <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 text-right">{Math.round(progress)}% {t('quantumEncrypted')}</p>
           </div>
         )}
 
@@ -186,28 +186,28 @@ export default function QuantumLock() {
               className={`flex items-center gap-3 p-2.5 rounded-lg transition-all ${
                 step.status === 'complete' ? 'bg-green-50/50 border border-green-100' :
                 step.status === 'active' ? 'bg-amber-50/50 border border-amber-100' :
-                'bg-gray-50/50 border border-gray-100'
+                'bg-gray-50/50 border border-gray-100 dark:border-slate-700'
               }`}
             >
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                step.status === 'complete' ? 'bg-green-100 text-green-600' :
-                step.status === 'active' ? 'bg-amber-100 text-amber-600' :
-                'bg-gray-100 text-gray-400'
+                step.status === 'complete' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300' :
+                step.status === 'active' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300' :
+                'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500'
               }`}>
                 <i className={`fas ${step.status === 'complete' ? 'fa-check' : step.status === 'active' ? 'fa-spinner fa-spin' : step.icon}`} aria-hidden="true" />
               </div>
               <div className="flex-1">
                 <p className={`text-[11px] font-bold ${
-                  step.status === 'complete' ? 'text-green-700' :
-                  step.status === 'active' ? 'text-amber-700' :
-                  'text-gray-400'
+                  step.status === 'complete' ? 'text-green-700 dark:text-green-300' :
+                  step.status === 'active' ? 'text-amber-700 dark:text-amber-300' :
+                  'text-gray-400 dark:text-slate-500'
                 }`}>{step.name}</p>
-                <p className="text-[10px] text-gray-500">{step.detail}</p>
+                <p className="text-[10px] text-gray-500 dark:text-slate-400">{step.detail}</p>
               </div>
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                step.status === 'complete' ? 'bg-green-100 text-green-700' :
-                step.status === 'active' ? 'bg-amber-100 text-amber-700' :
-                'bg-gray-100 text-gray-400'
+                step.status === 'complete' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                step.status === 'active' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500'
               }`}>
                 {step.status}
               </span>

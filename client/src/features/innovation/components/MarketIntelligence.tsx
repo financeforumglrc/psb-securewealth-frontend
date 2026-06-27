@@ -43,10 +43,10 @@ export default function MarketIntelligence() {
       {/* Header Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('marketSignals'), value: '47', icon: 'fa-satellite-dish', color: 'bg-blue-50 text-blue-600' },
-          { label: t('marketAccuracy'), value: '81%', icon: 'fa-bullseye', color: 'bg-green-50 text-green-600' },
-          { label: t('marketAlpha'), value: '+₹4.2L', icon: 'fa-chart-line', color: 'bg-amber-50 text-amber-600' },
-          { label: t('marketMissed'), value: '2', icon: 'fa-eye', color: 'bg-rose-50 text-rose-600' },
+          { label: t('marketSignals'), value: '47', icon: 'fa-satellite-dish', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300' },
+          { label: t('marketAccuracy'), value: '81%', icon: 'fa-bullseye', color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' },
+          { label: t('marketAlpha'), value: '+₹4.2L', icon: 'fa-chart-line', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300' },
+          { label: t('marketMissed'), value: '2', icon: 'fa-eye', color: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -59,8 +59,8 @@ export default function MarketIntelligence() {
               <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -70,10 +70,10 @@ export default function MarketIntelligence() {
       <div className="card-psb">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <i className="fas fa-chart-line text-primary" aria-hidden="true" /> {t('marketTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('marketSubtitle')}
             </p>
           </div>
@@ -100,7 +100,7 @@ export default function MarketIntelligence() {
           </ResponsiveContainer>
         </div>
 
-        <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500">
+        <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500 dark:text-slate-400">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-1 bg-primary rounded-full" />
             <span>{t('marketIndex')}</span>
@@ -118,7 +118,7 @@ export default function MarketIntelligence() {
 
       {/* Predictive Timing Recommendations */}
       <div className="card-psb">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
           <i className="fas fa-wand-magic-sparkles text-amber-500" aria-hidden="true" /> {t('marketRecommendationsTitle')}
         </h4>
         <div className="space-y-3">
@@ -128,22 +128,22 @@ export default function MarketIntelligence() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.08 }}
-              className="p-3 rounded-xl border border-gray-100 hover:border-amber-200 hover:shadow-sm transition-all"
+              className="p-3 rounded-xl border border-gray-100 dark:border-slate-700 hover:border-amber-200 hover:shadow-sm transition-all"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-bold text-gray-800">{rec.action}</span>
-                    <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full">{rec.confidence}% confidence</span>
+                    <span className="text-[11px] font-bold text-gray-800 dark:text-slate-200">{rec.action}</span>
+                    <span className="px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[10px] font-bold rounded-full">{rec.confidence}% confidence</span>
                   </div>
-                  <p className="text-[10px] text-gray-500 mb-1">
-                    <i className="fas fa-calendar-day mr-1 text-primary" aria-hidden="true" /> {t('marketOptimalWindow')} <span className="font-semibold text-gray-700">{rec.timing}</span>
+                  <p className="text-[10px] text-gray-500 dark:text-slate-400 mb-1">
+                    <i className="fas fa-calendar-day mr-1 text-primary" aria-hidden="true" /> {t('marketOptimalWindow')} <span className="font-semibold text-gray-700 dark:text-slate-300">{rec.timing}</span>
                   </p>
-                  <p className="text-[10px] text-gray-500 leading-relaxed">{rec.reason}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-slate-400 leading-relaxed">{rec.reason}</p>
                 </div>
                 <div className="text-right ml-3">
-                  <p className="text-sm font-extrabold text-green-600">{rec.potentialGain}</p>
-                  <p className="text-[10px] text-gray-400">{t('marketPotential')}</p>
+                  <p className="text-sm font-extrabold text-green-600 dark:text-green-300">{rec.potentialGain}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500">{t('marketPotential')}</p>
                 </div>
               </div>
             </motion.div>
@@ -153,7 +153,7 @@ export default function MarketIntelligence() {
 
       {/* External Signal Calendar */}
       <div className="card-psb">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
           <i className="fas fa-calendar-days text-primary" aria-hidden="true" /> {t('marketRadarTitle')}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -164,7 +164,7 @@ export default function MarketIntelligence() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.06 }}
               className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                selectedSignal === idx ? 'border-gray-300 shadow-md' : 'border-gray-100 hover:border-gray-200'
+                selectedSignal === idx ? 'border-gray-300 shadow-md' : 'border-gray-100 dark:border-slate-700 hover:border-gray-200'
               }`}
               role="button"
               tabIndex={0}
@@ -176,17 +176,17 @@ export default function MarketIntelligence() {
                   <i className={`fas ${sig.icon}`} style={{ color: sig.color, fontSize: '12px' }} aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-bold text-gray-800 truncate">{sig.name}</p>
-                  <p className="text-[10px] text-gray-400">{sig.date}</p>
+                  <p className="text-[11px] font-bold text-gray-800 dark:text-slate-200 truncate">{sig.name}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500">{sig.date}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                  sig.impact === 'Critical' ? 'bg-rose-50 text-rose-700' : sig.impact === 'High' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'
+                  sig.impact === 'Critical' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300' : sig.impact === 'High' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
                 }`}>
                   {sig.impact}
                 </span>
-                <span className="text-[10px] text-gray-500">{sig.direction}</span>
+                <span className="text-[10px] text-gray-500 dark:text-slate-400">{sig.direction}</span>
               </div>
             </motion.div>
           ))}

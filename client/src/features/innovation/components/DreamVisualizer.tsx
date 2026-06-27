@@ -90,10 +90,10 @@ export default function DreamVisualizer() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('dreamsVisualized'), value: DREAMS.length, icon: 'fa-cloud-moon', color: 'bg-violet-50 text-violet-600' },
-          { label: t('dreamYearsAhead'), value: '29', icon: 'fa-hourglass-half', color: 'bg-blue-50 text-blue-600' },
-          { label: t('dreamConfidence'), value: '89%', icon: 'fa-wand-magic-sparkles', color: 'bg-amber-50 text-amber-600' },
-          { label: t('dreamVisualizationPower'), value: '4K', icon: 'fa-eye', color: 'bg-rose-50 text-rose-600' },
+          { label: t('dreamsVisualized'), value: DREAMS.length, icon: 'fa-cloud-moon', color: 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300' },
+          { label: t('dreamYearsAhead'), value: '29', icon: 'fa-hourglass-half', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300' },
+          { label: t('dreamConfidence'), value: '89%', icon: 'fa-wand-magic-sparkles', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300' },
+          { label: t('dreamVisualizationPower'), value: '4K', icon: 'fa-eye', color: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -106,8 +106,8 @@ export default function DreamVisualizer() {
               <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -116,10 +116,10 @@ export default function DreamVisualizer() {
       <div className="card-psb overflow-hidden">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-cloud-moon text-violet-600" aria-hidden="true" /> {t('dreamTitle')}
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <i className="fas fa-cloud-moon text-violet-600 dark:text-violet-300" aria-hidden="true" /> {t('dreamTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('dreamSubtitle')}
             </p>
           </div>
@@ -134,7 +134,7 @@ export default function DreamVisualizer() {
               className={`px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
                 activeDream === idx
                   ? 'bg-violet-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200'
               }`}
             >
               {d.year} · {d.title}
@@ -199,7 +199,7 @@ export default function DreamVisualizer() {
                 whileHover={{ scale: 1.2, zIndex: 10 }}
               >
                 <span className="text-4xl filter drop-shadow-lg">{el.emoji}</span>
-                <span className="text-[10px] text-gray-500 mt-1 bg-white/80 px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                <span className="text-[10px] text-gray-500 dark:text-slate-400 mt-1 bg-white/80 px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                   {el.label}
                 </span>
               </motion.div>
@@ -219,17 +219,17 @@ export default function DreamVisualizer() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="mt-4 p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100"
+            className="mt-4 p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100 dark:border-violet-800"
           >
             <p className="text-sm font-bold text-violet-800 mb-1">{dream.title} · Year {dream.year}</p>
-            <p className="text-[11px] text-violet-600 leading-relaxed italic">"{dream.description}"</p>
+            <p className="text-[11px] text-violet-600 dark:text-violet-300 leading-relaxed italic">"{dream.description}"</p>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Dream Frequency Analysis */}
       <div className="card-psb">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
           <i className="fas fa-chart-pie text-primary" aria-hidden="true" /> {t('dreamThemesTitle')}
         </h4>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -244,14 +244,14 @@ export default function DreamVisualizer() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.08 }}
-              className="p-3 rounded-xl border border-gray-100 text-center hover:shadow-sm transition-all"
+              className="p-3 rounded-xl border border-gray-100 dark:border-slate-700 text-center hover:shadow-sm transition-all"
             >
               <span className="text-2xl">{theme.icon}</span>
-              <p className="text-[11px] font-bold text-gray-800 mt-1">{theme.theme}</p>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden mt-2">
+              <p className="text-[11px] font-bold text-gray-800 dark:text-slate-200 mt-1">{theme.theme}</p>
+              <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden mt-2">
                 <div className="h-full rounded-full" style={{ width: theme.frequency, backgroundColor: theme.color }} />
               </div>
-              <p className="text-[10px] text-gray-500 mt-1">{theme.frequency} {t('dreamThemesOf')}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-1">{theme.frequency} {t('dreamThemesOf')}</p>
             </motion.div>
           ))}
         </div>

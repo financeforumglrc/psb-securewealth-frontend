@@ -1295,7 +1295,7 @@ export default function AdminDashboard() {
         }}
       />
       {/* ─── Sidebar ─── */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed md:static md:translate-x-0 z-50 w-64 h-full flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl transition-transform duration-300`}>
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed md:static md:translate-x-0 z-[100] w-64 h-full flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl transition-transform duration-300`}>
         {/* Logo */}
         <div className="p-6 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
@@ -1371,7 +1371,7 @@ export default function AdminDashboard() {
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-black/30 z-[90] md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* ─── Main Content ─── */}
@@ -1972,9 +1972,9 @@ export default function AdminDashboard() {
         {selectedUser && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 z-50" onClick={() => setSelectedUser(null)} />
+              className="fixed inset-0 bg-black/40 z-[110]" onClick={() => setSelectedUser(null)} />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+              className="fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-none">
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl w-full max-w-lg pointer-events-auto overflow-hidden"
                 onClick={(e) => e.stopPropagation()}>
                 {(() => {

@@ -45,10 +45,10 @@ export default function CommunityDNA() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('communityDnaPeersAnalyzed'), value: '2.4M', icon: 'fa-users', color: 'bg-blue-50 text-blue-600' },
-          { label: t('communityDnaPercentile'), value: '87th', icon: 'fa-ranking-star', color: 'bg-amber-50 text-amber-600' },
-          { label: t('communityDnaLocalInsights'), value: '12', icon: 'fa-lightbulb', color: 'bg-green-50 text-green-600' },
-          { label: t('communityDnaCrowdAccuracy'), value: '74%', icon: 'fa-bullseye', color: 'bg-violet-50 text-violet-600' },
+          { label: t('communityDnaPeersAnalyzed'), value: '2.4M', icon: 'fa-users', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300' },
+          { label: t('communityDnaPercentile'), value: '87th', icon: 'fa-ranking-star', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300' },
+          { label: t('communityDnaLocalInsights'), value: '12', icon: 'fa-lightbulb', color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' },
+          { label: t('communityDnaCrowdAccuracy'), value: '74%', icon: 'fa-bullseye', color: 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -61,8 +61,8 @@ export default function CommunityDNA() {
               <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -72,10 +72,10 @@ export default function CommunityDNA() {
       <div className="card-psb">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-users text-blue-600" aria-hidden="true" /> {t('communityDnaChartTitle')}
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <i className="fas fa-users text-blue-600 dark:text-blue-300" aria-hidden="true" /> {t('communityDnaChartTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('communityDnaChartSubtitle')}
             </p>
           </div>
@@ -97,8 +97,8 @@ export default function CommunityDNA() {
           </ResponsiveContainer>
         </div>
 
-        <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500">
-          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-gray-200" aria-hidden="true" /><span className="sr-only">Gray</span>{t('communityDnaPeerAvg')}</span>
+        <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500 dark:text-slate-400">
+          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-gray-200 dark:bg-slate-600" aria-hidden="true" /><span className="sr-only">Gray</span>{t('communityDnaPeerAvg')}</span>
           <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-primary" aria-hidden="true" /><span className="sr-only">Green</span>{t('communityDnaYou')}</span>
           <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-amber-400" aria-hidden="true" /><span className="sr-only">Amber</span>{t('communityDnaTop10')}</span>
         </div>
@@ -106,7 +106,7 @@ export default function CommunityDNA() {
 
       {/* Community Insights Grid */}
       <div className="card-psb">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
           <i className="fas fa-lightbulb text-amber-500" aria-hidden="true" /> {t('communityDnaInsightsTitle')}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -116,19 +116,19 @@ export default function CommunityDNA() {
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.05 }}
-              className="p-3 rounded-xl border border-gray-100 hover:border-amber-200 hover:shadow-sm transition-all"
+              className="p-3 rounded-xl border border-gray-100 dark:border-slate-700 hover:border-amber-200 hover:shadow-sm transition-all"
             >
               <div className="flex items-center gap-2 mb-2">
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                  insight.trend === 'up' ? 'bg-green-50 text-green-700' : insight.trend === 'down' ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
+                  insight.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' : insight.trend === 'down' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300' : 'bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400'
                 }`}>
                   {insight.category}
                 </span>
-                <span className={`text-[10px] font-bold ${insight.trend === 'up' ? 'text-green-600' : insight.trend === 'down' ? 'text-rose-600' : 'text-gray-600'}`}>
+                <span className={`text-[10px] font-bold ${insight.trend === 'up' ? 'text-green-600 dark:text-green-300' : insight.trend === 'down' ? 'text-rose-600 dark:text-rose-300' : 'text-gray-600 dark:text-slate-400'}`}>
                   {insight.value}
                 </span>
               </div>
-              <p className="text-[11px] text-gray-700 leading-relaxed">{insight.insight}</p>
+              <p className="text-[11px] text-gray-700 dark:text-slate-300 leading-relaxed">{insight.insight}</p>
             </motion.div>
           ))}
         </div>
@@ -136,8 +136,8 @@ export default function CommunityDNA() {
 
       {/* Crowd Predictions */}
       <div className="card-psb">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-          <i className="fas fa-users-viewfinder text-violet-600" aria-hidden="true" /> {t('communityDnaPredictionsTitle')}
+        <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+          <i className="fas fa-users-viewfinder text-violet-600 dark:text-violet-300" aria-hidden="true" /> {t('communityDnaPredictionsTitle')}
         </h4>
         <div className="space-y-3">
           {CROWD_PREDICTIONS.map((pred, idx) => (
@@ -146,28 +146,28 @@ export default function CommunityDNA() {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.06 }}
-              className="p-3 rounded-xl border border-gray-100 hover:shadow-sm transition-all"
+              className="p-3 rounded-xl border border-gray-100 dark:border-slate-700 hover:shadow-sm transition-all"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-bold text-gray-800">{pred.event}</span>
-                    <span className="text-[10px] text-gray-400">{pred.voters.toLocaleString()} {t('communityDnaVoters')}</span>
+                    <span className="text-[11px] font-bold text-gray-800 dark:text-slate-200">{pred.event}</span>
+                    <span className="text-[10px] text-gray-400 dark:text-slate-500">{pred.voters.toLocaleString()} {t('communityDnaVoters')}</span>
                   </div>
-                  <p className="text-[10px] text-gray-500 mb-2">{pred.financialImpact}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-slate-400 mb-2">{pred.financialImpact}</p>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full bg-violet-500"
                         style={{ width: pred.consensus }}
                       />
                     </div>
-                    <span className="text-[10px] font-bold text-violet-600">{pred.consensus} agree</span>
+                    <span className="text-[10px] font-bold text-violet-600 dark:text-violet-300">{pred.consensus} agree</span>
                   </div>
                 </div>
                 <div className="ml-3">
                   <span className={`text-[10px] px-2 py-1 rounded-full font-bold ${
-                    pred.yourVote === 'agree' ? 'bg-green-50 text-green-700' : pred.yourVote === 'disagree' ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
+                    pred.yourVote === 'agree' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' : pred.yourVote === 'disagree' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300' : 'bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400'
                   }`}>
                     {t('communityDnaYouVote')} {pred.yourVote}
                   </span>
@@ -180,7 +180,7 @@ export default function CommunityDNA() {
 
       {/* Local Economy Heatmap */}
       <div className="card-psb">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
           <i className="fas fa-map-location-dot text-primary" aria-hidden="true" /> {t('communityDnaPincodeTitle')}
         </h4>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
@@ -190,13 +190,13 @@ export default function CommunityDNA() {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="p-3 rounded-xl border border-gray-100 bg-gray-50/50"
+              className="p-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50/50"
             >
-              <p className="text-[10px] text-gray-400 mb-1">{item.indicator}</p>
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 mb-1">{item.indicator}</p>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-sm font-extrabold text-gray-900">{item.yourArea}</p>
-                  <p className="text-[10px] text-gray-400">{t('communityDnaCityAvg')} {item.cityAvg}</p>
+                  <p className="text-sm font-extrabold text-gray-900 dark:text-white">{item.yourArea}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500">{t('communityDnaCityAvg')} {item.cityAvg}</p>
                 </div>
                 <i className={`fas fa-arrow-${item.trend} ${item.trend === 'up' ? 'text-green-500' : 'text-rose-500'} text-xs`} aria-hidden="true" />
               </div>

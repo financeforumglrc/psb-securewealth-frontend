@@ -80,14 +80,15 @@ export default function Page({ view, children }: PageProps) {
       </div>
 
       {/* Regulatory / simulation disclaimer */}
-      <div className="mx-4 lg:mx-8 mb-6 p-4 rounded-2xl bg-white/60 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 text-center">
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-          <strong className="text-slate-700 dark:text-slate-300">
-            {language === 'hi' ? 'सिमुलेशन / डेमो केवल।' : 'Simulation / Demo Only.'}
+      <div className="mx-4 lg:mx-8 mb-6 p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/40 text-center">
+        <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+          <i className="fas fa-triangle-exclamation mr-1.5" />
+          <strong>
+            {language === 'hi' ? 'सिमुलेशन / डेमो केवल — कोई गारंटीड रिटर्न नहीं।' : 'Simulation / Demo Only — No Guaranteed Returns.'}
           </strong>{' '}
           {language === 'hi'
-            ? 'सिक्योरवेल्थ ट्विन एक हैकथॉन प्रोटोटाइप है। यह कोई लाइसेंस प्राप्त बैंक, SEBI-पंजीकृत निवेश सलाहकार या बीमा प्रदाता नहीं है। सभी अनुमान, सिफारिशें और बाजार डेटा केवल प्रदर्शन उद्देश्यों के लिए हैं।'
-            : 'SecureWealth Twin is a hackathon prototype. It is not a licensed bank, SEBI-registered investment advisor, or insurance provider. All projections, recommendations, and market data are for demonstration purposes only.'}
+            ? 'सिक्योरवेल्थ ट्विन एक हैकथॉन प्रोटोटाइप है। यह कोई लाइसेंस प्राप्त बैंक, SEBI-पंजीकृत निवेश सलाहकार या बीमा प्रदाता नहीं है। सभी अनुमान, सिफारिशें और बाजार डेटा केवल प्रदर्शन उद्देश्यों के लिए हैं। निवेश बाजार जोखिमों के अधीन हैं।'
+            : 'SecureWealth Twin is a hackathon prototype. It is not a licensed bank, SEBI-registered investment advisor, or insurance provider. All projections, recommendations, and market data are for demonstration purposes only. Investments are subject to market risks.'}
         </p>
       </div>
 

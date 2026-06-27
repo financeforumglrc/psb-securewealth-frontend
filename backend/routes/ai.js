@@ -699,4 +699,47 @@ RULES:
     }
 });
 
+/**
+ * @route   POST /api/v1/ai/execute-agent-action
+ * @desc    Approve or dismiss an autonomous Wealth Twin action
+ * @access  Private
+ */
+router.post('/execute-agent-action', (req, res) => {
+    try {
+        const { actionId, approved } = req.body;
+        if (!actionId || typeof approved !== 'boolean') {
+            return res.status(400).json({ success: false, error: 'actionId and approved boolean are required' });
+        }
+
+        if (!approved) {
+            return res.json({ success: true, message: 'Action dismissed by user', executed: false });
+        }
+
+        // Simulate execution: update mock balances for demo user if applicable
+        const user = req.user;
+        const isDemo = DEMO_MODE && user?.id === 'demo-001';
+        if (isDemo && DEMO_USER.accounts && DEMO_USER.accounts.length >= 2) {
+            const savings = DEMO_USER.accounts.find(a => a.type === 'savings') || DEMO_USER.accounts[0];
+            const fd = DEMO_USER.accounts.find(a => a.type === 'fd') || DEMO_USER.accounts[1];
+            if (actionId === 'agent-001') {
+                savings.balance -= 40000;
+                fd.balance += 40000;
+            } else if (actionId === 'agent-002') {
+                savings.balance -= 5000;
+            }
+        }
+
+        res.json({
+            success: true,
+            executed: true,
+            message: 'Action executed by Agentic AI',
+            actionId,
+            timestamp: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error('Execute agent action error:', error);
+        res.status(500).json({ success: false, error: 'Failed to execute agent action' });
+    }
+});
+
 module.exports = router;

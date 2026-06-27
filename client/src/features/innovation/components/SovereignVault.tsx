@@ -45,7 +45,7 @@ export default function SovereignVault() {
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <i className="fas fa-vault text-primary" aria-hidden="true" /> {t('sovereignTitle')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">{t('sovereignSubtitle')}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('sovereignSubtitle')}</p>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export default function SovereignVault() {
               className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700"
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                cat.local ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-amber-50 text-amber-600 dark:bg-amber-900/20'
+                cat.local ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:bg-amber-900/20'
               }`}>
                 <i className={`fas ${cat.icon}`} aria-hidden="true" />
               </div>
@@ -103,12 +103,12 @@ export default function SovereignVault() {
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                     cat.local
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30'
-                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30'
+                      : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:bg-amber-900/30'
                   }`}>
                     {cat.local ? t('sovereignDeviceOnly') : t('sovereignBankCopy')}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500">{cat.size} • {cat.description}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">{cat.size} • {cat.description}</p>
               </div>
               <div className="flex-shrink-0">
                 <i className={`fas ${cat.local ? 'fa-lock text-emerald-500' : 'fa-lock-open text-amber-500'} text-sm`} aria-hidden="true" />
@@ -124,7 +124,7 @@ export default function SovereignVault() {
           <i className="fas fa-key text-violet-500 text-sm" aria-hidden="true" />
           <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('sovereignZkDemoTitle')}</h4>
         </div>
-        <p className="text-xs text-slate-500 mb-3">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
           {t('sovereignZkDemoDesc')}
         </p>
         <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
@@ -160,16 +160,16 @@ export default function SovereignVault() {
               </div>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="p-2 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">
-                  <p className="text-[10px] text-slate-500">{t('sovereignBankSees')}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">{t('sovereignBankSees')}</p>
                   <p className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{t('sovereignBankSeesValue')}</p>
                 </div>
                 <div className="p-2 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">
-                  <p className="text-[10px] text-slate-500">{t('sovereignBankDoesNotSee')}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">{t('sovereignBankDoesNotSee')}</p>
                   <p className="font-mono text-rose-500 font-bold line-through">{formatCurrency(netWorth)}</p>
                   <p className="font-mono text-rose-500 font-bold line-through">{t('sovereignBankDoesNotSeeAssets')}</p>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">
                 <i className="fas fa-circle-info mr-1" aria-hidden="true" />
                 {t('sovereignZkGuarantee')}
               </p>
@@ -191,27 +191,27 @@ export default function SovereignVault() {
             <i className="fas fa-mobile-screen text-xl" aria-hidden="true" />
           </div>
           <p className="text-xs font-bold text-slate-800 dark:text-white">{t('sovereignYourDevice')}</p>
-          <p className="text-[10px] text-slate-500 mt-1">{t('sovereignYourDeviceDesc')}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{t('sovereignYourDeviceDesc')}</p>
         </div>
         <div className="card text-center">
           <div className="w-12 h-12 bg-violet-50 dark:bg-violet-900/20 rounded-xl flex items-center justify-center text-violet-500 mx-auto mb-2">
             <i className="fas fa-shield-halved text-xl" aria-hidden="true" />
           </div>
           <p className="text-xs font-bold text-slate-800 dark:text-white">{t('sovereignZkProver')}</p>
-          <p className="text-[10px] text-slate-500 mt-1">{t('sovereignZkProverDesc')}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{t('sovereignZkProverDesc')}</p>
         </div>
         <div className="card text-center">
           <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-500 mx-auto mb-2">
             <i className="fas fa-building-columns text-xl" aria-hidden="true" />
           </div>
           <p className="text-xs font-bold text-slate-800 dark:text-white">{t('sovereignBankServer')}</p>
-          <p className="text-[10px] text-slate-500 mt-1">{t('sovereignBankServerDesc')}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{t('sovereignBankServerDesc')}</p>
         </div>
       </div>
 
       {/* Regulatory */}
       <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">{t('sovereignRegulatoryAlignment')}</p>
+        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('sovereignRegulatoryAlignment')}</p>
         <div className="flex flex-wrap gap-2">
           {[
             { id: 'RBI-DPDP', text: 'RBI — Digital Personal Data Protection Act 2023 (Consent & Purpose Limitation)' },

@@ -5,6 +5,7 @@
  */
 
 const path = require('path');
+const fs = require('fs');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
@@ -35,7 +36,9 @@ const scenarioRoutes = require('./routes/scenarios');
 const nlpQueryRoutes = require('./routes/nlp-query');
 const screenerRoutes  = require('./routes/screener');
 const bankingRoutes = require('./routes/banking');
+const businessRoutes = require('./routes/business');
 const kycRoutes = require('./routes/kyc');
+const msmeRoutes = require('./routes/msme');
 const { seedAll } = require('./scripts/seedDemoData');
 
 // Import middleware
@@ -240,7 +243,9 @@ app.use('/api/v1/scenarios', scenarioRoutes);
 app.use('/api/v1/query', nlpQueryRoutes);
 app.use('/api/v1/screener', screenerRoutes);
 app.use('/api/v1/banking', authMiddleware, bankingRoutes);
+app.use('/api/v1/business', businessRoutes);
 app.use('/api/v1/kyc', authMiddleware, kycRoutes);
+app.use('/api/v1/msme', authMiddleware, msmeRoutes);
 
 // Patent information endpoint
 app.get('/api/v1/patents', (req, res) => {
@@ -306,6 +311,19 @@ app.get('/api/v1/patents', (req, res) => {
 app.use(express.static(path.join(__dirname, '..', 'public'), {
     index: ['index.html', 'api-demo.html']
 }));
+
+// Serve the built React SPA in production / container deployments
+const spaDist = path.join(__dirname, '..', 'client', 'dist');
+app.use(express.static(spaDist, { index: false }));
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/ws')) return next();
+    if (req.headers.accept && !req.headers.accept.includes('text/html')) return next();
+    const indexPath = path.join(spaDist, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+    }
+    next();
+});
 
 // 404 handler
 app.use((req, res) => {

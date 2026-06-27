@@ -1,6 +1,8 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useWealthStore } from '@/shared/store/wealthStore';
+import { useToast } from '@/shared/components/ui/ToastProvider';
 
 interface PreparednessDimension {
   name: string;
@@ -25,25 +27,47 @@ const OVERALL_SCORE = Math.round(
 );
 
 const getScoreLabel = (score: number) => {
-  if (score >= 80) return { label: 'Excellent', color: '#10B981', bg: 'bg-green-50' };
-  if (score >= 60) return { label: 'Good', color: '#3B82F6', bg: 'bg-blue-50' };
-  if (score >= 40) return { label: 'Needs Work', color: '#F59E0B', bg: 'bg-amber-50' };
-  return { label: 'Critical', color: '#EF4444', bg: 'bg-rose-50' };
+  if (score >= 80) return { label: 'Excellent', color: '#10B981', bg: 'bg-green-50 dark:bg-green-900/20' };
+  if (score >= 60) return { label: 'Good', color: '#3B82F6', bg: 'bg-blue-50 dark:bg-blue-900/20' };
+  if (score >= 40) return { label: 'Needs Work', color: '#F59E0B', bg: 'bg-amber-50 dark:bg-amber-900/20' };
+  return { label: 'Critical', color: '#EF4444', bg: 'bg-rose-50 dark:bg-rose-900/20' };
 };
 
 export default function PreparednessScore() {
   const { t } = useTranslation();
   const [selectedDim, setSelectedDim] = useState<number | null>(null);
   const overall = getScoreLabel(OVERALL_SCORE);
+  const addGoal = useWealthStore((s) => s.addGoal);
+  const { showToast } = useToast();
+
+  const handleFix = (dim: PreparednessDimension) => {
+    const targets: Record<string, number> = {
+      'Emergency Fund': 300000,
+      'Insurance Coverage': 1500000,
+      'Retirement Corpus': 5000000,
+      'Child Education': 2000000,
+      'Home Ownership': 1500000,
+      'Debt Freedom': 500000,
+    };
+    addGoal({
+      id: `goal-ps-${Date.now()}`,
+      name: dim.name,
+      type: 'other',
+      targetAmount: targets[dim.name] || 500000,
+      currentAmount: 0,
+      deadline: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    });
+    showToast(`Created action plan for ${dim.name}`, 'success');
+  };
 
   return (
     <div className="card-psb">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+          <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <i className="fas fa-shield-halved text-primary" aria-hidden="true" /> {t('preparednessTitle')}
           </h3>
-          <p className="text-[11px] text-gray-500 mt-0.5">
+          <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
             {t('preparednessSubtitle')}
           </p>
         </div>
@@ -54,7 +78,7 @@ export default function PreparednessScore() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main Score Circle */}
-        <div className="flex flex-col items-center justify-center p-4 bg-gradient-to-b from-gray-50 to-white rounded-xl border border-gray-100">
+        <div className="flex flex-col items-center justify-center p-4 bg-gradient-to-b from-gray-50 to-white rounded-xl border border-gray-100 dark:border-slate-700">
           <div className="relative w-40 h-40">
             <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
               <circle cx="60" cy="60" r="50" fill="none" stroke="#F3F4F6" strokeWidth="10" />
@@ -69,13 +93,13 @@ export default function PreparednessScore() {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-extrabold text-gray-900">{OVERALL_SCORE}</span>
-              <span className="text-[10px] text-gray-500 font-medium">/ 100</span>
+              <span className="text-3xl font-extrabold text-gray-900 dark:text-white">{OVERALL_SCORE}</span>
+              <span className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">/ 100</span>
             </div>
           </div>
           <div className="mt-3 text-center">
-            <p className="text-sm font-bold text-gray-800">{overall.label}</p>
-            <p className="text-[10px] text-gray-500 mt-0.5">
+            <p className="text-sm font-bold text-gray-800 dark:text-slate-200">{overall.label}</p>
+            <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">
               You're more prepared than {Math.max(10, OVERALL_SCORE - 12)}% of Indians your age
             </p>
           </div>
@@ -84,14 +108,14 @@ export default function PreparednessScore() {
           <div className="w-full mt-3 space-y-1.5">
             {DIMENSIONS.map((dim) => (
               <div key={dim.name} className="flex items-center gap-2">
-                <span className="text-[10px] text-gray-500 w-20 truncate">{dim.name}</span>
-                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <span className="text-[10px] text-gray-500 dark:text-slate-400 w-20 truncate">{dim.name}</span>
+                <div className="flex-1 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${dim.score}%`, backgroundColor: dim.color }}
                   />
                 </div>
-                <span className="text-[10px] font-bold text-gray-600 w-6 text-right">{dim.score}</span>
+                <span className="text-[10px] font-bold text-gray-600 dark:text-slate-400 w-6 text-right">{dim.score}</span>
               </div>
             ))}
           </div>
@@ -107,8 +131,8 @@ export default function PreparednessScore() {
               transition={{ delay: idx * 0.07 }}
               className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
                 selectedDim === idx
-                  ? 'border-gray-300 shadow-md bg-white'
-                  : 'border-gray-100 hover:border-gray-200 hover:shadow-sm bg-white'
+                  ? 'border-gray-300 shadow-md bg-white dark:bg-slate-900'
+                  : 'border-gray-100 dark:border-slate-700 hover:border-gray-200 hover:shadow-sm bg-white dark:bg-slate-900'
               }`}
               role="button"
               tabIndex={0}
@@ -124,8 +148,8 @@ export default function PreparednessScore() {
                     <i className={`fas ${dim.icon}`} style={{ color: dim.color, fontSize: '13px' }} aria-hidden="true" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-gray-800">{dim.name}</p>
-                    <p className="text-[10px] text-gray-400">{t('preparednessWeight')} {dim.weight}%</p>
+                    <p className="text-[11px] font-bold text-gray-800 dark:text-slate-200">{dim.name}</p>
+                    <p className="text-[10px] text-gray-400 dark:text-slate-500">{t('preparednessWeight')} {dim.weight}%</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -133,7 +157,7 @@ export default function PreparednessScore() {
                 </div>
               </div>
 
-              <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="mt-2 h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full rounded-full"
                   style={{ backgroundColor: dim.color }}
@@ -147,13 +171,16 @@ export default function PreparednessScore() {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className="mt-2 pt-2 border-t border-dashed border-gray-100"
+                  className="mt-2 pt-2 border-t border-dashed border-gray-100 dark:border-slate-700"
                 >
                   <div className="flex items-start gap-2">
                     <i className="fas fa-lightbulb text-amber-500 text-[10px] mt-0.5" aria-hidden="true" />
-                    <p className="text-[10px] text-gray-600 leading-relaxed">{dim.insight}</p>
+                    <p className="text-[10px] text-gray-600 dark:text-slate-400 leading-relaxed">{dim.insight}</p>
                   </div>
-                  <button className="mt-2 w-full py-1.5 bg-primary/5 text-primary text-[10px] font-bold rounded-lg hover:bg-primary/10 transition-colors">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleFix(dim); }}
+                    className="mt-2 w-full py-1.5 bg-primary/5 text-primary text-[10px] font-bold rounded-lg hover:bg-primary/10 transition-colors"
+                  >
                     <i className="fas fa-wand-magic-sparkles mr-1" aria-hidden="true" /> {t('preparednessFix')}
                   </button>
                 </motion.div>
@@ -166,12 +193,12 @@ export default function PreparednessScore() {
       {/* India Benchmark */}
       <div className="mt-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <i className="fas fa-chart-simple text-amber-600 text-sm" aria-hidden="true" />
+          <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+            <i className="fas fa-chart-simple text-amber-600 dark:text-amber-300 text-sm" aria-hidden="true" />
           </div>
           <div className="flex-1">
-            <p className="text-[11px] font-bold text-gray-800">{t('preparednessIndiaAvg')}</p>
-            <p className="text-[10px] text-gray-600">
+            <p className="text-[11px] font-bold text-gray-800 dark:text-slate-200">{t('preparednessIndiaAvg')}</p>
+            <p className="text-[10px] text-gray-600 dark:text-slate-400">
               {t('preparednessAhead').replace('{points}', `${OVERALL_SCORE > 41 ? '+' : ''}${OVERALL_SCORE - 41}`)}
             </p>
           </div>

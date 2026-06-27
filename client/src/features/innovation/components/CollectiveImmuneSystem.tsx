@@ -81,7 +81,7 @@ export default function CollectiveImmuneSystem() {
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <i className="fas fa-shield-virus text-emerald-500" aria-hidden="true" /> {t('collectiveImmuneTitle')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">{t('collectiveImmuneSubtitle')}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('collectiveImmuneSubtitle')}</p>
         </div>
         <button
           onClick={toggleCommunity}
@@ -90,7 +90,7 @@ export default function CollectiveImmuneSystem() {
           className={`relative w-14 h-7 rounded-full transition-colors ${includeCommunity ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
         >
           <motion.div
-            className="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow"
+            className="absolute top-0.5 w-6 h-6 bg-white dark:bg-slate-900 rounded-full shadow"
             animate={{ left: includeCommunity ? '26px' : '2px' }}
             transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 30 }}
           />
@@ -107,10 +107,10 @@ export default function CollectiveImmuneSystem() {
       {/* Live Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('collectiveImmuneUsers'), value: stats.users.toLocaleString(), icon: 'fa-users', color: 'bg-blue-50 text-blue-600', sub: t('collectiveImmuneGrowing') },
+          { label: t('collectiveImmuneUsers'), value: stats.users.toLocaleString(), icon: 'fa-users', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300', sub: t('collectiveImmuneGrowing') },
           { label: t('collectiveImmuneProtected'), value: stats.protected.toLocaleString(), icon: 'fa-shield-halved', color: 'bg-emerald-50 text-emerald-600', sub: t('collectiveImmuneProtectedSub') },
-          { label: t('collectiveImmuneNeutralized'), value: stats.neutralized.toLocaleString(), icon: 'fa-ban', color: 'bg-rose-50 text-rose-600', sub: t('collectiveImmuneNeutralizedSub') },
-          { label: t('collectiveImmuneActive'), value: stats.active, icon: 'fa-triangle-exclamation', color: 'bg-amber-50 text-amber-600', sub: t('collectiveImmuneActiveSub') },
+          { label: t('collectiveImmuneNeutralized'), value: stats.neutralized.toLocaleString(), icon: 'fa-ban', color: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300', sub: t('collectiveImmuneNeutralizedSub') },
+          { label: t('collectiveImmuneActive'), value: stats.active, icon: 'fa-triangle-exclamation', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300', sub: t('collectiveImmuneActiveSub') },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -124,9 +124,9 @@ export default function CollectiveImmuneSystem() {
                 <i className={`fas ${stat.icon}`} aria-hidden="true" />
               </div>
               <div>
-                <p className="text-[10px] text-slate-500 font-bold uppercase">{stat.label}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{stat.label}</p>
                 <p className="text-xl font-extrabold text-slate-800 dark:text-white">{stat.value}</p>
-                <p className="text-[10px] text-slate-400">{stat.sub}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">{stat.sub}</p>
               </div>
             </div>
           </motion.div>
@@ -138,7 +138,7 @@ export default function CollectiveImmuneSystem() {
         <div className="flex items-center gap-2 mb-3">
           <i className="fas fa-map text-primary text-sm" aria-hidden="true" />
           <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('collectiveImmuneMapTitle')}</h4>
-          <span className="ml-auto flex items-center gap-1 text-[10px] text-slate-400">
+          <span className="ml-auto flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
             <span className={`w-2 h-2 bg-rose-500 rounded-full ${prefersReducedMotion ? '' : 'animate-pulse'}`} aria-label="Live" />
             {t('collectiveImmuneLive')}
           </span>
@@ -146,7 +146,7 @@ export default function CollectiveImmuneSystem() {
         <div className="relative h-64 bg-slate-50 dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700">
           {/* Simplified India outline dots */}
           <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full opacity-20">
-            <path d="M30,20 Q40,15 50,18 Q60,12 70,20 Q75,30 72,40 Q78,50 70,60 Q72,75 60,82 Q50,88 40,82 Q30,75 28,60 Q22,50 28,40 Q25,30 30,20Z" fill="currentColor" className="text-slate-400" />
+            <path d="M30,20 Q40,15 50,18 Q60,12 70,20 Q75,30 72,40 Q78,50 70,60 Q72,75 60,82 Q50,88 40,82 Q30,75 28,60 Q22,50 28,40 Q25,30 30,20Z" fill="currentColor" className="text-slate-400 dark:text-slate-500" />
           </svg>
           {cityStats.map((city) => (
             <motion.div
@@ -168,7 +168,7 @@ export default function CollectiveImmuneSystem() {
             </motion.div>
           ))}
         </div>
-        <div className="flex flex-wrap gap-4 mt-2 text-[10px] text-slate-500">
+        <div className="flex flex-wrap gap-4 mt-2 text-[10px] text-slate-500 dark:text-slate-400">
           <span className="flex items-center gap-1"><span className="w-2 h-2 bg-rose-500 rounded-full" aria-hidden="true" /> {t('collectiveImmuneThreatCluster')}</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full" aria-hidden="true" /> {t('collectiveImmuneProtectedZone')}</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 bg-amber-500 rounded-full" aria-hidden="true" /> {t('collectiveImmuneContainment')}</span>
@@ -180,7 +180,7 @@ export default function CollectiveImmuneSystem() {
         <div className="flex items-center gap-2 mb-4">
           <i className="fas fa-radar text-rose-500 text-sm" aria-hidden="true" />
           <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('collectiveImmuneFeedTitle')}</h4>
-          <span className={`ml-auto text-[10px] px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full font-bold ${prefersReducedMotion ? '' : 'animate-pulse'}`} aria-label="Live feed">
+          <span className={`ml-auto text-[10px] px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-full font-bold ${prefersReducedMotion ? '' : 'animate-pulse'}`} aria-label="Live feed">
             {t('collectiveImmuneLiveBadge')}
           </span>
         </div>
@@ -197,21 +197,21 @@ export default function CollectiveImmuneSystem() {
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{threat.type}</p>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                    threat.status === 'active' ? 'bg-rose-100 text-rose-700' :
-                    threat.status === 'contained' ? 'bg-amber-100 text-amber-700' :
+                    threat.status === 'active' ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300' :
+                    threat.status === 'contained' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
                     'bg-emerald-100 text-emerald-700'
                   }`}>
                     {threat.status.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500 truncate">{threat.pattern} • {threat.city}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{threat.pattern} • {threat.city}</p>
               </div>
               <div className="text-right flex-shrink-0">
                 <p className="text-xs font-bold text-slate-800 dark:text-white">{threat.count}</p>
-                <p className="text-[10px] text-slate-400">{t('collectiveImmuneReports')}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">{t('collectiveImmuneReports')}</p>
               </div>
               <div className="text-right flex-shrink-0 min-w-[60px]">
-                <p className="text-[10px] text-slate-400">{threat.firstSeen}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">{threat.firstSeen}</p>
               </div>
               <i className={`fas ${statusIcon[threat.status]} text-xs flex-shrink-0`} aria-hidden="true" />
             </motion.div>
@@ -232,7 +232,7 @@ export default function CollectiveImmuneSystem() {
             </div>
             <div>
               <p className="text-xs font-bold text-slate-800 dark:text-white">{s.step}. {s.title}</p>
-              <p className="text-[10px] text-slate-500 mt-0.5">{s.desc}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{s.desc}</p>
             </div>
           </div>
         ))}

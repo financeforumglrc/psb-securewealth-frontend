@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { Transaction } from '@/shared/types';
+import CounterfactualPanel from '@/features/protection/components/CounterfactualPanel';
 
 interface Props {
   tx: Transaction | null;
@@ -126,6 +127,12 @@ export default function TransactionDetailModal({ tx, onClose }: Props) {
               </div>
             </div>
           )}
+
+          {/* Counterfactual Explainable AI */}
+          <CounterfactualPanel
+            riskScore={tx.score ?? (tx.riskLevel === 'HIGH' ? 85 : tx.riskLevel === 'MEDIUM' ? 55 : 15)}
+            signals={tx.signals || {}}
+          />
 
           {/* Protection Decision */}
           {tx.decision && (

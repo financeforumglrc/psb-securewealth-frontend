@@ -190,10 +190,10 @@ export default function NeuralNetworkViz() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('neuralNeurons'), value: activeNeurons, icon: 'fa-circle-nodes', color: 'bg-violet-50 text-violet-600' },
-          { label: t('neuralSignals'), value: signalCount * 60, icon: 'fa-bolt', color: 'bg-amber-50 text-amber-600' },
-          { label: t('neuralLayers'), value: '5', icon: 'fa-layer-group', color: 'bg-blue-50 text-blue-600' },
-          { label: t('neuralConfidence'), value: '94.2%', icon: 'fa-brain', color: 'bg-pink-50 text-pink-600' },
+          { label: t('neuralNeurons'), value: activeNeurons, icon: 'fa-circle-nodes', color: 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300' },
+          { label: t('neuralSignals'), value: signalCount * 60, icon: 'fa-bolt', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300' },
+          { label: t('neuralLayers'), value: '5', icon: 'fa-layer-group', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300' },
+          { label: t('neuralConfidence'), value: '94.2%', icon: 'fa-brain', color: 'bg-pink-50 dark:bg-pink-900/20 text-pink-600' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -206,8 +206,8 @@ export default function NeuralNetworkViz() {
               <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -216,10 +216,10 @@ export default function NeuralNetworkViz() {
       <div className="card-psb overflow-hidden">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <i className="fas fa-brain text-pink-600" aria-hidden="true" /> {t('neuralTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('neuralSubtitle')}
             </p>
           </div>
@@ -233,18 +233,18 @@ export default function NeuralNetworkViz() {
             {LAYER_LABELS.map((label, idx) => (
               <div key={label} className="text-center">
                 <div className="w-2 h-2 rounded-full mx-auto mb-1" style={{ backgroundColor: LAYER_COLORS[idx] }} />
-                <p className="text-[10px] text-gray-400">{label}</p>
-                <p className="text-[10px] text-gray-600">{LAYER_CONFIG[idx]} {t('neuralNodes')}</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-500">{label}</p>
+                <p className="text-[10px] text-gray-600 dark:text-slate-400">{LAYER_CONFIG[idx]} {t('neuralNodes')}</p>
               </div>
             ))}
           </div>
 
           {/* Top info bar */}
           <div className="absolute top-3 left-3 right-3 flex justify-between">
-            <div className="px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-[10px] text-gray-300">
+            <div className="px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-[10px] text-gray-300 dark:text-slate-600">
               <i className="fas fa-microchip mr-1 text-green-400" aria-hidden="true" /> {t('neuralProcessing')}
             </div>
-            <div className="px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-[10px] text-gray-300">
+            <div className="px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg text-[10px] text-gray-300 dark:text-slate-600">
               <i className="fas fa-satellite-dish mr-1 text-amber-400" aria-hidden="true" /> {t('neuralSignalsCount')}
             </div>
           </div>
@@ -262,15 +262,15 @@ export default function NeuralNetworkViz() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
-              className="p-3 rounded-xl border border-gray-100 bg-gray-50/50"
+              className="p-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50/50"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: layer.color }} />
-                <p className="text-[11px] font-bold text-gray-800">{layer.label}</p>
+                <p className="text-[11px] font-bold text-gray-800 dark:text-slate-200">{layer.label}</p>
               </div>
               <div className="space-y-1">
                 {layer.signals.map((sig, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                  <div key={i} className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-slate-400">
                     <i className="fas fa-chevron-right text-[6px]" style={{ color: layer.color }} aria-hidden="true" />
                     {sig}
                   </div>

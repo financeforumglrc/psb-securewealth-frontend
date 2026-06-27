@@ -15,16 +15,21 @@ export default function NotificationCenter() {
   const notifications = useWealthStore((s) => s.notifications);
   const markNotificationRead = useWealthStore((s) => s.markNotificationRead);
   const bills = useWealthStore((s) => s.bills);
+  const dnd = useWealthStore((s) => s.notificationsDnd);
+  const popupEnabled = useWealthStore((s) => s.notificationsPopup);
+  const setNotificationsDnd = useWealthStore((s) => s.setNotificationsDnd);
+  const setNotificationsPopup = useWealthStore((s) => s.setNotificationsPopup);
   const panelRef = useRef<HTMLDivElement>(null);
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  const effectiveUnread = dnd ? 0 : notifications.filter((n) => n.unread).length;
+  const unreadCount = effectiveUnread;
 
   useEffect(() => {
-    if (unreadCount > 0) {
-      setAppBadge(unreadCount);
+    if (effectiveUnread > 0) {
+      setAppBadge(effectiveUnread);
     } else {
       clearAppBadge();
     }
-  }, [unreadCount]);
+  }, [effectiveUnread]);
 
   useEffect(() => {
     setPushEnabled(isNotificationGranted());
@@ -44,11 +49,14 @@ export default function NotificationCenter() {
     const permission = await requestNotificationPermission();
     if (permission === 'granted') {
       setPushEnabled(true);
-      sendLocalNotification(
-        'SecureWealth Twin',
-        'Push notifications are now enabled!',
-        '/favicon.ico'
-      );
+      setNotificationsPopup(true);
+      if (!dnd) {
+        sendLocalNotification(
+          'SecureWealth Twin',
+          'Push notifications are now enabled!',
+          '/favicon.ico'
+        );
+      }
 
       // Schedule reminders for upcoming bills (next 7 days)
       const now = new Date();
@@ -64,7 +72,10 @@ export default function NotificationCenter() {
         }
       });
     }
-  }, [bills]);
+  }, [bills, dnd]);
+
+  const toggleDnd = useCallback(() => setNotificationsDnd(!dnd), [dnd, setNotificationsDnd]);
+  const togglePopup = useCallback(() => setNotificationsPopup(!popupEnabled), [popupEnabled, setNotificationsPopup]);
 
   const colorMap: Record<string, string> = {
     rose: 'bg-rose-100 text-rose-600',
@@ -92,6 +103,29 @@ export default function NotificationCenter() {
           <div className="p-3 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
             <h3 className="font-semibold text-sm text-slate-800 dark:text-white">Notifications</h3>
             <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full">{unreadCount} new</span>
+          </div>
+
+          <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-800/50">
+            <button
+              onClick={toggleDnd}
+              className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg border transition-colors ${
+                dnd
+                  ? 'bg-rose-100 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              <i className={`fas ${dnd ? 'fa-bell-slash' : 'fa-bell'} mr-1`} /> {dnd ? 'DND On' : 'DND Off'}
+            </button>
+            <button
+              onClick={togglePopup}
+              className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg border transition-colors ${
+                popupEnabled
+                  ? 'bg-primary/10 border-primary/20 text-primary'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              <i className={`fas ${popupEnabled ? 'fa-toggle-on' : 'fa-toggle-off'} mr-1`} /> Pop-ups {popupEnabled ? 'On' : 'Off'}
+            </button>
           </div>
 
           {isNotificationSupported() && !pushEnabled && (

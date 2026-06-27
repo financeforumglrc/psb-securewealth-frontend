@@ -1,18 +1,12 @@
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { useEffect, useState } from 'react';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import DashboardWidget from '@/features/dashboard/components/DashboardWidget';
 import CosmosCard from '@/shared/components/ui/CosmosCard';
 import SmartTriggers from '@/features/market/components/SmartTriggers';
 import MarketStrategist from '@/features/market/components/MarketStrategist';
 import MarketNewsFeed from '@/features/market/components/MarketNewsFeed';
-
-const niftyData = [
-  { month: 'Jan', value: 21400 }, { month: 'Feb', value: 22300 }, { month: 'Mar', value: 22800 },
-  { month: 'Apr', value: 23500 }, { month: 'May', value: 23200 }, { month: 'Jun', value: 24100 },
-  { month: 'Jul', value: 24800 }, { month: 'Aug', value: 24500 }, { month: 'Sep', value: 25200 },
-  { month: 'Oct', value: 24900 }, { month: 'Nov', value: 25100 }, { month: 'Dec', value: 25340 },
-];
 
 const SECTORS = [
   { name: 'IT', change: 2.4, volume: '₹12,400Cr', trending: true },
@@ -29,22 +23,6 @@ const SECTORS = [
   { name: 'PSU Bank', change: -1.1, volume: '₹8,400Cr', trending: false },
 ];
 
-const WATCHLIST = [
-  { symbol: 'RELIANCE', name: 'Reliance Industries', price: 2984.5, change: 1.2, spark: [2950, 2960, 2945, 2970, 2980, 2975, 2984] },
-  { symbol: 'TCS', name: 'Tata Consultancy', price: 4320.0, change: 2.1, spark: [4250, 4280, 4260, 4290, 4310, 4305, 4320] },
-  { symbol: 'HDFCBANK', name: 'HDFC Bank', price: 1678.3, change: -0.5, spark: [1690, 1685, 1680, 1675, 1682, 1680, 1678] },
-  { symbol: 'INFY', name: 'Infosys', price: 1856.2, change: 1.8, spark: [1820, 1830, 1825, 1840, 1845, 1850, 1856] },
-  { symbol: 'ICICIBANK', name: 'ICICI Bank', price: 1245.6, change: -0.3, spark: [1255, 1250, 1248, 1245, 1250, 1248, 1245] },
-];
-
-const ECONOMIC_CALENDAR = [
-  { date: 'Tomorrow', event: 'RBI MPC Decision', impact: 'high', forecast: 'Repo rate unchanged at 6.5%' },
-  { date: 'Jun 25', event: 'US Fed Chair Speech', impact: 'medium', forecast: 'Rate guidance expected' },
-  { date: 'Jun 28', event: 'GDP Q1 Data (India)', impact: 'high', forecast: 'Growth ~6.8% YoY' },
-  { date: 'Jul 02', event: 'Auto Sales Data', impact: 'medium', forecast: 'PV sales +8% MoM' },
-  { date: 'Jul 05', event: 'FOMC Minutes', impact: 'medium', forecast: 'Hawkish tone likely' },
-];
-
 const INDICATORS = [
   { label: 'NIFTY P/E', value: '23.4', status: 'Above Average', color: 'text-amber-600', bg: 'bg-amber-50' },
   { label: 'RBI Repo Rate', value: '6.5%', status: 'Stable', color: 'text-emerald-600', bg: 'bg-emerald-50' },
@@ -54,6 +32,14 @@ const INDICATORS = [
   { label: '10Y G-Sec', value: '7.1%', status: 'Rising', color: 'text-amber-600', bg: 'bg-amber-50' },
 ];
 
+interface MarketSnapshot {
+  indices: { symbol: string; name: string; value: number; change: number; currency: string }[];
+  watchlist: { symbol: string; name: string; price: number; change: number; spark: number[] }[];
+  niftyHistory: { date: string; price: number }[];
+}
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
+
 const SENTIMENT_DATA = [
   { name: 'Bullish', value: 62, fill: '#10b981' },
   { name: 'Neutral', value: 24, fill: '#94a3b8' },
@@ -62,6 +48,42 @@ const SENTIMENT_DATA = [
 
 export default function MarketView() {
   const market = useWealthStore((s) => s.marketData);
+  const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
+  const [calendar, setCalendar] = useState<{ date: string; event: string; impact: string; forecast: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [snapRes, calRes] = await Promise.all([
+          fetch(`${API_BASE}/market/snapshot`),
+          fetch(`${API_BASE}/market/calendar`),
+        ]);
+        const snap = await snapRes.json();
+        const cal = await calRes.json();
+        if (!cancelled) {
+          setSnapshot(snap.success ? snap.data : null);
+          setCalendar(cal.success ? cal.data : []);
+        }
+      } catch (e) {
+        console.warn('Market snapshot failed', e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const niftyData = snapshot?.niftyHistory?.map((d) => ({
+    month: d.date.slice(5),
+    value: d.price,
+  })) || [];
+
+  const WATCHLIST = snapshot?.watchlist || [];
+  const globalIndices = snapshot?.indices.filter((i) => !['^NSEI', '^BSESN'].includes(i.symbol)) || [];
+  const niftyQuote = snapshot?.indices.find((i) => i.symbol === '^NSEI');
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -100,7 +122,7 @@ export default function MarketView() {
 
       {/* Main Grid: NIFTY + Sentiment */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <DashboardWidget title="NIFTY 50 Trend" icon="fa-chart-area" subtitle="12-month performance" className="lg:col-span-2">
+        <DashboardWidget title={`NIFTY 50 ${niftyQuote ? `— ${niftyQuote.value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : ''}`} icon="fa-chart-area" subtitle="Live 12-month performance" className="lg:col-span-2">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={niftyData}>
@@ -168,9 +190,9 @@ export default function MarketView() {
 
       {/* Watchlist + Economic Calendar */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DashboardWidget title="Your Watchlist" icon="fa-star" subtitle="5 stocks tracked">
+        <DashboardWidget title="Your Watchlist" icon="fa-star" subtitle={loading ? 'Loading live quotes…' : 'Live quotes'}>
           <div className="space-y-2">
-            {WATCHLIST.map((stock) => {
+            {WATCHLIST.map((stock: typeof WATCHLIST[number]) => {
               const isUp = stock.change >= 0;
               const min = Math.min(...stock.spark);
               const max = Math.max(...stock.spark);
@@ -200,9 +222,9 @@ export default function MarketView() {
           </div>
         </DashboardWidget>
 
-        <DashboardWidget title="Economic Calendar" icon="fa-calendar-days">
+        <DashboardWidget title="Economic Calendar" icon="fa-calendar-days" subtitle={loading ? 'Loading…' : undefined}>
           <div className="space-y-2">
-            {ECONOMIC_CALENDAR.map((event, i) => (
+            {calendar.map((event, i) => (
               <div key={i} className="flex items-start gap-3 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                 <div className="flex-shrink-0 text-center w-16">
                   <p className="text-[10px] font-bold text-slate-500">{event.date}</p>
@@ -241,21 +263,15 @@ export default function MarketView() {
 
         <DashboardWidget title="Global Indices" icon="fa-globe">
           <div className="space-y-2">
-            {[
-              { name: 'S&P 500', country: 'US', value: '5,840', change: 0.8 },
-              { name: 'FTSE 100', country: 'UK', value: '8,250', change: -0.3 },
-              { name: 'Nikkei 225', country: 'Japan', value: '39,800', change: 1.2 },
-              { name: 'DAX', country: 'Germany', value: '19,400', change: 0.5 },
-              { name: 'Hang Seng', country: 'Hong Kong', value: '20,100', change: -1.1 },
-            ].map((idx) => (
+            {globalIndices.map((idx) => (
               <div key={idx.name} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40">
                 <div>
                   <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{idx.name}</p>
-                  <p className="text-[10px] text-slate-400">{idx.country}</p>
+                  <p className="text-[10px] text-slate-400">{idx.symbol}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{idx.value}</p>
-                  <p className={`text-[10px] font-bold ${idx.change >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{idx.change >= 0 ? '+' : ''}{idx.change}%</p>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{idx.value?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                  <p className={`text-[10px] font-bold ${idx.change >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{idx.change >= 0 ? '+' : ''}{idx.change?.toFixed(2)}%</p>
                 </div>
               </div>
             ))}

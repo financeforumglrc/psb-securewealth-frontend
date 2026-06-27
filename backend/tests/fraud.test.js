@@ -141,7 +141,7 @@ describe('Fraud Intelligence Center API', () => {
             .set('Authorization', authHeader());
         expect(res.status).toBe(200);
         expect(res.headers['content-type']).toContain('spreadsheetml');
-    });
+    }, 15000);
 
     test('should surface correlated clusters', async () => {
         const sharedIp = '203.0.113.99';

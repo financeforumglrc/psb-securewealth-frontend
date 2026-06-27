@@ -72,6 +72,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
   const [goalError, setGoalError] = useState<string | null>(null);
   const [linkedBanks, setLinkedBanks] = useState<string[]>(['sbi', 'hdfc']);
   const [linkingAll, setLinkingAll] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const updateUser = useWealthStore((s) => s.updateUser);
   const addGoal = useWealthStore((s) => s.addGoal);
   const { t, language, setLanguage } = useTranslation();
@@ -158,9 +159,9 @@ export default function OnboardingWizard({ onComplete }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-psb-bg dark:bg-[#0b1120] flex flex-col items-center justify-center p-6 text-psb-text dark:text-slate-100">
+    <div className="min-h-screen bg-psb-bg dark:bg-[#0b1120] flex flex-col items-center justify-center p-6 pb-24 text-psb-text dark:text-slate-100">
       {/* Progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200 dark:bg-slate-800">
+      <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200 dark:bg-slate-800 pointer-events-none">
         <motion.div
           className="h-full bg-primary"
           initial={{ width: 0 }}
@@ -170,8 +171,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
       </div>
 
       {/* Stepper */}
-      <div className="fixed top-6 left-0 right-0 flex justify-center">
-        <div className="flex items-center gap-1 sm:gap-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-psb-border dark:border-slate-700 rounded-2xl px-4 py-2 shadow-sm">
+      <div className="fixed top-6 left-0 right-0 flex justify-center pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-1 sm:gap-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-psb-border dark:border-slate-700 rounded-2xl px-4 py-2 shadow-sm">
           {STEP_ORDER.map((s, idx) => {
             const active = s === step;
             const completed = idx < stepIndex;
@@ -209,7 +210,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                  className="absolute inset-0 rounded-full border-2 border-secondary/30 border-t-secondary"
+                  className="absolute inset-0 rounded-full border-2 border-secondary/30 border-t-secondary pointer-events-none"
                 />
                 <Sparkles className="w-12 h-12 text-white" />
               </div>
@@ -232,16 +233,28 @@ export default function OnboardingWizard({ onComplete }: Props) {
                   { icon: TrendingUp, label: isHindi ? 'स्मार्ट निवेश' : 'Smart Investing', color: 'text-emerald-500' },
                   { icon: Shield, label: isHindi ? 'धोखाधड़ी सुरक्षा' : 'Fraud Protection', color: 'text-rose-500' },
                   { icon: Target, label: isHindi ? 'लक्ष्य योजना' : 'Goal Planning', color: 'text-violet-500' },
-                ].map((item) => (
-                  <div key={item.label} className="bg-white dark:bg-slate-900/80 border border-psb-border dark:border-slate-700 rounded-2xl p-4 flex flex-col items-center gap-2">
-                    <item.icon className={`w-6 h-6 ${item.color}`} />
-                    <span className="text-xs font-semibold">{item.label}</span>
-                  </div>
-                ))}
+                ].map((item) => {
+                  const selected = selectedFeature === item.label;
+                  return (
+                    <button
+                      type="button"
+                      key={item.label}
+                      onClick={() => setSelectedFeature(item.label)}
+                      className={`text-left bg-white dark:bg-slate-900/80 border rounded-2xl p-4 flex flex-col items-center gap-2 transition-transform active:scale-95 touch-manipulation ${
+                        selected
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-psb-border dark:border-slate-700 hover:border-primary/50'
+                      }`}
+                    >
+                      <item.icon className={`w-6 h-6 ${item.color}`} />
+                      <span className="text-xs font-semibold">{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
               <button
                 onClick={nextStep}
-                className="px-8 py-3 bg-primary text-white rounded-xl font-bold text-base hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
+                className="px-8 py-3 bg-primary text-white rounded-xl font-bold text-base hover:bg-primary/90 transition-colors inline-flex items-center gap-2 touch-manipulation min-h-[48px]"
               >
                 {t('buildMyTwin')} <ChevronRight className="w-5 h-5" />
               </button>

@@ -65,11 +65,11 @@ export default function AutonomousAgent() {
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <i className="fas fa-robot text-primary" aria-hidden="true" /> {t('autonomousAgentTitle')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">{t('autonomousAgentSubtitle')}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('autonomousAgentSubtitle')}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-slate-500">{t('autonomousAgentActiveTasks')}</p>
-          <p className="text-2xl font-extrabold text-primary">{activeCount}<span className="text-sm text-slate-400">/{toggles.length}</span></p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('autonomousAgentActiveTasks')}</p>
+          <p className="text-2xl font-extrabold text-primary">{activeCount}<span className="text-sm text-slate-400 dark:text-slate-500">/{toggles.length}</span></p>
         </div>
       </div>
 
@@ -100,13 +100,13 @@ export default function AutonomousAgent() {
           {toggles.map((toggle) => (
             <div key={toggle.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                toggle.enabled ? 'bg-primary/10 text-primary' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                toggle.enabled ? 'bg-primary/10 text-primary' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
               }`}>
                 <i className={`fas ${toggle.icon}`} aria-hidden="true" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-bold ${toggle.enabled ? 'text-slate-800 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>{toggle.label}</p>
-                <p className="text-[10px] text-slate-500 truncate">{toggle.description}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{toggle.description}</p>
               </div>
               <button
                 onClick={() => toggleAction(toggle.id)}
@@ -117,7 +117,7 @@ export default function AutonomousAgent() {
                 }`}
               >
                 <motion.div
-                  className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow"
+                  className="absolute top-0.5 w-5 h-5 bg-white dark:bg-slate-900 rounded-full shadow"
                   animate={{ left: toggle.enabled ? '25px' : '2px' }}
                   transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 30 }}
                 />
@@ -135,7 +135,7 @@ export default function AutonomousAgent() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] text-slate-500 font-bold uppercase">{t('autonomousAgentMaxAutoMove')}</label>
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t('autonomousAgentMaxAutoMove')}</label>
             <div className="flex items-center gap-2 mt-1">
               <input
                 type="range"
@@ -151,7 +151,7 @@ export default function AutonomousAgent() {
             </div>
           </div>
           <div>
-            <label className="text-[10px] text-slate-500 font-bold uppercase">{t('autonomousAgentMinBalance')}</label>
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t('autonomousAgentMinBalance')}</label>
             <div className="flex items-center gap-2 mt-1">
               <input
                 type="range"
@@ -167,7 +167,7 @@ export default function AutonomousAgent() {
             </div>
           </div>
           <div>
-            <label className="text-[10px] text-slate-500 font-bold uppercase">{t('autonomousAgentPreferredBank')}</label>
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t('autonomousAgentPreferredBank')}</label>
             <select
               value={guardrails.preferredBankType}
               onChange={(e) => setGuardrails((g) => ({ ...g, preferredBankType: e.target.value }))}
@@ -179,7 +179,7 @@ export default function AutonomousAgent() {
             </select>
           </div>
           <div>
-            <label className="text-[10px] text-slate-500 font-bold uppercase">{t('autonomousAgentMaxDonation')}</label>
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t('autonomousAgentMaxDonation')}</label>
             <div className="flex items-center gap-2 mt-1">
               <input
                 type="range"
@@ -226,19 +226,19 @@ export default function AutonomousAgent() {
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                   a.status === 'completed' ? 'bg-emerald-100 text-emerald-600' :
-                  a.status === 'pending' ? 'bg-amber-100 text-amber-600' :
-                  'bg-rose-100 text-rose-600'
+                  a.status === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300' :
+                  'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300'
                 }`}>
                   <i className={`fas ${a.status === 'completed' ? 'fa-check' : a.status === 'pending' ? 'fa-clock' : 'fa-xmark'}`} aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-slate-800 dark:text-white">{a.action}</p>
-                  <p className="text-[10px] text-slate-500 truncate">{a.result}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{a.result}</p>
                 </div>
                 {a.savings > 0 && (
                   <span className="text-xs font-bold text-emerald-500 flex-shrink-0">+₹{a.savings.toLocaleString()}</span>
                 )}
-                <span className="text-[10px] text-slate-400 flex-shrink-0 min-w-[80px] text-right">{a.date}</span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 flex-shrink-0 min-w-[80px] text-right">{a.date}</span>
               </motion.div>
             ))}
           </AnimatePresence>

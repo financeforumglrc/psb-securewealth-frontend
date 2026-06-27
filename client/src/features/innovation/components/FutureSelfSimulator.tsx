@@ -29,17 +29,17 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload) return null;
   const data = PROJECTION_DATA.find(d => d.year === label);
   return (
-    <div className="bg-white p-3 rounded-xl shadow-lg border border-gray-100 text-xs">
-      <p className="font-bold text-gray-800 mb-1">{label}</p>
+    <div className="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 text-xs">
+      <p className="font-bold text-gray-800 dark:text-slate-200 mb-1">{label}</p>
       {payload.map((p: any) => (
         <div key={p.dataKey} className="flex items-center gap-2 mb-0.5">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-          <span className="text-gray-600">{p.name}:</span>
+          <span className="text-gray-600 dark:text-slate-400">{p.name}:</span>
           <span className="font-bold">₹{p.value}L</span>
         </div>
       ))}
       {data?.milestone && (
-        <div className="mt-1.5 pt-1.5 border-t border-gray-100 text-violet-600 font-semibold">
+        <div className="mt-1.5 pt-1.5 border-t border-gray-100 dark:border-slate-700 text-violet-600 dark:text-violet-300 font-semibold">
           <i className={`fas ${data.icon} mr-1`} aria-hidden="true" />{data.milestone}
         </div>
       )}
@@ -75,16 +75,16 @@ export default function FutureSelfSimulator() {
     <div className="card-psb">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <i className="fas fa-user-clock text-amber-600" aria-hidden="true" /> {t('futureSelfTitle')}
+          <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <i className="fas fa-user-clock text-amber-600 dark:text-amber-300" aria-hidden="true" /> {t('futureSelfTitle')}
           </h3>
-          <p className="text-[11px] text-gray-500 mt-0.5">
+          <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
             {t('futureSelfSubtitle')}
           </p>
         </div>
         <button
           onClick={() => setShowAvatar(!showAvatar)}
-          className="px-2.5 py-1 bg-amber-50 rounded-lg text-[10px] font-bold text-amber-700 hover:bg-amber-100 transition-colors"
+          className="px-2.5 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-[10px] font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-colors"
         >
           <i className={`fas ${showAvatar ? 'fa-eye' : 'fa-eye-slash'} mr-1`} aria-hidden="true" />
           {showAvatar ? t('futureSelfAvatarOn') : t('futureSelfAvatarOff')}
@@ -166,9 +166,9 @@ export default function FutureSelfSimulator() {
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               aria-label={t('futureSelfSelectYear')}
-              className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-primary"
+              className="w-full h-1.5 bg-gray-200 dark:bg-slate-600 rounded-full appearance-none cursor-pointer accent-primary"
             />
-            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <div className="flex justify-between text-[10px] text-gray-400 dark:text-slate-500 mt-1">
               <span>2026</span>
               <span>2031</span>
               <span>2036</span>
@@ -188,23 +188,23 @@ export default function FutureSelfSimulator() {
             >
               <div className="text-5xl mb-2">{avatar.emoji}</div>
               <p className="text-lg font-extrabold" style={{ color: avatar.color }}>{avatar.label}</p>
-              <p className="text-[11px] text-gray-500">{avatar.netWorth} {t('futureSelfEstimatedNetWorth')}</p>
-              <p className="text-[10px] text-gray-400 mt-1">{t('futureSelfYear').replace('{year}', String(selectedYear))}</p>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">{avatar.netWorth} {t('futureSelfEstimatedNetWorth')}</p>
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">{t('futureSelfYear').replace('{year}', String(selectedYear))}</p>
             </motion.div>
           )}
 
           {/* Wealth Gap */}
           <div className="p-3 bg-gradient-to-br from-primary/5 to-amber-50 rounded-xl border border-primary/10">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">{t('futureSelfGapTitle')}</p>
+            <p className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">{t('futureSelfGapTitle')}</p>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-gray-600">{t('futureSelfCurrentTrajectory')}</span>
-              <span className="text-[11px] font-bold text-gray-400">₹{currentData.currentPath}L</span>
+              <span className="text-[11px] text-gray-600 dark:text-slate-400">{t('futureSelfCurrentTrajectory')}</span>
+              <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500">₹{currentData.currentPath}L</span>
             </div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-gray-600">{t('futureSelfOptimized')}</span>
+              <span className="text-[11px] text-gray-600 dark:text-slate-400">{t('futureSelfOptimized')}</span>
               <span className="text-[11px] font-bold text-primary">₹{currentData.optimizedPath}L</span>
             </div>
-            <div className="h-px bg-gray-200 my-2" />
+            <div className="h-px bg-gray-200 dark:bg-slate-600 my-2" />
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-primary">{t('futureSelfPotentialGain')}</span>
               <span className="text-sm font-extrabold text-primary">
@@ -215,15 +215,15 @@ export default function FutureSelfSimulator() {
 
           {/* Milestones */}
           <div className="space-y-2">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">{t('futureSelfMilestones')}</p>
+            <p className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('futureSelfMilestones')}</p>
             {PROJECTION_DATA.filter(d => d.milestone && d.year >= selectedYear).slice(0, 3).map(m => (
               <div key={m.year} className="flex items-center gap-2 text-[11px]">
-                <div className="w-6 h-6 bg-amber-50 rounded-full flex items-center justify-center flex-shrink-0">
-                  <i className={`fas ${m.icon} text-amber-600 text-[10px]`} aria-hidden="true" />
+                <div className="w-6 h-6 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <i className={`fas ${m.icon} text-amber-600 dark:text-amber-300 text-[10px]`} aria-hidden="true" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-700">{m.milestone}</p>
-                  <p className="text-gray-400">{m.year}</p>
+                  <p className="font-semibold text-gray-700 dark:text-slate-300">{m.milestone}</p>
+                  <p className="text-gray-400 dark:text-slate-500">{m.year}</p>
                 </div>
               </div>
             ))}

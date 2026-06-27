@@ -61,10 +61,10 @@ export default function EmotionalHeatmap() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('emotionalHeatmapDaysTracked'), value: '365', icon: 'fa-calendar-check', color: 'bg-blue-50 text-blue-600' },
-          { label: t('emotionalHeatmapAvgMood'), value: `${avgMood}%`, icon: 'fa-face-smile', color: 'bg-green-50 text-green-600' },
-          { label: t('emotionalHeatmapTotalSpend'), value: `₹${(totalSpend / 100000).toFixed(1)}L`, icon: 'fa-wallet', color: 'bg-amber-50 text-amber-600' },
-          { label: t('emotionalHeatmapMoodSpendCorr'), value: '-0.74', icon: 'fa-link', color: 'bg-rose-50 text-rose-600' },
+          { label: t('emotionalHeatmapDaysTracked'), value: '365', icon: 'fa-calendar-check', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300' },
+          { label: t('emotionalHeatmapAvgMood'), value: `${avgMood}%`, icon: 'fa-face-smile', color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' },
+          { label: t('emotionalHeatmapTotalSpend'), value: `₹${(totalSpend / 100000).toFixed(1)}L`, icon: 'fa-wallet', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300' },
+          { label: t('emotionalHeatmapMoodSpendCorr'), value: '-0.74', icon: 'fa-link', color: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -77,8 +77,8 @@ export default function EmotionalHeatmap() {
               <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -87,10 +87,10 @@ export default function EmotionalHeatmap() {
       <div className="card-psb">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <i className="fas fa-fire text-rose-500" aria-hidden="true" /> {t('emotionalHeatmapTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('emotionalHeatmapSubtitle')}
             </p>
           </div>
@@ -102,7 +102,7 @@ export default function EmotionalHeatmap() {
             <div key={item.label} className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} aria-hidden="true" />
               <span className="sr-only">{item.emotion}:</span>
-              <span className="text-[10px] text-gray-500">{item.label}</span>
+              <span className="text-[10px] text-gray-500 dark:text-slate-400">{item.label}</span>
             </div>
           ))}
         </div>
@@ -111,7 +111,7 @@ export default function EmotionalHeatmap() {
         <div className="space-y-2">
           {YEAR_DATA.map((monthData, monthIdx) => (
             <div key={monthIdx} className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-gray-400 w-8 text-right">{MONTHS[monthIdx]}</span>
+              <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 w-8 text-right">{MONTHS[monthIdx]}</span>
               <div className="flex-1 flex gap-[2px]">
                 {monthData.map((day) => (
                   <motion.div
@@ -145,8 +145,8 @@ export default function EmotionalHeatmap() {
               </div>
               <div>
                 <p className="font-bold">{hoveredDay.month} {hoveredDay.day}</p>
-                <p className="text-gray-300">{t('emotionalHeatmapMood')}: {hoveredDay.mood}% · {hoveredDay.emotion}</p>
-                <p className="text-gray-300">{t('emotionalHeatmapSpend')}: ₹{hoveredDay.spend.toLocaleString()}</p>
+                <p className="text-gray-300 dark:text-slate-600">{t('emotionalHeatmapMood')}: {hoveredDay.mood}% · {hoveredDay.emotion}</p>
+                <p className="text-gray-300 dark:text-slate-600">{t('emotionalHeatmapSpend')}: ₹{hoveredDay.spend.toLocaleString()}</p>
               </div>
             </div>
           </motion.div>
@@ -160,20 +160,20 @@ export default function EmotionalHeatmap() {
             <span className="text-2xl">😄</span>
             <div>
               <p className="text-sm font-bold text-green-800">{t('emotionalHeatmapBestDay')}</p>
-              <p className="text-[11px] text-green-600">{bestDay.month} {bestDay.day} · Mood: {bestDay.mood}%</p>
+              <p className="text-[11px] text-green-600 dark:text-green-300">{bestDay.month} {bestDay.day} · Mood: {bestDay.mood}%</p>
             </div>
           </div>
-          <p className="text-[11px] text-gray-600">{t('emotionalHeatmapBestDesc')}</p>
+          <p className="text-[11px] text-gray-600 dark:text-slate-400">{t('emotionalHeatmapBestDesc')}</p>
         </div>
         <div className="p-4 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-100">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">😰</span>
             <div>
               <p className="text-sm font-bold text-rose-800">{t('emotionalHeatmapWorstDay')}</p>
-              <p className="text-[11px] text-rose-600">{worstDay.month} {worstDay.day} · Mood: {worstDay.mood}%</p>
+              <p className="text-[11px] text-rose-600 dark:text-rose-300">{worstDay.month} {worstDay.day} · Mood: {worstDay.mood}%</p>
             </div>
           </div>
-          <p className="text-[11px] text-gray-600">{t('emotionalHeatmapWorstDescPrefix')}₹{worstDay.spend.toLocaleString()}{t('emotionalHeatmapWorstDescSuffix')}</p>
+          <p className="text-[11px] text-gray-600 dark:text-slate-400">{t('emotionalHeatmapWorstDescPrefix')}₹{worstDay.spend.toLocaleString()}{t('emotionalHeatmapWorstDescSuffix')}</p>
         </div>
       </div>
     </div>

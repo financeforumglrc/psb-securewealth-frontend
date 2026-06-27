@@ -23,6 +23,8 @@ import GoalTracker from '@/features/goals/components/GoalTracker';
 import ComplianceBar from '@/features/compliance/components/ComplianceBar';
 import SmartActionOrchestrator from '@/features/ai/components/SmartActionOrchestrator';
 import RecommendationCard from '@/features/ai/components/RecommendationCard';
+import AgenticActionCard from '@/features/ai/components/AgenticActionCard';
+import MacroSignalTower from '@/features/market/components/MacroSignalTower';
 
 // Advanced insights (comprehensive mode)
 import ScenarioSimulator from '@/features/forecast/components/ScenarioSimulator';
@@ -41,6 +43,8 @@ export default function DashboardView() {
   const setView = useWealthStore((s) => s.setView);
   const dashboardDensity = useWealthStore((s) => s.dashboardDensity);
   const setDashboardDensity = useWealthStore((s) => s.setDashboardDensity);
+  const quickAccessEnabled = useWealthStore((s) => s.quickAccessEnabled);
+  const setQuickAccessEnabled = useWealthStore((s) => s.setQuickAccessEnabled);
   const { t, language, setLanguage } = useTranslation();
   const { cashbackBalance } = useRewards();
   const streak = getStreak();
@@ -128,6 +132,24 @@ export default function DashboardView() {
 
   const isSimple = dashboardDensity === 'simple';
   const [showAdvanced, setShowAdvanced] = useState(!isSimple);
+  const [agenticActions, setAgenticActions] = useState([
+    {
+      actionId: 'agent-001',
+      actionType: 'sweep' as const,
+      description: 'Move ₹40,000 from Savings Account (4.0%) to Sweep FD (7.2%) and earn ₹1,280 extra interest per year.',
+      potentialGain: '₹1,280 / year',
+      riskLevel: 'low' as const,
+    },
+    {
+      actionId: 'agent-002',
+      actionType: 'sip_start' as const,
+      description: 'Top-up your Nifty Index SIP by ₹5,000/month based on your rising monthly savings trend.',
+      potentialGain: '₹2.4L in 10 yrs',
+      riskLevel: 'medium' as const,
+    },
+  ]);
+
+  const removeAction = (id: string) => setAgenticActions((prev) => prev.filter((a) => a.actionId !== id));
 
   const openPaymentHub = () => {
     window.dispatchEvent(new CustomEvent('sw-open-payment-hub'));
@@ -190,6 +212,19 @@ export default function DashboardView() {
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${!isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
               >{t('comprehensiveMode')}</button>
             </div>
+            <button
+              onClick={() => setQuickAccessEnabled(!quickAccessEnabled)}
+              aria-pressed={quickAccessEnabled}
+              aria-label="Toggle quick access"
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                quickAccessEnabled
+                  ? 'bg-primary/10 border-primary/20 text-primary'
+                  : 'bg-white dark:bg-slate-900 border-psb-border dark:border-slate-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              <i className={`fas ${quickAccessEnabled ? 'fa-bolt' : 'fa-bolt-slash'}`} />
+              {quickAccessEnabled ? 'Quick Access On' : 'Quick Access Off'}
+            </button>
           </div>
         </div>
 
@@ -224,6 +259,23 @@ export default function DashboardView() {
           <VirtualCard />
         </div>
 
+        {/* Agentic AI Actions */}
+        {agenticActions.length > 0 && (
+          <div className="space-y-3">
+            <SectionHeader icon="fa-robot" title="AI Autonomous Actions Pending Approval" subtitle="1-tap execution drafted by Wealth Twin" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {agenticActions.map((action) => (
+                <AgenticActionCard
+                  key={action.actionId}
+                  {...action}
+                  onApprove={() => removeAction(action.actionId)}
+                  onDismiss={() => removeAction(action.actionId)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Main grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-5">
@@ -257,6 +309,10 @@ export default function DashboardView() {
 
             <DashboardWidget title="Market Pulse" subtitle="Indices & movers" icon="fa-globe" action={{ label: 'Market', onClick: () => setView('market') }}>
               <MarketIntelligenceHero />
+            </DashboardWidget>
+
+            <DashboardWidget title="Macro Signal Tower" subtitle="Global indicators → auto actions" icon="fa-tower-broadcast" action={{ label: 'Wealth Twin', onClick: () => setView('wealth-twin') }}>
+              <MacroSignalTower compact />
             </DashboardWidget>
 
             <CosmosCard

@@ -115,6 +115,33 @@ const FALLBACK_NEWS: NewsItem[] = [
   },
 ];
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
+
+/* ── SecureWealth backend curated news (today-only) ── */
+async function fetchFromBackend(): Promise<NewsItem[] | null> {
+  try {
+    const res = await fetch(`${API_BASE}/market/news`, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const news = data?.data?.news as Array<{ title: string; source: string; time: string; category: string }>;
+    if (!Array.isArray(news)) return null;
+    return news.map((n) => {
+      const title = n.title;
+      return {
+        id: generateId(title, n.source),
+        title,
+        description: `${n.category} • ${n.time}`,
+        source: n.source,
+        url: '#',
+        publishedAt: new Date().toISOString(),
+        sentiment: analyzeSentiment(title),
+      };
+    });
+  } catch {
+    return null;
+  }
+}
+
 /* ── Reddit fetch (CORS-friendly, no API key) ── */
 async function fetchFromReddit(): Promise<NewsItem[] | null> {
   try {
@@ -222,7 +249,10 @@ export async function getMarketNews(forceRefresh = false): Promise<{ items: News
   let error: string | null = null;
 
   // Try sources in order of reliability / CORS-friendliness
-  items = await fetchFromReddit();
+  items = await fetchFromBackend();
+  if (!items || items.length === 0) {
+    items = await fetchFromReddit();
+  }
   if (!items || items.length === 0) {
     items = await fetchFromNewsData();
   }

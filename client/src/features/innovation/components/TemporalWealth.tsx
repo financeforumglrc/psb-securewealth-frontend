@@ -103,17 +103,17 @@ export default function TemporalWealth() {
           {/* Current Point Stats */}
           <div className="space-y-3">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">{t('temporalYear').replace('{year}', String(selectedPoint.year))}</p>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">{t('temporalYear').replace('{year}', String(selectedPoint.year))}</p>
               <p className="text-2xl font-extrabold text-slate-800 dark:text-white">{t('temporalAge').replace('{age}', String(selectedPoint.age))}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">{t('temporalProjectedNetWorth')}</p>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">{t('temporalProjectedNetWorth')}</p>
               <motion.p key={selectedPoint.netWorth} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-extrabold text-primary">
                 ₹{(selectedPoint.netWorth / 1e5).toFixed(1)}L
               </motion.p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">{t('temporalMonthlySIP')}</p>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">{t('temporalMonthlySIP')}</p>
               <p className="text-lg font-bold text-slate-700 dark:text-slate-200">₹{selectedPoint.monthlySavings.toLocaleString()}</p>
             </div>
             {selectedPoint.milestone && (
@@ -128,9 +128,9 @@ export default function TemporalWealth() {
           <div className="lg:col-span-2">
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500">{t('temporalToday')}</span>
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('temporalToday')}</span>
                 <span className="text-xs font-bold text-primary">{t('temporalYear').replace('{year}', String(sliderYear))}</span>
-                <span className="text-xs font-bold text-slate-500">{t('temporal30Years')}</span>
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('temporal30Years')}</span>
               </div>
               <input
                 type="range"
@@ -143,7 +143,7 @@ export default function TemporalWealth() {
               />
               <div className="flex justify-between mt-1">
                 {activeData.filter((_, i) => i % 5 === 0).map((p) => (
-                  <span key={p.year} className="text-[10px] text-slate-400">{p.year}</span>
+                  <span key={p.year} className="text-[10px] text-slate-400 dark:text-slate-500">{p.year}</span>
                 ))}
               </div>
             </div>
@@ -192,7 +192,7 @@ export default function TemporalWealth() {
         </div>
         <div className="flex flex-wrap gap-2 mt-3">
           {activeData.filter((d) => d.milestone).map((d) => (
-            <div key={d.year} className="flex items-center gap-1 text-[10px] text-slate-500">
+            <div key={d.year} className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
               <div className="w-2 h-2 rounded-full bg-primary/30" />
               {d.year}: {t(`temporalMilestone${d.milestone?.replace(/[₹\\s]+/g, '')}` as any)}
             </div>
@@ -211,10 +211,10 @@ export default function TemporalWealth() {
           >
             <CosmosCard variant={sliderYear >= i * 5 ? 'gradient' : 'default'} padding="sm">
               <div className="text-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-1 ${sliderYear >= i * 5 ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-1 ${sliderYear >= i * 5 ? 'bg-primary/10 text-primary' : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'}`}>
                   <i className={`fas ${d.milestoneIcon}`} aria-hidden="true" />
                 </div>
-                <p className="text-[10px] font-bold text-slate-400">{d.year}</p>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{d.year}</p>
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{d.milestone}</p>
                 <p className="text-[10px] text-primary font-bold">₹{(d.netWorth / 1e5).toFixed(1)}L</p>
               </div>
@@ -234,12 +234,12 @@ export default function TemporalWealth() {
 
               return (
                 <div key={goal.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${onTrack ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${onTrack ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300'}`}>
                     <i className={`fas fa-${onTrack ? 'check' : 'triangle-exclamation'}`} aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{goal.name}</p>
-                    <p className="text-[10px] text-slate-400">{t('temporalGoalTarget').replace('{amount}', goal.targetAmount.toLocaleString()).replace('{year}', String(goalYear))}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">{t('temporalGoalTarget').replace('{amount}', goal.targetAmount.toLocaleString()).replace('{year}', String(goalYear))}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-200">₹{projectedAtGoal.toLocaleString()}</p>

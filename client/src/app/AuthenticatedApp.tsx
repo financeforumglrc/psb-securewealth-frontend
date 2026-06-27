@@ -31,6 +31,7 @@ import ForecastView from '@/features/forecast/components/ForecastView';
 import ManualAssetForm from '@/features/assets/components/ManualAssetForm';
 import LinkAccountModal from '@/features/assets/components/LinkAccountModal';
 import PhysicalAssetIntelligence from '@/features/assets/components/PhysicalAssetIntelligence';
+import VisionAppraisalModal from '@/features/assets/components/VisionAppraisalModal';
 import AAFetchAnimation from '@/features/aa/components/AAFetchAnimation';
 import AACallbackHandler from '@/features/aa/components/AACallbackHandler';
 import OnboardingWizard from '@/features/onboarding/components/OnboardingWizard';
@@ -79,6 +80,11 @@ const NRIMode = lazyWithRetry(() => import('@/features/nri/components/NRIMode'))
 const SeniorMode = lazyWithRetry(() => import('@/features/senior/components/SeniorMode'));
 const BusinessMode = lazyWithRetry(() => import('@/features/business/components/BusinessMode'));
 const LoanCenter = lazyWithRetry(() => import('@/features/banking/components/LoanCenter'));
+const MSMEcreditbridgeView = lazyWithRetry(() => import('@/features/msme/components/MSMEcreditbridgeView'));
+const LoansHub = lazyWithRetry(() => import('@/features/loans/components/LoansHub'));
+const LoanResearchShowcase = lazyWithRetry(() => import('@/features/loans/components/LoanResearchShowcase'));
+const LoanImpactSimulator = lazyWithRetry(() => import('@/features/loans/components/LoanImpactSimulator'));
+const SocialCollateralLoan = lazyWithRetry(() => import('@/features/loans/components/SocialCollateralLoan'));
 const RecurringPayments = lazyWithRetry(() => import('@/features/banking/components/RecurringPayments'));
 const AccountStatement = lazyWithRetry(() => import('@/features/banking/components/AccountStatement'));
 const AuditLog = lazyWithRetry(() => import('@/features/banking/components/AuditLog'));
@@ -128,6 +134,7 @@ const assetTypeIcons: Record<string, React.ElementType> = {
 function AssetsView() {
   const assets = useWealthStore((s) => s.assets);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showVisionModal, setShowVisionModal] = useState(false);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -138,6 +145,12 @@ function AssetsView() {
             className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2"
           >
             <Link2 className="w-4 h-4" /> Link Account
+          </button>
+          <button
+            onClick={() => setShowVisionModal(true)}
+            className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2"
+          >
+            <i className="fas fa-camera" /> Vision Appraisal
           </button>
           <ManualAssetForm />
         </div>
@@ -177,6 +190,7 @@ function AssetsView() {
         </div>
       )}
       <LinkAccountModal show={showLinkModal} onClose={() => setShowLinkModal(false)} />
+      <VisionAppraisalModal show={showVisionModal} onClose={() => setShowVisionModal(false)} />
       <PhysicalAssetIntelligence />
     </div>
   );
@@ -391,6 +405,11 @@ export default function AuthenticatedApp() {
               {currentView === 'pitch-deck' && <PitchDeckView />}
               {currentView === 'payments' && <PaymentsPage />}
               {currentView === 'loan-center' && <LoanCenter />}
+              {currentView === 'msme-creditbridge' && <MSMEcreditbridgeView />}
+              {currentView === 'loans-hub' && <LoansHub />}
+              {currentView === 'loan-research' && <LoanResearchShowcase />}
+              {currentView === 'loan-impact' && <LoanImpactSimulator />}
+              {currentView === 'social-collateral-loan' && <SocialCollateralLoan />}
               {currentView === 'recurring-payments' && <RecurringPayments />}
               {currentView === 'account-statement' && <AccountStatement />}
               {currentView === 'audit-log' && <AuditLog />}

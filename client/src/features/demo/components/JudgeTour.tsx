@@ -238,7 +238,7 @@ export default function JudgeTour({ onNavigate }: DemoTourProps) {
       <motion.div
         initial={{ opacity: 0, scale: 0.8, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="fixed bottom-5 right-5 z-[60] flex items-center gap-2"
+        className="fixed bottom-28 right-5 z-[60] flex items-center gap-2"
       >
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -275,7 +275,7 @@ export default function JudgeTour({ onNavigate }: DemoTourProps) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={startTour}
-          className="fixed bottom-5 right-5 z-[60] w-12 h-12 bg-white dark:bg-slate-800 text-primary rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center"
+          className="fixed bottom-28 right-5 z-[60] w-12 h-12 bg-white dark:bg-slate-800 text-primary rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center"
           aria-label="Replay judge tour"
         >
           <Route className="w-5 h-5" />

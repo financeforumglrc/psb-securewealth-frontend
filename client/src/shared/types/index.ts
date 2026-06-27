@@ -290,6 +290,90 @@ export interface NRIInvestmentRule {
   note: string;
 }
 
+export interface MSMEScoreFactor {
+  factor: string;
+  weight: string;
+  score: number;
+  maxScore: number;
+  impact: string;
+  icon: string;
+}
+
+export interface MSMERecommendation {
+  action: string;
+  impact: string;
+  timeline: string;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+export interface MSMEApplication {
+  id: number;
+  applicationRef: string;
+  businessName: string;
+  udyamNumber?: string;
+  gstin?: string;
+  panNumber?: string;
+  aadhaarMasked?: string;
+  enterpriseType: 'micro' | 'small' | 'medium';
+  annualTurnover: number;
+  employees: number;
+  requestedAmount: number;
+  requestedTenure: number;
+  purpose?: string;
+  status: string;
+  decision?: string;
+  decisionReason?: string;
+  consentGst: boolean;
+  consentAa: boolean;
+  consentUpi: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MSMECreditScore {
+  id: number;
+  applicationId: number;
+  score: number;
+  category: string;
+  factors: MSMEScoreFactor[];
+  eli5: string;
+  recommendations: MSMERecommendation[];
+  fraudSignals: { type: string; message: string; severity: string }[];
+}
+
+export interface MSMEOffer {
+  id: number;
+  offerType: string;
+  principalAmount: number;
+  interestRate: number;
+  tenureMonths: number;
+  emiAmount: number;
+  totalInterest: number;
+  totalRepayment: number;
+  processingFee: number;
+  gstOnFees: number;
+  cgtmseApplicable: boolean;
+  cgtmseGuaranteePercent: number;
+  cgtmseGuaranteedAmount: number;
+  collateralRequired: boolean;
+  conditions: string[];
+  status: string;
+}
+
+export interface MSMEAdminStats {
+  totalLoansDisbursed: number;
+  activeMSMEs: number;
+  totalApplications: number;
+  approved: number;
+  rejected: number;
+  averageTicketSize: number;
+  portfolioPAR: number;
+  recoveryRate: number;
+  womenLedMSMEs: number;
+  ruralReach: number;
+  cgstmseClaims: number;
+}
+
 export type ViewType = 
   | 'dashboard' | 'wealth-twin' | 'goals' | 'portfolio'
   | 'assets' | 'market' | 'forecast' | 'protection'
@@ -298,4 +382,6 @@ export type ViewType =
   | 'family'
   | 'profile'
   | 'loan-center' | 'recurring-payments' | 'account-statement' | 'audit-log' | 'admin'
+  | 'msme-creditbridge'
+  | 'loans-hub' | 'loan-research' | 'loan-impact' | 'social-collateral-loan'
   | 'pitch-deck';

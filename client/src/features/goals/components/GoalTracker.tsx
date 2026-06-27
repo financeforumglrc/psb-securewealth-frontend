@@ -6,6 +6,7 @@ import AddGoalModal from '@/features/goals/components/AddGoalModal';
 import GoalConflictModal from '@/features/goals/components/GoalConflictModal';
 import GoalConflictIntelligence from '@/features/goals/components/GoalConflictIntelligence';
 import CosmosCard, { CosmosBadge, CosmosEmptyState } from '@/shared/components/ui/CosmosCard';
+import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
 import type { Goal } from '@/shared/types';
 
 const GOAL_ICONS: Record<Goal['type'], string> = {
@@ -188,6 +189,7 @@ export default function GoalTracker({ asWidget = false }: Props) {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      <RegulatoryDisclaimer compact />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

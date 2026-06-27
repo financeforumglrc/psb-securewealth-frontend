@@ -5,7 +5,7 @@ import { useTranslation } from '@/shared/hooks/useTranslation';
 import { aggregateSpending, generateMonteCarlo, generateLifeEventImpact, formatCr } from './utils';
 import type { Asset } from '@/shared/types';
 
-export type TwinTab = 'overview' | 'goals' | 'tax' | 'rebalance' | 'whatif' | 'retirement';
+export type TwinTab = 'overview' | 'goals' | 'tax' | 'rebalance' | 'whatif' | 'retirement' | 'macroshock' | 'macrosignal';
 
 export interface TaxSuggestion {
   name: string;

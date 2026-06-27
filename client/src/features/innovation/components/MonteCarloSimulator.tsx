@@ -107,7 +107,7 @@ export default function MonteCarloSimulator() {
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <i className="fas fa-dice text-primary" aria-hidden="true" /> {t('monteTitle')}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">{t('monteSubtitle')}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('monteSubtitle')}</p>
         </div>
       </div>
 
@@ -156,9 +156,9 @@ export default function MonteCarloSimulator() {
           { label: t('monteWorstCase'), value: final.p10, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20' },
         ].map((stat) => (
           <div key={stat.label} className={`${stat.bg} p-3 rounded-xl`}>
-            <p className="text-[10px] text-slate-500 font-bold uppercase">{stat.label}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{stat.label}</p>
             <p className={`text-lg font-extrabold ${stat.color}`}>{formatCr(stat.value)}</p>
-            <p className="text-[10px] text-slate-400">{t('monteAtAge')} {endAge}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">{t('monteAtAge')} {endAge}</p>
           </div>
         ))}
       </div>
@@ -220,7 +220,7 @@ export default function MonteCarloSimulator() {
           ].map((l) => (
             <div key={l.label} className="flex items-center gap-1.5">
               <div className="w-4 h-0.5 rounded" style={{ backgroundColor: l.color, borderStyle: 'dashed', borderWidth: l.dash !== '0' ? '1px' : 0, borderColor: l.color }} />
-              <span className="text-[10px] text-slate-500">{l.label}</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">{l.label}</span>
             </div>
           ))}
         </div>
@@ -234,7 +234,7 @@ export default function MonteCarloSimulator() {
             <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('monteMedianOutcome')}</h4>
           </div>
           <p className="text-2xl font-extrabold text-primary">{formatCr(final.p50)}</p>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {diff < 0
               ? `₹${Math.abs(Math.round(diff / 1e5) / 10).toFixed(1)}L ${t('monteLessThanBaseline')}`
               : diff > 0
@@ -248,7 +248,7 @@ export default function MonteCarloSimulator() {
             <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('monteDownsideRisk')}</h4>
           </div>
           <p className="text-2xl font-extrabold text-rose-500">{formatCr(final.p10)}</p>
-          <p className="text-xs text-slate-500 mt-1">{t('monteDownsideDesc')}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('monteDownsideDesc')}</p>
         </div>
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
@@ -256,13 +256,13 @@ export default function MonteCarloSimulator() {
             <h4 className="text-sm font-bold text-slate-800 dark:text-white">{t('monteUpside')}</h4>
           </div>
           <p className="text-2xl font-extrabold text-emerald-500">{formatCr(final.p90)}</p>
-          <p className="text-xs text-slate-500 mt-1">{t('monteUpsideDesc')}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('monteUpsideDesc')}</p>
         </div>
       </div>
 
       {/* Formula Disclosure */}
       <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">{t('monteMethodology')}</p>
+        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('monteMethodology')}</p>
         <p className="text-xs text-slate-600 dark:text-slate-300 font-mono">
           {t('monteMethodDesc').replace('{rate}', String(Math.round(annualReturn * 100))).replace('{savings}', monthlySavings.toLocaleString())}<sub>t+1</sub> = W<sub>t</sub> × (1 + r<sub>random</sub>) + 12 × savings
         </p>

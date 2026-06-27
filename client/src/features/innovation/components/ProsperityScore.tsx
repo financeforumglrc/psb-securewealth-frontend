@@ -93,7 +93,7 @@ function RadialScore({ score, size = 80, stroke = 6, color, label, icon }: {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-lg font-extrabold" style={{ color }}>{score}</span>
-          <span className="text-[10px] font-bold text-slate-400">{grade}</span>
+          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{grade}</span>
         </div>
       </div>
       <div className="flex items-center gap-1.5">
@@ -133,7 +133,7 @@ export default function ProsperityScore() {
                 <motion.span className="text-4xl font-extrabold" style={{ color: overallColor }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
                   {overall}
                 </motion.span>
-                <span className="text-[10px] font-bold text-slate-400">{t('prosperityLabel')}</span>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{t('prosperityLabel')}</span>
               </div>
             </div>
             <motion.span
@@ -216,7 +216,7 @@ export default function ProsperityScore() {
               }`}
             >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
-                step.done ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
+                step.done ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
               }`}>
                 {step.done ? <i className="fas fa-check" aria-hidden="true" /> : step.step}
                 <span className="sr-only">{step.done ? t('prosperityCompleted') : t('prosperityNotCompleted')}</span>
@@ -226,7 +226,7 @@ export default function ProsperityScore() {
                   <p className={`text-xs font-bold ${step.done ? 'text-emerald-700 dark:text-emerald-300 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
                     {step.title}
                   </p>
-                  <span className="text-[10px] font-bold text-amber-600 flex-shrink-0">{step.impact}</span>
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-300 flex-shrink-0">{step.impact}</span>
                 </div>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400">{step.desc}</p>
               </div>
@@ -244,11 +244,11 @@ export default function ProsperityScore() {
       {/* Wisdom Quote */}
       <CosmosCard variant="glass">
         <div className="text-center py-4">
-          <i className="fas fa-quote-left text-slate-300 text-lg mb-2" aria-hidden="true" />
+          <i className="fas fa-quote-left text-slate-300 dark:text-slate-600 text-lg mb-2" aria-hidden="true" />
           <p className="text-sm font-medium text-slate-600 dark:text-slate-300 italic">
             "{t('prosperityQuote')}"
           </p>
-          <p className="text-[10px] text-slate-400 mt-2">{t('prosperityAttribution')}</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">{t('prosperityAttribution')}</p>
         </div>
       </CosmosCard>
     </div>

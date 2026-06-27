@@ -16,6 +16,8 @@ import TaxTab from './wealthTwin/TaxTab';
 import RebalanceTab from './wealthTwin/RebalanceTab';
 import WhatIfTab from './wealthTwin/WhatIfTab';
 import RetirementTab from './wealthTwin/RetirementTab';
+import MacroShockSimulator from '@/features/innovation/components/MacroShockSimulator';
+import MacroSignalTower from '@/features/market/components/MacroSignalTower';
 
 const TAB_TITLE_KEYS: Record<TwinTab, string> = {
   overview: 'twinTabOverviewAndDna',
@@ -24,6 +26,8 @@ const TAB_TITLE_KEYS: Record<TwinTab, string> = {
   rebalance: 'twinTabMarketAwareRebalancing',
   whatif: 'twinTabWhatIfSimulator',
   retirement: 'twinTabFireRetirementPlan',
+  macroshock: 'twinTabMacroShock',
+  macrosignal: 'twinTabMacroSignal',
 };
 
 function TabContent({ activeTab }: { activeTab: TwinTab }) {
@@ -49,8 +53,12 @@ function TabContent({ activeTab }: { activeTab: TwinTab }) {
           <RebalanceTab />
         ) : activeTab === 'whatif' ? (
           <WhatIfTab />
-        ) : (
+        ) : activeTab === 'retirement' ? (
           <RetirementTab />
+        ) : activeTab === 'macroshock' ? (
+          <MacroShockSimulator />
+        ) : (
+          <MacroSignalTower />
         )}
       </motion.div>
     </AnimatePresence>

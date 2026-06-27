@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { useIsMobile } from '@/shared/hooks/useMediaQuery';
 import { priorityColor } from '@/features/admin/services/fraudService';
 import type { FraudCase, FraudHop } from '@/features/admin/lib/fraudTypes';
 
@@ -103,6 +104,7 @@ export default function FraudMapView({
   const [showTrails, setShowTrails] = useState(true);
   const [showNodes, setShowNodes] = useState(true);
   const [focusMode, setFocusMode] = useState(false);
+  const isMobile = useIsMobile();
 
   const tileUrls: Record<MapStyle, string> = {
     roads: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
@@ -306,14 +308,16 @@ export default function FraudMapView({
       }).addTo(map);
       marker._fraudOriginalStyle = { opacity: 1, fillOpacity: 1, weight: 1 };
       marker._fraudHopKey = `${c.id}-${h.lat}-${h.lon}`;
-      marker.bindTooltip(`
-        <div class="text-xs">
-          <div class="font-bold text-slate-800 dark:text-slate-100">${h.nodeName}</div>
-          <div class="text-slate-500 dark:text-slate-400">${h.institution || h.entityType}</div>
-          <div class="font-semibold mt-0.5">${h.amount.toLocaleString('en-IN')} ${h.currency}</div>
-          <div class="text-[10px] text-slate-400">Case: ${c.caseRef}</div>
-          <div class="text-[10px] text-indigo-500 mt-0.5">Click to inspect case</div>
-        </div>`, { direction: 'top', className: 'fraud-tooltip', offset: [0, -8] });
+      if (!isMobile) {
+        marker.bindTooltip(`
+          <div class="text-xs">
+            <div class="font-bold text-slate-800 dark:text-slate-100">${h.nodeName}</div>
+            <div class="text-slate-500 dark:text-slate-400">${h.institution || h.entityType}</div>
+            <div class="font-semibold mt-0.5">${h.amount.toLocaleString('en-IN')} ${h.currency}</div>
+            <div class="text-[10px] text-slate-400">Case: ${c.caseRef}</div>
+            <div class="text-[10px] text-indigo-500 mt-0.5">Click to inspect case</div>
+          </div>`, { direction: 'top', className: 'fraud-tooltip', offset: [0, -8] });
+      }
       marker.on('mouseover', () => highlightCaseLayers(c.id));
       marker.on('mouseout', () => highlightCaseLayers(null));
       marker.on('click', () => { selectedByMapRef.current = c.id; onSelectCase?.(c); });
@@ -420,7 +424,7 @@ export default function FraudMapView({
     ).slice(0, 8);
   }, [searchQuery, cases]);
 
-  const recentCases = cases.slice(0, 6);
+  const recentCases = cases.slice(0, isMobile ? 4 : 6);
 
   return (
     <div ref={wrapperRef} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
@@ -444,8 +448,8 @@ export default function FraudMapView({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 shrink-0">
             <button title="Roads" onClick={() => setMapStyle('roads')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'roads' ? 'bg-white text-slate-900 shadow' : 'text-slate-500'}`}><Globe className="w-3.5 h-3.5" /></button>
             <button title="Dark" onClick={() => setMapStyle('dark')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'dark' ? 'bg-slate-800 text-white shadow' : 'text-slate-500'}`}><Moon className="w-3.5 h-3.5" /></button>
             <button title="Light" onClick={() => setMapStyle('light')} className={`p-1.5 rounded-md text-xs ${mapStyle === 'light' ? 'bg-white text-slate-900 shadow' : 'text-slate-500'}`}><Sun className="w-3.5 h-3.5" /></button>
@@ -469,7 +473,7 @@ export default function FraudMapView({
         </div>
       </div>
 
-      <div className="relative h-[650px] md:h-[820px]">
+      <div className="relative h-[360px] sm:h-[480px] md:h-[650px] lg:h-[820px]">
         <div ref={containerRef} className="absolute inset-0 z-0" />
 
         {(loading || !leafletReady) && (
@@ -500,7 +504,7 @@ export default function FraudMapView({
         </AnimatePresence>
 
         {/* Search overlay */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[500] w-[min(420px,92%)]">
+        <div className="absolute top-[7.5rem] md:top-3 left-1/2 -translate-x-1/2 z-[20] w-[min(420px,92%)]">
           <div className="relative">
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-lg">
               <Search className="w-4 h-4 text-slate-400" />
@@ -543,27 +547,27 @@ export default function FraudMapView({
         </div>
 
         {/* Floating KPI cards */}
-        <div className="absolute top-3 left-3 z-[500] flex flex-col gap-2">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-lg min-w-[160px]">
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1"><Activity className="w-3.5 h-3.5 text-indigo-500" /> Active Trails</div>
-            <div className="text-2xl font-bold">{stats.plotted}</div>
+        <div className="absolute top-12 left-2 right-2 md:top-3 md:left-3 md:right-auto z-[20] flex md:flex-col gap-2 overflow-x-auto no-scrollbar">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-2 md:p-3 shadow-lg min-w-[110px] md:min-w-[160px]">
+            <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mb-0.5 md:mb-1"><Activity className="w-3 h-3 md:w-3.5 md:h-3.5 text-indigo-500" /> Active Trails</div>
+            <div className="text-lg md:text-2xl font-bold">{stats.plotted}</div>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-lg min-w-[160px]">
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1"><AlertTriangle className="w-3.5 h-3.5 text-red-500" /> Critical Risk</div>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.critical}</div>
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-2 md:p-3 shadow-lg min-w-[110px] md:min-w-[160px]">
+            <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mb-0.5 md:mb-1"><AlertTriangle className="w-3 h-3 md:w-3.5 md:h-3.5 text-red-500" /> Critical Risk</div>
+            <div className="text-lg md:text-2xl font-bold text-red-600 dark:text-red-400">{stats.critical}</div>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-lg min-w-[160px]">
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1"><ShieldAlert className="w-3.5 h-3.5 text-amber-500" /> Sanctioned Hops</div>
-            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.sanctioned}</div>
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-2 md:p-3 shadow-lg min-w-[110px] md:min-w-[160px]">
+            <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mb-0.5 md:mb-1"><ShieldAlert className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-500" /> Sanctioned Hops</div>
+            <div className="text-lg md:text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.sanctioned}</div>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl p-3 shadow-lg min-w-[160px]">
-            <div className="flex items-center gap-2 text-xs text-emerald-100 mb-1"><TrendingUp className="w-3.5 h-3.5" /> INR Traced</div>
-            <div className="text-2xl font-bold">{formatAmount(stats.totalInr)}</div>
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="shrink-0 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl p-2 md:p-3 shadow-lg min-w-[110px] md:min-w-[160px]">
+            <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-emerald-100 mb-0.5 md:mb-1"><TrendingUp className="w-3 h-3 md:w-3.5 md:h-3.5" /> INR Traced</div>
+            <div className="text-lg md:text-2xl font-bold">{formatAmount(stats.totalInr)}</div>
           </motion.div>
         </div>
 
         {/* Selected case indicator & focus toggle */}
-        <div className="absolute top-[4.5rem] left-1/2 -translate-x-1/2 z-[500] flex items-center gap-2">
+        <div className="absolute bottom-14 md:top-[4.5rem] md:bottom-auto left-1/2 -translate-x-1/2 z-[20] flex items-center gap-2">
           <AnimatePresence>
             {selectedCase && (
               <motion.div
@@ -579,7 +583,7 @@ export default function FraudMapView({
             )}
           </AnimatePresence>
         </div>
-        <div className="absolute top-[7.5rem] left-1/2 -translate-x-1/2 z-[500]">
+        <div className="absolute top-[13rem] md:top-[7.5rem] left-1/2 -translate-x-1/2 z-[20] hidden md:block">
           <button
             onClick={() => setFocusMode(v => !v)}
             className={`px-3 py-1.5 rounded-full text-[10px] font-bold border backdrop-blur shadow-sm transition-all ${
@@ -637,8 +641,8 @@ export default function FraudMapView({
         </div>
 
         {/* Legend */}
-        <div className="absolute bottom-3 left-3 z-[500] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-700 p-3 shadow-lg text-xs space-y-2">
-          <div className="font-semibold text-slate-700 dark:text-slate-200 mb-1">Legend</div>
+        <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3 z-[20] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-700 p-2 md:p-3 shadow-lg text-[10px] md:text-xs space-y-1 md:space-y-2">
+          <div className="font-semibold text-slate-700 dark:text-slate-200 mb-0.5 md:mb-1">Legend</div>
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]" /> {t('fraudIntelMapLegendOrigin')}</div>
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.7)]" /> {t('fraudIntelMapLegendDestination')}</div>
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)]" /> {t('fraudIntelMapLegendIntermediate')}</div>

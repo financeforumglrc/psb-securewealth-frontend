@@ -1,6 +1,9 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useWealthStore } from '@/shared/store/wealthStore';
+import { useToast } from '@/shared/components/ui/ToastProvider';
+import { sendLocalNotification, isNotificationGranted } from '@/shared/services/notificationService';
 
 interface PredictedEvent {
   id: string;
@@ -106,15 +109,40 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const READINESS_CONFIG = {
-  prepared: { label: 'On Track', bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', icon: 'fa-check-circle' },
-  'at-risk': { label: 'Needs Attention', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: 'fa-triangle-exclamation' },
-  critical: { label: 'Urgent Action', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', icon: 'fa-circle-exclamation' },
+  prepared: { label: 'On Track', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-300', border: 'border-green-200 dark:border-green-800', icon: 'fa-check-circle' },
+  'at-risk': { label: 'Needs Attention', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-800', icon: 'fa-triangle-exclamation' },
+  critical: { label: 'Urgent Action', bg: 'bg-rose-50 dark:bg-rose-900/20', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-200 dark:border-rose-800', icon: 'fa-circle-exclamation' },
 };
 
 export default function LifeEventPredictor() {
   const { t } = useTranslation();
   const [selectedEvent, setSelectedEvent] = useState<PredictedEvent | null>(null);
   const [filter, setFilter] = useState<string>('all');
+  const addGoal = useWealthStore((s) => s.addGoal);
+  const { showToast } = useToast();
+
+  const handleAutoSetup = (event: PredictedEvent) => {
+    const target = event.financialImpact.includes('Lakhs')
+      ? Math.max(100000, parseInt(event.financialImpact.replace(/[^0-9]/g, '').slice(0, 3)) * 100000)
+      : 500000;
+    const deadline = new Date(Date.now() + event.monthsAway * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    addGoal({
+      id: `goal-le-${Date.now()}`,
+      name: event.title,
+      type: 'other',
+      targetAmount: target,
+      currentAmount: 0,
+      deadline,
+    });
+    showToast(`Auto-created goal: ${event.title}`, 'success');
+  };
+
+  const handleRemindLater = (event: PredictedEvent) => {
+    if (isNotificationGranted()) {
+      sendLocalNotification('SecureWealth Twin', `Reminder: ${event.title} — ${event.suggestedAction}`, '/favicon.ico');
+    }
+    showToast(`Reminder set for ${event.timeframe}`, 'info');
+  };
 
   const filtered = filter === 'all' 
     ? PREDICTED_EVENTS 
@@ -124,14 +152,14 @@ export default function LifeEventPredictor() {
     <div className="card-psb">
       <div className="flex items-center justify-between mb-1">
         <div>
-          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <i className="fas fa-crystal-ball text-violet-600" aria-hidden="true" /> {t('lifeEventTitle')}
+          <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <i className="fas fa-crystal-ball text-violet-600 dark:text-violet-300" aria-hidden="true" /> {t('lifeEventTitle')}
           </h3>
-          <p className="text-[11px] text-gray-500 mt-0.5">
+          <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
             {t('lifeEventSubtitle')}
           </p>
         </div>
-        <div className="px-2.5 py-1 bg-violet-50 rounded-full text-[10px] font-bold text-violet-700">
+        <div className="px-2.5 py-1 bg-violet-50 dark:bg-violet-900/20 rounded-full text-[10px] font-bold text-violet-700 dark:text-violet-300">
           {t('lifeEventAccuracy')}
         </div>
       </div>
@@ -145,7 +173,7 @@ export default function LifeEventPredictor() {
             className={`px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
               filter === cat
                 ? 'bg-violet-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200'
             }`}
           >
             {cat === 'all' ? t('lifeEventAll') : CATEGORY_LABELS[cat] === 'Family' ? t('lifeEventFamily') : CATEGORY_LABELS[cat] === 'Career' ? t('lifeEventCareer') : CATEGORY_LABELS[cat] === 'Health' ? t('lifeEventHealth') : CATEGORY_LABELS[cat] === 'Asset' ? t('lifeEventAsset') : t('lifeEventEducation')}
@@ -172,7 +200,7 @@ export default function LifeEventPredictor() {
                   className={`relative ml-8 p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
                     selectedEvent?.id === event.id 
                       ? 'border-violet-300 bg-violet-50/50 shadow-md' 
-                      : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+                      : 'border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-200 hover:shadow-sm'
                   }`}
                   role="button"
                   tabIndex={0}
@@ -181,7 +209,7 @@ export default function LifeEventPredictor() {
                 >
                   {/* Timeline dot */}
                   <div 
-                    className="absolute -left-[26px] top-4 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm"
+                    className="absolute -left-[26px] top-4 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-800 shadow-sm"
                     style={{ backgroundColor: event.color }}
                     aria-label={`${event.title} timeline marker`}
                   />
@@ -190,16 +218,16 @@ export default function LifeEventPredictor() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <i className={`fas ${event.icon} text-xs`} style={{ color: event.color }} aria-hidden="true" />
-                        <span className="text-[11px] font-bold text-gray-800">{event.title}</span>
+                        <span className="text-[11px] font-bold text-gray-800 dark:text-slate-200">{event.title}</span>
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${readiness.bg} ${readiness.text} border ${readiness.border}`}>
                           <i className={`fas ${readiness.icon} mr-0.5 text-[10px]`} aria-hidden="true" />
                           {readiness.label === 'On Track' ? t('lifeEventOnTrack') : readiness.label === 'Needs Attention' ? t('lifeEventNeedsAttention') : t('lifeEventUrgent')}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                      <div className="flex items-center gap-3 text-[10px] text-gray-500 dark:text-slate-400">
                         <span><i className="fas fa-clock mr-1" aria-hidden="true" />{event.timeframe}</span>
                         <span><i className="fas fa-percent mr-1" aria-hidden="true" />{event.probability}% probability</span>
-                        <span className="font-semibold text-gray-700">
+                        <span className="font-semibold text-gray-700 dark:text-slate-300">
                           <i className="fas fa-indian-rupee-sign mr-0.5" aria-hidden="true" />{event.financialImpact.replace('₹', '')}
                         </span>
                       </div>
@@ -222,7 +250,7 @@ export default function LifeEventPredictor() {
                             strokeLinecap="round"
                           />
                         </svg>
-                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-700">
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-700 dark:text-slate-300">
                           {event.probability}
                         </span>
                       </div>
@@ -236,22 +264,28 @@ export default function LifeEventPredictor() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="mt-3 pt-3 border-t border-dashed border-gray-200"
+                        className="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-slate-600"
                       >
                         <div className="flex items-start gap-2">
-                          <div className="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <div className="w-8 h-8 bg-violet-50 dark:bg-violet-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
                             <i className="fas fa-wand-magic-sparkles text-violet-500 text-xs" aria-hidden="true" />
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-gray-700 mb-0.5">{t('lifeEventAiAction')}</p>
-                            <p className="text-[11px] text-gray-600 leading-relaxed">{event.suggestedAction}</p>
+                            <p className="text-[10px] font-bold text-gray-700 dark:text-slate-300 mb-0.5">{t('lifeEventAiAction')}</p>
+                            <p className="text-[11px] text-gray-600 dark:text-slate-400 leading-relaxed">{event.suggestedAction}</p>
                           </div>
                         </div>
                         <div className="mt-2 flex gap-2">
-                          <button className="px-3 py-1.5 bg-violet-600 text-white text-[10px] font-bold rounded-lg hover:bg-violet-700 transition-colors">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleAutoSetup(event); }}
+                            className="px-3 py-1.5 bg-violet-600 text-white text-[10px] font-bold rounded-lg hover:bg-violet-700 transition-colors"
+                          >
                             <i className="fas fa-rocket mr-1" aria-hidden="true" />{t('lifeEventAutoSetup')}
                           </button>
-                          <button className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-50 transition-colors">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRemindLater(event); }}
+                            className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 text-[10px] font-bold rounded-lg hover:bg-gray-50 transition-colors"
+                          >
                             <i className="fas fa-bell mr-1" aria-hidden="true" />{t('lifeEventRemind')}
                           </button>
                         </div>

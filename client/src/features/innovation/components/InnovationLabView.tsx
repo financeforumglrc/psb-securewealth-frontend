@@ -54,7 +54,7 @@ function TabLoader() {
     <div className="min-h-[50vh] flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <div className="w-10 h-10 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-        <p className="text-xs text-slate-400">{t('innovationLabLoading')}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">{t('innovationLabLoading')}</p>
       </div>
     </div>
   );
@@ -139,7 +139,7 @@ export default function InnovationLabView() {
                   {tabItem.badgeKey && (
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold whitespace-nowrap ${
-                        tab === tabItem.key ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+                        tab === tabItem.key ? 'bg-white/20 text-white' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
                       }`}
                     >
                       {t(tabItem.badgeKey as any)}

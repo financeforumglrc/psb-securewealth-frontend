@@ -530,4 +530,84 @@ export const backendApi = {
       timeoutMs: 15000,
     });
   },
+
+  // Agentic Wealth Twin — approve or dismiss autonomous actions
+  async executeAgentAction(payload: { actionId: string; approved: boolean }) {
+    return fetchJson('/ai/execute-agent-action', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 10000,
+    });
+  },
+
+  // Money mule network trace for a beneficiary
+  async getMuleTrace(beneficiaryId: string) {
+    return fetchJson(`/fraud/mule-trace/${encodeURIComponent(beneficiaryId)}`, { timeoutMs: 10000 });
+  },
+
+  // Computer vision asset appraisal from uploaded image
+  async appraiseVision(payload: { imageBase64: string }) {
+    return fetchJson('/banking/assets/appraise-vision', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 30000,
+    });
+  },
+
+  // Business / SME endpoints
+  async getSmeDashboard() {
+    return fetchJson('/business/sme-dashboard');
+  },
+  async getCashFlow() {
+    return fetchJson('/business/cash-flow');
+  },
+  async getSurplusAdvisor() {
+    return fetchJson('/business/surplus');
+  },
+  async getWorkingCapital() {
+    return fetchJson('/business/working-capital');
+  },
+  async getMacroSignals() {
+    return fetchJson('/market/macro-signals');
+  },
+  async calculateIncomeTax(payload: Record<string, any>) {
+    return fetchJson('/tax/calculate-income-tax', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      timeoutMs: 10000,
+    });
+  },
+
+  // MSME CreditBridge AI
+  async msmeApply(payload: Record<string, any>) {
+    return fetchJson('/msme/apply', { method: 'POST', body: JSON.stringify(payload), timeoutMs: 20000 });
+  },
+  async msmeScorePreview(payload: Record<string, any>) {
+    return fetchJson('/msme/score', { method: 'POST', body: JSON.stringify(payload), timeoutMs: 15000 });
+  },
+  async msmeMyApplications() {
+    return fetchJson('/msme/my-applications');
+  },
+  async msmeApplication(id: number) {
+    return fetchJson(`/msme/application/${id}`);
+  },
+  async msmeOffers(applicationId: number) {
+    return fetchJson(`/msme/offers/${applicationId}`);
+  },
+  async msmeAcceptOffer(offerId: number) {
+    return fetchJson('/msme/accept-offer', { method: 'POST', body: JSON.stringify({ offerId }) });
+  },
+  async msmeAdminApplications(params?: Record<string, any>) {
+    const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString() : '';
+    return fetchJson(`/msme/admin/applications${qs}`, { timeoutMs: 15000 });
+  },
+  async msmeAdminPortfolio() {
+    return fetchJson('/msme/admin/portfolio', { timeoutMs: 10000 });
+  },
+  async msmeAdminFraudSignals() {
+    return fetchJson('/msme/admin/fraud-signals', { timeoutMs: 10000 });
+  },
+  async msmeAdminBiasAudit() {
+    return fetchJson('/msme/admin/bias-audit', { timeoutMs: 10000 });
+  },
 };

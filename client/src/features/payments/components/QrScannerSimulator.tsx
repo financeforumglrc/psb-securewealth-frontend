@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import QRCode from 'qrcode';
+import jsQR from 'jsqr';
 import { useWealthStore } from '@/shared/store/wealthStore';
 
 interface Props {
@@ -26,6 +27,11 @@ export default function QrScannerSimulator({ onScan, onClose }: Props) {
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [detected, setDetected] = useState<typeof MOCK_QR_CODES[0] | null>(null);
+  const [cameraError, setCameraError] = useState('');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scanLoopRef = useRef<number | null>(null);
+  const canvasRefScan = useRef<HTMLCanvasElement | null>(null);
 
   // Generate mode state
   const [upiId, setUpiId] = useState('');
@@ -33,23 +39,111 @@ export default function QrScannerSimulator({ onScan, onClose }: Props) {
   const [qrError, setQrError] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const stopCamera = useCallback(() => {
+    if (scanLoopRef.current) {
+      cancelAnimationFrame(scanLoopRef.current);
+      scanLoopRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
-    if (!scanning) return;
+    if (!scanning) {
+      stopCamera();
+      return;
+    }
     setProgress(0);
     setDetected(null);
-    const interval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) {
-          clearInterval(interval);
-          const random = MOCK_QR_CODES[Math.floor(Math.random() * MOCK_QR_CODES.length)];
-          setDetected(random);
-          return 100;
+    setCameraError('');
+
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false,
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
         }
-        return p + 4;
-      });
-    }, 80);
-    return () => clearInterval(interval);
-  }, [scanning]);
+        // real-time scan loop
+        const loop = () => {
+          if (!videoRef.current || !canvasRefScan.current) {
+            scanLoopRef.current = requestAnimationFrame(loop);
+            return;
+          }
+          const video = videoRef.current;
+          const canvas = canvasRefScan.current;
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) {
+            scanLoopRef.current = requestAnimationFrame(loop);
+            return;
+          }
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: 'attemptBoth' });
+          if (code?.data) {
+            const parsed = parseQrUpi(code.data);
+            if (parsed) {
+              setDetected({ upiId: parsed.pa, name: parsed.pn || 'Merchant', amount: parsed.am || 0 });
+              stopCamera();
+              return;
+            }
+          }
+          scanLoopRef.current = requestAnimationFrame(loop);
+        };
+        scanLoopRef.current = requestAnimationFrame(loop);
+      } catch (err) {
+        console.warn('Camera access failed, falling back to simulated scan', err);
+        setCameraError('Camera unavailable. Using simulator.');
+        // fallback simulated scan
+        let p = 0;
+        const interval = setInterval(() => {
+          p += 4;
+          setProgress(p);
+          if (p >= 100) {
+            clearInterval(interval);
+            const random = MOCK_QR_CODES[Math.floor(Math.random() * MOCK_QR_CODES.length)];
+            setDetected(random);
+          }
+        }, 80);
+      }
+    }
+
+    startCamera();
+    return () => stopCamera();
+  }, [scanning, stopCamera]);
+
+  const parseQrUpi = (data: string) => {
+    try {
+      const url = new URL(data);
+      if (!url.protocol.includes('upi')) return null;
+      return {
+        pa: url.searchParams.get('pa') || '',
+        pn: url.searchParams.get('pn') || '',
+        am: parseFloat(url.searchParams.get('am') || '0') || undefined,
+      };
+    } catch {
+      // try regex fallback
+      const pa = data.match(/pa=([^&]+)/)?.[1];
+      const pn = data.match(/pn=([^&]+)/)?.[1];
+      const am = data.match(/am=([^&]+)/)?.[1];
+      if (pa) {
+        return {
+          pa: decodeURIComponent(pa),
+          pn: pn ? decodeURIComponent(pn) : '',
+          am: am ? parseFloat(decodeURIComponent(am)) : undefined,
+        };
+      }
+      return null;
+    }
+  };
 
   const generateQr = useCallback(async () => {
     if (!canvasRef.current || !upiId.trim()) return;
@@ -61,6 +155,12 @@ export default function QrScannerSimulator({ onScan, onClose }: Props) {
       setQrError('Failed to generate QR code. Please check your UPI ID.');
     }
   }, [upiId, payeeName]);
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, [stopCamera]);
 
   useEffect(() => {
     if (mode === 'generate' && upiId.trim() && canvasRef.current) {
@@ -151,35 +251,36 @@ export default function QrScannerSimulator({ onScan, onClose }: Props) {
           <>
             {/* Camera View */}
             <div className="aspect-square rounded-2xl bg-black relative overflow-hidden mb-4">
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-black">
-                {scanning && (
-                  <>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-48 h-48 border-2 border-primary/50 rounded-xl relative">
-                        <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-primary" />
-                        <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-primary" />
-                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-primary" />
-                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-primary" />
-                      </div>
+              <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
+              <canvas ref={canvasRefScan} className="hidden" />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-800/30 via-transparent to-black/30 pointer-events-none" />
+              {scanning && !detected && (
+                <>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-48 h-48 border-2 border-primary/50 rounded-xl relative">
+                      <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-primary" />
+                      <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-primary" />
+                      <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-primary" />
+                      <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-primary" />
                     </div>
-                    <div className="absolute bottom-6 left-0 right-0 px-4">
-                      <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full transition-all"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                      <p className="text-white/70 text-xs text-center mt-2">
-                        {progress < 100 ? 'Align QR code within frame...' : 'QR code detected!'}
-                      </p>
+                  </div>
+                  <div className="absolute bottom-6 left-0 right-0 px-4">
+                    <div className="h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all"
+                        style={{ width: `${progress}%` }}
+                      />
                     </div>
-                    <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-primary/30 animate-[scan_2s_ease-in-out_infinite]" />
-                  </>
-                )}
-              </div>
+                    <p className="text-white/70 text-xs text-center mt-2">
+                      {cameraError || (progress < 100 ? 'Align QR code within frame...' : 'QR code detected!')}
+                    </p>
+                  </div>
+                  <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-primary/30 animate-[scan_2s_ease-in-out_infinite] pointer-events-none" />
+                </>
+              )}
 
               {!scanning && !detected && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/60">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/60 pointer-events-none">
                   <i className="fas fa-camera text-4xl mb-3" />
                   <p className="text-sm">Camera preview</p>
                 </div>

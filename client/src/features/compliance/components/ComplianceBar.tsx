@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import KYCModal from '@/features/compliance/components/KYCModal';
 
 /* ═══════════════════════════════════════════════════════════════
    COMPLIANCE BAR — Visible Privacy & Trust Indicators
@@ -21,7 +22,7 @@ interface ComplianceItem {
   icon: string;
   status: 'active' | 'pending' | 'info';
   detail: string;
-  action?: 'navigate' | 'tooltip';
+  action?: 'navigate' | 'tooltip' | 'modal';
   target?: string;
 }
 
@@ -62,8 +63,7 @@ export default function ComplianceBar() {
       icon: 'fa-id-card',
       status: kycVerified ? 'active' : 'pending',
       detail: kycVerified ? t('kycVerifiedDetail') : t('kycPendingDetail'),
-      action: kycVerified ? undefined : 'navigate',
-      target: 'profile',
+      action: kycVerified ? undefined : 'modal',
     },
     {
       id: 'simulation',
@@ -75,9 +75,15 @@ export default function ComplianceBar() {
     },
   ];
 
+  const [showKyc, setShowKyc] = useState(false);
+
   const handleClick = (item: ComplianceItem) => {
     if (item.action === 'navigate' && item.target) {
       setView(item.target as any);
+      return;
+    }
+    if (item.action === 'modal' && item.id === 'kyc') {
+      setShowKyc(true);
       return;
     }
     if (item.action === 'tooltip') {
@@ -130,6 +136,7 @@ export default function ComplianceBar() {
           </Wrapper>
         );
       })}
+      <KYCModal show={showKyc} onClose={() => setShowKyc(false)} />
     </motion.div>
   );
 }

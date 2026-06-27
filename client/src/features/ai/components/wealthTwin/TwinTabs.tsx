@@ -8,6 +8,8 @@ const TABS: { id: TwinTab; label: string; icon: string }[] = [
   { id: 'rebalance', label: 'twinTabRebalancing', icon: 'fa-scale-balanced' },
   { id: 'whatif', label: 'twinTabWhatIf', icon: 'fa-sliders' },
   { id: 'retirement', label: 'twinTabFirePlan', icon: 'fa-umbrella-beach' },
+  { id: 'macroshock', label: 'twinTabMacroShock', icon: 'fa-globe' },
+  { id: 'macrosignal', label: 'twinTabMacroSignal', icon: 'fa-tower-broadcast' },
 ];
 
 export default function TwinTabs() {

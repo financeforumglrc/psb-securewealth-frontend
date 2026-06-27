@@ -1147,4 +1147,38 @@ router.post('/seed', (req, res) => {
     }
 });
 
+/**
+ * @route   POST /api/v1/banking/assets/appraise-vision
+ * @desc    Mock computer-vision appraisal of a physical asset photo
+ * @access  Private
+ */
+router.post('/assets/appraise-vision', authMiddleware, (req, res) => {
+    try {
+        const { imageBase64 } = req.body;
+        if (!imageBase64 || typeof imageBase64 !== 'string') {
+            return res.status(400).json({ success: false, error: 'imageBase64 string is required' });
+        }
+
+        // Simulate AI processing time
+        setTimeout(() => {
+            res.json({
+                success: true,
+                message: 'Asset appraised successfully',
+                data: {
+                    assetType: 'Gold Jewelry (Detected)',
+                    weightGrams: 15.2,
+                    purity: '22K (91.6%)',
+                    marketValue: 138500,
+                    confidence: 0.94,
+                    currency: 'INR',
+                    appraisedAt: new Date().toISOString(),
+                }
+            });
+        }, 2000);
+    } catch (error) {
+        console.error('Vision appraisal error:', error);
+        res.status(500).json({ success: false, error: 'Vision appraisal failed' });
+    }
+});
+
 module.exports = router;

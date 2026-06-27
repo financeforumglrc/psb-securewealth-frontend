@@ -50,10 +50,10 @@ export default function TimeMachine() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('timeYearsScanned'), value: '34', icon: 'fa-clock-rotate-left', color: 'bg-blue-50 text-blue-600' },
-          { label: t('timeTimelineEvents'), value: TIMELINE.length, icon: 'fa-timeline', color: 'bg-violet-50 text-violet-600' },
-          { label: t('timePeakNetWorth'), value: '₹22Cr', icon: 'fa-mountain', color: 'bg-amber-50 text-amber-600' },
-          { label: t('timeFireAge'), value: '46', icon: 'fa-fire', color: 'bg-rose-50 text-rose-600' },
+          { label: t('timeYearsScanned'), value: '34', icon: 'fa-clock-rotate-left', color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300' },
+          { label: t('timeTimelineEvents'), value: TIMELINE.length, icon: 'fa-timeline', color: 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300' },
+          { label: t('timePeakNetWorth'), value: '₹22Cr', icon: 'fa-mountain', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300' },
+          { label: t('timeFireAge'), value: '46', icon: 'fa-fire', color: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300' },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -66,8 +66,8 @@ export default function TimeMachine() {
               <i className={`fas ${stat.icon}`} aria-hidden="true" />
             </div>
             <div>
-              <p className="text-lg font-extrabold text-gray-900">{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{stat.label}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -76,19 +76,19 @@ export default function TimeMachine() {
       <div className="card-psb">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-clock-rotate-left text-violet-600" aria-hidden="true" /> {t('timeTitle')}
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <i className="fas fa-clock-rotate-left text-violet-600 dark:text-violet-300" aria-hidden="true" /> {t('timeTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('timeSubtitle')}
             </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={prevYear} aria-label={t('timePreviousYear')} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <i className="fas fa-chevron-left text-gray-600 text-xs" aria-hidden="true" />
+            <button onClick={prevYear} aria-label={t('timePreviousYear')} className="w-8 h-8 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+              <i className="fas fa-chevron-left text-gray-600 dark:text-slate-400 text-xs" aria-hidden="true" />
             </button>
-            <button onClick={nextYear} aria-label={t('timeNextYear')} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <i className="fas fa-chevron-right text-gray-600 text-xs" aria-hidden="true" />
+            <button onClick={nextYear} aria-label={t('timeNextYear')} className="w-8 h-8 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+              <i className="fas fa-chevron-right text-gray-600 dark:text-slate-400 text-xs" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function TimeMachine() {
             aria-label={t('timeSelectYear')}
             className="w-full h-2 bg-gradient-to-r from-blue-200 via-violet-200 to-amber-200 rounded-full appearance-none cursor-pointer accent-primary"
           />
-          <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+          <div className="flex justify-between text-[10px] text-gray-400 dark:text-slate-500 mt-1">
             <span>2026 ({t('timeAge')} 32)</span>
             <span>2043</span>
             <span>2060 ({t('timeAge')} 66)</span>
@@ -113,15 +113,16 @@ export default function TimeMachine() {
         </div>
 
         {/* Timeline Dots */}
-        <div className="flex justify-between mb-6 px-2">
-          {TIMELINE.map((evt) => (
+        <div className="overflow-x-auto mb-6 px-2 pb-2 -mx-2">
+          <div className="flex justify-between min-w-[500px]">
+            {TIMELINE.map((evt) => (
             <button
               key={evt.year}
               onClick={() => setYear(evt.year)}
               aria-label={t('timeJumpToYear').replace('{year}', String(evt.year))}
               className={`relative w-3 h-3 rounded-full transition-all ${
                 evt.year === year ? 'bg-primary scale-150 shadow-lg shadow-primary/30' :
-                evt.year < year ? 'bg-primary/40' : 'bg-gray-200'
+                evt.year < year ? 'bg-primary/40' : 'bg-gray-200 dark:bg-slate-600'
               }`}
             >
               {evt.year === year && (
@@ -131,6 +132,7 @@ export default function TimeMachine() {
               )}
             </button>
           ))}
+          </div>
         </div>
 
         {/* Year Detail Card */}
@@ -141,33 +143,33 @@ export default function TimeMachine() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="p-5 rounded-2xl bg-gradient-to-br from-violet-50 to-blue-50 border border-violet-100"
+            className="p-5 rounded-2xl bg-gradient-to-br from-violet-50 to-blue-50 border border-violet-100 dark:border-violet-800"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-4">
                 <div className="text-5xl">{current.avatar}</div>
                 <div>
-                  <p className="text-2xl font-extrabold text-gray-900">{current.year}</p>
-                  <p className="text-sm font-bold text-violet-600">{current.title}</p>
-                  <p className="text-[11px] text-gray-500">{t('timeAgeMood').replace('{age}', String(current.age)).replace('{mood}', current.mood)}</p>
+                  <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{current.year}</p>
+                  <p className="text-sm font-bold text-violet-600 dark:text-violet-300">{current.title}</p>
+                  <p className="text-[11px] text-gray-500 dark:text-slate-400">{t('timeAgeMood').replace('{age}', String(current.age)).replace('{mood}', current.mood)}</p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-3xl font-extrabold text-primary">₹{(current.netWorth / 100).toFixed(1)}Cr</p>
-                <p className="text-[10px] text-gray-500">{t('timeNetWorth')}</p>
+                <p className="text-[10px] text-gray-500 dark:text-slate-400">{t('timeNetWorth')}</p>
               </div>
             </div>
 
             {/* Financial Breakdown */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
               {[
-                { label: t('timeMonthlyIncome'), value: `₹${(current.income / 12).toLocaleString()}`, icon: 'fa-money-bill-wave', color: 'text-green-600' },
-                { label: t('timeMonthlyExpenses'), value: `₹${(current.expenses / 12).toLocaleString()}`, icon: 'fa-cart-shopping', color: 'text-rose-600' },
-                { label: t('timeMonthlyInvested'), value: `₹${(current.investments / 12).toLocaleString()}`, icon: 'fa-chart-line', color: 'text-blue-600' },
-                { label: t('timeSavingsRate'), value: `${Math.round((current.investments / current.income) * 100)}%`, icon: 'fa-piggy-bank', color: 'text-amber-600' },
+                { label: t('timeMonthlyIncome'), value: `₹${(current.income / 12).toLocaleString()}`, icon: 'fa-money-bill-wave', color: 'text-green-600 dark:text-green-300' },
+                { label: t('timeMonthlyExpenses'), value: `₹${(current.expenses / 12).toLocaleString()}`, icon: 'fa-cart-shopping', color: 'text-rose-600 dark:text-rose-300' },
+                { label: t('timeMonthlyInvested'), value: `₹${(current.investments / 12).toLocaleString()}`, icon: 'fa-chart-line', color: 'text-blue-600 dark:text-blue-300' },
+                { label: t('timeSavingsRate'), value: `${Math.round((current.investments / current.income) * 100)}%`, icon: 'fa-piggy-bank', color: 'text-amber-600 dark:text-amber-300' },
               ].map((item, idx) => (
                 <div key={idx} className="p-2.5 bg-white/70 rounded-lg">
-                  <p className="text-[10px] text-gray-400">{item.label}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500">{item.label}</p>
                   <p className={`text-sm font-extrabold ${item.color}`}>{item.value}</p>
                 </div>
               ))}
@@ -176,7 +178,7 @@ export default function TimeMachine() {
             {/* Milestones */}
             <div className="flex flex-wrap gap-2">
               {current.milestones.map((m, i) => (
-                <span key={i} className="px-3 py-1.5 bg-white rounded-full text-[10px] font-bold text-violet-700 border border-violet-100">
+                <span key={i} className="px-3 py-1.5 bg-white dark:bg-slate-900 rounded-full text-[10px] font-bold text-violet-700 dark:text-violet-300 border border-violet-100 dark:border-violet-800">
                   <i className="fas fa-star text-amber-400 mr-1 text-[10px]" aria-hidden="true" />{m}
                 </span>
               ))}
@@ -186,15 +188,16 @@ export default function TimeMachine() {
 
         {/* Comparison Bar */}
         <div className="mt-4">
-          <p className="text-[10px] text-gray-400 mb-2">{t('timeNetWorthTrajectory')}</p>
-          <div className="flex items-end gap-1 h-[80px]">
-            {TIMELINE.map((t, idx) => {
+          <p className="text-[10px] text-gray-400 dark:text-slate-500 mb-2">{t('timeNetWorthTrajectory')}</p>
+          <div className="overflow-x-auto -mx-2 px-2 pb-1">
+            <div className="flex items-end gap-1 h-[80px] min-w-[500px]">
+              {TIMELINE.map((t, idx) => {
               const height = (t.netWorth / 2200) * 100;
               const isCurrent = t.year === year;
               return (
                 <motion.div
                   key={t.year}
-                  className={`flex-1 rounded-t-sm cursor-pointer transition-all ${isCurrent ? 'bg-primary' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  className={`flex-1 rounded-t-sm cursor-pointer transition-all ${isCurrent ? 'bg-primary' : 'bg-gray-200 dark:bg-slate-600 hover:bg-gray-300'}`}
                   style={{ height: `${height}%` }}
                   role="button"
                   tabIndex={0}
@@ -206,6 +209,7 @@ export default function TimeMachine() {
                 />
               );
             })}
+            </div>
           </div>
         </div>
       </div>

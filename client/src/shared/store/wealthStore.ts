@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { UserProfile, Asset, Goal, ConsentRecord, Badge, Notification, MarketData, ViewType, Transaction, FamilyMember, RecurringBill, InvestmentTrigger, CibilFactor, Challenge, KidProfile, KidTask, SpendRequest, UncategorizedTx, CategoryRule, DuplicateGroup, Subscription, NRIAccount, Remittance, NRIInvestmentRule } from '@/shared/types';
+import type { UserProfile, Asset, Goal, ConsentRecord, Badge, Notification, MarketData, ViewType, Transaction, FamilyMember, RecurringBill, InvestmentTrigger, CibilFactor, Challenge, KidProfile, KidTask, SpendRequest, UncategorizedTx, CategoryRule, DuplicateGroup, Subscription, NRIAccount, Remittance, NRIInvestmentRule, MSMEApplication, MSMECreditScore, MSMEOffer } from '@/shared/types';
 import { backendApi } from '@/shared/lib/backendApi';
 
 interface WealthState {
@@ -60,6 +60,13 @@ interface WealthState {
   behavioralDeviation: number;
   isLoading: boolean;
   loginAt: number;
+  quickAccessEnabled: boolean;
+  notificationsDnd: boolean;
+  notificationsPopup: boolean;
+  msmeApplications: MSMEApplication[];
+  msmeScores: Record<number, MSMECreditScore>;
+  msmeOffers: Record<number, MSMEOffer[]>;
+  msmeAdminStats: import('@/shared/types').MSMEAdminStats | null;
 
   setView: (view: ViewType) => void;
   setLockdownActive: (val: boolean) => void;
@@ -126,6 +133,14 @@ interface WealthState {
   setDashboardDensity: (density: 'simple' | 'comprehensive') => void;
   setBehavioralDeviation: (val: number) => void;
   setLoginAt: (val: number) => void;
+  setQuickAccessEnabled: (val: boolean) => void;
+  setNotificationsDnd: (val: boolean) => void;
+  setNotificationsPopup: (val: boolean) => void;
+  setMsmeApplications: (apps: MSMEApplication[]) => void;
+  addMsmeApplication: (app: MSMEApplication) => void;
+  setMsmeScore: (applicationId: number, score: MSMECreditScore) => void;
+  setMsmeOffers: (applicationId: number, offers: MSMEOffer[]) => void;
+  setMsmeAdminStats: (stats: import('@/shared/types').MSMEAdminStats | null) => void;
 }
 
 const SEED_ASSETS: Asset[] = [
@@ -252,6 +267,13 @@ export const useWealthStore = create<WealthState>()(
       dashboardDensity: 'simple',
       behavioralDeviation: 0,
       loginAt: Date.now(),
+      quickAccessEnabled: true,
+      notificationsDnd: false,
+      notificationsPopup: true,
+      msmeApplications: [],
+      msmeScores: {},
+      msmeOffers: {},
+      msmeAdminStats: null,
 
       setView: (view) => set({ currentView: view }),
       setLockdownActive: (val) => set({ lockdownActive: val }),
@@ -369,6 +391,14 @@ export const useWealthStore = create<WealthState>()(
       setDashboardDensity: (density) => set({ dashboardDensity: density }),
       setBehavioralDeviation: (val) => set({ behavioralDeviation: val }),
       setLoginAt: (val) => set({ loginAt: val }),
+      setQuickAccessEnabled: (val) => set({ quickAccessEnabled: val }),
+      setNotificationsDnd: (val) => set({ notificationsDnd: val }),
+      setNotificationsPopup: (val) => set({ notificationsPopup: val }),
+      setMsmeApplications: (apps) => set({ msmeApplications: apps }),
+      addMsmeApplication: (app) => set((s) => ({ msmeApplications: [app, ...s.msmeApplications] })),
+      setMsmeScore: (applicationId, score) => set((s) => ({ msmeScores: { ...s.msmeScores, [applicationId]: score } })),
+      setMsmeOffers: (applicationId, offers) => set((s) => ({ msmeOffers: { ...s.msmeOffers, [applicationId]: offers } })),
+      setMsmeAdminStats: (stats) => set({ msmeAdminStats: stats }),
       // Seed realistic data for judges
       seedRealData: () => set({
         user: { name: 'Deepanshu Sharma', riskProfile: 'Aggressive', taxBracket: 30, monthlyIncome: 85000, monthlySavings: 35000, monthlyExpenses: 50000 },
@@ -457,6 +487,13 @@ export const useWealthStore = create<WealthState>()(
         exchangeRatesLastUpdated: state.exchangeRatesLastUpdated,
         seniorMode: state.seniorMode,
         kycVerified: state.kycVerified,
+        quickAccessEnabled: state.quickAccessEnabled,
+        notificationsDnd: state.notificationsDnd,
+        notificationsPopup: state.notificationsPopup,
+        msmeApplications: state.msmeApplications,
+        msmeScores: state.msmeScores,
+        msmeOffers: state.msmeOffers,
+        msmeAdminStats: state.msmeAdminStats,
       }),
     }
   )

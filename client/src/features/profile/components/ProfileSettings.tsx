@@ -12,6 +12,12 @@ export default function ProfileSettings() {
   const assets = useWealthStore((s) => s.assets);
   const updateAsset = useWealthStore((s) => s.updateAsset);
   const duressModeActive = useWealthStore((s) => s.duressModeActive);
+  const quickAccessEnabled = useWealthStore((s) => s.quickAccessEnabled);
+  const notificationsDnd = useWealthStore((s) => s.notificationsDnd);
+  const notificationsPopup = useWealthStore((s) => s.notificationsPopup);
+  const setQuickAccessEnabled = useWealthStore((s) => s.setQuickAccessEnabled);
+  const setNotificationsDnd = useWealthStore((s) => s.setNotificationsDnd);
+  const setNotificationsPopup = useWealthStore((s) => s.setNotificationsPopup);
 
   const [form, setForm] = useState({ ...user });
   const [saved, setSaved] = useState(false);
@@ -223,6 +229,42 @@ export default function ProfileSettings() {
               )}
             </div>
           ))}
+        </div>
+      </CosmosCard>
+
+      {/* Preferences */}
+      <CosmosCard variant="default" padding="md">
+        <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+          <i className="fas fa-sliders text-primary" /> Preferences
+        </h2>
+        <div className="space-y-3">
+          <label className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 cursor-pointer">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Quick Access Menu</span>
+            <input
+              type="checkbox"
+              checked={quickAccessEnabled}
+              onChange={(e) => setQuickAccessEnabled(e.target.checked)}
+              className="w-5 h-5 accent-primary"
+            />
+          </label>
+          <label className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 cursor-pointer">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Notification Do Not Disturb</span>
+            <input
+              type="checkbox"
+              checked={notificationsDnd}
+              onChange={(e) => setNotificationsDnd(e.target.checked)}
+              className="w-5 h-5 accent-primary"
+            />
+          </label>
+          <label className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 cursor-pointer">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Notification Pop-ups</span>
+            <input
+              type="checkbox"
+              checked={notificationsPopup}
+              onChange={(e) => setNotificationsPopup(e.target.checked)}
+              className="w-5 h-5 accent-primary"
+            />
+          </label>
         </div>
       </CosmosCard>
 

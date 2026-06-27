@@ -143,7 +143,7 @@ export default function LifeShockSimulator() {
           </div>
           <div>
             <h3 className="text-lg font-bold">Life Shock Simulator</h3>
-            <p className="text-xs text-slate-300">Test real-life crises before they happen. See exactly how your money protects you.</p>
+            <p className="text-xs text-slate-300 dark:text-slate-600">Test real-life crises before they happen. See exactly how your money protects you.</p>
           </div>
         </div>
       </div>
@@ -160,11 +160,11 @@ export default function LifeShockSimulator() {
                 : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-primary/30'
             }`}
           >
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${selectedId === scenario.id ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${selectedId === scenario.id ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
               <i className={`fas ${scenario.icon}`} />
             </div>
             <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{scenario.label}</p>
-            <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-2">{scenario.description}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-2">{scenario.description}</p>
           </button>
         ))}
       </div>
@@ -187,7 +187,7 @@ export default function LifeShockSimulator() {
           onChange={(e) => { setAmount(Number(e.target.value)); setSimulated(false); }}
           className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
         />
-        <div className="flex justify-between text-[10px] text-slate-400 mt-2">
+        <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-2">
           <span>₹{selected.step.toLocaleString('en-IN')}</span>
           <span>₹{selected.maxAmount.toLocaleString('en-IN')}</span>
         </div>
@@ -236,7 +236,7 @@ export default function LifeShockSimulator() {
                 ) : (
                   <>
                     This ₹{amount.toLocaleString('en-IN')} shock exceeds your liquid buffers by{' '}
-                    <span className="font-semibold text-rose-600">₹{recommendation.shortfall.toLocaleString('en-IN')}</span>.
+                    <span className="font-semibold text-rose-600 dark:text-rose-300">₹{recommendation.shortfall.toLocaleString('en-IN')}</span>.
                     {' '}Consider a top-up loan against FD or insurance claim rather than high-interest personal loans.
                   </>
                 )}
@@ -249,7 +249,7 @@ export default function LifeShockSimulator() {
                       <div className="w-6 h-6 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">{idx + 1}</div>
                       <div>
                         <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{step.source}</p>
-                        {step.note && <p className="text-[10px] text-slate-500">{step.note}</p>}
+                        {step.note && <p className="text-[10px] text-slate-500 dark:text-slate-400">{step.note}</p>}
                       </div>
                     </div>
                     <p className="text-sm font-bold text-slate-800 dark:text-white">₹{step.amount.toLocaleString('en-IN')}</p>
@@ -261,18 +261,18 @@ export default function LifeShockSimulator() {
             {/* Side stats */}
             <div className="space-y-3">
               <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <p className="text-[10px] text-slate-400 uppercase tracking-wide">Total Liquid Buffer</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Total Liquid Buffer</p>
                 <p className="text-xl font-black text-slate-800 dark:text-white">₹{(buckets.liquidTotal + buckets.emergencyFundValue).toLocaleString('en-IN')}</p>
               </div>
               <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <p className="text-[10px] text-slate-400 uppercase tracking-wide">Digital Gold</p>
-                <p className="text-xl font-black text-amber-600">₹{buckets.digitalGoldTotal.toLocaleString('en-IN')}</p>
-                <p className="text-[10px] text-slate-400">No penalty liquidation</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Digital Gold</p>
+                <p className="text-xl font-black text-amber-600 dark:text-amber-300">₹{buckets.digitalGoldTotal.toLocaleString('en-IN')}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">No penalty liquidation</p>
               </div>
               <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <p className="text-[10px] text-slate-400 uppercase tracking-wide">Fixed Deposits</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">Fixed Deposits</p>
                 <p className="text-xl font-black text-emerald-600">₹{buckets.fdTotal.toLocaleString('en-IN')}</p>
-                <p className="text-[10px] text-slate-400">Break only if needed</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">Break only if needed</p>
               </div>
             </div>
           </motion.div>

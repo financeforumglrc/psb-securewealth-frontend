@@ -67,6 +67,26 @@ const REASONING: Record<TwinTab, { titleKey: string; pointKeys: string[]; modelK
     ],
     modelKey: 'explainableRetirementModel',
   },
+  macroshock: {
+    titleKey: 'explainableMacroShockTitle',
+    pointKeys: [
+      'explainableMacroShockPoint1',
+      'explainableMacroShockPoint2',
+      'explainableMacroShockPoint3',
+      'explainableMacroShockPoint4',
+    ],
+    modelKey: 'explainableMacroShockModel',
+  },
+  macrosignal: {
+    titleKey: 'explainableMacroSignalTitle',
+    pointKeys: [
+      'explainableMacroSignalPoint1',
+      'explainableMacroSignalPoint2',
+      'explainableMacroSignalPoint3',
+      'explainableMacroSignalPoint4',
+    ],
+    modelKey: 'explainableMacroSignalModel',
+  },
 };
 
 export default function ExplainablePanel({ activeTab }: ExplainablePanelProps) {

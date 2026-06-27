@@ -697,4 +697,36 @@ function safeJsonParse(value, fallback) {
     try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
 }
 
+/**
+ * @route   GET /api/v1/fraud/mule-trace/:beneficiaryId
+ * @desc    Mock money-mule network trace for a beneficiary
+ * @access  Public / internal demo
+ */
+router.get('/mule-trace/:beneficiaryId', (req, res) => {
+    try {
+        const { beneficiaryId } = req.params;
+        const seed = beneficiaryId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        const isMule = (seed % 3) !== 0; // 2 out of 3 flagged as mule for demo impact
+        const connectedNodes = isMule ? [
+            { id: `ACC-${(seed % 9000) + 1000}`, risk: 'high', label: 'Scam Node 1' },
+            { id: `ACC-${(seed % 9000) + 1001}`, risk: 'high', label: 'Scam Node 2' },
+            { id: `ACC-${(seed % 9000) + 1002}`, risk: 'medium', label: 'Scam Node 3' },
+            { id: `ACC-${(seed % 9000) + 1003}`, risk: 'high', label: 'Scam Node 4' },
+        ] : [];
+
+        res.json({
+            success: true,
+            data: {
+                beneficiary: beneficiaryId,
+                beneficiaryId,
+                isMule,
+                connectedNodes,
+            }
+        });
+    } catch (error) {
+        console.error('Mule trace error:', error);
+        res.status(500).json({ success: false, error: 'Failed to trace beneficiary network' });
+    }
+});
+
 module.exports = router;

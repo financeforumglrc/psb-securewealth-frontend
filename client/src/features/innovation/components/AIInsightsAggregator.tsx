@@ -115,10 +115,10 @@ const INSIGHTS: Insight[] = [
 ];
 
 const PRIORITY_CONFIG = {
-  critical: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700', badge: 'bg-rose-100', dot: 'bg-rose-500' },
-  high: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', badge: 'bg-amber-100', dot: 'bg-amber-500' },
-  medium: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100', dot: 'bg-blue-500' },
-  low: { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700', badge: 'bg-gray-100', dot: 'bg-gray-400' },
+  critical: { bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-200 dark:border-rose-800', text: 'text-rose-700 dark:text-rose-300', badge: 'bg-rose-100 dark:bg-rose-900/30', dot: 'bg-rose-500' },
+  high: { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-700 dark:text-amber-300', badge: 'bg-amber-100 dark:bg-amber-900/30', dot: 'bg-amber-500' },
+  medium: { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-700 dark:text-blue-300', badge: 'bg-blue-100 dark:bg-blue-900/30', dot: 'bg-blue-500' },
+  low: { bg: 'bg-gray-50 dark:bg-slate-800', border: 'border-gray-200 dark:border-slate-600', text: 'text-gray-700 dark:text-slate-300', badge: 'bg-gray-100 dark:bg-slate-700', dot: 'bg-gray-400' },
 };
 
 const FILTER_KEYS = {
@@ -156,10 +156,10 @@ export default function AIInsightsAggregator() {
     <div className="card-psb">
       <div className="flex items-center justify-between mb-1">
         <div>
-          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+          <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <i className="fas fa-robot text-primary" /> {t('aiInsightsTitle')}
           </h3>
-          <p className="text-[11px] text-gray-500 mt-0.5">
+          <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
             {t('aiInsightsSubtitle')}
           </p>
         </div>
@@ -177,7 +177,7 @@ export default function AIInsightsAggregator() {
             className={`px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
               filter === p
                 ? 'bg-primary text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200'
             }`}
           >
             {t(FILTER_KEYS[p])}
@@ -213,7 +213,7 @@ export default function AIInsightsAggregator() {
                       >
                         <i className={`fas ${insight.icon}`} style={{ color: insight.color, fontSize: '13px' }} />
                       </div>
-                      <div className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${cfg.dot}`} />
+                      <div className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-800 ${cfg.dot}`} />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -221,11 +221,11 @@ export default function AIInsightsAggregator() {
                         <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${cfg.badge} ${cfg.text}`}>
                           {t(FILTER_KEYS[insight.priority]).toUpperCase()}
                         </span>
-                        <span className="text-[9px] text-gray-400">{t(insight.source)}</span>
-                        <span className="text-[9px] text-gray-300 ml-auto">{t(insight.time)}</span>
+                        <span className="text-[9px] text-gray-400 dark:text-slate-500">{t(insight.source)}</span>
+                        <span className="text-[9px] text-gray-300 dark:text-slate-600 ml-auto">{t(insight.time)}</span>
                       </div>
-                      <h4 id={titleId} className="text-[12px] font-bold text-gray-800">{t(insight.title)}</h4>
-                      <p className="text-[11px] text-gray-600 leading-relaxed mt-0.5">{t(insight.description)}</p>
+                      <h4 id={titleId} className="text-[12px] font-bold text-gray-800 dark:text-slate-200">{t(insight.title)}</h4>
+                      <p className="text-[11px] text-gray-600 dark:text-slate-400 leading-relaxed mt-0.5">{t(insight.description)}</p>
 
                       <div className="flex items-center gap-2 mt-2">
                         <button
@@ -239,14 +239,14 @@ export default function AIInsightsAggregator() {
                         </button>
                         <button
                           onClick={() => setExpanded(isOpen ? null : insight.id)}
-                          className="px-2 py-1.5 text-gray-400 text-[10px] hover:text-gray-600 transition-colors"
+                          className="px-2 py-1.5 text-gray-400 dark:text-slate-500 text-[10px] hover:text-gray-600 transition-colors"
                         >
                           <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} mr-1`} />
                           {isOpen ? t('less') : t('details')}
                         </button>
                         <button
                           onClick={() => setDismissed([...dismissed, insight.id])}
-                          className="ml-auto px-2 py-1.5 text-gray-300 text-[10px] hover:text-gray-500 transition-colors"
+                          className="ml-auto px-2 py-1.5 text-gray-300 dark:text-slate-600 text-[10px] hover:text-gray-500 transition-colors"
                         >
                           <i className="fas fa-xmark" />
                         </button>
@@ -263,7 +263,7 @@ export default function AIInsightsAggregator() {
                       exit={{ opacity: 0, height: 0 }}
                       className={`border-t border-dashed ${cfg.border} px-3 pb-3`}
                     >
-                      <div className="pt-2 space-y-2 text-[10px] text-gray-500">
+                      <div className="pt-2 space-y-2 text-[10px] text-gray-500 dark:text-slate-400">
                         <p><i className="fas fa-microchip mr-1 text-primary" /><strong>AI Confidence:</strong> 87% based on 23 correlated signals</p>
                         <p><i className="fas fa-coins mr-1 text-amber-500" /><strong>Financial Impact:</strong> ₹2.4L - ₹5.8L over 24 months</p>
                         <p><i className="fas fa-clock mr-1 text-blue-500" /><strong>Action Window:</strong> Next 14 days for optimal outcome</p>
@@ -279,8 +279,8 @@ export default function AIInsightsAggregator() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center py-8 text-gray-400">
-          <i className="fas fa-check-circle text-3xl text-green-300 mb-2" />
+        <div className="text-center py-8 text-gray-400 dark:text-slate-500">
+          <i className="fas fa-check-circle text-3xl text-green-300 dark:text-green-600 mb-2" />
           <p className="text-sm font-medium">{t('aiInsightsEmptyTitle')}</p>
           <p className="text-[11px]">{t('aiInsightsEmptySubtitle')}</p>
         </div>

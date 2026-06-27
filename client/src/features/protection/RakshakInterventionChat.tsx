@@ -5,6 +5,7 @@ import { useWealthStore } from '@/shared/store/wealthStore';
 import { useFamilySafeWord } from '@/shared/hooks/useFamilySafeWord';
 import { useRakshakStore } from '@/shared/store/rakshakStore';
 import { logEmergencyLockdown } from '@/shared/utils/auditLogger';
+import MoneyMuleGraph from '@/features/protection/components/MoneyMuleGraph';
 
 const HELPLINE_NUMBER = '1800-110-001';
 
@@ -235,6 +236,14 @@ export default function RakshakInterventionChat() {
                   </div>
                 </div>
               </div>
+
+              {/* Money Mule Network Graph */}
+              {score > 80 && !isTyping && (
+                <MoneyMuleGraph
+                  beneficiaryId={String(rakshakData?.pendingTransaction?.beneficiaryName || rakshakData?.pendingTransaction?.name || 'unknown-beneficiary')}
+                  beneficiaryName={String(rakshakData?.pendingTransaction?.beneficiaryName || rakshakData?.pendingTransaction?.name || 'Unknown Beneficiary')}
+                />
+              )}
 
               {/* Deepfake Voice Liveness Challenge */}
               {score >= 80 && !isTyping && (

@@ -97,16 +97,16 @@ export default function FinancialDNAHelix() {
       <div className="card-psb overflow-hidden" ref={containerRef}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <i className="fas fa-dna text-primary" aria-hidden="true" /> {t('financialDnaTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">{t('financialDnaSubtitle')}</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">{t('financialDnaSubtitle')}</p>
           </div>
           <div className="flex gap-2">
             <div className="px-2.5 py-1 bg-primary/10 rounded-full text-[10px] font-bold text-primary">
               {t('financialDnaGen')}
             </div>
-            <div className="px-2.5 py-1 bg-amber-50 rounded-full text-[10px] font-bold text-amber-700">
+            <div className="px-2.5 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-full text-[10px] font-bold text-amber-700 dark:text-amber-300">
               {t('financialDnaAvg')}: {avgScore}%
             </div>
           </div>
@@ -121,7 +121,7 @@ export default function FinancialDNAHelix() {
               className={`px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
                 activeCategory === cat.key
                   ? 'bg-primary text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200'
               }`}
             >
               {cat.label} ({cat.count})
@@ -131,7 +131,7 @@ export default function FinancialDNAHelix() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Helix Visualization */}
-          <div className="relative h-[340px] bg-gradient-to-b from-gray-50 to-white rounded-xl border border-gray-100 overflow-hidden flex items-center justify-center">
+          <div className="relative h-[340px] bg-gradient-to-b from-gray-50 to-white rounded-xl border border-gray-100 dark:border-slate-700 overflow-hidden flex items-center justify-center">
             <div className="absolute inset-0 flex items-center justify-center">
               <svg viewBox="-100 0 200 320" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
                 {Array.from({ length: 40 }).map((_, i) => {
@@ -178,12 +178,12 @@ export default function FinancialDNAHelix() {
                 })}
               </svg>
             </div>
-            <div className="absolute bottom-3 left-3 right-3 flex justify-between text-[10px] text-gray-400">
+            <div className="absolute bottom-3 left-3 right-3 flex justify-between text-[10px] text-gray-400 dark:text-slate-500">
               <span>{t('financialDnaGenotype')}</span>
               <span>{t('financialDnaUpdated')}</span>
             </div>
-            <div className="absolute top-3 right-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-100">
-              <p className="text-[10px] text-gray-500">{t('financialDnaUniqueness')}</p>
+            <div className="absolute top-3 right-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-100 dark:border-slate-700">
+              <p className="text-[10px] text-gray-500 dark:text-slate-400">{t('financialDnaUniqueness')}</p>
               <p className="text-sm font-extrabold text-primary">94.2%</p>
             </div>
           </div>
@@ -209,14 +209,14 @@ export default function FinancialDNAHelix() {
                       style={{ backgroundColor: trait.color }}
                       aria-hidden="true"
                     />
-                    <span className="text-[11px] font-semibold text-gray-700">{trait.trait}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 capitalize">{trait.category}</span>
+                    <span className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">{trait.trait}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 capitalize">{trait.category}</span>
                   </div>
                   <span className="text-[11px] font-bold" style={{ color: trait.color }}>
                     {trait.value}%
                   </span>
                 </div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
                     style={{ backgroundColor: trait.color }}
@@ -229,7 +229,7 @@ export default function FinancialDNAHelix() {
                   <motion.p
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="text-[10px] text-gray-500 mt-1 leading-relaxed"
+                    className="text-[10px] text-gray-500 dark:text-slate-400 mt-1 leading-relaxed"
                   >
                     {trait.description}
                   </motion.p>
@@ -244,14 +244,14 @@ export default function FinancialDNAHelix() {
       <div className="card-psb">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-fingerprint text-violet-600" aria-hidden="true" /> {t('financialDnaBiometricTitle')}
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <i className="fas fa-fingerprint text-violet-600 dark:text-violet-300" aria-hidden="true" /> {t('financialDnaBiometricTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('financialDnaBiometricSubtitle')}
             </p>
           </div>
-          <div className="px-2.5 py-1 bg-violet-50 rounded-full text-[10px] font-bold text-violet-700">
+          <div className="px-2.5 py-1 bg-violet-50 dark:bg-violet-900/20 rounded-full text-[10px] font-bold text-violet-700 dark:text-violet-300">
             {t('financialDnaContinuousAuth')}
           </div>
         </div>
@@ -263,19 +263,19 @@ export default function FinancialDNAHelix() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ delay: idx * 0.08 }}
-              className="p-3 rounded-xl border border-gray-100 hover:border-violet-200 hover:shadow-sm transition-all group"
+              className="p-3 rounded-xl border border-gray-100 dark:border-slate-700 hover:border-violet-200 hover:shadow-sm transition-all group"
             >
               <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-9 h-9 bg-violet-50 rounded-lg flex items-center justify-center group-hover:bg-violet-100 transition-colors">
-                  <i className={`fas ${bio.icon} text-violet-600 text-xs`} aria-hidden="true" />
+                <div className="w-9 h-9 bg-violet-50 dark:bg-violet-900/20 rounded-lg flex items-center justify-center group-hover:bg-violet-100 transition-colors">
+                  <i className={`fas ${bio.icon} text-violet-600 dark:text-violet-300 text-xs`} aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-bold text-gray-800">{bio.name}</p>
-                  <p className="text-[10px] text-gray-500">{bio.desc}</p>
+                  <p className="text-[11px] font-bold text-gray-800 dark:text-slate-200">{bio.name}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-slate-400">{bio.desc}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full rounded-full bg-violet-500"
                     initial={{ width: 0 }}
@@ -283,7 +283,7 @@ export default function FinancialDNAHelix() {
                     transition={{ delay: idx * 0.1 + 0.4, duration: 0.8 }}
                   />
                 </div>
-                <span className="text-[11px] font-bold text-violet-600">{bio.value}</span>
+                <span className="text-[11px] font-bold text-violet-600 dark:text-violet-300">{bio.value}</span>
               </div>
             </motion.div>
           ))}
@@ -294,10 +294,10 @@ export default function FinancialDNAHelix() {
       <div className="card-psb">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <i className="fas fa-brain text-rose-500" aria-hidden="true" /> {t('financialDnaCognitiveTitle')}
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               {t('financialDnaCognitiveSubtitle')}
             </p>
           </div>
@@ -310,15 +310,15 @@ export default function FinancialDNAHelix() {
               initial={{ opacity: 0, y: 12 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: idx * 0.07 }}
-              className="p-3 rounded-xl border border-gray-100 hover:shadow-sm transition-all"
+              className="p-3 rounded-xl border border-gray-100 dark:border-slate-700 hover:shadow-sm transition-all"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-gray-700">{pat.label}</span>
-                <span className={`text-[11px] font-extrabold ${pat.score >= 70 ? 'text-green-600' : pat.score >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>
+                <span className="text-[11px] font-bold text-gray-700 dark:text-slate-300">{pat.label}</span>
+                <span className={`text-[11px] font-extrabold ${pat.score >= 70 ? 'text-green-600 dark:text-green-300' : pat.score >= 50 ? 'text-amber-600 dark:text-amber-300' : 'text-rose-600 dark:text-rose-300'}`}>
                   {pat.score}
                 </span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+              <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
                 <motion.div
                   className={`h-full rounded-full ${pat.score >= 70 ? 'bg-green-500' : pat.score >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
                   initial={{ width: 0 }}
@@ -326,7 +326,7 @@ export default function FinancialDNAHelix() {
                   transition={{ delay: idx * 0.1 + 0.3, duration: 0.7 }}
                 />
               </div>
-              <p className="text-[10px] text-gray-500 leading-relaxed">{pat.detail}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 leading-relaxed">{pat.detail}</p>
             </motion.div>
           ))}
         </div>
@@ -340,28 +340,28 @@ export default function FinancialDNAHelix() {
               <i className="fas fa-fingerprint text-primary text-lg" aria-hidden="true" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-gray-800">{t('financialDnaUniquenessTitle')}</p>
-              <p className="text-[11px] text-gray-500">{t('financialDnaUniquenessDesc')}</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-slate-200">{t('financialDnaUniquenessTitle')}</p>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">{t('financialDnaUniquenessDesc')}</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-extrabold text-primary">94.2</p>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide">{t('financialDnaPercentile')}</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('financialDnaPercentile')}</p>
             </div>
           </div>
         </div>
 
-        <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100">
+        <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100 dark:border-violet-800">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
-              <i className="fas fa-shield-halved text-violet-600 text-lg" aria-hidden="true" />
+            <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/30 rounded-full flex items-center justify-center">
+              <i className="fas fa-shield-halved text-violet-600 dark:text-violet-300 text-lg" aria-hidden="true" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-gray-800">{t('financialDnaAuthTitle')}</p>
-              <p className="text-[11px] text-gray-500">{t('financialDnaAuthDesc')}</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-slate-200">{t('financialDnaAuthTitle')}</p>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">{t('financialDnaAuthDesc')}</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-extrabold text-violet-600">99.7%</p>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide">{t('financialDnaAccuracy')}</p>
+              <p className="text-2xl font-extrabold text-violet-600 dark:text-violet-300">99.7%</p>
+              <p className="text-[10px] text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('financialDnaAccuracy')}</p>
             </div>
           </div>
         </div>

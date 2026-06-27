@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { AA_BANKS } from '@/shared/data/aaBanks';
 import { backendApi } from '@/shared/lib/backendApi';
+import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
 
 export default function AccountAggregatorWidget() {
   const assets = useWealthStore((s) => s.assets);
@@ -59,6 +60,7 @@ export default function AccountAggregatorWidget() {
           {linkedCount} Linked
         </span>
       </div>
+      <RegulatoryDisclaimer compact className="mb-4" />
 
       <div className="space-y-2">
         {AA_BANKS.map((bank) => {

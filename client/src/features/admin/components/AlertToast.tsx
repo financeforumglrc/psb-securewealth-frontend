@@ -66,7 +66,7 @@ export default function AlertToast() {
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className={`fixed top-4 right-4 z-[9999] max-w-sm w-full ${cfg.bg} ${cfg.border} border rounded-xl shadow-lg ${cfg.glow} pointer-events-auto`}>
+              className={`fixed top-2 left-2 right-2 sm:top-4 sm:right-4 sm:left-auto z-[9999] sm:max-w-sm w-full ${cfg.bg} ${cfg.border} border rounded-xl shadow-lg ${cfg.glow} pointer-events-auto`}>
               <div className="flex items-start gap-3 p-4">
                 <div className={`w-8 h-8 rounded-lg ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0`}>
                   <Icon className={`w-4 h-4 ${cfg.color}`} />

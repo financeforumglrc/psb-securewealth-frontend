@@ -1,0 +1,82 @@
+/*
+ * Mobile-first polish for PSB SecureWealth.
+ * Applied globally; uses @media to keep desktop untouched.
+ */
+
+/* Prevent horizontal overflow and respect safe areas */
+html, body, #root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.recharts-wrapper, .leaflet-container {
+  max-width: 100% !important;
+}
+
+/* Keep input text readable on iOS without auto-zoom */
+@media (max-width: 768px) {
+  input, select, textarea, button {
+    font-size: 16px !important;
+  }
+
+  /* Minimum 44px tap targets and remove 300ms touch delay */
+  button, a, [role="button"], input[type="checkbox"], input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  input, select, textarea, summary {
+    touch-action: manipulation;
+  }
+
+  /* Tables become horizontal scroll instead of overflowing */
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Cards and containers: keep padding sane */
+  .card, [class*="card"] {
+    padding: 0.75rem;
+  }
+
+  /* Reduce giant headings on small screens */
+  h1 { font-size: 1.25rem !important; }
+  h2 { font-size: 1.125rem !important; }
+  h3 { font-size: 1rem !important; }
+
+  /* Toast notifications: edge-to-edge with safe gaps */
+  [class*="fixed top-4 right-4"],
+  [class*="fixed top-2 right-2"] {
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    max-width: none !important;
+    width: auto !important;
+  }
+
+  /* Leaflet touch tweaks */
+  .leaflet-control-zoom {
+    margin-bottom: 60px !important;
+  }
+  .leaflet-popup-content-wrapper,
+  .leaflet-tooltip {
+    max-width: 220px;
+    font-size: 11px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 380px) {
+  html { font-size: 14px; }
+}
+
+/* Utility: hide scrollbars while keeping scroll */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

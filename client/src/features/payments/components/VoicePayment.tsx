@@ -11,6 +11,7 @@ export default function VoicePayment({ onPay }: Props) {
   const [parsed, setParsed] = useState<{ amount?: number; payee?: string } | null>(null);
   const [error, setError] = useState('');
   const recognitionRef = useRef<any>(null);
+  const lastResultRef = useRef('');
 
   const startListening = useCallback(() => {
     setTranscript('');
@@ -41,11 +42,12 @@ export default function VoicePayment({ onPay }: Props) {
       const text = Array.from(e.results)
         .map((r: any) => r[0].transcript)
         .join('');
+      lastResultRef.current = text;
       setTranscript(text);
     };
     rec.onend = () => {
       setIsListening(false);
-      parseCommand(transcript || recognitionRef.current?.lastResult || '');
+      parseCommand(lastResultRef.current || transcript || '');
     };
     rec.onerror = () => {
       setIsListening(false);
@@ -54,18 +56,76 @@ export default function VoicePayment({ onPay }: Props) {
     rec.start();
   }, [transcript]);
 
+  const numberWords: Record<string, number> = {
+    zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+    eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+    twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+    hundred: 100, thousand: 1000, lakh: 100000, crores: 10000000, crore: 10000000,
+  };
+
+  const wordsToNumber = (text: string): number | null => {
+    const lower = text.toLowerCase().replace(/,/g, '');
+    // First try digit match
+    const digitMatch = lower.match(/(\d[\d,]*)/);
+    if (digitMatch) return parseInt(digitMatch[1].replace(/,/g, ''), 10);
+
+    // Try simple combined word forms like five hundred, two thousand five hundred
+    const tokens = lower.split(/\s+/).filter(Boolean);
+    let total = 0;
+    let current = 0;
+    let lastValue = 0;
+    for (const raw of tokens) {
+      const token = raw.replace(/[^a-z]/g, '');
+      const val = numberWords[token];
+      if (val === undefined) continue;
+      if (val === 100 && lastValue > 0) {
+        current = current - lastValue + lastValue * 100;
+        lastValue *= 100;
+      } else if (val >= 1000) {
+        current = (current === 0 ? 1 : current) * val;
+        total += current;
+        current = 0;
+        lastValue = val;
+      } else {
+        current += val;
+        lastValue = val;
+      }
+    }
+    total += current;
+    return total > 0 ? total : null;
+  };
+
   const parseCommand = (text: string) => {
     const lower = text.toLowerCase();
-    const amountMatch = lower.match(/(?:pay|send|transfer)\s*(?:rs\.?|rupees?|₹)?\s*(\d+)/);
-    const amount = amountMatch ? parseInt(amountMatch[1]) : undefined;
+    if (!lower.match(/(?:pay|send|transfer)/)) {
+      setError('Say: "Pay 500 to Mrigesh"');
+      return;
+    }
 
-    const payeeMatch = lower.match(/(?:to|for)\s+([a-z]+)/i);
-    const payee = payeeMatch ? payeeMatch[1].charAt(0).toUpperCase() + payeeMatch[1].slice(1) : undefined;
+    const amount = wordsToNumber(text) ?? undefined;
+
+    // Payee can be any words after to/for/2/until end
+    const payeeMatch = lower.match(/(?:\bto\b|\bfor\b|\b2\b)\s+(.+?)(?:\s+(?:via|using|from|at|on)\s+|$)/i);
+    let payee = payeeMatch ? payeeMatch[1].trim() : undefined;
+    if (!payee) {
+      // fallback: last word sequence after "to" if any
+      const fallback = lower.match(/(?:\bto\b|\bfor\b)\s+(.+)$/i);
+      payee = fallback ? fallback[1].trim() : undefined;
+    }
+    // Clean trailing punctuation
+    payee = payee ? payee.replace(/[.,!?]$/, '') : undefined;
+    // Title case each word
+    payee = payee
+      ? payee.split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      : undefined;
 
     if (amount && payee) {
       setParsed({ amount, payee });
+      setError('');
+    } else if (!amount) {
+      setError('Could not understand the amount. Try "Pay 500 to Mrigesh".');
     } else {
-      setError('Say: "Pay 500 to Mrigesh"');
+      setError('Could not understand the name. Try "Pay 500 to Mrigesh".');
     }
   };
 
