@@ -1,8 +1,15 @@
+# PSB SecureWealth — Render Blueprint
+# This blueprint creates/updates two services:
+#   1. psb-securewealth-backend  (Node + SQLite backend, also serves the built SPA)
+#   2. psb-securewealth-frontend (static Vite SPA)
+#
+# To apply: Render Dashboard → Blueprints → New Blueprint Instance → select this repo.
+
 services:
   - type: web
-    name: psb-securewealth
+    name: psb-securewealth-backend
     runtime: docker
-    repo: https://github.com/your-org/psb-securewealth.git
+    repo: https://github.com/financeforumglrc/psb-securewealth-frontend.git
     plan: standard
     region: singapore
     branch: main
@@ -37,3 +44,18 @@ services:
       - key: SMTP_PASS
         sync: false
     healthCheckPath: /api/v1/health
+
+  - type: static
+    name: psb-securewealth-frontend
+    runtime: static
+    repo: https://github.com/financeforumglrc/psb-securewealth-frontend.git
+    branch: main
+    buildCommand: cd client && npm ci && npm run build
+    staticPublishPath: ./client/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_BACKEND_URL
+        value: https://psb-securewealth-backend.onrender.com/api/v1
