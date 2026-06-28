@@ -241,6 +241,37 @@ export default function MSMEcreditbridgeView() {
         </div>
       </motion.div>
 
+      <CosmosCard variant="elevated" header={{ title: 'Why MSME CreditBridge AI Wins', icon: 'fa-trophy' }}>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">The Problem</p>
+            <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200">
+              <li className="flex items-start gap-2"><i className="fas fa-circle-exclamation text-red-500 mt-1 text-xs" /> ₹15.7 lakh Cr market, yet $300B credit demand unmet</li>
+              <li className="flex items-start gap-2"><i className="fas fa-circle-exclamation text-red-500 mt-1 text-xs" /> 85% rejected for vague “generic risk” reasons</li>
+              <li className="flex items-start gap-2"><i className="fas fa-circle-exclamation text-red-500 mt-1 text-xs" /> 62% women-led &amp; 71% rural MSMEs left out</li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">How We Support MSMEs</p>
+            <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200">
+              <li className="flex items-start gap-2"><i className="fas fa-shield-halved text-emerald-500 mt-1 text-xs" /> Collateral-free loans via CGTMSE guarantee</li>
+              <li className="flex items-start gap-2"><i className="fas fa-brain text-primary mt-1 text-xs" /> 0–1000 score from GST, cash-flow, UPI &amp; digital data</li>
+              <li className="flex items-start gap-2"><i className="fas fa-eye text-primary mt-1 text-xs" /> Explainable AI — every rejection tells the real reason</li>
+              <li className="flex items-start gap-2"><i className="fas fa-bolt text-amber-500 mt-1 text-xs" /> Disbursement within 48 hours of offer acceptance</li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">Why We Win</p>
+            <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200">
+              <li className="flex items-start gap-2"><i className="fas fa-book-open text-indigo-500 mt-1 text-xs" /> Backed by INFINITY 2025 published research</li>
+              <li className="flex items-start gap-2"><i className="fas fa-award text-indigo-500 mt-1 text-xs" /> NMIMS Abhirva 3.0 finalist</li>
+              <li className="flex items-start gap-2"><i className="fas fa-scale-balanced text-indigo-500 mt-1 text-xs" /> Gender &amp; geography-agnostic bias audits</li>
+              <li className="flex items-start gap-2"><i className="fas fa-landmark text-indigo-500 mt-1 text-xs" /> RBI Account Aggregator &amp; UPI-ready consent stack</li>
+            </ul>
+          </div>
+        </div>
+      </CosmosCard>
+
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setTab('apply')}
