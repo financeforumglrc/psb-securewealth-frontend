@@ -425,14 +425,35 @@ export const useWealthStore = create<WealthState>()(
       loadFromBackend: async () => {
         set({ isLoading: true });
         try {
-          const { ok, data } = await backendApi.getDashboard();
-          if (!ok || !data?.data) return;
-          const d = data.data;
+          const [{ ok: dashOk, data: dashData }, { ok: txOk, data: txData }] = await Promise.all([
+            backendApi.getDashboard(),
+            backendApi.getTransactions({ limit: 100 }),
+          ]);
+          if (!dashOk || !dashData?.data) return;
+          const d = dashData.data;
           const current = get();
+
+          const mapTransaction = (t: any): Transaction => ({
+            id: String(t.id),
+            date: t.created_at ? t.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+            description: t.description,
+            category: t.type,
+            amount: t.amount,
+            type: t.type,
+            status: t.riskLevel === 'HIGH' ? 'BLOCKED' : (t.status?.toUpperCase() || 'ALLOWED'),
+            riskLevel: t.riskLevel || 'LOW',
+            score: t.riskLevel === 'HIGH' ? 85 : undefined,
+            signals: t.riskLevel === 'HIGH' ? { newDevice: true, rushedAction: true, unusualAmount: true, otpRetries: false, firstTimeInvest: false, abnormalBehavior: true } : undefined,
+          });
+
+          const txns = txOk && txData?.data
+            ? txData.data.map(mapTransaction)
+            : d.recentTransactions?.map(mapTransaction) || current.transactions;
+
           set({
             assets: d.assets?.map((a: any) => ({ id: String(a.id), name: a.name, type: a.asset_type, value: a.value, liquidity: a.liquidity, returns: a.returns })) || current.assets,
             goals: d.goals?.map((g: any) => ({ id: String(g.id), name: g.name, type: g.goal_type, targetAmount: g.target_amount, currentAmount: g.current_amount, deadline: g.deadline })) || current.goals,
-            transactions: d.recentTransactions?.map((t: any) => ({ id: String(t.id), date: t.created_at?.split(' ')[0] || new Date().toISOString().split('T')[0], description: t.description, category: t.type, amount: t.amount, type: t.type, status: t.status?.toUpperCase() || 'ALLOWED', riskLevel: 'LOW' })) || current.transactions,
+            transactions: txns,
             bills: d.bills?.map((b: any) => ({ id: String(b.id), name: b.name, category: b.category, amount: b.amount, dueDay: b.due_date ? parseInt(b.due_date.split('-')[2]) : 1, icon: 'fa-file-invoice', color: 'bg-primary', status: b.status, isRecurring: !!b.is_recurring, frequency: b.frequency || 'monthly' })) || current.bills,
           });
         } catch { /* backend optional */ }

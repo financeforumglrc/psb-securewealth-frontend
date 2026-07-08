@@ -270,6 +270,70 @@ router.post('/login', authLimiter, async (req, res) => {
  * @desc    Refresh access token
  * @access  Public (with refresh token)
  */
+/**
+ * @route   POST /api/v1/auth/demo-login
+ * @desc    Login as a curated demo persona (synthetic data)
+ * @access  Public
+ */
+router.post('/demo-login', authLimiter, async (req, res) => {
+    try {
+        const { email, name } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Email is required', code: 'FIELDS_MISSING' });
+        }
+
+        let user = userDb.findByEmail(email);
+        if (!user) {
+            // Auto-create the demo persona if it does not exist (defensive fallback)
+            const bcrypt = require('bcryptjs');
+            user = {
+                id: require('crypto').randomUUID(),
+                email,
+                password: bcrypt.hashSync('SecureWealth@123', 12),
+                name: name || email.split('@')[0],
+                role: 'user',
+                tier: 'premium'
+            };
+            userDb.create(user);
+            user = userDb.findByEmail(email);
+        }
+
+        userDb.updateLastLogin(user.id);
+
+        const accessToken = jwt.sign(
+            { id: user.id, email: user.email, role: user.role, tier: user.tier },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRE || '7d' }
+        );
+
+        const refreshToken = jwt.sign(
+            { id: user.id, type: 'refresh' },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_REFRESH_EXPIRE || '30d' }
+        );
+
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+        sessionDb.create({
+            userId: user.id,
+            refreshToken: refreshToken,
+            expiresAt: expiresAt.toISOString()
+        });
+
+        res.json({
+            success: true,
+            message: 'Demo login successful',
+            data: {
+                user: { id: user.id, email: user.email, name: user.name, role: user.role, tier: user.tier },
+                tokens: { accessToken, refreshToken, expiresIn: '7d' }
+            }
+        });
+    } catch (error) {
+        console.error('Demo login error:', error);
+        res.status(500).json({ success: false, error: 'Demo login failed', code: 'DEMO_LOGIN_ERROR' });
+    }
+});
+
 router.post('/refresh', refreshLimiter, (req, res) => {
     try {
         const { refreshToken } = req.body;

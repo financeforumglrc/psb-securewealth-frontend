@@ -10,6 +10,28 @@ const API_BASE = import.meta.env.VITE_BACKEND_URL || 'https://psb-securewealth-b
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 500;
 
+let authToken: string | null = null;
+
+function setAuthToken(token: string | null) {
+  authToken = token;
+  if (typeof localStorage !== 'undefined') {
+    if (token) localStorage.setItem('sw-auth-token', token);
+    else localStorage.removeItem('sw-auth-token');
+  }
+}
+
+function getAuthToken(): string | null {
+  if (authToken) return authToken;
+  if (typeof localStorage !== 'undefined') {
+    return localStorage.getItem('sw-auth-token') || null;
+  }
+  return null;
+}
+
+function clearAuthToken() {
+  setAuthToken(null);
+}
+
 function getHeaders(path: string = ''): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -18,9 +40,13 @@ function getHeaders(path: string = ''): Record<string, string> {
   if (visitorId) {
     headers['X-Device-Id'] = visitorId;
   }
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   if ((path.startsWith('/admin') || path.startsWith('/fraud')) && typeof sessionStorage !== 'undefined') {
-    const token = sessionStorage.getItem('sw-admin-token');
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const adminToken = sessionStorage.getItem('sw-admin-token');
+    if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
   }
   return headers;
 }
@@ -59,6 +85,11 @@ async function fetchJson(path: string, options?: RequestInit & { timeoutMs?: num
 export const backendApi = {
   // Low-level fetch helper
   fetchJson,
+
+  // Auth token management (demo login + backend sessions)
+  setAuthToken,
+  clearAuthToken,
+  getAuthToken,
 
   // Health check to warm up the Render backend
   async health() {

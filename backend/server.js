@@ -40,6 +40,7 @@ const businessRoutes = require('./routes/business');
 const kycRoutes = require('./routes/kyc');
 const msmeRoutes = require('./routes/msme');
 const { seedAll } = require('./scripts/seedDemoData');
+const { seedComprehensiveDemo } = require('./scripts/seedComprehensiveDemo');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -384,6 +385,7 @@ if (require.main === module) {
     }, 24 * 60 * 60 * 1000);
 
     seedAll()
+        .then(() => seedComprehensiveDemo())
         .then(() => {
             httpServer.listen(PORT, () => {
                 logger.info(`DS Financial API Server running on port ${PORT}`);

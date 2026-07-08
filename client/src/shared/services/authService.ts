@@ -45,6 +45,8 @@ export function setAuthState(state: Partial<AuthState>) {
 export function clearAuth() {
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem(DEVICE_KEY);
+  localStorage.removeItem('sw-auth-token');
+  localStorage.removeItem('sw-demo-user');
 }
 
 export function isDeviceTrusted(): boolean {

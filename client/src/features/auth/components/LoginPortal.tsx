@@ -215,10 +215,39 @@ export default function LoginPortal() {
 
   const handleDemoLogin = async (account: (typeof DEMO_ACCOUNTS)[0]) => {
     setError(null);
-    // Demo login uses local data instantly so the UI never hangs on a cold backend.
+    dispatch({ type: 'SET_LOADING', payload: true });
+
+    try {
+      // Try backend-first demo login so the seeded synthetic data is used.
+      const { ok, data } = await backendApi.demoLogin({ email: account.email, name: account.profile.name });
+      if (ok && data?.data?.tokens?.accessToken) {
+        backendApi.setAuthToken(data.data.tokens.accessToken);
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('sw-demo-user', JSON.stringify(data.data.user));
+        }
+        dispatch({ type: 'LOGIN', userId: data.data.user.id, userEmail: data.data.user.email });
+
+        // Hydrate the wealth twin from backend (accounts, goals, assets, transactions).
+        const store = useWealthStore.getState();
+        store.updateUser({
+          name: data.data.user.name,
+          monthlyIncome: account.profile.monthlyIncome,
+          monthlyExpenses: account.profile.monthlyExpenses,
+          monthlySavings: account.profile.monthlySavings,
+          riskProfile: account.profile.riskProfile,
+          taxBracket: account.profile.taxBracket,
+        });
+        await store.loadFromBackend();
+        return;
+      }
+    } catch (err) {
+      console.warn('Backend demo login failed, falling back to local data:', err);
+    }
+
+    // Fallback: local data instantly so the UI never hangs on a cold backend.
+    backendApi.clearAuthToken();
     applyDemoAccount(account);
-    // Ping the backend in the background to wake Render up for later API calls.
-    backendApi.demoLogin({ email: account.email, name: account.profile.name }).catch(() => {});
+    dispatch({ type: 'SET_LOADING', payload: false });
   };
 
   const handlePasskeySignIn = async () => {
