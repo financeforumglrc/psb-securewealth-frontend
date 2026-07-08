@@ -239,8 +239,9 @@ export default function LoginPortal() {
         });
         // Fetch backend data in the background so the AA demo animation can start immediately.
         void store.loadFromBackend();
-        // Skip the risk/goals onboarding wizard, but keep the Account Aggregator fetch animation.
+        // Skip the risk/goals onboarding wizard, but show the Account Aggregator fetch animation.
         store.setOnboardingComplete(true);
+        store.setAAFetchComplete(false);
         dispatch({ type: 'SET_LOADING', payload: false });
         return;
       }
@@ -253,6 +254,7 @@ export default function LoginPortal() {
     applyDemoAccount(account);
     const store = useWealthStore.getState();
     store.setOnboardingComplete(true);
+    store.setAAFetchComplete(false);
     dispatch({ type: 'SET_LOADING', payload: false });
   };
 
