@@ -238,6 +238,8 @@ export default function LoginPortal() {
           taxBracket: account.profile.taxBracket,
         });
         await store.loadFromBackend();
+        store.setOnboardingComplete(true);
+        store.setAAFetchComplete(true);
         return;
       }
     } catch (err) {
@@ -247,6 +249,8 @@ export default function LoginPortal() {
     // Fallback: local data instantly so the UI never hangs on a cold backend.
     backendApi.clearAuthToken();
     applyDemoAccount(account);
+    useWealthStore.getState().setOnboardingComplete(true);
+    useWealthStore.getState().setAAFetchComplete(true);
     dispatch({ type: 'SET_LOADING', payload: false });
   };
 

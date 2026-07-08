@@ -515,6 +515,8 @@ export const useWealthStore = create<WealthState>()(
         msmeScores: state.msmeScores,
         msmeOffers: state.msmeOffers,
         msmeAdminStats: state.msmeAdminStats,
+        onboardingComplete: state.onboardingComplete,
+        aaFetchComplete: state.aaFetchComplete,
       }),
     }
   )
