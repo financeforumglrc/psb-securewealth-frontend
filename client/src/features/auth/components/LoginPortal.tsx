@@ -237,9 +237,11 @@ export default function LoginPortal() {
           riskProfile: account.profile.riskProfile,
           taxBracket: account.profile.taxBracket,
         });
-        await store.loadFromBackend();
+        // Fetch backend data in the background so the AA demo animation can start immediately.
+        void store.loadFromBackend();
+        // Skip the risk/goals onboarding wizard, but keep the Account Aggregator fetch animation.
         store.setOnboardingComplete(true);
-        store.setAAFetchComplete(true);
+        dispatch({ type: 'SET_LOADING', payload: false });
         return;
       }
     } catch (err) {
@@ -249,8 +251,8 @@ export default function LoginPortal() {
     // Fallback: local data instantly so the UI never hangs on a cold backend.
     backendApi.clearAuthToken();
     applyDemoAccount(account);
-    useWealthStore.getState().setOnboardingComplete(true);
-    useWealthStore.getState().setAAFetchComplete(true);
+    const store = useWealthStore.getState();
+    store.setOnboardingComplete(true);
     dispatch({ type: 'SET_LOADING', payload: false });
   };
 
