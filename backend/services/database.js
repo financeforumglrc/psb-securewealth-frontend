@@ -8,7 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const { maskEmail, maskPhone, maskPan, maskAadhaar } = require('../lib/pii');
 
-const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '..', 'data', 'ds_financial.db');
+const dbPath = process.env.DATABASE_PATH || process.env.DB_PATH || path.join(__dirname, '..', 'data', 'ds_financial.db');
 const dbDir = path.dirname(dbPath);
 
 if (!fs.existsSync(dbDir)) {
