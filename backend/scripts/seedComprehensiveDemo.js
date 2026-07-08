@@ -18,8 +18,37 @@ const {
   generateAuditLogs,
   generateFraudEvents,
 } = require('../seeds/syntheticPersonas');
+const { ingestAllRealData, linkAssetToInstrument } = require('../services/dataIngestion');
 
 const FORCE = process.env.FORCE_COMPREHENSIVE_SEED === '1' || process.env.FORCE_SEED === '1';
+
+// Map synthetic asset names to real market instrument symbols.
+function resolveAssetSymbol(name, assetType) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('nifty')) return '^NSEI';
+  if (n.includes('reliance')) return 'RELIANCE.NS';
+  if (n.includes('tcs')) return 'TCS.NS';
+  if (n.includes('infosys') || n.includes('infy')) return 'INFY.NS';
+  if (n.includes('hdfc bank')) return 'HDFCBANK.NS';
+  if (n.includes('icici')) return 'ICICIBANK.NS';
+  if (n.includes('sbi')) return 'SBIN.NS';
+  if (n.includes('unilever') || n.includes('hul')) return 'HINDUNILVR.NS';
+  if (n.includes('itc')) return 'ITC.NS';
+  if (n.includes('l&t') || n.includes('larsen')) return 'LT.NS';
+  if (n.includes('bharti') || n.includes('airtel')) return 'BHARTIARTL.NS';
+  if (n.includes('kotak')) return 'KOTAKBANK.NS';
+  if (n.includes('axis')) return 'AXISBANK.NS';
+  if (n.includes('bajaj finance')) return 'BAJFINANCE.NS';
+  if (n.includes('maruti')) return 'MARUTI.NS';
+  if (n.includes('tata motors')) return 'TATAMOTORS.NS';
+  if (n.includes('sun pharma')) return 'SUNPHARMA.NS';
+  if (n.includes('dr reddy')) return 'DRREDDY.NS';
+  if (assetType === 'gold' || n.includes('gold') || n.includes('sgb')) return 'GC=F';
+  if (assetType === 'mutualFund' && n.includes('bluechip')) return '^NSEI';
+  if (assetType === 'mutualFund' && n.includes('small cap')) return '^NSEI';
+  if (assetType === 'stock') return '^NSEI';
+  return null;
+}
 
 async function clearPersonaData() {
   console.log('[seedComprehensiveDemo] clearing existing persona data...');
@@ -56,6 +85,114 @@ async function clearPersonaData() {
   console.log(`[seedComprehensiveDemo] cleared ${idsToDelete.length} persona records.`);
 }
 
+function seedSinglePersona(persona, hashedPassword) {
+  // 1. User
+  userDb.create({
+    id: persona.id,
+    email: persona.email,
+    password: hashedPassword,
+    name: persona.name,
+    phone: persona.phone,
+    role: persona.role,
+    tier: persona.tier,
+    pan_number: persona.pan,
+    aadhar: persona.aadhar,
+  });
+
+  // 2. Accounts
+  const accounts = generateAccounts(persona);
+  const accountRows = accounts.map(acc => {
+    const result = bankingDb.createAccount({
+      userId: persona.id,
+      accountNumber: acc.accountNumber,
+      type: acc.type,
+      balance: acc.balance,
+      ifsc: acc.ifsc,
+      branch: acc.branch,
+      status: acc.status,
+    });
+    return { ...acc, dbId: result.lastInsertRowid };
+  });
+
+  // 3. Transactions (~60 per user)
+  const txns = generateTransactions(persona, accountRows, 60);
+  txns.forEach((t, idx) => {
+    bankingDb.createTransaction({
+      userId: persona.id,
+      fromAccount: t.fromAccount,
+      toAccount: t.toAccount,
+      type: t.type,
+      amount: t.amount,
+      description: t.description,
+      status: t.status,
+      referenceId: `TXN-${persona.id}-${idx}-${Date.now()}`,
+    });
+  });
+
+  // 4. Goals
+  const goals = generateGoals(persona);
+  goals.forEach(g => {
+    bankingDb.createGoal({
+      userId: persona.id,
+      name: g.name,
+      targetAmount: g.targetAmount,
+      currentAmount: g.currentAmount,
+      deadline: g.deadline,
+      goalType: g.goalType,
+      status: g.status,
+    });
+  });
+
+  // 5. Assets (with real-market linking where possible)
+  const assets = generateAssets(persona);
+  assets.forEach(a => {
+    const result = bankingDb.createAsset({
+      userId: persona.id,
+      name: a.name,
+      assetType: a.assetType,
+      value: a.value,
+      liquidity: a.liquidity,
+      returns: a.returns,
+    });
+    // Link synthetic assets to real instruments for proper market tracking.
+    const symbol = resolveAssetSymbol(a.name, a.assetType);
+    if (symbol) {
+      linkAssetToInstrument(result.lastInsertRowid, symbol, { personaId: persona.id, seededValue: a.value });
+    }
+  });
+
+  // 6. Audit logs
+  const auditLogs = generateAuditLogs(persona, accountRows, txns);
+  auditLogs.forEach(log => {
+    bankingDb.createAuditLog({
+      userId: persona.id,
+      action: log.action,
+      entityType: log.entityType,
+      entityId: log.entityId,
+      newValue: log.newValue,
+      ipAddress: log.ipAddress,
+      userAgent: log.userAgent,
+    });
+  });
+
+  // 7. Fraud events (inserted as audit logs with risky locations)
+  const fraudEvents = generateFraudEvents(persona, txns);
+  fraudEvents.forEach(event => {
+    bankingDb.createAuditLog({
+      userId: persona.id,
+      action: event.action,
+      entityType: event.entityType,
+      entityId: event.entityId,
+      newValue: event.newValue,
+      ipAddress: event.ipAddress,
+      userAgent: event.userAgent,
+    });
+  });
+
+  console.log(`[seedComprehensiveDemo] seeded ${persona.name}: ${accounts.length} accounts, ${txns.length} txns, ${goals.length} goals, ${assets.length} assets, ${auditLogs.length} audit logs, ${fraudEvents.length} fraud events`);
+  return { accounts, txns, goals, assets, auditLogs, fraudEvents };
+}
+
 async function seedComprehensiveDemo() {
   const existingById = db.prepare(`SELECT COUNT(*) as count FROM users WHERE id IN (${PERSONAS.map(() => '?').join(',')})`).all(...PERSONAS.map(p => p.id))[0].count;
   const existingByEmail = db.prepare(`SELECT COUNT(*) as count FROM users WHERE email IN (${PERSONAS.map(() => '?').join(',')})`).all(...PERSONAS.map(p => p.email))[0].count;
@@ -69,110 +206,21 @@ async function seedComprehensiveDemo() {
     await clearPersonaData();
   }
 
+  // Ingest real-world reference data before creating personas so asset linking works.
+  console.log('[seedComprehensiveDemo] ingesting real-world reference data...');
+  try {
+    const dataSummary = await ingestAllRealData();
+    console.log('[seedComprehensiveDemo] real-world data ingestion summary:', JSON.stringify(dataSummary, null, 2));
+  } catch (err) {
+    console.warn('[seedComprehensiveDemo] real-world data ingestion failed (continuing with synthetic data):', err.message);
+  }
+
   console.log('[seedComprehensiveDemo] seeding curated personas...');
   const hashedPassword = await bcrypt.hash(DEMO_PASSWORD, 10);
 
   const insertAll = db.transaction(() => {
     for (const persona of PERSONAS) {
-      // 1. User
-      userDb.create({
-        id: persona.id,
-        email: persona.email,
-        password: hashedPassword,
-        name: persona.name,
-        phone: persona.phone,
-        role: persona.role,
-        tier: persona.tier,
-        pan_number: persona.pan,
-        aadhar: persona.aadhar,
-      });
-
-      // 2. Accounts
-      const accounts = generateAccounts(persona);
-      const accountRows = accounts.map(acc => {
-        const result = bankingDb.createAccount({
-          userId: persona.id,
-          accountNumber: acc.accountNumber,
-          type: acc.type,
-          balance: acc.balance,
-          ifsc: acc.ifsc,
-          branch: acc.branch,
-          status: acc.status,
-        });
-        return { ...acc, dbId: result.lastInsertRowid };
-      });
-
-      // 3. Transactions (~60 per user)
-      const txns = generateTransactions(persona, accountRows, 60);
-      txns.forEach((t, idx) => {
-        bankingDb.createTransaction({
-          userId: persona.id,
-          fromAccount: t.fromAccount,
-          toAccount: t.toAccount,
-          type: t.type,
-          amount: t.amount,
-          description: t.description,
-          status: t.status,
-          referenceId: `TXN-${persona.id}-${idx}-${Date.now()}`,
-        });
-      });
-
-      // 4. Goals
-      const goals = generateGoals(persona);
-      goals.forEach(g => {
-        bankingDb.createGoal({
-          userId: persona.id,
-          name: g.name,
-          targetAmount: g.targetAmount,
-          currentAmount: g.currentAmount,
-          deadline: g.deadline,
-          goalType: g.goalType,
-          status: g.status,
-        });
-      });
-
-      // 5. Assets
-      const assets = generateAssets(persona);
-      assets.forEach(a => {
-        bankingDb.createAsset({
-          userId: persona.id,
-          name: a.name,
-          assetType: a.assetType,
-          value: a.value,
-          liquidity: a.liquidity,
-          returns: a.returns,
-        });
-      });
-
-      // 6. Audit logs
-      const auditLogs = generateAuditLogs(persona, accountRows, txns);
-      auditLogs.forEach(log => {
-        bankingDb.createAuditLog({
-          userId: persona.id,
-          action: log.action,
-          entityType: log.entityType,
-          entityId: log.entityId,
-          newValue: log.newValue,
-          ipAddress: log.ipAddress,
-          userAgent: log.userAgent,
-        });
-      });
-
-      // 7. Fraud events (inserted as audit logs with risky locations)
-      const fraudEvents = generateFraudEvents(persona, txns);
-      fraudEvents.forEach(event => {
-        bankingDb.createAuditLog({
-          userId: persona.id,
-          action: event.action,
-          entityType: event.entityType,
-          entityId: event.entityId,
-          newValue: event.newValue,
-          ipAddress: event.ipAddress,
-          userAgent: event.userAgent,
-        });
-      });
-
-      console.log(`[seedComprehensiveDemo] seeded ${persona.name}: ${accounts.length} accounts, ${txns.length} txns, ${goals.length} goals, ${assets.length} assets, ${auditLogs.length} audit logs, ${fraudEvents.length} fraud events`);
+      seedSinglePersona(persona, hashedPassword);
     }
   });
 
@@ -197,4 +245,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { seedComprehensiveDemo };
+module.exports = { seedComprehensiveDemo, seedSinglePersona };
