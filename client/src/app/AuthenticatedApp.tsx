@@ -70,6 +70,7 @@ const CalculatorsView = lazyWithRetry(() => import('@/features/calculators/compo
 const TransactionsView = lazyWithRetry(() => import('@/features/transactions/components/TransactionsView'));
 const BillCalendar = lazyWithRetry(() => import('@/features/bills/components/BillCalendar'));
 const CreditHealth = lazyWithRetry(() => import('@/features/credit/components/CreditHealth'));
+const CreditBridgeAI = lazyWithRetry(() => import('@/features/credit/components/CreditBridgeAI'));
 const BhavishyaEngine = lazyWithRetry(() => import('@/features/innovation/components/BhavishyaEngine'));
 const InnovationLabView = lazyWithRetry(() => import('@/features/innovation/components/InnovationLabView'));
 const FantasyLeague = lazyWithRetry(() => import('@/features/gamification/components/FantasyLeague'));
@@ -388,6 +389,7 @@ export default function AuthenticatedApp() {
               {currentView === 'architecture' && <SystemArchitecture />}
               {currentView === 'bills' && <BillCalendar />}
               {currentView === 'credit-health' && <CreditHealth />}
+              {currentView === 'creditbridge-ai' && <CreditBridgeAI />}
               {currentView === 'notification-demo' && <NotificationDemo />}
               {currentView === 'digital-gold' && <DigitalGold />}
               {currentView === 'challenges' && <ChallengesView />}

@@ -43,6 +43,7 @@ export const VIEW_TITLES: Record<string, string> = {
   calculators: 'Calculators',
   bills: 'Bill Calendar',
   'credit-health': 'Credit Health',
+  'creditbridge-ai': 'CreditBridge AI',
   'loan-center': 'Loan Center',
   'loans-hub': 'Loans & Credit Hub',
   'loan-research': 'Research & Accountability',
@@ -86,6 +87,7 @@ export const VIEW_DESCRIPTIONS: Record<string, string> = {
   calculators: 'EMI, SIP, FD and goal calculators.',
   bills: 'Never miss a due date with smart reminders.',
   'credit-health': 'CIBIL-style score and improvement tips.',
+  'creditbridge-ai': 'Explainable, bias-audited retail & MSME credit scoring.',
   'loan-center': 'Apply, track and manage loans.',
   'loans-hub': 'One place for all loan and credit products.',
   'loan-research': 'Published research on algorithmic accountability in AI credit scoring.',
@@ -175,6 +177,7 @@ const loanHubGroup: NavGroup = {
   bgClass: 'bg-emerald-50',
   items: [
     { view: 'loans-hub', label: 'Loans Hub', icon: 'fa-hand-holding-dollar', description: 'All loan and credit products in one place.', badge: 'NEW' },
+    { view: 'creditbridge-ai', label: 'CreditBridge AI', icon: 'fa-bridge', description: 'Explainable retail & MSME credit scoring with XAI.', badge: 'FLAGSHIP' },
     { view: 'msme-creditbridge', label: 'MSME CreditBridge AI', icon: 'fa-building-columns', description: 'Collateral-free MSME loans via alternative data & XAI.', badge: 'FLAGSHIP' },
     { view: 'loan-research', label: 'Research & Accountability', icon: 'fa-book-open', description: 'Our INFINITY 2025 published research.', badge: 'PUBLISHED' },
     { view: 'loan-impact', label: 'Impact Simulator', icon: 'fa-chart-pie', description: 'Estimate MSME credit impact on jobs & GDP.' },
