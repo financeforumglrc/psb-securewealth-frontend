@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Check initial session (Supabase first, then backend demo session)
+    // Check initial session (Supabase only; demo sessions are no longer auto-restored)
     supabase.auth.getSession().then(({ data: { session } }) => {
       const passkeyRegistered = hasRegisteredPasskey();
       const passkeyUserId = getPasskeyUser();
@@ -104,31 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Restore backend demo session if present
+      // Stop auto-restoring demo sessions so the login/portal page is always shown first.
+      // Existing stored demo credentials are cleared for a clean slate.
       if (typeof localStorage !== 'undefined') {
-        const demoUserRaw = localStorage.getItem('sw-demo-user');
-        if (demoUserRaw) {
-          try {
-            const demoUser = JSON.parse(demoUserRaw);
-            dispatch({
-              type: 'INIT',
-              state: {
-                isAuthenticated: true,
-                userId: demoUser.id,
-                userEmail: demoUser.email ?? null,
-                lockoutUntil: null,
-                failedAttempts: 0,
-                loading: false,
-                deviceFingerprint: null,
-                passkeyRegistered,
-                passkeyUserId,
-              },
-            });
-            return;
-          } catch {
-            localStorage.removeItem('sw-demo-user');
-          }
-        }
+        localStorage.removeItem('sw-demo-user');
       }
 
       dispatch({
