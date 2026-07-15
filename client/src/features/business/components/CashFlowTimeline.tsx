@@ -8,11 +8,11 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   Legend,
   Cell,
 } from 'recharts';
 import { backendApi } from '@/shared/lib/backendApi';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
 
 interface CashFlowMonth {
@@ -44,10 +44,11 @@ function formatLakh(value: number) {
 export default function CashFlowTimeline() {
   const [data, setData] = useState<CashFlowMonth[]>([]);
   const [loading, setLoading] = useState(true);
+  const { ref, width, height } = useChartSize<HTMLDivElement>();
 
   useEffect(() => {
     backendApi.getCashFlow().then((res) => {
-      if (res.ok && Array.isArray(res.data?.data)) {
+      if (res.ok && Array.isArray(res.data?.data) && res.data.data.length > 0) {
         setData(res.data.data);
       } else {
         setData(DEMO_CASH_FLOW);
@@ -92,24 +93,30 @@ export default function CashFlowTimeline() {
         ))}
       </div>
 
-      <div className="h-72 w-full min-w-0 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
-            <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-            <YAxis tickFormatter={(v) => `₹${(v / 1_00_000).toFixed(0)}L`} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={50} />
-            <Tooltip formatter={(value: any) => [formatLakh(Number(value)), '']} contentStyle={{ borderRadius: 12, border: 'none' }} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="inflow" name="Inflow" fill="#10b981" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="outflow" name="Outflow" fill="#ef4444" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="net" name="Net (surplus / shortage)" radius={[4, 4, 0, 0]}>
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.net >= 0 ? '#22c55e' : '#f43f5e'} />
-              ))}
-            </Bar>
-            <Line type="monotone" dataKey="net" name="Net trend" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-          </ComposedChart>
-        </ResponsiveContainer>
+      <div
+        ref={ref}
+        className="h-72 w-full min-w-0 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 flex items-center justify-center"
+      >
+        <ComposedChart
+          width={width || ref.current?.clientWidth || 800}
+          height={height || ref.current?.clientHeight || 260}
+          data={data}
+          margin={{ top: 8, right: 16, bottom: 0, left: 0 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
+          <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+          <YAxis tickFormatter={(v) => `₹${(v / 1_00_000).toFixed(0)}L`} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={50} />
+          <Tooltip formatter={(value: any) => [formatLakh(Number(value)), '']} contentStyle={{ borderRadius: 12, border: 'none' }} />
+          <Legend wrapperStyle={{ fontSize: 11 }} />
+          <Bar dataKey="inflow" name="Inflow" fill="#10b981" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="outflow" name="Outflow" fill="#ef4444" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="net" name="Net (surplus / shortage)" radius={[4, 4, 0, 0]}>
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.net >= 0 ? '#22c55e' : '#f43f5e'} />
+            ))}
+          </Bar>
+          <Line type="monotone" dataKey="net" name="Net trend" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+        </ComposedChart>
       </div>
 
       {negativeMonths > 0 && (
