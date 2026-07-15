@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MlKem768 } from 'mlkem';
 import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
@@ -63,35 +63,38 @@ export default function QuantumKeyExchange() {
   const [state, setState] = useState<QuantumState>({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('Hello from the quantum-safe future 🔐');
-  const [inputPublicKey, setInputPublicKey] = useState('');
-  const [inputCiphertext, setInputCiphertext] = useState('');
   const [logs, setLogs] = useState<string[]>([]);
+
+  const publicKeyRef = useRef<HTMLTextAreaElement>(null);
+  const ciphertextRef = useRef<HTMLTextAreaElement>(null);
+  const encryptedMsgRef = useRef<HTMLTextAreaElement>(null);
 
   const channel = useMemo(() => {
     if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return null;
     return new BroadcastChannel(CHANNEL_NAME);
   }, []);
 
+  const addLog = (msg: string) => {
+    setLogs((prev) => [`${new Date().toLocaleTimeString('en-IN')} — ${msg}`, ...prev].slice(0, 10));
+  };
+
   useEffect(() => {
     if (!channel) return;
     channel.onmessage = (event) => {
       const data = event.data as { type: string; payload: string };
       if (data.type === 'public-key') {
-        setInputPublicKey(data.payload);
+        if (publicKeyRef.current) publicKeyRef.current.value = data.payload;
         addLog('Received public key from Device A');
       } else if (data.type === 'ciphertext') {
-        setInputCiphertext(data.payload);
+        if (ciphertextRef.current) ciphertextRef.current.value = data.payload;
         addLog('Received ciphertext from Device B');
       } else if (data.type === 'message') {
+        if (encryptedMsgRef.current) encryptedMsgRef.current.value = data.payload;
         addLog(`Received encrypted message: ${data.payload.slice(0, 24)}…`);
       }
     };
     return () => channel.close();
   }, [channel]);
-
-  const addLog = (msg: string) => {
-    setLogs((prev) => [`${new Date().toLocaleTimeString('en-IN')} — ${msg}`, ...prev].slice(0, 10));
-  };
 
   const generateAliceKeys = async () => {
     setLoading(true);
@@ -112,11 +115,12 @@ export default function QuantumKeyExchange() {
   };
 
   const bobEncapsulate = async () => {
-    if (!inputPublicKey) return;
+    const pk = publicKeyRef.current?.value.trim() || '';
+    if (!pk) return;
     setLoading(true);
     try {
       const kem = new MlKem768();
-      const [ciphertext, sharedSecret] = await kem.encap(hexToBuf(inputPublicKey));
+      const [ciphertext, sharedSecret] = await kem.encap(hexToBuf(pk));
       const ciphertextHex = bufToHex(ciphertext);
       const sharedSecretHex = bufToHex(sharedSecret);
       setState((s) => ({ ...s, ciphertext: ciphertextHex, sharedSecretB: sharedSecretHex }));
@@ -131,11 +135,12 @@ export default function QuantumKeyExchange() {
   };
 
   const aliceDecapsulate = async () => {
-    if (!inputCiphertext || !state.secretKey) return;
+    const ct = ciphertextRef.current?.value.trim() || '';
+    if (!ct || !state.secretKey) return;
     setLoading(true);
     try {
       const kem = new MlKem768();
-      const sharedSecret = await kem.decap(hexToBuf(inputCiphertext), hexToBuf(state.secretKey));
+      const sharedSecret = await kem.decap(hexToBuf(ct), hexToBuf(state.secretKey));
       const sharedSecretHex = bufToHex(sharedSecret);
       setState((s) => ({ ...s, sharedSecretA: sharedSecretHex }));
       addLog('Device A decapsulated shared secret from ciphertext');
@@ -163,10 +168,11 @@ export default function QuantumKeyExchange() {
   };
 
   const aliceDecrypt = async () => {
-    if (!state.sharedSecretA || !state.encryptedMessage) return;
+    const em = encryptedMsgRef.current?.value.trim() || state.encryptedMessage || '';
+    if (!state.sharedSecretA || !em) return;
     setLoading(true);
     try {
-      const decrypted = await decryptMessage(hexToBuf(state.sharedSecretA), state.encryptedMessage);
+      const decrypted = await decryptMessage(hexToBuf(state.sharedSecretA), em);
       setState((s) => ({ ...s, decryptedMessage: decrypted }));
       addLog('Device A decrypted message with AES-GCM');
     } catch (e) {
@@ -249,15 +255,14 @@ export default function QuantumKeyExchange() {
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                     <p className="text-[10px] text-slate-400 uppercase font-bold">Ciphertext from Bob</p>
                     <textarea
-                      value={inputCiphertext}
-                      onChange={(e) => setInputCiphertext(e.target.value)}
+                      ref={ciphertextRef}
                       placeholder="Paste Bob's ciphertext here..."
                       className="w-full mt-1 h-20 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/30 resize-none"
                     />
                   </div>
                   <button
                     onClick={aliceDecapsulate}
-                    disabled={loading || !inputCiphertext || !state.secretKey}
+                    disabled={loading || !state.secretKey}
                     className="w-full py-2 rounded-xl bg-blue-600 text-white text-xs font-black disabled:opacity-50"
                   >
                     Decapsulate Shared Secret
@@ -281,15 +286,14 @@ export default function QuantumKeyExchange() {
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                     <p className="text-[10px] text-slate-400 uppercase font-bold">Encrypted message from Bob</p>
                     <textarea
-                      value={state.encryptedMessage || ''}
-                      onChange={(e) => setState((s) => ({ ...s, encryptedMessage: e.target.value }))}
+                      ref={encryptedMsgRef}
                       placeholder="Paste encrypted message here..."
                       className="w-full mt-1 h-20 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/30 resize-none"
                     />
                   </div>
                   <button
                     onClick={aliceDecrypt}
-                    disabled={loading || !state.encryptedMessage}
+                    disabled={loading}
                     className="w-full py-2 rounded-xl bg-emerald-600 text-white text-xs font-black disabled:opacity-50"
                   >
                     Decrypt with AES-GCM
@@ -323,15 +327,14 @@ export default function QuantumKeyExchange() {
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                 <p className="text-[10px] text-slate-400 uppercase font-bold">Alice's Public Key</p>
                 <textarea
-                  value={inputPublicKey}
-                  onChange={(e) => setInputPublicKey(e.target.value)}
+                  ref={publicKeyRef}
                   placeholder="Paste Alice's public key here..."
                   className="w-full mt-1 h-20 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/30 resize-none"
                 />
               </div>
               <button
                 onClick={bobEncapsulate}
-                disabled={loading || !inputPublicKey}
+                disabled={loading}
                 className="w-full py-2.5 rounded-xl bg-rose-600 text-white text-sm font-black shadow-lg shadow-rose-600/20 hover:shadow-rose-600/30 transition-shadow disabled:opacity-50"
               >
                 Encapsulate Shared Secret
