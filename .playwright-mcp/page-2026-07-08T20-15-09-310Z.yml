@@ -1,0 +1,590 @@
+- generic [active] [ref=f27e1]:
+  - generic [ref=f27e2]:
+    - generic [ref=f27e3]:
+      - banner [ref=f27e4]:
+        - generic [ref=f27e5]:
+          - link "Render" [ref=f27e7] [cursor=pointer]:
+            - /url: /
+            - img "Render" [ref=f27e8]
+          - button "M My Workspace" [ref=f27e12] [cursor=pointer]:
+            - generic [ref=f27e13]:
+              - generic [ref=f27e14]: M
+              - generic "My Workspace" [ref=f27e15]
+              - img [ref=f27e16]
+        - generic [ref=f27e20]:
+          - navigation [ref=f27e21]:
+            - list [ref=f27e22]:
+              - listitem [ref=f27e23]:
+                - link "psb-securewealth-backend" [ref=f27e24] [cursor=pointer]:
+                  - /url: /web/srv-d8p6ohernols73f7hkkg
+                  - img [ref=f27e25]
+                  - generic [ref=f27e27]: psb-securewealth-backend
+                - button [ref=f27e30] [cursor=pointer]:
+                  - img [ref=f27e31]
+          - button "Search Ctrl + K" [ref=f27e34] [cursor=pointer]:
+            - img [ref=f27e36]
+            - text: Search
+            - generic [ref=f27e38]:
+              - img [ref=f27e39]
+              - generic [ref=f27e41]: Ctrl
+              - generic [ref=f27e42]: +
+              - generic [ref=f27e43]: K
+              - generic [ref=f27e44]: K
+        - generic [ref=f27e45]:
+          - button "New" [ref=f27e47] [cursor=pointer]:
+            - generic [ref=f27e48]:
+              - img [ref=f27e49]
+              - generic [ref=f27e51]: New
+          - button "Upgrade" [ref=f27e53] [cursor=pointer]:
+            - generic [ref=f27e54]:
+              - img [ref=f27e55]
+              - generic [ref=f27e57]: Upgrade
+          - button "Help" [ref=f27e59] [cursor=pointer]:
+            - img "Help" [ref=f27e60]
+          - button "d" [ref=f27e65] [cursor=pointer]:
+            - generic [ref=f27e67]: d
+      - generic [ref=f27e68]:
+        - navigation [ref=f27e69]:
+          - separator [ref=f27e70]
+          - generic [ref=f27e71]:
+            - generic [ref=f27e72]:
+              - link "Dashboard" [ref=f27e73] [cursor=pointer]:
+                - /url: /
+                - img [ref=f27e74]
+                - generic [ref=f27e76]: Dashboard
+              - generic [ref=f27e77]:
+                - img [ref=f27e78]
+                - generic [ref=f27e80]: psb-securewealth-backend
+            - generic [ref=f27e81]:
+              - list [ref=f27e82]:
+                - listitem [ref=f27e83]:
+                  - link "Events" [ref=f27e84] [cursor=pointer]:
+                    - /url: /web/srv-d8p6ohernols73f7hkkg/events
+                    - img [ref=f27e85]
+                    - generic [ref=f27e92]: Events
+                - listitem [ref=f27e93]:
+                  - link "Settings" [ref=f27e94] [cursor=pointer]:
+                    - /url: /web/srv-d8p6ohernols73f7hkkg/settings
+                    - img [ref=f27e95]
+                    - generic [ref=f27e98]: Settings
+              - generic [ref=f27e99]:
+                - generic [ref=f27e100]: Monitor
+                - list "Monitor" [ref=f27e101]:
+                  - listitem [ref=f27e102]:
+                    - link "Logs" [ref=f27e103] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/logs
+                      - img [ref=f27e104]
+                      - generic [ref=f27e109]: Logs
+                  - listitem [ref=f27e110]:
+                    - link "Metrics" [ref=f27e111] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/metrics
+                      - img [ref=f27e112]
+                      - generic [ref=f27e114]: Metrics
+              - generic [ref=f27e115]:
+                - generic [ref=f27e116]: Manage
+                - list "Manage" [ref=f27e117]:
+                  - listitem [ref=f27e118]:
+                    - link "Environment" [ref=f27e119] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/env
+                      - img [ref=f27e120]
+                      - generic [ref=f27e124]: Environment
+                  - listitem [ref=f27e125]:
+                    - link "Shell" [ref=f27e126] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/shell
+                      - img [ref=f27e127]
+                      - generic [ref=f27e131]:
+                        - generic [ref=f27e132]: Shell
+                        - status [ref=f27e135]:
+                          - img [ref=f27e136]
+                  - listitem [ref=f27e138]:
+                    - link "Scaling" [ref=f27e139] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/scaling
+                      - img [ref=f27e140]
+                      - generic [ref=f27e145]:
+                        - generic [ref=f27e146]: Scaling
+                        - status [ref=f27e149]:
+                          - img [ref=f27e150]
+                  - listitem [ref=f27e152]:
+                    - link "Previews" [ref=f27e153] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/previews
+                      - img [ref=f27e154]
+                      - generic [ref=f27e158]: Previews
+                  - listitem [ref=f27e159]:
+                    - link "Disk" [ref=f27e160] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/disks
+                      - img [ref=f27e161]
+                      - generic [ref=f27e166]:
+                        - generic [ref=f27e167]: Disk
+                        - status [ref=f27e170]:
+                          - img [ref=f27e171]
+                  - listitem [ref=f27e173]:
+                    - link "One-Off Jobs" [ref=f27e174] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/jobs
+                      - img [ref=f27e175]
+                      - generic [ref=f27e181]:
+                        - generic [ref=f27e182]: One-Off Jobs
+                        - status [ref=f27e185]:
+                          - img [ref=f27e186]
+          - generic [ref=f27e189]:
+            - button "Collapse items" [expanded] [ref=f27e190] [cursor=pointer]:
+              - img [ref=f27e191]
+            - list "Footer navigation" [ref=f27e193]:
+              - listitem [ref=f27e194]:
+                - link "Changelog" [ref=f27e195] [cursor=pointer]:
+                  - /url: https://render.com/changelog
+                  - img [ref=f27e196]
+                  - generic [ref=f27e201]: Changelog
+              - listitem [ref=f27e202]:
+                - link "Invite a friend" [ref=f27e203] [cursor=pointer]:
+                  - /url: /invites
+                  - img [ref=f27e204]
+                  - generic [ref=f27e206]: Invite a friend
+              - listitem [ref=f27e207]:
+                - button "Contact support" [ref=f27e208] [cursor=pointer]:
+                  - img [ref=f27e209]
+                  - generic [ref=f27e213]: Contact support
+            - link "Render Status" [ref=f27e215] [cursor=pointer]:
+              - /url: https://status.render.com
+              - img [ref=f27e216]
+              - generic [ref=f27e218]: Render Status
+        - generic [ref=f27e220]:
+          - banner [ref=f27e222]:
+            - generic [ref=f27e223]:
+              - generic [ref=f27e224]:
+                - img [ref=f27e225]
+                - generic [ref=f27e227]: Web Service
+              - generic [ref=f27e228]:
+                - heading "psb-securewealth-backend Node Free Upgrade your instance Blueprint managed" [level=1] [ref=f27e230]:
+                  - generic [ref=f27e231]: psb-securewealth-backend
+                  - generic [ref=f27e232]:
+                    - generic [ref=f27e233]: Node
+                    - link "Free" [ref=f27e234] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/plan
+                      - generic [ref=f27e235]: Free
+                    - link "Upgrade your instance" [ref=f27e236] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/plan
+                      - text: Upgrade your instance
+                      - img [ref=f27e238]
+                    - link "Blueprint managed" [ref=f27e242] [cursor=pointer]:
+                      - /url: /blueprint/exs-d8r63f8js32c73bldrfg
+                      - img [ref=f27e243]
+                      - generic [ref=f27e248]: Blueprint managed
+                - generic [ref=f27e250]:
+                  - button "Connect" [ref=f27e251] [cursor=pointer]:
+                    - generic [ref=f27e252]: Connect
+                    - img [ref=f27e253]
+                  - button "Manual Deploy" [ref=f27e255] [cursor=pointer]:
+                    - generic [ref=f27e256]: Manual Deploy
+                    - img [ref=f27e257]
+            - generic [ref=f27e261]:
+              - generic [ref=f27e263]:
+                - generic [ref=f27e264]: "Service ID:"
+                - generic "Service ID:" [ref=f27e265]:
+                  - generic [ref=f27e266]: srv-d8p6ohernols73f7hkkg
+                  - button "Copy" [ref=f27e269] [cursor=pointer]:
+                    - img [ref=f27e270]
+              - generic [ref=f27e274]:
+                - img "GitHub" [ref=f27e276]
+                - link "financeforumglrc / psb-banking-backend main" [ref=f27e278] [cursor=pointer]:
+                  - /url: https://github.com/financeforumglrc/psb-banking-backend/tree/main
+                  - generic [ref=f27e279]:
+                    - generic [ref=f27e280]: financeforumglrc / psb-banking-backend
+                    - img [ref=f27e281]
+                    - generic [ref=f27e283]: main
+              - generic "Copy" [ref=f27e285]:
+                - link "https://psb-securewealth-backend.onrender.com" [ref=f27e287] [cursor=pointer]:
+                  - /url: https://psb-securewealth-backend.onrender.com
+                - button "Copy" [ref=f27e290] [cursor=pointer]:
+                  - img [ref=f27e291]
+          - main [ref=f27e294]:
+            - generic [ref=f27e295]:
+              - alert [ref=f27e296]:
+                - generic [ref=f27e298]:
+                  - img [ref=f27e300]
+                  - generic [ref=f27e304]:
+                    - generic [ref=f27e306]: Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more.
+                    - link "Upgrade now" [ref=f27e308] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/plan
+              - generic [ref=f27e311]:
+                - generic [ref=f27e312]:
+                  - generic [ref=f27e313]: July 9, 2026 at 1:43 AM
+                  - generic [ref=f27e314]:
+                    - img [ref=f27e315]
+                    - generic [ref=f27e317]: live
+                - generic [ref=f27e318]:
+                  - link "941c251" [ref=f27e319] [cursor=pointer]:
+                    - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/941c25196ad6783632cb4b36b3cd6e8c387328ee
+                  - generic [ref=f27e320]: "fix: sync full backend from monorepo, add missing routes, on-demand seeding"
+              - generic [ref=f27e321]:
+                - generic [ref=f27e323]:
+                  - generic [ref=f27e325]:
+                    - button "All logs" [ref=f27e328] [cursor=pointer]:
+                      - generic [ref=f27e329]:
+                        - generic [ref=f27e330]: All logs
+                        - img [ref=f27e331]
+                    - generic [ref=f27e334]:
+                      - generic [ref=f27e335]: Search
+                      - generic [ref=f27e338]:
+                        - img [ref=f27e339]
+                        - searchbox "Search" [ref=f27e341]
+                    - button "Live tail" [ref=f27e344] [cursor=pointer]:
+                      - generic [ref=f27e347]:
+                        - img [ref=f27e348]
+                        - generic [ref=f27e350]: Live tail
+                        - img [ref=f27e351]
+                    - button "Maximize" [ref=f27e357] [cursor=pointer]:
+                      - img "Maximize" [ref=f27e358]
+                    - button "Options" [ref=f27e363] [cursor=pointer]:
+                      - img "Options" [ref=f27e364]
+                  - generic:
+                    - button "Return to Bottom":
+                      - img
+                  - listbox [ref=f27e368]:
+                    - generic [ref=f27e369]: Jul 9
+                    - option "01:44:14 AM To address issues that do not require attention, run:" [ref=f27e370]:
+                      - generic [ref=f27e372]:
+                        - img [ref=f27e374]
+                        - time [ref=f27e378]: 01:44:14 AM
+                      - generic [ref=f27e381]: "To address issues that do not require attention, run:"
+                    - option "01:44:14 AM npm audit fix" [ref=f27e382]:
+                      - generic [ref=f27e384]:
+                        - img [ref=f27e386]
+                        - time [ref=f27e390]: 01:44:14 AM
+                      - generic [ref=f27e393]: npm audit fix
+                    - option "01:44:14 AM" [ref=f27e394]:
+                      - generic [ref=f27e396]:
+                        - img [ref=f27e398]
+                        - time [ref=f27e402]: 01:44:14 AM
+                    - option "01:44:14 AM To address all issues (including breaking changes), run:" [ref=f27e405]:
+                      - generic [ref=f27e407]:
+                        - img [ref=f27e409]
+                        - time [ref=f27e413]: 01:44:14 AM
+                      - generic [ref=f27e416]: "To address all issues (including breaking changes), run:"
+                    - option "01:44:14 AM npm audit fix --force" [ref=f27e417]:
+                      - generic [ref=f27e419]:
+                        - img [ref=f27e421]
+                        - time [ref=f27e425]: 01:44:14 AM
+                      - generic [ref=f27e428]: npm audit fix --force
+                    - option "01:44:14 AM" [ref=f27e429]:
+                      - generic [ref=f27e431]:
+                        - img [ref=f27e433]
+                        - time [ref=f27e437]: 01:44:14 AM
+                    - 'option "01:44:14 AM Run `npm audit` for details." [ref=f27e440]':
+                      - generic [ref=f27e442]:
+                        - img [ref=f27e444]
+                        - time [ref=f27e448]: 01:44:14 AM
+                      - generic [ref=f27e451]: "Run `npm audit` for details."
+                    - option "01:44:21 AM ==> Uploading build..." [ref=f27e452]:
+                      - generic [ref=f27e454]:
+                        - img [ref=f27e456]
+                        - time [ref=f27e460]: 01:44:21 AM
+                      - generic [ref=f27e463]: ==> Uploading build...
+                    - option "01:44:26 AM ==> Uploaded in 3.7s. Compression took 2.0s" [ref=f27e464]:
+                      - generic [ref=f27e466]:
+                        - img [ref=f27e468]
+                        - time [ref=f27e472]: 01:44:26 AM
+                      - generic [ref=f27e475]: ==> Uploaded in 3.7s. Compression took 2.0s
+                    - option "01:44:26 AM ==> Build successful 🎉" [ref=f27e476]:
+                      - generic [ref=f27e478]:
+                        - img [ref=f27e480]
+                        - time [ref=f27e484]: 01:44:26 AM
+                      - generic [ref=f27e487]: ==> Build successful 🎉
+                    - option "01:44:32 AM ==> Deploying..." [ref=f27e488]:
+                      - generic [ref=f27e490]:
+                        - img [ref=f27e492]
+                        - time [ref=f27e496]: 01:44:32 AM
+                      - generic [ref=f27e499]: ==> Deploying...
+                    - option "01:44:32 AM ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance" [ref=f27e500]:
+                      - generic [ref=f27e502]:
+                        - img [ref=f27e504]
+                        - time [ref=f27e508]: 01:44:32 AM
+                      - generic [ref=f27e511]: ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+                    - 'option "01:44:44 AM [x2rws] Migration applied: added aadhar column" [ref=f27e512]':
+                      - generic [ref=f27e513]:
+                        - generic [ref=f27e514]:
+                          - img [ref=f27e516]
+                          - time [ref=f27e520]: 01:44:44 AM
+                        - generic [ref=f27e524] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e526]: "Migration applied: added aadhar column"
+                    - option "01:44:44 AM [x2rws] SQLite database initialized" [ref=f27e527]:
+                      - generic [ref=f27e528]:
+                        - generic [ref=f27e529]:
+                          - img [ref=f27e531]
+                          - time [ref=f27e535]: 01:44:44 AM
+                        - generic [ref=f27e539] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e541]: SQLite database initialized
+                    - option "01:44:48 AM [x2rws] [seedComprehensiveDemo] seeding curated personas..." [ref=f27e542]:
+                      - generic [ref=f27e543]:
+                        - generic [ref=f27e544]:
+                          - img [ref=f27e546]
+                          - time [ref=f27e550]: 01:44:48 AM
+                        - generic [ref=f27e554] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e556]: "[seedComprehensiveDemo] seeding curated personas..."
+                    - 'option "01:44:49 AM [x2rws] [seedComprehensiveDemo] seeded Deepanshu Sharma: 3 accounts, 60 txns, 4 goals, 7 assets, 31 audit logs, 3 fraud events" [ref=f27e557]':
+                      - generic [ref=f27e558]:
+                        - generic [ref=f27e559]:
+                          - img [ref=f27e561]
+                          - time [ref=f27e565]: 01:44:49 AM
+                        - generic [ref=f27e569] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e571]: "[seedComprehensiveDemo] seeded Deepanshu Sharma: 3 accounts, 60 txns, 4 goals, 7 assets, 31 audit logs, 3 fraud events"
+                    - 'option "01:44:49 AM [x2rws] [seedComprehensiveDemo] seeded Mrigesh Mohanty: 3 accounts, 60 txns, 4 goals, 6 assets, 31 audit logs, 3 fraud events" [ref=f27e572]':
+                      - generic [ref=f27e573]:
+                        - generic [ref=f27e574]:
+                          - img [ref=f27e576]
+                          - time [ref=f27e580]: 01:44:49 AM
+                        - generic [ref=f27e584] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e586]: "[seedComprehensiveDemo] seeded Mrigesh Mohanty: 3 accounts, 60 txns, 4 goals, 6 assets, 31 audit logs, 3 fraud events"
+                    - 'option "01:44:49 AM [x2rws] [seedComprehensiveDemo] seeded Rikshita Barua: 3 accounts, 60 txns, 4 goals, 5 assets, 31 audit logs, 3 fraud events" [ref=f27e587]':
+                      - generic [ref=f27e588]:
+                        - generic [ref=f27e589]:
+                          - img [ref=f27e591]
+                          - time [ref=f27e595]: 01:44:49 AM
+                        - generic [ref=f27e599] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e601]: "[seedComprehensiveDemo] seeded Rikshita Barua: 3 accounts, 60 txns, 4 goals, 5 assets, 31 audit logs, 3 fraud events"
+                    - 'option "01:44:49 AM [x2rws] [seedComprehensiveDemo] seeded Ishita Anand: 3 accounts, 60 txns, 3 goals, 6 assets, 31 audit logs, 3 fraud events" [ref=f27e602]':
+                      - generic [ref=f27e603]:
+                        - generic [ref=f27e604]:
+                          - img [ref=f27e606]
+                          - time [ref=f27e610]: 01:44:49 AM
+                        - generic [ref=f27e614] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e616]: "[seedComprehensiveDemo] seeded Ishita Anand: 3 accounts, 60 txns, 3 goals, 6 assets, 31 audit logs, 3 fraud events"
+                    - 'option "01:44:49 AM [x2rws] [seedComprehensiveDemo] seeded Dr. Neha Gupta: 3 accounts, 60 txns, 3 goals, 6 assets, 31 audit logs, 3 fraud events" [ref=f27e617]':
+                      - generic [ref=f27e618]:
+                        - generic [ref=f27e619]:
+                          - img [ref=f27e621]
+                          - time [ref=f27e625]: 01:44:49 AM
+                        - generic [ref=f27e629] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e631]: "[seedComprehensiveDemo] seeded Dr. Neha Gupta: 3 accounts, 60 txns, 3 goals, 6 assets, 31 audit logs, 3 fraud events"
+                    - 'option "01:44:49 AM [x2rws] [seedComprehensiveDemo] seeded Meera Krishnan: 3 accounts, 60 txns, 4 goals, 6 assets, 31 audit logs, 3 fraud events" [ref=f27e632]':
+                      - generic [ref=f27e633]:
+                        - generic [ref=f27e634]:
+                          - img [ref=f27e636]
+                          - time [ref=f27e640]: 01:44:49 AM
+                        - generic [ref=f27e644] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e646]: "[seedComprehensiveDemo] seeded Meera Krishnan: 3 accounts, 60 txns, 4 goals, 6 assets, 31 audit logs, 3 fraud events"
+                    - 'option "01:44:49 AM [x2rws] [seedComprehensiveDemo] seeded Balbir Singh: 3 accounts, 60 txns, 3 goals, 4 assets, 31 audit logs, 3 fraud events" [ref=f27e647]':
+                      - generic [ref=f27e648]:
+                        - generic [ref=f27e649]:
+                          - img [ref=f27e651]
+                          - time [ref=f27e655]: 01:44:49 AM
+                        - generic [ref=f27e659] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e661]: "[seedComprehensiveDemo] seeded Balbir Singh: 3 accounts, 60 txns, 3 goals, 4 assets, 31 audit logs, 3 fraud events"
+                    - 'option "01:44:49 AM [x2rws] [seedComprehensiveDemo] seeded Kunal Saxena: 3 accounts, 60 txns, 4 goals, 4 assets, 31 audit logs, 3 fraud events" [ref=f27e662]':
+                      - generic [ref=f27e663]:
+                        - generic [ref=f27e664]:
+                          - img [ref=f27e666]
+                          - time [ref=f27e670]: 01:44:49 AM
+                        - generic [ref=f27e674] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e676]: "[seedComprehensiveDemo] seeded Kunal Saxena: 3 accounts, 60 txns, 4 goals, 4 assets, 31 audit logs, 3 fraud events"
+                    - option "01:44:49 AM [x2rws] [seedComprehensiveDemo] done." [ref=f27e677]:
+                      - generic [ref=f27e678]:
+                        - generic [ref=f27e679]:
+                          - img [ref=f27e681]
+                          - time [ref=f27e685]: 01:44:49 AM
+                        - generic [ref=f27e689] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e691]: "[seedComprehensiveDemo] done."
+                    - 'option "01:44:49 AM [x2rws] {\"level\":\"info\",\"message\":\"[seed] comprehensive personas: seeded\",\"timestamp\":\"2026-07-08T20:14:49.831Z\"}" [ref=f27e692]':
+                      - generic [ref=f27e693]:
+                        - generic [ref=f27e694]:
+                          - img [ref=f27e696]
+                          - time [ref=f27e700]: 01:44:49 AM
+                        - generic [ref=f27e704] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e706]: "{\"level\":\"info\",\"message\":\"[seed] comprehensive personas: seeded\",\"timestamp\":\"2026-07-08T20:14:49.831Z\"}"
+                    - option "01:44:49 AM [x2rws] [seedDemoData] users table not empty, skipping user seed." [ref=f27e707]:
+                      - generic [ref=f27e708]:
+                        - generic [ref=f27e709]:
+                          - img [ref=f27e711]
+                          - time [ref=f27e715]: 01:44:49 AM
+                        - generic [ref=f27e719] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e721]: "[seedDemoData] users table not empty, skipping user seed."
+                    - option "01:44:49 AM [x2rws] [seedDemoData] bank_accounts not empty, skipping banking seed." [ref=f27e722]:
+                      - generic [ref=f27e723]:
+                        - generic [ref=f27e724]:
+                          - img [ref=f27e726]
+                          - time [ref=f27e730]: 01:44:49 AM
+                        - generic [ref=f27e734] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e736]: "[seedDemoData] bank_accounts not empty, skipping banking seed."
+                    - option "01:44:49 AM [x2rws] [seedDemoData] seeding 500 synthetic fraud cases..." [ref=f27e737]:
+                      - generic [ref=f27e738]:
+                        - generic [ref=f27e739]:
+                          - img [ref=f27e741]
+                          - time [ref=f27e745]: 01:44:49 AM
+                        - generic [ref=f27e749] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e751]: "[seedDemoData] seeding 500 synthetic fraud cases..."
+                    - option "01:44:51 AM [x2rws] [seedDemoData] seeded 500 fraud cases." [ref=f27e752]:
+                      - generic [ref=f27e753]:
+                        - generic [ref=f27e754]:
+                          - img [ref=f27e756]
+                          - time [ref=f27e760]: 01:44:51 AM
+                        - generic [ref=f27e764] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e766]: "[seedDemoData] seeded 500 fraud cases."
+                    - option "01:44:51 AM [x2rws] [seedDemoData] done." [ref=f27e767]:
+                      - generic [ref=f27e768]:
+                        - generic [ref=f27e769]:
+                          - img [ref=f27e771]
+                          - time [ref=f27e775]: 01:44:51 AM
+                        - generic [ref=f27e779] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e781]: "[seedDemoData] done."
+                    - 'option "01:44:51 AM [x2rws] {\"level\":\"info\",\"message\":\"[seed] generic demo data complete\",\"timestamp\":\"2026-07-08T20:14:51.132Z\"}" [ref=f27e782]':
+                      - generic [ref=f27e783]:
+                        - generic [ref=f27e784]:
+                          - img [ref=f27e786]
+                          - time [ref=f27e790]: 01:44:51 AM
+                        - generic [ref=f27e794] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e796]: "{\"level\":\"info\",\"message\":\"[seed] generic demo data complete\",\"timestamp\":\"2026-07-08T20:14:51.132Z\"}"
+                    - 'option "01:44:51 AM [x2rws] {\"level\":\"info\",\"message\":\"DS Financial API Server running on port 10000\",\"timestamp\":\"2026-07-08T20:14:51.135Z\"}" [ref=f27e797]':
+                      - generic [ref=f27e798]:
+                        - generic [ref=f27e799]:
+                          - img [ref=f27e801]
+                          - time [ref=f27e805]: 01:44:51 AM
+                        - generic [ref=f27e809] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e811]: "{\"level\":\"info\",\"message\":\"DS Financial API Server running on port 10000\",\"timestamp\":\"2026-07-08T20:14:51.135Z\"}"
+                    - 'option "01:44:51 AM [x2rws] {\"level\":\"info\",\"message\":\"Environment: production\",\"timestamp\":\"2026-07-08T20:14:51.135Z\"}" [ref=f27e812]':
+                      - generic [ref=f27e813]:
+                        - generic [ref=f27e814]:
+                          - img [ref=f27e816]
+                          - time [ref=f27e820]: 01:44:51 AM
+                        - generic [ref=f27e824] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e826]: "{\"level\":\"info\",\"message\":\"Environment: production\",\"timestamp\":\"2026-07-08T20:14:51.135Z\"}"
+                    - 'option "01:44:51 AM [x2rws] {\"level\":\"info\",\"message\":\"Patent Portfolio: 47 innovations ready\",\"timestamp\":\"2026-07-08T20:14:51.136Z\"}" [ref=f27e827]':
+                      - generic [ref=f27e828]:
+                        - generic [ref=f27e829]:
+                          - img [ref=f27e831]
+                          - time [ref=f27e835]: 01:44:51 AM
+                        - generic [ref=f27e839] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e841]: "{\"level\":\"info\",\"message\":\"Patent Portfolio: 47 innovations ready\",\"timestamp\":\"2026-07-08T20:14:51.136Z\"}"
+                    - option "01:44:51 AM [x2rws] [keepAlive] 2026-07-08T20:14:51.525Z backend 404 OK" [ref=f27e842]:
+                      - generic [ref=f27e843]:
+                        - generic [ref=f27e844]:
+                          - img [ref=f27e846]
+                          - time [ref=f27e850]: 01:44:51 AM
+                        - generic [ref=f27e854] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e856]: "[keepAlive] 2026-07-08T20:14:51.525Z backend 404 OK"
+                    - option "01:44:51 AM [x2rws] [keepAlive] 2026-07-08T20:14:51.529Z frontend 200 OK" [ref=f27e857]:
+                      - generic [ref=f27e858]:
+                        - generic [ref=f27e859]:
+                          - img [ref=f27e861]
+                          - time [ref=f27e865]: 01:44:51 AM
+                        - generic [ref=f27e869] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e871]: "[keepAlive] 2026-07-08T20:14:51.529Z frontend 200 OK"
+                    - 'option "01:44:51 AM [x2rws] {\"level\":\"info\",\"message\":\"::1 - - [08/Jul/2026:20:14:51 +0000] \\\"HEAD / HTTP/1.1\\\" 200 113 \\\"-\\\" \\\"Go-http-client/1.1\\\"\",\"timestamp\":\"2026-07-08T20:14:51.760Z\"}" [ref=f27e872]':
+                      - generic [ref=f27e873]:
+                        - generic [ref=f27e874]:
+                          - img [ref=f27e876]
+                          - time [ref=f27e880]: 01:44:51 AM
+                        - generic [ref=f27e884] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e886]: "{\"level\":\"info\",\"message\":\"::1 - - [08/Jul/2026:20:14:51 +0000] \\\"HEAD / HTTP/1.1\\\" 200 113 \\\"-\\\" \\\"Go-http-client/1.1\\\"\",\"timestamp\":\"2026-07-08T20:14:51.760Z\"}"
+                    - 'option "01:44:53 AM [x2rws] {\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:14:53 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:14:53.227Z\"}" [ref=f27e887]':
+                      - generic [ref=f27e888]:
+                        - generic [ref=f27e889]:
+                          - img [ref=f27e891]
+                          - time [ref=f27e895]: 01:44:53 AM
+                        - generic [ref=f27e899] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e901]: "{\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:14:53 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:14:53.227Z\"}"
+                    - 'option "01:44:53 AM [x2rws] {\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:14:53 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:14:53.240Z\"}" [ref=f27e902]':
+                      - generic [ref=f27e903]:
+                        - generic [ref=f27e904]:
+                          - img [ref=f27e906]
+                          - time [ref=f27e910]: 01:44:53 AM
+                        - generic [ref=f27e914] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e916]: "{\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:14:53 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:14:53.240Z\"}"
+                    - 'option "01:44:53 AM [x2rws] {\"level\":\"info\",\"message\":\"::1 - - [08/Jul/2026:20:14:53 +0000] \\\"GET / HTTP/1.1\\\" 200 113 \\\"-\\\" \\\"Go-http-client/2.0\\\"\",\"timestamp\":\"2026-07-08T20:14:53.982Z\"}" [ref=f27e917]':
+                      - generic [ref=f27e918]:
+                        - generic [ref=f27e919]:
+                          - img [ref=f27e921]
+                          - time [ref=f27e925]: 01:44:53 AM
+                        - generic [ref=f27e929] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e931]: "{\"level\":\"info\",\"message\":\"::1 - - [08/Jul/2026:20:14:53 +0000] \\\"GET / HTTP/1.1\\\" 200 113 \\\"-\\\" \\\"Go-http-client/2.0\\\"\",\"timestamp\":\"2026-07-08T20:14:53.982Z\"}"
+                    - option "01:44:53 AM ==> Your service is live 🎉" [ref=f27e932]:
+                      - generic [ref=f27e934]:
+                        - img [ref=f27e936]
+                        - time [ref=f27e940]: 01:44:53 AM
+                      - generic [ref=f27e943]: ==> Your service is live 🎉
+                    - option "01:44:54 AM ==>" [ref=f27e944]:
+                      - generic [ref=f27e946]:
+                        - img [ref=f27e948]
+                        - time [ref=f27e952]: 01:44:54 AM
+                      - generic [ref=f27e955]: ==>
+                    - option "01:44:54 AM ==> ///////////////////////////////////////////////////////////" [ref=f27e956]:
+                      - generic [ref=f27e958]:
+                        - img [ref=f27e960]
+                        - time [ref=f27e964]: 01:44:54 AM
+                      - generic [ref=f27e967]: ==> ///////////////////////////////////////////////////////////
+                    - option "01:44:54 AM ==>" [ref=f27e968]:
+                      - generic [ref=f27e970]:
+                        - img [ref=f27e972]
+                        - time [ref=f27e976]: 01:44:54 AM
+                      - generic [ref=f27e979]: ==>
+                    - option "01:44:54 AM ==> Available at your primary URL https://psb-securewealth-backend.onrender.com" [ref=f27e980]:
+                      - generic [ref=f27e982]:
+                        - img [ref=f27e984]
+                        - time [ref=f27e988]: 01:44:54 AM
+                      - generic [ref=f27e991]:
+                        - text: ==>
+                        - generic [ref=f27e992]:
+                          - text: Available at your primary URL
+                          - link "https://psb-securewealth-backend.onrender.com" [ref=f27e993] [cursor=pointer]:
+                            - /url: https://psb-securewealth-backend.onrender.com
+                    - option "01:44:54 AM ==>" [ref=f27e994]:
+                      - generic [ref=f27e996]:
+                        - img [ref=f27e998]
+                        - time [ref=f27e1002]: 01:44:54 AM
+                      - generic [ref=f27e1005]: ==>
+                    - option "01:44:54 AM ==> ///////////////////////////////////////////////////////////" [ref=f27e1006]:
+                      - generic [ref=f27e1008]:
+                        - img [ref=f27e1010]
+                        - time [ref=f27e1014]: 01:44:54 AM
+                      - generic [ref=f27e1017]: ==> ///////////////////////////////////////////////////////////
+                    - 'option "01:44:58 AM [x2rws] {\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:14:58 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:14:58.231Z\"}" [ref=f27e1018]':
+                      - generic [ref=f27e1019]:
+                        - generic [ref=f27e1020]:
+                          - img [ref=f27e1022]
+                          - time [ref=f27e1026]: 01:44:58 AM
+                        - generic [ref=f27e1030] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e1032]: "{\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:14:58 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:14:58.231Z\"}"
+                    - 'option "01:45:03 AM [x2rws] {\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:15:03 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:15:03.214Z\"}" [ref=f27e1033]':
+                      - generic [ref=f27e1034]:
+                        - generic [ref=f27e1035]:
+                          - img [ref=f27e1037]
+                          - time [ref=f27e1041]: 01:45:03 AM
+                        - generic [ref=f27e1045] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e1047]: "{\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:15:03 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:15:03.214Z\"}"
+                    - 'option "01:45:03 AM [x2rws] {\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:15:03 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:15:03.230Z\"}" [ref=f27e1048]':
+                      - generic [ref=f27e1049]:
+                        - generic [ref=f27e1050]:
+                          - img [ref=f27e1052]
+                          - time [ref=f27e1056]: 01:45:03 AM
+                        - generic [ref=f27e1060] [cursor=pointer]: "[x2rws]"
+                      - generic [ref=f27e1062]: "{\"level\":\"info\",\"message\":\"::ffff:10.203.27.112 - - [08/Jul/2026:20:15:03 +0000] \\\"GET /api/v1/health HTTP/1.1\\\" 200 288 \\\"-\\\" \\\"Render/1.0\\\"\",\"timestamp\":\"2026-07-08T20:15:03.230Z\"}"
+                - paragraph [ref=f27e1064]:
+                  - text: Need better ways to work with logs? Try the
+                  - link "Render CLI" [ref=f27e1065] [cursor=pointer]:
+                    - /url: https://render.com/docs/cli
+                    - img [ref=f27e1066]
+                    - text: Render CLI
+                  - text: ","
+                  - link "Render MCP Server" [ref=f27e1069] [cursor=pointer]:
+                    - /url: https://render.com/docs/mcp-server
+                  - text: ", or set up a"
+                  - link "log stream integration" [ref=f27e1070] [cursor=pointer]:
+                    - /url: https://render.com/docs/log-streams
+                    - text: log stream integration
+                    - img [ref=f27e1071]
+    - generic:
+      - generic:
+        - generic: "0 services selected:"
+        - generic:
+          - generic:
+            - button:
+              - generic:
+                - img
+              - generic: Move
+              - img
+      - generic:
+        - separator
+        - generic:
+          - generic:
+            - button:
+              - img
+  - iframe [ref=f27e1074]:
+    

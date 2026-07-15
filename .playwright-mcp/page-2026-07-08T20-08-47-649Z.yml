@@ -1,0 +1,563 @@
+- generic [active] [ref=f9e1]:
+  - generic [ref=f9e2]:
+    - generic [ref=f9e3]:
+      - banner [ref=f9e4]:
+        - generic [ref=f9e5]:
+          - link "Render" [ref=f9e7] [cursor=pointer]:
+            - /url: /
+            - img "Render" [ref=f9e8]
+          - button "M My Workspace" [ref=f9e12] [cursor=pointer]:
+            - generic [ref=f9e13]:
+              - generic [ref=f9e14]: M
+              - generic "My Workspace" [ref=f9e15]
+              - img [ref=f9e16]
+        - generic [ref=f9e20]:
+          - navigation [ref=f9e21]:
+            - list [ref=f9e22]:
+              - listitem [ref=f9e23]:
+                - link "psb-securewealth-backend" [ref=f9e24] [cursor=pointer]:
+                  - /url: /web/srv-d8p6ohernols73f7hkkg
+                  - img [ref=f9e25]
+                  - generic [ref=f9e27]: psb-securewealth-backend
+                - button [ref=f9e30] [cursor=pointer]:
+                  - img [ref=f9e31]
+          - button "Search Ctrl + K" [ref=f9e34] [cursor=pointer]:
+            - img [ref=f9e36]
+            - text: Search
+            - generic [ref=f9e38]:
+              - img [ref=f9e39]
+              - generic [ref=f9e41]: Ctrl
+              - generic [ref=f9e42]: +
+              - generic [ref=f9e43]: K
+              - generic [ref=f9e44]: K
+        - generic [ref=f9e45]:
+          - button "New" [ref=f9e47] [cursor=pointer]:
+            - generic [ref=f9e48]:
+              - img [ref=f9e49]
+              - generic [ref=f9e51]: New
+          - button "Upgrade" [ref=f9e53] [cursor=pointer]:
+            - generic [ref=f9e54]:
+              - img [ref=f9e55]
+              - generic [ref=f9e57]: Upgrade
+          - button "Help" [ref=f9e59] [cursor=pointer]:
+            - img "Help" [ref=f9e60]
+          - button "d" [ref=f9e65] [cursor=pointer]:
+            - generic [ref=f9e67]: d
+      - generic [ref=f9e68]:
+        - navigation [ref=f9e69]:
+          - separator [ref=f9e70]
+          - generic [ref=f9e71]:
+            - generic [ref=f9e72]:
+              - link "Dashboard" [ref=f9e73] [cursor=pointer]:
+                - /url: /
+                - img [ref=f9e74]
+                - generic [ref=f9e76]: Dashboard
+              - generic [ref=f9e77]:
+                - img [ref=f9e78]
+                - generic [ref=f9e80]: psb-securewealth-backend
+            - generic [ref=f9e81]:
+              - list [ref=f9e82]:
+                - listitem [ref=f9e83]:
+                  - link "Events" [ref=f9e84] [cursor=pointer]:
+                    - /url: /web/srv-d8p6ohernols73f7hkkg/events
+                    - img [ref=f9e85]
+                    - generic [ref=f9e92]: Events
+                - listitem [ref=f9e93]:
+                  - link "Settings" [ref=f9e94] [cursor=pointer]:
+                    - /url: /web/srv-d8p6ohernols73f7hkkg/settings
+                    - img [ref=f9e95]
+                    - generic [ref=f9e98]: Settings
+              - generic [ref=f9e99]:
+                - generic [ref=f9e100]: Monitor
+                - list "Monitor" [ref=f9e101]:
+                  - listitem [ref=f9e102]:
+                    - link "Logs" [ref=f9e103] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/logs
+                      - img [ref=f9e104]
+                      - generic [ref=f9e109]: Logs
+                  - listitem [ref=f9e110]:
+                    - link "Metrics" [ref=f9e111] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/metrics
+                      - img [ref=f9e112]
+                      - generic [ref=f9e114]: Metrics
+              - generic [ref=f9e115]:
+                - generic [ref=f9e116]: Manage
+                - list "Manage" [ref=f9e117]:
+                  - listitem [ref=f9e118]:
+                    - link "Environment" [ref=f9e119] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/env
+                      - img [ref=f9e120]
+                      - generic [ref=f9e124]: Environment
+                  - listitem [ref=f9e125]:
+                    - link "Shell" [ref=f9e126] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/shell
+                      - img [ref=f9e127]
+                      - generic [ref=f9e131]:
+                        - generic [ref=f9e132]: Shell
+                        - status [ref=f9e135]:
+                          - img [ref=f9e136]
+                  - listitem [ref=f9e138]:
+                    - link "Scaling" [ref=f9e139] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/scaling
+                      - img [ref=f9e140]
+                      - generic [ref=f9e145]:
+                        - generic [ref=f9e146]: Scaling
+                        - status [ref=f9e149]:
+                          - img [ref=f9e150]
+                  - listitem [ref=f9e152]:
+                    - link "Previews" [ref=f9e153] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/previews
+                      - img [ref=f9e154]
+                      - generic [ref=f9e158]: Previews
+                  - listitem [ref=f9e159]:
+                    - link "Disk" [ref=f9e160] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/disks
+                      - img [ref=f9e161]
+                      - generic [ref=f9e166]:
+                        - generic [ref=f9e167]: Disk
+                        - status [ref=f9e170]:
+                          - img [ref=f9e171]
+                  - listitem [ref=f9e173]:
+                    - link "One-Off Jobs" [ref=f9e174] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/jobs
+                      - img [ref=f9e175]
+                      - generic [ref=f9e181]:
+                        - generic [ref=f9e182]: One-Off Jobs
+                        - status [ref=f9e185]:
+                          - img [ref=f9e186]
+          - generic [ref=f9e189]:
+            - button "Collapse items" [expanded] [ref=f9e190] [cursor=pointer]:
+              - img [ref=f9e191]
+            - list "Footer navigation" [ref=f9e193]:
+              - listitem [ref=f9e194]:
+                - link "Changelog" [ref=f9e195] [cursor=pointer]:
+                  - /url: https://render.com/changelog
+                  - img [ref=f9e196]
+                  - generic [ref=f9e201]: Changelog
+              - listitem [ref=f9e202]:
+                - link "Invite a friend" [ref=f9e203] [cursor=pointer]:
+                  - /url: /invites
+                  - img [ref=f9e204]
+                  - generic [ref=f9e206]: Invite a friend
+              - listitem [ref=f9e207]:
+                - button "Contact support" [ref=f9e208] [cursor=pointer]:
+                  - img [ref=f9e209]
+                  - generic [ref=f9e213]: Contact support
+            - link "Render Status" [ref=f9e215] [cursor=pointer]:
+              - /url: https://status.render.com
+              - img [ref=f9e216]
+              - generic [ref=f9e218]: Render Status
+        - generic [ref=f9e220]:
+          - banner [ref=f9e222]:
+            - generic [ref=f9e223]:
+              - generic [ref=f9e224]:
+                - img [ref=f9e225]
+                - generic [ref=f9e227]: Web Service
+              - generic [ref=f9e228]:
+                - heading "psb-securewealth-backend Node Free Upgrade your instance Blueprint managed" [level=1] [ref=f9e230]:
+                  - generic [ref=f9e231]: psb-securewealth-backend
+                  - generic [ref=f9e232]:
+                    - generic [ref=f9e233]: Node
+                    - link "Free" [ref=f9e234] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/plan
+                      - generic [ref=f9e235]: Free
+                    - link "Upgrade your instance" [ref=f9e236] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/plan
+                      - text: Upgrade your instance
+                      - img [ref=f9e238]
+                    - link "Blueprint managed" [ref=f9e242] [cursor=pointer]:
+                      - /url: /blueprint/exs-d8r63f8js32c73bldrfg
+                      - img [ref=f9e243]
+                      - generic [ref=f9e248]: Blueprint managed
+                - generic [ref=f9e250]:
+                  - button "Connect" [ref=f9e251] [cursor=pointer]:
+                    - generic [ref=f9e252]: Connect
+                    - img [ref=f9e253]
+                  - button "Manual Deploy" [ref=f9e255] [cursor=pointer]:
+                    - generic [ref=f9e256]: Manual Deploy
+                    - img [ref=f9e257]
+            - generic [ref=f9e261]:
+              - generic [ref=f9e263]:
+                - generic [ref=f9e264]: "Service ID:"
+                - generic "Service ID:" [ref=f9e265]:
+                  - generic [ref=f9e266]: srv-d8p6ohernols73f7hkkg
+                  - button "Copy" [ref=f9e269] [cursor=pointer]:
+                    - img [ref=f9e270]
+              - generic [ref=f9e274]:
+                - img "GitHub" [ref=f9e276]
+                - link "financeforumglrc / psb-banking-backend main" [ref=f9e278] [cursor=pointer]:
+                  - /url: https://github.com/financeforumglrc/psb-banking-backend/tree/main
+                  - generic [ref=f9e279]:
+                    - generic [ref=f9e280]: financeforumglrc / psb-banking-backend
+                    - img [ref=f9e281]
+                    - generic [ref=f9e283]: main
+              - generic "Copy" [ref=f9e285]:
+                - link "https://psb-securewealth-backend.onrender.com" [ref=f9e287] [cursor=pointer]:
+                  - /url: https://psb-securewealth-backend.onrender.com
+                - button "Copy" [ref=f9e290] [cursor=pointer]:
+                  - img [ref=f9e291]
+          - main [ref=f9e294]:
+            - generic [ref=f9e295]:
+              - alert [ref=f9e296]:
+                - generic [ref=f9e298]:
+                  - img [ref=f9e300]
+                  - generic [ref=f9e304]:
+                    - generic [ref=f9e306]: Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more.
+                    - link "Upgrade now" [ref=f9e308] [cursor=pointer]:
+                      - /url: /web/srv-d8p6ohernols73f7hkkg/plan
+              - button "Filter events 31" [ref=f9e310] [cursor=pointer]:
+                - img [ref=f9e312]
+                - generic [ref=f9e314]:
+                  - text: Filter events
+                  - generic [ref=f9e315]: "31"
+                - img [ref=f9e316]
+              - generic [ref=f9e318]:
+                - list [ref=f9e319]:
+                  - listitem [ref=f9e320]:
+                    - generic [ref=f9e321]:
+                      - img [ref=f9e324]
+                      - generic [ref=f9e326]:
+                        - generic [ref=f9e327]: Service recovered
+                        - generic [ref=f9e328]: Recently failed instances are now reporting healthy.
+                        - generic [ref=f9e329]: July 9, 2026 at 1:34 AM
+                  - listitem [ref=f9e330]:
+                    - generic [ref=f9e331]:
+                      - img [ref=f9e334]
+                      - generic [ref=f9e338]:
+                        - generic [ref=f9e339]:
+                          - text: "Instance failed:"
+                          - code [ref=f9e340]: bcmgx
+                        - generic [ref=f9e341]: HTTP health check failed with status code 429 while running your code.
+                        - generic [ref=f9e342]: July 9, 2026 at 1:34 AM
+                    - button "Debug" [ref=f9e345] [cursor=pointer]:
+                      - generic [ref=f9e346]: Debug
+                      - img [ref=f9e347]
+                  - listitem [ref=f9e349]:
+                    - generic [ref=f9e350]:
+                      - img [ref=f9e353]
+                      - generic [ref=f9e355]:
+                        - generic [ref=f9e356]:
+                          - generic [ref=f9e357]:
+                            - link "Deploy" [ref=f9e358] [cursor=pointer]:
+                              - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97apm3eo5us73aetpug
+                            - text: failed
+                          - text: for
+                          - link "874c31e" [ref=f9e360] [cursor=pointer]:
+                            - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/874c31e41514c12aaeb0661cccfc7902501c501d
+                          - text: ":"
+                          - generic [ref=f9e361]: "feat: on-demand persona seeding in demo-login and auto-deploy workflow"
+                        - generic [ref=f9e362]:
+                          - text: Exited with status 1 while running your code. Check your
+                          - link "deploy logs" [ref=f9e363] [cursor=pointer]:
+                            - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97apm3eo5us73aetpug
+                          - text: for more information.
+                        - generic [ref=f9e364]: July 9, 2026 at 1:33 AM
+                    - button "Rollback" [disabled] [ref=f9e366]:
+                      - img [ref=f9e368]
+                      - text: Rollback
+                  - listitem [ref=f9e370]:
+                    - generic [ref=f9e371]:
+                      - img [ref=f9e374]
+                      - generic [ref=f9e377]:
+                        - generic [ref=f9e378]:
+                          - generic [ref=f9e379]:
+                            - generic [ref=f9e380]:
+                              - link "Deploy" [ref=f9e381] [cursor=pointer]:
+                                - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97apm3eo5us73aetpug
+                              - text: started
+                            - text: for
+                            - link "874c31e" [ref=f9e383] [cursor=pointer]:
+                              - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/874c31e41514c12aaeb0661cccfc7902501c501d
+                            - text: ":"
+                            - generic [ref=f9e384]: "feat: on-demand persona seeding in demo-login and auto-deploy workflow"
+                          - generic [ref=f9e385]: Triggered via Deploy Hook
+                        - generic [ref=f9e386]: July 9, 2026 at 1:32 AM
+                  - listitem [ref=f9e387]:
+                    - generic [ref=f9e388]:
+                      - img [ref=f9e391]
+                      - generic [ref=f9e393]:
+                        - generic [ref=f9e394]:
+                          - generic [ref=f9e395]:
+                            - link "Deploy" [ref=f9e396] [cursor=pointer]:
+                              - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97amuoshr3s73fgq00g
+                            - text: failed
+                          - text: for
+                          - link "874c31e" [ref=f9e398] [cursor=pointer]:
+                            - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/874c31e41514c12aaeb0661cccfc7902501c501d
+                          - text: ":"
+                          - generic [ref=f9e399]: "feat: on-demand persona seeding in demo-login and auto-deploy workflow"
+                        - generic [ref=f9e400]:
+                          - text: Exited with status 1 while running your code. Check your
+                          - link "deploy logs" [ref=f9e401] [cursor=pointer]:
+                            - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97amuoshr3s73fgq00g
+                          - text: for more information.
+                        - generic [ref=f9e402]: July 9, 2026 at 1:28 AM
+                    - button "Rollback" [disabled] [ref=f9e404]:
+                      - img [ref=f9e406]
+                      - text: Rollback
+                  - listitem [ref=f9e408]:
+                    - generic [ref=f9e409]:
+                      - img [ref=f9e412]
+                      - generic [ref=f9e415]:
+                        - generic [ref=f9e416]:
+                          - generic [ref=f9e417]:
+                            - generic [ref=f9e418]:
+                              - link "Deploy" [ref=f9e419] [cursor=pointer]:
+                                - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97amuoshr3s73fgq00g
+                              - text: started
+                            - text: for
+                            - link "874c31e" [ref=f9e421] [cursor=pointer]:
+                              - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/874c31e41514c12aaeb0661cccfc7902501c501d
+                            - text: ":"
+                            - generic [ref=f9e422]: "feat: on-demand persona seeding in demo-login and auto-deploy workflow"
+                          - generic [ref=f9e423]: Triggered via Deploy Hook
+                        - generic [ref=f9e424]: July 9, 2026 at 1:27 AM
+                  - listitem [ref=f9e425]:
+                    - generic [ref=f9e426]:
+                      - img [ref=f9e429]
+                      - generic [ref=f9e431]:
+                        - generic [ref=f9e432]:
+                          - generic [ref=f9e433]:
+                            - link "Deploy" [ref=f9e434] [cursor=pointer]:
+                              - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97amtm7r5hc73dtld70
+                            - text: failed
+                          - text: for
+                          - link "874c31e" [ref=f9e436] [cursor=pointer]:
+                            - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/874c31e41514c12aaeb0661cccfc7902501c501d
+                          - text: ":"
+                          - generic [ref=f9e437]: "feat: on-demand persona seeding in demo-login and auto-deploy workflow"
+                        - generic [ref=f9e438]:
+                          - text: Exited with status 1 while running your code. Check your
+                          - link "deploy logs" [ref=f9e439] [cursor=pointer]:
+                            - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97amtm7r5hc73dtld70
+                          - text: for more information.
+                        - generic [ref=f9e440]: July 9, 2026 at 1:27 AM
+                    - button "Rollback" [disabled] [ref=f9e442]:
+                      - img [ref=f9e444]
+                      - text: Rollback
+                  - listitem [ref=f9e446]:
+                    - generic [ref=f9e447]:
+                      - img [ref=f9e450]
+                      - generic [ref=f9e452]:
+                        - generic [ref=f9e453]: Service recovered
+                        - generic [ref=f9e454]: Recently failed instances are now reporting healthy.
+                        - generic [ref=f9e455]: July 9, 2026 at 1:26 AM
+                  - listitem [ref=f9e456]:
+                    - generic [ref=f9e457]:
+                      - img [ref=f9e460]
+                      - generic [ref=f9e463]:
+                        - generic [ref=f9e464]:
+                          - generic [ref=f9e465]:
+                            - generic [ref=f9e466]:
+                              - link "Deploy" [ref=f9e467] [cursor=pointer]:
+                                - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97amtm7r5hc73dtld70
+                              - text: started
+                            - text: for
+                            - link "874c31e" [ref=f9e469] [cursor=pointer]:
+                              - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/874c31e41514c12aaeb0661cccfc7902501c501d
+                            - text: ":"
+                            - generic [ref=f9e470]: "feat: on-demand persona seeding in demo-login and auto-deploy workflow"
+                          - generic [ref=f9e471]: New commit via Auto-Deploy
+                        - generic [ref=f9e472]: July 9, 2026 at 1:26 AM
+                  - listitem [ref=f9e473]:
+                    - generic [ref=f9e474]:
+                      - img [ref=f9e477]
+                      - generic [ref=f9e481]:
+                        - generic [ref=f9e482]:
+                          - text: "Instance failed:"
+                          - code [ref=f9e483]: bcmgx
+                        - generic [ref=f9e484]: HTTP health check failed with status code 429 while running your code.
+                        - generic [ref=f9e485]: July 9, 2026 at 1:26 AM
+                    - button "Debug" [ref=f9e488] [cursor=pointer]:
+                      - generic [ref=f9e489]: Debug
+                      - img [ref=f9e490]
+                  - listitem [ref=f9e492]:
+                    - generic [ref=f9e493]:
+                      - img [ref=f9e496]
+                      - generic [ref=f9e498]:
+                        - generic [ref=f9e499]:
+                          - generic [ref=f9e500]:
+                            - link "Deploy" [ref=f9e501] [cursor=pointer]:
+                              - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97aijok1i2s73d7qdig
+                            - text: failed
+                          - text: for
+                          - link "c0a8254" [ref=f9e503] [cursor=pointer]:
+                            - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/c0a8254fe37f95267d7f771d3ec694989cada98a
+                          - text: ":"
+                          - generic [ref=f9e504]: "chore: add db diagnostics to health endpoint for Render debugging"
+                        - generic [ref=f9e505]:
+                          - text: Exited with status 1 while running your code. Check your
+                          - link "deploy logs" [ref=f9e506] [cursor=pointer]:
+                            - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97aijok1i2s73d7qdig
+                          - text: for more information.
+                        - generic [ref=f9e507]: July 9, 2026 at 1:18 AM
+                    - button "Rollback" [disabled] [ref=f9e509]:
+                      - img [ref=f9e511]
+                      - text: Rollback
+                  - listitem [ref=f9e513]:
+                    - generic [ref=f9e514]:
+                      - img [ref=f9e517]
+                      - generic [ref=f9e520]:
+                        - generic [ref=f9e521]:
+                          - generic [ref=f9e522]:
+                            - generic [ref=f9e523]:
+                              - link "Deploy" [ref=f9e524] [cursor=pointer]:
+                                - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97aijok1i2s73d7qdig
+                              - text: started
+                            - text: for
+                            - link "c0a8254" [ref=f9e526] [cursor=pointer]:
+                              - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/c0a8254fe37f95267d7f771d3ec694989cada98a
+                            - text: ":"
+                            - generic [ref=f9e527]: "chore: add db diagnostics to health endpoint for Render debugging"
+                          - generic [ref=f9e528]: Triggered via Deploy Hook
+                        - generic [ref=f9e529]: July 9, 2026 at 1:17 AM
+                  - listitem [ref=f9e530]:
+                    - generic [ref=f9e531]:
+                      - img [ref=f9e534]
+                      - generic [ref=f9e536]:
+                        - generic [ref=f9e537]:
+                          - generic [ref=f9e538]:
+                            - link "Deploy" [ref=f9e539] [cursor=pointer]:
+                              - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97ag10q829s73am4np0
+                            - text: failed
+                          - text: for
+                          - link "c0a8254" [ref=f9e541] [cursor=pointer]:
+                            - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/c0a8254fe37f95267d7f771d3ec694989cada98a
+                          - text: ":"
+                          - generic [ref=f9e542]: "chore: add db diagnostics to health endpoint for Render debugging"
+                        - generic [ref=f9e543]:
+                          - text: Exited with status 1 while running your code. Check your
+                          - link "deploy logs" [ref=f9e544] [cursor=pointer]:
+                            - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97ag10q829s73am4np0
+                          - text: for more information.
+                        - generic [ref=f9e545]: July 9, 2026 at 1:13 AM
+                    - button "Rollback" [disabled] [ref=f9e547]:
+                      - img [ref=f9e549]
+                      - text: Rollback
+                  - listitem [ref=f9e551]:
+                    - generic [ref=f9e552]:
+                      - img [ref=f9e555]
+                      - generic [ref=f9e558]:
+                        - generic [ref=f9e559]:
+                          - generic [ref=f9e560]:
+                            - generic [ref=f9e561]:
+                              - link "Deploy" [ref=f9e562] [cursor=pointer]:
+                                - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97ag10q829s73am4np0
+                              - text: started
+                            - text: for
+                            - link "c0a8254" [ref=f9e564] [cursor=pointer]:
+                              - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/c0a8254fe37f95267d7f771d3ec694989cada98a
+                            - text: ":"
+                            - generic [ref=f9e565]: "chore: add db diagnostics to health endpoint for Render debugging"
+                          - generic [ref=f9e566]: Triggered via Deploy Hook
+                        - generic [ref=f9e567]: July 9, 2026 at 1:12 AM
+                  - listitem [ref=f9e568]:
+                    - generic [ref=f9e569]:
+                      - img [ref=f9e572]
+                      - generic [ref=f9e574]:
+                        - generic [ref=f9e575]:
+                          - generic [ref=f9e576]:
+                            - link "Deploy" [ref=f9e577] [cursor=pointer]:
+                              - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97afs1oagis73fm6960
+                            - text: failed
+                          - text: for
+                          - link "c0a8254" [ref=f9e579] [cursor=pointer]:
+                            - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/c0a8254fe37f95267d7f771d3ec694989cada98a
+                          - text: ":"
+                          - generic [ref=f9e580]: "chore: add db diagnostics to health endpoint for Render debugging"
+                        - generic [ref=f9e581]:
+                          - text: Exited with status 1 while running your code. Check your
+                          - link "deploy logs" [ref=f9e582] [cursor=pointer]:
+                            - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97afs1oagis73fm6960
+                          - text: for more information.
+                        - generic [ref=f9e583]: July 9, 2026 at 1:12 AM
+                    - button "Rollback" [disabled] [ref=f9e585]:
+                      - img [ref=f9e587]
+                      - text: Rollback
+                  - listitem [ref=f9e589]:
+                    - generic [ref=f9e590]:
+                      - img [ref=f9e593]
+                      - generic [ref=f9e596]:
+                        - generic [ref=f9e597]:
+                          - generic [ref=f9e598]:
+                            - generic [ref=f9e599]:
+                              - link "Deploy" [ref=f9e600] [cursor=pointer]:
+                                - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97afs1oagis73fm6960
+                              - text: started
+                            - text: for
+                            - link "c0a8254" [ref=f9e602] [cursor=pointer]:
+                              - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/c0a8254fe37f95267d7f771d3ec694989cada98a
+                            - text: ":"
+                            - generic [ref=f9e603]: "chore: add db diagnostics to health endpoint for Render debugging"
+                          - generic [ref=f9e604]: New commit via Auto-Deploy
+                        - generic [ref=f9e605]: July 9, 2026 at 1:11 AM
+                  - listitem [ref=f9e606]:
+                    - generic [ref=f9e607]:
+                      - img [ref=f9e610]
+                      - generic [ref=f9e612]:
+                        - generic [ref=f9e613]: Service recovered
+                        - generic [ref=f9e614]: Recently failed instances are now reporting healthy.
+                        - generic [ref=f9e615]: July 9, 2026 at 1:10 AM
+                  - listitem [ref=f9e616]:
+                    - generic [ref=f9e617]:
+                      - img [ref=f9e620]
+                      - generic [ref=f9e624]:
+                        - generic [ref=f9e625]:
+                          - text: "Instance failed:"
+                          - code [ref=f9e626]: bcmgx
+                        - generic [ref=f9e627]: HTTP health check failed with status code 429 while running your code.
+                        - generic [ref=f9e628]: July 9, 2026 at 1:10 AM
+                    - button "Debug" [ref=f9e631] [cursor=pointer]:
+                      - generic [ref=f9e632]: Debug
+                      - img [ref=f9e633]
+                  - listitem [ref=f9e635]:
+                    - generic [ref=f9e636]:
+                      - img [ref=f9e639]
+                      - generic [ref=f9e641]:
+                        - generic [ref=f9e642]:
+                          - generic [ref=f9e643]:
+                            - link "Deploy" [ref=f9e644] [cursor=pointer]:
+                              - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97ae1rcaegc73dboh1g
+                            - text: failed
+                          - text: for
+                          - link "8adc66a" [ref=f9e646] [cursor=pointer]:
+                            - /url: https://github.com/financeforumglrc/psb-banking-backend/commit/8adc66a02deb2c580144a37c9cb72ec6749d87cf
+                          - text: ":"
+                          - generic [ref=f9e647]: "fix: force seed personas on Render, handle conflicting emails"
+                        - generic [ref=f9e648]:
+                          - text: Exited with status 1 while running your code. Check your
+                          - link "deploy logs" [ref=f9e649] [cursor=pointer]:
+                            - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97ae1rcaegc73dboh1g
+                          - text: for more information.
+                        - generic [ref=f9e650]: July 9, 2026 at 1:09 AM
+                    - button "Rollback" [disabled] [ref=f9e652]:
+                      - img [ref=f9e654]
+                      - text: Rollback
+                  - listitem [ref=f9e656]:
+                    - generic [ref=f9e657]:
+                      - img [ref=f9e660]
+                      - generic [ref=f9e663]:
+                        - generic [ref=f9e665]:
+                          - link "Deploy" [ref=f9e666] [cursor=pointer]:
+                            - /url: /web/srv-d8p6ohernols73f7hkkg/deploys/dep-d97ae1rcaegc73dboh1g
+                          - text: started
+                        - generic [ref=f9e667]: July 9, 2026 at 1:08 AM
+                - img "Loading..." [ref=f9e669]
+    - generic:
+      - generic:
+        - generic: "0 services selected:"
+        - generic:
+          - generic:
+            - button:
+              - generic:
+                - img
+              - generic: Move
+              - img
+      - generic:
+        - separator
+        - generic:
+          - generic:
+            - button:
+              - img
+  - iframe [ref=f9e672]:
+    

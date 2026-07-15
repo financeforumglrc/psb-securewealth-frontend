@@ -1,0 +1,43 @@
+- generic [ref=f48e13]:
+  - generic [ref=f48e14]:
+    - img [ref=f48e16]
+    - generic [ref=f48e20]:
+      - generic [ref=f48e21]:
+        - img [ref=f48e23]
+        - generic [ref=f48e25]:
+          - heading "PSB SecureWealth" [level=2] [ref=f48e26]
+          - paragraph [ref=f48e27]: Internet Banking Portal
+      - generic [ref=f48e28]:
+        - heading "Banking Control Center" [level=1] [ref=f48e29]
+        - paragraph [ref=f48e30]: Secure administrative access for authorized personnel only. All login attempts are monitored and logged for compliance.
+    - generic [ref=f48e31]:
+      - generic [ref=f48e32]:
+        - img [ref=f48e33]
+        - text: RBI Licensed & Regulated
+      - generic [ref=f48e36]:
+        - img [ref=f48e37]
+        - text: 256-bit SSL Encryption
+      - generic [ref=f48e40]:
+        - img [ref=f48e41]
+        - text: Real-time System Monitoring
+      - paragraph [ref=f48e43]: © 2025 Punjab & Sind Bank. Government of India Undertaking.
+  - generic [ref=f48e44]:
+    - link "Back to Website" [ref=f48e47] [cursor=pointer]:
+      - /url: /
+      - img [ref=f48e48]
+      - text: Back to Website
+    - generic [ref=f48e53]:
+      - generic [ref=f48e54]:
+        - heading "Welcome back" [level=1] [ref=f48e55]
+        - paragraph [ref=f48e56]: Enter your admin credentials to access the control center.
+      - generic [ref=f48e57]:
+        - generic [ref=f48e58]:
+          - generic [ref=f48e59]: Admin ID
+          - textbox "TEAM EXCELLENT MINDS" [ref=f48e60]
+        - generic [ref=f48e61]:
+          - generic [ref=f48e62]: Password
+          - textbox "Enter your password" [ref=f48e63]
+        - button "Secure Login" [ref=f48e64]:
+          - img [ref=f48e65]
+          - text: Secure Login
+      - paragraph [ref=f48e69]: Authorized personnel only. Unauthorized access is a punishable offence under IT Act, 2000.

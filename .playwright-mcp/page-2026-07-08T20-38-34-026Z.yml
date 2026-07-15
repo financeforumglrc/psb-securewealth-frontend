@@ -1,0 +1,283 @@
+- generic [ref=f33e13]:
+  - link "Demo Mode" [ref=f33e14] [cursor=pointer]:
+    - /url: /demo
+    - img [ref=f33e15]
+    - text: Demo Mode
+  - generic [ref=f33e19]:
+    - generic [ref=f33e20]:
+      - img [ref=f33e22]
+      - generic [ref=f33e24]:
+        - heading "PSB SecureWealth" [level=1] [ref=f33e25]
+        - paragraph [ref=f33e26]: Twin · Public Sector Banking
+    - generic [ref=f33e27]:
+      - generic [ref=f33e28]:
+        - heading "Welcome back" [level=2] [ref=f33e29]
+        - paragraph [ref=f33e30]: Enter your credentials to access your secure vault.
+      - generic [ref=f33e31]:
+        - generic [ref=f33e32]:
+          - generic [ref=f33e33]: Email address
+          - generic [ref=f33e34]:
+            - img
+            - textbox "Email address" [ref=f33e35]:
+              - /placeholder: you@bank.in
+        - generic [ref=f33e36]:
+          - generic [ref=f33e37]: Password
+          - generic [ref=f33e38]:
+            - img
+            - textbox "Password" [ref=f33e39]:
+              - /placeholder: ••••••••
+            - button "Show password" [ref=f33e40]:
+              - img [ref=f33e41]
+        - generic [ref=f33e44] [cursor=pointer]:
+          - checkbox "I consent to the Privacy Policy and processing of my data for KYC, fraud prevention and account safeguarding." [ref=f33e45]
+          - img [ref=f33e47]
+          - generic [ref=f33e49]:
+            - text: I consent to the
+            - link "Privacy Policy" [ref=f33e50]:
+              - /url: "#privacy"
+            - text: and processing of my data for KYC, fraud prevention and account safeguarding.
+        - generic [ref=f33e51]:
+          - generic [ref=f33e52]:
+            - img [ref=f33e53]
+            - generic [ref=f33e55]: Trust this device
+          - checkbox [ref=f33e57]
+        - button "Sign in securely" [disabled] [ref=f33e60]:
+          - generic [ref=f33e61]:
+            - text: Sign in securely
+            - img [ref=f33e62]
+      - generic [ref=f33e65]:
+        - link "Forgot password?" [ref=f33e66] [cursor=pointer]:
+          - /url: "#forgot"
+        - button "⚙ Admin Portal" [ref=f33e67]
+      - generic [ref=f33e68]:
+        - text: New to PSB SecureWealth?
+        - button "Create account" [ref=f33e69]
+      - generic [ref=f33e70]:
+        - img [ref=f33e71]
+        - generic [ref=f33e74]: 256-bit TLS · RBI Compliant
+      - generic [ref=f33e75]:
+        - generic [ref=f33e78]: Or sign in with
+        - generic [ref=f33e80]:
+          - button "Face ID" [ref=f33e81]:
+            - img [ref=f33e82]
+            - text: Face ID
+          - button "Create Passkey" [disabled] [ref=f33e88]:
+            - img [ref=f33e89]
+            - text: Create Passkey
+      - generic [ref=f33e92]:
+        - paragraph [ref=f33e93]:
+          - img [ref=f33e94]
+          - text: Quick Login — Select Demo Profile
+        - generic [ref=f33e99]:
+          - img
+          - textbox "Search profiles..." [ref=f33e100]
+        - generic [ref=f33e101]:
+          - 'button "DS Deepanshu SharmaRichest enterprise Ultra HNI · Portfolio: ₹5.24 Cr ₹5.24Cr Net Worth" [ref=f33e102]':
+            - generic [ref=f33e103]: DS
+            - generic [ref=f33e104]:
+              - paragraph [ref=f33e105]:
+                - text: Deepanshu SharmaRichest
+                - generic [ref=f33e106]: enterprise
+              - paragraph [ref=f33e107]: "Ultra HNI · Portfolio: ₹5.24 Cr"
+            - generic [ref=f33e108]:
+              - paragraph [ref=f33e109]: ₹5.24Cr
+              - paragraph [ref=f33e110]: Net Worth
+          - 'button "DN Dr. Neha Gupta enterprise Dermatologist · Portfolio: ₹3.20 Cr ₹3.20Cr Net Worth" [ref=f33e111]':
+            - generic [ref=f33e112]: DN
+            - generic [ref=f33e113]:
+              - paragraph [ref=f33e114]:
+                - text: Dr. Neha Gupta
+                - generic [ref=f33e115]: enterprise
+              - paragraph [ref=f33e116]: "Dermatologist · Portfolio: ₹3.20 Cr"
+            - generic [ref=f33e117]:
+              - paragraph [ref=f33e118]: ₹3.20Cr
+              - paragraph [ref=f33e119]: Net Worth
+          - 'button "MK Meera Krishnan premium Architect · Portfolio: ₹2.60 Cr ₹2.60Cr Net Worth" [ref=f33e120]':
+            - generic [ref=f33e121]: MK
+            - generic [ref=f33e122]:
+              - paragraph [ref=f33e123]:
+                - text: Meera Krishnan
+                - generic [ref=f33e124]: premium
+              - paragraph [ref=f33e125]: "Architect · Portfolio: ₹2.60 Cr"
+            - generic [ref=f33e126]:
+              - paragraph [ref=f33e127]: ₹2.60Cr
+              - paragraph [ref=f33e128]: Net Worth
+          - 'button "IA Ishita Anand premium Business Owner · Portfolio: ₹2.45 Cr ₹2.45Cr Net Worth" [ref=f33e129]':
+            - generic [ref=f33e130]: IA
+            - generic [ref=f33e131]:
+              - paragraph [ref=f33e132]:
+                - text: Ishita Anand
+                - generic [ref=f33e133]: premium
+              - paragraph [ref=f33e134]: "Business Owner · Portfolio: ₹2.45 Cr"
+            - generic [ref=f33e135]:
+              - paragraph [ref=f33e136]: ₹2.45Cr
+              - paragraph [ref=f33e137]: Net Worth
+          - 'button "RM Rohan Mehta premium Chartered Accountant · Portfolio: ₹2.10 Cr ₹2.10Cr Net Worth" [ref=f33e138]':
+            - generic [ref=f33e139]: RM
+            - generic [ref=f33e140]:
+              - paragraph [ref=f33e141]:
+                - text: Rohan Mehta
+                - generic [ref=f33e142]: premium
+              - paragraph [ref=f33e143]: "Chartered Accountant · Portfolio: ₹2.10 Cr"
+            - generic [ref=f33e144]:
+              - paragraph [ref=f33e145]: ₹2.10Cr
+              - paragraph [ref=f33e146]: Net Worth
+          - 'button "MM Mrigesh Mohanty premium Tech Lead · Portfolio: ₹1.84 Cr ₹1.84Cr Net Worth" [ref=f33e147]':
+            - generic [ref=f33e148]: MM
+            - generic [ref=f33e149]:
+              - paragraph [ref=f33e150]:
+                - text: Mrigesh Mohanty
+                - generic [ref=f33e151]: premium
+              - paragraph [ref=f33e152]: "Tech Lead · Portfolio: ₹1.84 Cr"
+            - generic [ref=f33e153]:
+              - paragraph [ref=f33e154]: ₹1.84Cr
+              - paragraph [ref=f33e155]: Net Worth
+          - 'button "KR Karthik Reddy premium Data Scientist · Portfolio: ₹1.75 Cr ₹1.75Cr Net Worth" [ref=f33e156]':
+            - generic [ref=f33e157]: KR
+            - generic [ref=f33e158]:
+              - paragraph [ref=f33e159]:
+                - text: Karthik Reddy
+                - generic [ref=f33e160]: premium
+              - paragraph [ref=f33e161]: "Data Scientist · Portfolio: ₹1.75 Cr"
+            - generic [ref=f33e162]:
+              - paragraph [ref=f33e163]: ₹1.75Cr
+              - paragraph [ref=f33e164]: Net Worth
+          - 'button "AN Arjun Nair premium Senior Consultant · Portfolio: ₹1.55 Cr ₹1.55Cr Net Worth" [ref=f33e165]':
+            - generic [ref=f33e166]: AN
+            - generic [ref=f33e167]:
+              - paragraph [ref=f33e168]:
+                - text: Arjun Nair
+                - generic [ref=f33e169]: premium
+              - paragraph [ref=f33e170]: "Senior Consultant · Portfolio: ₹1.55 Cr"
+            - generic [ref=f33e171]:
+              - paragraph [ref=f33e172]: ₹1.55Cr
+              - paragraph [ref=f33e173]: Net Worth
+          - 'button "RP Rahul Pillai premium Sales Director · Portfolio: ₹1.42 Cr ₹1.42Cr Net Worth" [ref=f33e174]':
+            - generic [ref=f33e175]: RP
+            - generic [ref=f33e176]:
+              - paragraph [ref=f33e177]:
+                - text: Rahul Pillai
+                - generic [ref=f33e178]: premium
+              - paragraph [ref=f33e179]: "Sales Director · Portfolio: ₹1.42 Cr"
+            - generic [ref=f33e180]:
+              - paragraph [ref=f33e181]: ₹1.42Cr
+              - paragraph [ref=f33e182]: Net Worth
+          - 'button "SI Sneha Iyer premium Product Manager · Portfolio: ₹1.35 Cr ₹1.35Cr Net Worth" [ref=f33e183]':
+            - generic [ref=f33e184]: SI
+            - generic [ref=f33e185]:
+              - paragraph [ref=f33e186]:
+                - text: Sneha Iyer
+                - generic [ref=f33e187]: premium
+              - paragraph [ref=f33e188]: "Product Manager · Portfolio: ₹1.35 Cr"
+            - generic [ref=f33e189]:
+              - paragraph [ref=f33e190]: ₹1.35Cr
+              - paragraph [ref=f33e191]: Net Worth
+          - 'button "DC Divya Chauhan premium HR Head · Portfolio: ₹1.15 Cr ₹1.15Cr Net Worth" [ref=f33e192]':
+            - generic [ref=f33e193]: DC
+            - generic [ref=f33e194]:
+              - paragraph [ref=f33e195]:
+                - text: Divya Chauhan
+                - generic [ref=f33e196]: premium
+              - paragraph [ref=f33e197]: "HR Head · Portfolio: ₹1.15 Cr"
+            - generic [ref=f33e198]:
+              - paragraph [ref=f33e199]: ₹1.15Cr
+              - paragraph [ref=f33e200]: Net Worth
+          - 'button "SV Siddharth Verma premium Corporate Lawyer · Portfolio: ₹1.08 Cr ₹1.08Cr Net Worth" [ref=f33e201]':
+            - generic [ref=f33e202]: SV
+            - generic [ref=f33e203]:
+              - paragraph [ref=f33e204]:
+                - text: Siddharth Verma
+                - generic [ref=f33e205]: premium
+              - paragraph [ref=f33e206]: "Corporate Lawyer · Portfolio: ₹1.08 Cr"
+            - generic [ref=f33e207]:
+              - paragraph [ref=f33e208]: ₹1.08Cr
+              - paragraph [ref=f33e209]: Net Worth
+          - 'button "RB Rikshita Barua free Marketing Strategist · Portfolio: ₹96.5L ₹0.96Cr Net Worth" [ref=f33e210]':
+            - generic [ref=f33e211]: RB
+            - generic [ref=f33e212]:
+              - paragraph [ref=f33e213]:
+                - text: Rikshita Barua
+                - generic [ref=f33e214]: free
+              - paragraph [ref=f33e215]: "Marketing Strategist · Portfolio: ₹96.5L"
+            - generic [ref=f33e216]:
+              - paragraph [ref=f33e217]: ₹0.96Cr
+              - paragraph [ref=f33e218]: Net Worth
+          - 'button "PD Priya Desai free UX Design Lead · Portfolio: ₹92L ₹0.92Cr Net Worth" [ref=f33e219]':
+            - generic [ref=f33e220]: PD
+            - generic [ref=f33e221]:
+              - paragraph [ref=f33e222]:
+                - text: Priya Desai
+                - generic [ref=f33e223]: free
+              - paragraph [ref=f33e224]: "UX Design Lead · Portfolio: ₹92L"
+            - generic [ref=f33e225]:
+              - paragraph [ref=f33e226]: ₹0.92Cr
+              - paragraph [ref=f33e227]: Net Worth
+          - 'button "VS Vikram Singh free Army Officer · Portfolio: ₹88L ₹0.88Cr Net Worth" [ref=f33e228]':
+            - generic [ref=f33e229]: VS
+            - generic [ref=f33e230]:
+              - paragraph [ref=f33e231]:
+                - text: Vikram Singh
+                - generic [ref=f33e232]: free
+              - paragraph [ref=f33e233]: "Army Officer · Portfolio: ₹88L"
+            - generic [ref=f33e234]:
+              - paragraph [ref=f33e235]: ₹0.88Cr
+              - paragraph [ref=f33e236]: Net Worth
+          - 'button "KS Kunal Saxena free Early Investor · Portfolio: ₹78.5L ₹0.79Cr Net Worth" [ref=f33e237]':
+            - generic [ref=f33e238]: KS
+            - generic [ref=f33e239]:
+              - paragraph [ref=f33e240]:
+                - text: Kunal Saxena
+                - generic [ref=f33e241]: free
+              - paragraph [ref=f33e242]: "Early Investor · Portfolio: ₹78.5L"
+            - generic [ref=f33e243]:
+              - paragraph [ref=f33e244]: ₹0.79Cr
+              - paragraph [ref=f33e245]: Net Worth
+          - 'button "BS Balbir Singh free Retired Army Officer · Portfolio: ₹72L ₹0.72Cr Net Worth" [ref=f33e246]':
+            - generic [ref=f33e247]: BS
+            - generic [ref=f33e248]:
+              - paragraph [ref=f33e249]:
+                - text: Balbir Singh
+                - generic [ref=f33e250]: free
+              - paragraph [ref=f33e251]: "Retired Army Officer · Portfolio: ₹72L"
+            - generic [ref=f33e252]:
+              - paragraph [ref=f33e253]: ₹0.72Cr
+              - paragraph [ref=f33e254]: Net Worth
+          - 'button "AB Ananya Bose free Content Creator · Portfolio: ₹48L ₹0.48Cr Net Worth" [ref=f33e255]':
+            - generic [ref=f33e256]: AB
+            - generic [ref=f33e257]:
+              - paragraph [ref=f33e258]:
+                - text: Ananya Bose
+                - generic [ref=f33e259]: free
+              - paragraph [ref=f33e260]: "Content Creator · Portfolio: ₹48L"
+            - generic [ref=f33e261]:
+              - paragraph [ref=f33e262]: ₹0.48Cr
+              - paragraph [ref=f33e263]: Net Worth
+        - paragraph [ref=f33e264]: "Password for all demo accounts: Firstname@123"
+    - paragraph [ref=f33e265]: © 2026 PSB SecureWealth Twin. All rights reserved.
+  - generic [ref=f33e266]:
+    - generic:
+      - img
+    - generic [ref=f33e267]:
+      - generic [ref=f33e268]:
+        - generic [ref=f33e269]:
+          - img [ref=f33e270]
+          - text: Next-gen public sector banking
+        - heading "Your wealth. Protected." [level=2] [ref=f33e273]
+        - paragraph [ref=f33e274]: A unified, consent-first dashboard that merges your accounts, goals and risk cover into one intelligent twin.
+      - generic [ref=f33e275]:
+        - generic [ref=f33e276]:
+          - img [ref=f33e278]
+          - generic [ref=f33e280]:
+            - heading "Zero-knowledge encryption" [level=4] [ref=f33e281]
+            - paragraph [ref=f33e282]: Credentials are never stored in plain text.
+        - generic [ref=f33e283]:
+          - img [ref=f33e285]
+          - generic [ref=f33e294]:
+            - heading "Biometric-ready access" [level=4] [ref=f33e295]
+            - paragraph [ref=f33e296]: Face and passkey verification on supported devices.
+        - generic [ref=f33e297]:
+          - img [ref=f33e299]
+          - generic [ref=f33e302]:
+            - heading "AI fraud shield" [level=4] [ref=f33e303]
+            - paragraph [ref=f33e304]: Real-time anomaly detection across every login.
+    - paragraph [ref=f33e311]: Trusted by 2.4M+ PSB customers

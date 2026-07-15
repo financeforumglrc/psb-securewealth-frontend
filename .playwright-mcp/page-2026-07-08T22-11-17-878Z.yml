@@ -1,0 +1,1296 @@
+- generic [active] [ref=f9e1]:
+  - generic [ref=f9e2]:
+    - generic [ref=f9e309]:
+      - generic [ref=f9e312]:
+        - button "Regulated & Insured" [ref=f9e313]:
+          - generic [ref=f9e314]: Regulated & Insured
+        - generic [ref=f9e316]:
+          - generic [ref=f9e318]: 
+          - generic [ref=f9e320]: Wealth Protection Layer Active
+        - button "Trust 70" [ref=f9e322]:
+          - generic [ref=f9e323]: Trust 70
+        - generic [ref=f9e328]: Session Clear
+        - generic [ref=f9e330]:
+          - button "! Device" [ref=f9e331]:
+            - generic [ref=f9e332]: "!"
+            - generic [ref=f9e333]: Device
+          - button " Behaviour" [ref=f9e334]:
+            - generic [ref=f9e335]: 
+            - generic [ref=f9e336]: Behaviour
+          - button " OTP" [ref=f9e337]:
+            - generic [ref=f9e338]: 
+            - generic [ref=f9e339]: OTP
+          - button "! Session" [ref=f9e340]:
+            - generic [ref=f9e341]: "!"
+            - generic [ref=f9e342]: Session
+        - generic [ref=f9e343]:
+          - generic [ref=f9e344]: Online
+          - button " Report Fraud" [ref=f9e346]:
+            - generic [ref=f9e347]: 
+            - generic [ref=f9e348]: Report Fraud
+      - banner [ref=f9e349]:
+        - generic [ref=f9e351]:
+          - generic [ref=f9e352]:
+            - text: 
+            - link "PUNJAB & SIND BANK" [ref=f9e353] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=f9e355]:
+                - generic [ref=f9e362]: PSB
+              - generic [ref=f9e363]:
+                - paragraph [ref=f9e364]: PUNJAB & SIND
+                - paragraph [ref=f9e365]: BANK
+          - button "Open search command palette" [ref=f9e366]:
+            - generic [ref=f9e367]: 
+            - generic [ref=f9e368]: Search anything…
+            - generic [ref=f9e369]: ⌘K
+          - generic [ref=f9e370]:
+            - generic "Wealth Protection Trust Score" [ref=f9e371]:
+              - generic [ref=f9e373]: "70"
+            - button "Toggle language" [ref=f9e374]:
+              - generic [ref=f9e375]: हि
+            - button " Demo" [ref=f9e376]:
+              - generic [ref=f9e377]: 
+              - text: Demo
+            - button "" [ref=f9e379]:
+              - generic [ref=f9e380]: 
+            - button "DS Deepanshu Sharma " [ref=f9e382]:
+              - generic [ref=f9e383]: DS
+              - generic [ref=f9e384]: Deepanshu Sharma
+              - generic [ref=f9e385]: 
+      - navigation [ref=f9e386]:
+        - generic [ref=f9e388]:
+          - button " Wealth Intelligence " [ref=f9e389]:
+            - generic [ref=f9e390]: 
+            - text: Wealth Intelligence
+            - generic [ref=f9e391]: 
+          - button " Pay & Protect " [ref=f9e392]:
+            - generic [ref=f9e393]: 
+            - text: Pay & Protect
+            - generic [ref=f9e394]: 
+          - button " Plan & Tools " [ref=f9e395]:
+            - generic [ref=f9e396]: 
+            - text: Plan & Tools
+            - generic [ref=f9e397]: 
+          - button " Family & Lifestyle " [ref=f9e398]:
+            - generic [ref=f9e399]: 
+            - text: Family & Lifestyle
+            - generic [ref=f9e400]: 
+          - button " Innovation " [ref=f9e401]:
+            - generic [ref=f9e402]: 
+            - text: Innovation
+            - generic [ref=f9e403]: 
+          - button " Pay Now" [ref=f9e405]:
+            - generic [ref=f9e406]: 
+            - text: Pay Now
+      - generic [ref=f9e407]:
+        - complementary [ref=f9e408]:
+          - generic [ref=f9e411]: 
+          - generic [ref=f9e412]:
+            - button "Open profile" [ref=f9e413]: DS
+            - generic: Profile
+          - generic [ref=f9e416]:
+            - button "Wealth Intelligence" [ref=f9e417]:
+              - generic [ref=f9e418]: 
+              - generic [ref=f9e419]: Wealth Intelligence
+            - button "Pay & Protect" [ref=f9e421]:
+              - generic [ref=f9e422]: 
+              - generic [ref=f9e423]: Pay & Protect
+            - button "Plan & Tools" [ref=f9e424]:
+              - generic [ref=f9e425]: 
+              - generic [ref=f9e426]: Plan & Tools
+            - button "Family & Lifestyle" [ref=f9e427]:
+              - generic [ref=f9e428]: 
+              - generic [ref=f9e429]: Family & Lifestyle
+            - button "Innovation" [ref=f9e430]:
+              - generic [ref=f9e431]: 
+              - generic [ref=f9e432]: Innovation
+          - generic [ref=f9e434]:
+            - button "Trust score 70" [ref=f9e435]:
+              - generic [ref=f9e436]:
+                - img [ref=f9e437]
+                - generic [ref=f9e440]: "70"
+              - generic [ref=f9e441]: Trust
+            - generic: Trust score 70
+          - generic [ref=f9e442]:
+            - generic [ref=f9e443]:
+              - button "Accessibility settings" [ref=f9e444]:
+                - generic [ref=f9e445]: 
+              - generic: Accessibility
+            - generic [ref=f9e446]:
+              - button "Logout" [ref=f9e447]:
+                - generic [ref=f9e448]: 
+              - generic: Logout
+        - main [ref=f9e449]:
+          - generic [ref=f9e451]:
+            - generic [ref=f9e452]:
+              - button "Home" [ref=f9e453]
+              - generic [ref=f9e454]: 
+              - generic [ref=f9e455]: Wealth Intelligence
+              - generic [ref=f9e456]: 
+              - generic [ref=f9e457]: Dashboard
+            - generic [ref=f9e458]:
+              - generic [ref=f9e460]: 
+              - generic [ref=f9e461]:
+                - heading "Dashboard" [level=1] [ref=f9e462]
+                - paragraph [ref=f9e463]: Good morning, Deepanshu · SecureWealth Twin with built-in fraud protection
+          - generic [ref=f9e466]:
+            - generic [ref=f9e467]:
+              - generic [ref=f9e468]:
+                - generic [ref=f9e469]: 
+                - generic [ref=f9e470]: Customer App
+              - generic [ref=f9e471]: 
+            - generic [ref=f9e472]:
+              - generic [ref=f9e473]:
+                - generic [ref=f9e474]: 
+                - generic [ref=f9e475]: Wealth Intelligence Twin
+              - generic [ref=f9e476]: 
+            - generic [ref=f9e477]:
+              - generic [ref=f9e478]:
+                - generic [ref=f9e479]: 
+                - generic [ref=f9e480]: Wealth Protection Check
+              - generic [ref=f9e481]: 
+            - generic [ref=f9e482]:
+              - generic [ref=f9e483]:
+                - generic [ref=f9e484]: 
+                - generic [ref=f9e485]: Risk Decision
+              - generic [ref=f9e486]: 
+            - generic [ref=f9e488]:
+              - generic [ref=f9e489]: 
+              - generic [ref=f9e490]: Action / Simulation
+          - generic [ref=f9e494]:
+            - generic [ref=f9e495]:
+              - generic [ref=f9e496]:
+                - paragraph [ref=f9e497]: Good morning
+                - heading "Deepanshu Sharma" [level=1] [ref=f9e498]
+              - generic [ref=f9e499]:
+                - group "Language" [ref=f9e500]:
+                  - button "English" [pressed] [ref=f9e501]: EN
+                  - button "Hindi" [ref=f9e502]: हिं
+                - group "Dashboard density" [ref=f9e503]:
+                  - button "Simple Mode" [pressed] [ref=f9e504]
+                  - button "Comprehensive Mode" [ref=f9e505]
+                - button "Toggle quick access" [pressed] [ref=f9e506]:
+                  - generic [ref=f9e507]: 
+                  - text: Quick Access On
+            - generic [ref=f9e508]:
+              - generic [ref=f9e509]:
+                - generic [ref=f9e510]: 
+                - text: Trust
+              - generic [ref=f9e511]:
+                - generic [ref=f9e512]: 
+                - text: Privacy Protected
+                - generic: End-to-end encryption. No data sold. RBI-compliant.
+              - button " Consent Required  Explicit user consent for AI analysis & data usage." [ref=f9e513] [cursor=pointer]:
+                - generic [ref=f9e514]: 
+                - text: Consent Required
+                - generic [ref=f9e515]: 
+                - generic: Explicit user consent for AI analysis & data usage.
+              - generic [ref=f9e516]:
+                - generic [ref=f9e517]: 
+                - text: Explainable AI
+                - generic: Every recommendation shows logic, market data & user pattern.
+              - button " KYC Pending Complete KYC to unlock full features." [ref=f9e518] [cursor=pointer]:
+                - generic [ref=f9e519]: 
+                - text: KYC Pending
+                - generic: Complete KYC to unlock full features.
+              - button " Simulation / Demo Only This is not financial advice" [ref=f9e520] [cursor=pointer]:
+                - generic [ref=f9e521]: 
+                - text: Simulation / Demo Only
+                - generic: This is not financial advice
+            - generic [ref=f9e522]:
+              - generic [ref=f9e526]:
+                - generic [ref=f9e527]:
+                  - generic [ref=f9e528]: Net Worth
+                  - generic [ref=f9e530]: 
+                - paragraph [ref=f9e531]: ₹5.24Cr
+                - generic [ref=f9e532]:
+                  - generic [ref=f9e533]: 
+                  - generic [ref=f9e534]: +1.0%
+                  - generic [ref=f9e535]: vs last month
+              - generic [ref=f9e539]:
+                - generic [ref=f9e540]:
+                  - generic [ref=f9e541]: Monthly Savings
+                  - generic [ref=f9e543]: 
+                - paragraph [ref=f9e544]: ₹530,000
+                - generic [ref=f9e545]:
+                  - generic [ref=f9e546]: 
+                  - generic [ref=f9e547]: +62.4%
+                  - generic [ref=f9e548]: of income
+              - generic [ref=f9e552]:
+                - generic [ref=f9e553]:
+                  - generic [ref=f9e554]: Health Score
+                  - generic [ref=f9e556]: 
+                - paragraph [ref=f9e557]: 100/100
+                - generic [ref=f9e558]:
+                  - generic [ref=f9e559]: 
+                  - generic [ref=f9e560]: Good
+              - generic [ref=f9e564]:
+                - generic [ref=f9e565]:
+                  - generic [ref=f9e566]: Cashback
+                  - generic [ref=f9e568]: 
+                - paragraph [ref=f9e569]: ₹0
+                - generic [ref=f9e570]:
+                  - generic [ref=f9e571]: 
+                  - generic [ref=f9e572]: No cashback yet
+              - generic [ref=f9e576]:
+                - generic [ref=f9e577]:
+                  - generic [ref=f9e578]: Streak
+                  - generic [ref=f9e580]: 
+                - paragraph [ref=f9e581]: 1 days
+                - generic [ref=f9e582]:
+                  - generic [ref=f9e583]: 
+                  - generic [ref=f9e584]: Keep going
+            - generic [ref=f9e585]:
+              - button " Complete KYC" [ref=f9e586]:
+                - generic [ref=f9e587]: 
+                - text: Complete KYC
+              - button " Send Money" [ref=f9e588]:
+                - generic [ref=f9e589]: 
+                - text: Send Money
+              - button " Add Goal" [ref=f9e590]:
+                - generic [ref=f9e591]: 
+                - text: Add Goal
+              - button " View Portfolio" [ref=f9e592]:
+                - generic [ref=f9e593]: 
+                - text: View Portfolio
+            - generic [ref=f9e597]:
+              - generic [ref=f9e598]:
+                - generic [ref=f9e599]:
+                  - generic [ref=f9e601]:
+                    - generic [ref=f9e602]: 
+                    - generic [ref=f9e603]: "35"
+                    - generic [ref=f9e604]: / 100 Risk
+                  - generic [ref=f9e605]: LOW RISK
+                - paragraph [ref=f9e606]: Your SecureWealth Twin
+                - paragraph [ref=f9e607]: AI-powered digital guardian monitoring your wealth 24/7
+              - generic [ref=f9e608]:
+                - generic [ref=f9e609]:
+                  - heading " Wealth Protection Status" [level=3] [ref=f9e610]:
+                    - generic [ref=f9e611]: 
+                    - text: Wealth Protection Status
+                  - paragraph [ref=f9e612]: 1 advisory signal detected — review below.
+                - generic [ref=f9e613]:
+                  - button " Device Trust Trusted device verified Your current device is recognised and trusted. New or unknown devices raise the protection risk score." [ref=f9e614] [cursor=pointer]:
+                    - generic [ref=f9e616]: 
+                    - generic [ref=f9e617]:
+                      - paragraph [ref=f9e618]: Device Trust
+                      - paragraph [ref=f9e619]: Trusted device verified
+                    - generic: Your current device is recognised and trusted. New or unknown devices raise the protection risk score.
+                  - button " Behavior Pattern Spending pattern normal Your spending and saving pattern is within a healthy range." [ref=f9e620] [cursor=pointer]:
+                    - generic [ref=f9e622]: 
+                    - generic [ref=f9e623]:
+                      - paragraph [ref=f9e624]: Behavior Pattern
+                      - paragraph [ref=f9e625]: Spending pattern normal
+                    - generic: Your spending and saving pattern is within a healthy range.
+                  - button " Market Risk Markets stable (P/E 23.4) Market valuations or inflation are elevated. Review exposure to high-risk assets." [ref=f9e626] [cursor=pointer]:
+                    - generic [ref=f9e628]: 
+                    - generic [ref=f9e629]:
+                      - paragraph [ref=f9e630]: Market Risk
+                      - paragraph [ref=f9e631]: Markets stable (P/E 23.4)
+                    - generic: Market valuations or inflation are elevated. Review exposure to high-risk assets.
+                  - button " Transaction History 60 transactions analyzed Recent transactions are screened for anomalies, large deviations, and fraud patterns." [ref=f9e632] [cursor=pointer]:
+                    - generic [ref=f9e634]: 
+                    - generic [ref=f9e635]:
+                      - paragraph [ref=f9e636]: Transaction History
+                      - paragraph [ref=f9e637]: 60 transactions analyzed
+                    - generic: Recent transactions are screened for anomalies, large deviations, and fraud patterns.
+                - generic [ref=f9e639]:
+                  - generic [ref=f9e641]: 
+                  - generic [ref=f9e642]:
+                    - paragraph [ref=f9e643]: "AI Insight: Inflation Hedge Allocation"
+                    - paragraph [ref=f9e644]: Inflation is above 6%. Add gold/FD exposure for stability.
+              - generic [ref=f9e645]:
+                - generic [ref=f9e649]:
+                  - generic [ref=f9e650]:
+                    - paragraph [ref=f9e651]: Net Worth
+                    - paragraph [ref=f9e652]: ₹5.24Cr
+                  - generic [ref=f9e654]: 
+                - generic [ref=f9e658]:
+                  - generic [ref=f9e659]:
+                    - paragraph [ref=f9e660]: Savings Rate
+                    - paragraph [ref=f9e661]: 62.4%
+                  - generic [ref=f9e663]: 
+                - generic [ref=f9e667]:
+                  - generic [ref=f9e668]:
+                    - paragraph [ref=f9e669]: Active Goals
+                    - paragraph [ref=f9e670]: "4"
+                  - generic [ref=f9e672]: 
+                - button " Open Protection Center" [ref=f9e673]:
+                  - generic [ref=f9e674]: 
+                  - text: Open Protection Center
+            - generic [ref=f9e698]:
+              - generic [ref=f9e701]: Live Pulse
+              - generic [ref=f9e702]:
+                - generic [ref=f9e703]: 
+                - generic [ref=f9e704]:
+                  - generic [ref=f9e705]:
+                    - generic [ref=f9e706]: "849"
+                    - generic [ref=f9e707]:
+                      - generic [ref=f9e708]: 
+                      - text: "+12"
+                  - paragraph [ref=f9e709]: Frauds Blocked Today
+              - generic [ref=f9e710]:
+                - generic [ref=f9e711]: 
+                - generic [ref=f9e712]:
+                  - generic [ref=f9e713]:
+                    - generic [ref=f9e714]: ₹6,730
+                    - generic [ref=f9e715]:
+                      - generic [ref=f9e716]: 
+                      - text: +₹1,200
+                  - paragraph [ref=f9e717]: Agent Savings
+              - generic [ref=f9e718]:
+                - generic [ref=f9e719]: 
+                - generic [ref=f9e720]:
+                  - generic [ref=f9e721]:
+                    - generic [ref=f9e722]: "36"
+                    - generic [ref=f9e723]:
+                      - generic [ref=f9e724]: 
+                      - text: +47K
+                  - paragraph [ref=f9e725]: Users Protected
+              - generic [ref=f9e726]:
+                - generic [ref=f9e727]: 
+                - generic [ref=f9e728]:
+                  - generic [ref=f9e729]:
+                    - generic [ref=f9e730]: "146"
+                    - generic [ref=f9e731]:
+                      - generic [ref=f9e732]: 
+                      - text: "+892"
+                  - paragraph [ref=f9e733]: AI Queries
+              - generic [ref=f9e734]:
+                - generic [ref=f9e735]: 
+                - generic [ref=f9e736]:
+                  - generic [ref=f9e737]:
+                    - generic [ref=f9e738]: ₹2,855
+                    - generic [ref=f9e739]:
+                      - generic [ref=f9e740]: 
+                      - text: "-₹450"
+                  - paragraph [ref=f9e741]: Emotional Spends Blocked
+              - generic [ref=f9e742]:
+                - generic [ref=f9e743]: 
+                - generic [ref=f9e744]:
+                  - generic [ref=f9e745]:
+                    - generic [ref=f9e746]: "492"
+                    - generic [ref=f9e747]:
+                      - generic [ref=f9e748]: 
+                      - text: +3,402
+                  - paragraph [ref=f9e749]: Simulations Run
+            - generic [ref=f9e751]:
+              - generic [ref=f9e752]: 
+              - generic [ref=f9e753]:
+                - heading "Quick Actions" [level=2] [ref=f9e754]
+                - paragraph [ref=f9e755]: Frequent tasks, one tap away
+            - generic [ref=f9e756]:
+              - generic [ref=f9e760]:
+                - generic [ref=f9e761]:
+                  - generic [ref=f9e762]:
+                    - generic [ref=f9e764]: 
+                    - generic [ref=f9e765]:
+                      - heading "Quick Pay" [level=3] [ref=f9e766]
+                      - paragraph [ref=f9e767]: Instant UPI transfer
+                  - button "Full Hub " [ref=f9e768]:
+                    - text: Full Hub
+                    - generic [ref=f9e769]: 
+                - generic [ref=f9e770]:
+                  - generic [ref=f9e771]:
+                    - generic [ref=f9e772]: UPI ID / Mobile Number
+                    - textbox "name@upi or mobile number" [ref=f9e773]
+                  - generic [ref=f9e774]:
+                    - generic [ref=f9e775]: Amount (₹)
+                    - spinbutton "0.00" [ref=f9e776]
+                  - generic [ref=f9e777]:
+                    - button "₹100" [ref=f9e778]
+                    - button "₹500" [ref=f9e779]
+                    - button "₹1000" [ref=f9e780]
+                    - button "₹5000" [ref=f9e781]
+                  - generic [ref=f9e782]:
+                    - generic [ref=f9e783]: 
+                    - paragraph [ref=f9e784]: All payments pass through 6-layer cyber-protection before execution.
+                  - button " Pay Securely via UPI" [disabled] [ref=f9e785]:
+                    - generic [ref=f9e786]: 
+                    - text: Pay Securely via UPI
+              - generic [ref=f9e787]:
+                - generic [ref=f9e788]:
+                  - heading "My Card" [level=3] [ref=f9e789]
+                  - button " Show" [ref=f9e790]:
+                    - generic [ref=f9e791]: 
+                    - text: Show
+                - generic [ref=f9e793]:
+                  - img [ref=f9e795]
+                  - generic [ref=f9e799]:
+                    - generic [ref=f9e800]:
+                      - generic [ref=f9e801]:
+                        - img [ref=f9e802]:
+                          - generic [ref=f9e805]: PSB
+                        - generic [ref=f9e806]: PUNJAB & SIND BANK
+                      - generic [ref=f9e807]: 
+                    - generic [ref=f9e808]: "**** **** **** 1111"
+                    - generic [ref=f9e809]:
+                      - generic [ref=f9e810]:
+                        - paragraph [ref=f9e811]: Card Holder
+                        - paragraph [ref=f9e813]: R**** S****
+                      - generic [ref=f9e814]:
+                        - paragraph [ref=f9e815]: Expires
+                        - paragraph [ref=f9e817]: "**/**"
+                      - generic [ref=f9e818]:
+                        - paragraph [ref=f9e819]: CVV
+                        - paragraph [ref=f9e821]: "***"
+                - generic [ref=f9e822]:
+                  - button " Freeze" [ref=f9e823]:
+                    - generic [ref=f9e824]: 
+                    - text: Freeze
+                  - button " Limits" [ref=f9e825]:
+                    - generic [ref=f9e826]: 
+                    - text: Limits
+                  - button " Pay" [ref=f9e827]:
+                    - generic [ref=f9e828]: 
+                    - text: Pay
+                  - button " Copy" [ref=f9e829]:
+                    - generic [ref=f9e830]: 
+                    - text: Copy
+            - generic [ref=f9e831]:
+              - generic [ref=f9e833]:
+                - generic [ref=f9e834]: 
+                - generic [ref=f9e835]:
+                  - heading "AI Autonomous Actions Pending Approval" [level=2] [ref=f9e836]
+                  - paragraph [ref=f9e837]: 1-tap execution drafted by Wealth Twin
+              - generic [ref=f9e838]:
+                - generic [ref=f9e839]:
+                  - generic [ref=f9e840]: 
+                  - paragraph [ref=f9e841]:
+                    - strong [ref=f9e842]: "Disclaimer:"
+                    - text: Simulation/demo only. No guaranteed returns. Subject to market risks.
+                - generic [ref=f9e844]:
+                  - generic [ref=f9e846]: 
+                  - generic [ref=f9e847]:
+                    - generic [ref=f9e848]:
+                      - generic [ref=f9e849]: Smart Sweep
+                      - generic [ref=f9e850]: low risk
+                    - paragraph [ref=f9e851]: Move ₹40,000 from Savings Account (4.0%) to Sweep FD (7.2%) and earn ₹1,280 extra interest per year.
+                    - paragraph [ref=f9e852]:
+                      - generic [ref=f9e853]: 
+                      - text: "Potential gain: ₹1,280 / year"
+                    - generic [ref=f9e854]:
+                      - button " Approve & Execute" [ref=f9e855]:
+                        - generic [ref=f9e856]: 
+                        - text: Approve & Execute
+                      - button " Dismiss" [ref=f9e857]:
+                        - generic [ref=f9e858]: 
+                        - text: Dismiss
+                - generic [ref=f9e859]:
+                  - generic [ref=f9e860]: 
+                  - paragraph [ref=f9e861]:
+                    - strong [ref=f9e862]: "Disclaimer:"
+                    - text: Simulation/demo only. No guaranteed returns. Subject to market risks.
+                - generic [ref=f9e864]:
+                  - generic [ref=f9e866]: 
+                  - generic [ref=f9e867]:
+                    - generic [ref=f9e868]:
+                      - generic [ref=f9e869]: SIP Top-up
+                      - generic [ref=f9e870]: medium risk
+                    - paragraph [ref=f9e871]: Top-up your Nifty Index SIP by ₹5,000/month based on your rising monthly savings trend.
+                    - paragraph [ref=f9e872]:
+                      - generic [ref=f9e873]: 
+                      - text: "Potential gain: ₹2.4L in 10 yrs"
+                    - generic [ref=f9e874]:
+                      - button " Approve & Execute" [ref=f9e875]:
+                        - generic [ref=f9e876]: 
+                        - text: Approve & Execute
+                      - button " Dismiss" [ref=f9e877]:
+                        - generic [ref=f9e878]: 
+                        - text: Dismiss
+            - generic [ref=f9e879]:
+              - generic [ref=f9e880]:
+                - generic [ref=f9e881]:
+                  - generic [ref=f9e882]:
+                    - generic [ref=f9e883]:
+                      - generic [ref=f9e885]: 
+                      - generic [ref=f9e886]:
+                        - heading "Wealth Overview" [level=3] [ref=f9e887]
+                        - paragraph [ref=f9e888]: Net worth & allocation
+                    - button "Details " [ref=f9e890]:
+                      - text: Details
+                      - generic [ref=f9e891]: 
+                  - generic [ref=f9e893]:
+                    - generic [ref=f9e896]:
+                      - generic [ref=f9e897]:
+                        - generic [ref=f9e898]:
+                          - heading "Net Worth Growth" [level=3] [ref=f9e899]
+                          - paragraph [ref=f9e900]: Last 8 months (₹ Lakhs)
+                        - generic [ref=f9e901]:
+                          - generic [ref=f9e902]: 
+                          - text: +16.4%
+                      - generic [ref=f9e903]:
+                        - generic:
+                          - generic:
+                            - application:
+                              - generic [ref=f9e919]:
+                                - generic [ref=f9e920]:
+                                  - generic [ref=f9e922]: Jan
+                                  - generic [ref=f9e924]: Feb
+                                  - generic [ref=f9e926]: Apr
+                                  - generic [ref=f9e928]: Jun
+                                  - generic [ref=f9e930]: Aug
+                                - generic [ref=f9e931]:
+                                  - generic [ref=f9e933]: "0"
+                                  - generic [ref=f9e935]: "25"
+                                  - generic [ref=f9e937]: "50"
+                                  - generic [ref=f9e939]: "75"
+                                  - generic [ref=f9e941]: "100"
+                    - generic [ref=f9e944]:
+                      - generic [ref=f9e946]:
+                        - heading "Asset Allocation" [level=3] [ref=f9e947]
+                        - paragraph [ref=f9e948]: Portfolio breakdown
+                      - generic [ref=f9e949]:
+                        - application [ref=f9e951]
+                        - generic [ref=f9e970]:
+                          - generic [ref=f9e971]:
+                            - generic [ref=f9e973]: Bank
+                            - generic [ref=f9e974]: 35%
+                          - generic [ref=f9e975]:
+                            - generic [ref=f9e977]: Mutual Funds
+                            - generic [ref=f9e978]: 25%
+                          - generic [ref=f9e979]:
+                            - generic [ref=f9e981]: Stocks
+                            - generic [ref=f9e982]: 20%
+                          - generic [ref=f9e983]:
+                            - generic [ref=f9e985]: Gold
+                            - generic [ref=f9e986]: 12%
+                          - generic [ref=f9e987]:
+                            - generic [ref=f9e989]: Property
+                            - generic [ref=f9e990]: 8%
+                - generic [ref=f9e991]:
+                  - generic [ref=f9e992]:
+                    - generic [ref=f9e993]:
+                      - generic [ref=f9e994]:
+                        - generic [ref=f9e996]: 
+                        - generic [ref=f9e997]:
+                          - heading "Recent Activity" [level=3] [ref=f9e998]
+                          - paragraph [ref=f9e999]: Last 5 transactions
+                      - button "All " [ref=f9e1001]:
+                        - text: All
+                        - generic [ref=f9e1002]: 
+                    - generic [ref=f9e1004]:
+                      - generic [ref=f9e1005]:
+                        - heading " Recent Transactions PROTECTED" [level=2] [ref=f9e1006]:
+                          - generic [ref=f9e1007]: 
+                          - text: Recent Transactions
+                          - generic [ref=f9e1008]: PROTECTED
+                        - button " Download Statement" [ref=f9e1009]:
+                          - generic [ref=f9e1010]: 
+                          - text: Download Statement
+                      - table [ref=f9e1012]:
+                        - rowgroup [ref=f9e1013]:
+                          - row "Date Description Amount Status Risk" [ref=f9e1014]:
+                            - columnheader "Date" [ref=f9e1015]
+                            - columnheader "Description" [ref=f9e1016]
+                            - columnheader "Amount" [ref=f9e1017]
+                            - columnheader "Status" [ref=f9e1018]
+                            - columnheader "Risk" [ref=f9e1019]
+                            - columnheader [ref=f9e1020]
+                        - rowgroup [ref=f9e1021]:
+                          - row "2026-07-08 22:10:10 Mobile Recharge -₹45,505  COMPLETED  LOW" [ref=f9e1022]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1023]
+                            - cell "Mobile Recharge" [ref=f9e1024]
+                            - cell "-₹45,505" [ref=f9e1025]
+                            - cell " COMPLETED" [ref=f9e1026]:
+                              - generic [ref=f9e1027]:
+                                - generic [ref=f9e1028]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1029]:
+                              - generic [ref=f9e1030]:
+                                - generic [ref=f9e1031]: 
+                                - text: LOW
+                            - cell [ref=f9e1032]
+                          - row "2026-07-08 22:10:10 Zomato — Utility Bill -₹90,495  COMPLETED  LOW" [ref=f9e1033]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1034]
+                            - cell "Zomato — Utility Bill" [ref=f9e1035]
+                            - cell "-₹90,495" [ref=f9e1036]
+                            - cell " COMPLETED" [ref=f9e1037]:
+                              - generic [ref=f9e1038]:
+                                - generic [ref=f9e1039]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1040]:
+                              - generic [ref=f9e1041]:
+                                - generic [ref=f9e1042]: 
+                                - text: LOW
+                            - cell [ref=f9e1043]
+                          - row "2026-07-08 22:10:10 Nykaa — Grocery -₹171,292  COMPLETED  LOW" [ref=f9e1044]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1045]
+                            - cell "Nykaa — Grocery" [ref=f9e1046]
+                            - cell "-₹171,292" [ref=f9e1047]
+                            - cell " COMPLETED" [ref=f9e1048]:
+                              - generic [ref=f9e1049]:
+                                - generic [ref=f9e1050]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1051]:
+                              - generic [ref=f9e1052]:
+                                - generic [ref=f9e1053]: 
+                                - text: LOW
+                            - cell [ref=f9e1054]
+                          - row "2026-07-08 22:10:10 Grocery -₹95,097  COMPLETED  LOW" [ref=f9e1055]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1056]
+                            - cell "Grocery" [ref=f9e1057]
+                            - cell "-₹95,097" [ref=f9e1058]
+                            - cell " COMPLETED" [ref=f9e1059]:
+                              - generic [ref=f9e1060]:
+                                - generic [ref=f9e1061]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1062]:
+                              - generic [ref=f9e1063]:
+                                - generic [ref=f9e1064]: 
+                                - text: LOW
+                            - cell [ref=f9e1065]
+                          - row "2026-07-08 22:10:10 Salary Credit — Axis Bank +₹850,000  COMPLETED  LOW" [ref=f9e1066]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1067]
+                            - cell "Salary Credit — Axis Bank" [ref=f9e1068]
+                            - cell "+₹850,000" [ref=f9e1069]
+                            - cell " COMPLETED" [ref=f9e1070]:
+                              - generic [ref=f9e1071]:
+                                - generic [ref=f9e1072]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1073]:
+                              - generic [ref=f9e1074]:
+                                - generic [ref=f9e1075]: 
+                                - text: LOW
+                            - cell [ref=f9e1076]
+                          - row "2026-07-08 22:10:10 Home Loan EMI / Rent Payment -₹80,000  COMPLETED  LOW" [ref=f9e1077]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1078]
+                            - cell "Home Loan EMI / Rent Payment" [ref=f9e1079]
+                            - cell "-₹80,000" [ref=f9e1080]
+                            - cell " COMPLETED" [ref=f9e1081]:
+                              - generic [ref=f9e1082]:
+                                - generic [ref=f9e1083]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1084]:
+                              - generic [ref=f9e1085]:
+                                - generic [ref=f9e1086]: 
+                                - text: LOW
+                            - cell [ref=f9e1087]
+                          - row "2026-07-08 22:10:10 Mutual Fund SIP -₹88,911  COMPLETED  LOW" [ref=f9e1088]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1089]
+                            - cell "Mutual Fund SIP" [ref=f9e1090]
+                            - cell "-₹88,911" [ref=f9e1091]
+                            - cell " COMPLETED" [ref=f9e1092]:
+                              - generic [ref=f9e1093]:
+                                - generic [ref=f9e1094]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1095]:
+                              - generic [ref=f9e1096]:
+                                - generic [ref=f9e1097]: 
+                                - text: LOW
+                            - cell [ref=f9e1098]
+                          - row "2026-07-08 22:10:10 Mobile Recharge -₹163,774  COMPLETED  LOW" [ref=f9e1099]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1100]
+                            - cell "Mobile Recharge" [ref=f9e1101]
+                            - cell "-₹163,774" [ref=f9e1102]
+                            - cell " COMPLETED" [ref=f9e1103]:
+                              - generic [ref=f9e1104]:
+                                - generic [ref=f9e1105]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1106]:
+                              - generic [ref=f9e1107]:
+                                - generic [ref=f9e1108]: 
+                                - text: LOW
+                            - cell [ref=f9e1109]
+                          - row "2026-07-08 22:10:10 Mobile Recharge -₹64,623  COMPLETED  LOW" [ref=f9e1110]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1111]
+                            - cell "Mobile Recharge" [ref=f9e1112]
+                            - cell "-₹64,623" [ref=f9e1113]
+                            - cell " COMPLETED" [ref=f9e1114]:
+                              - generic [ref=f9e1115]:
+                                - generic [ref=f9e1116]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1117]:
+                              - generic [ref=f9e1118]:
+                                - generic [ref=f9e1119]: 
+                                - text: LOW
+                            - cell [ref=f9e1120]
+                          - 'row "2026-07-08 22:10:10 FLAGGED: UPI Splitwise Settlement -₹1,845,686  COMPLETED  LOW" [ref=f9e1121]':
+                            - cell "2026-07-08 22:10:10" [ref=f9e1122]
+                            - 'cell "FLAGGED: UPI Splitwise Settlement" [ref=f9e1123]'
+                            - cell "-₹1,845,686" [ref=f9e1124]
+                            - cell " COMPLETED" [ref=f9e1125]:
+                              - generic [ref=f9e1126]:
+                                - generic [ref=f9e1127]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1128]:
+                              - generic [ref=f9e1129]:
+                                - generic [ref=f9e1130]: 
+                                - text: LOW
+                            - cell [ref=f9e1131]
+                          - row "2026-07-08 22:10:10 Cred — UPI Splitwise Settlement -₹45,911  COMPLETED  LOW" [ref=f9e1132]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1133]
+                            - cell "Cred — UPI Splitwise Settlement" [ref=f9e1134]
+                            - cell "-₹45,911" [ref=f9e1135]
+                            - cell " COMPLETED" [ref=f9e1136]:
+                              - generic [ref=f9e1137]:
+                                - generic [ref=f9e1138]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1139]:
+                              - generic [ref=f9e1140]:
+                                - generic [ref=f9e1141]: 
+                                - text: LOW
+                            - cell [ref=f9e1142]
+                          - row "2026-07-08 22:10:10 Swiggy — UPI Merchant Payment -₹164,961  COMPLETED  LOW" [ref=f9e1143]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1144]
+                            - cell "Swiggy — UPI Merchant Payment" [ref=f9e1145]
+                            - cell "-₹164,961" [ref=f9e1146]
+                            - cell " COMPLETED" [ref=f9e1147]:
+                              - generic [ref=f9e1148]:
+                                - generic [ref=f9e1149]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1150]:
+                              - generic [ref=f9e1151]:
+                                - generic [ref=f9e1152]: 
+                                - text: LOW
+                            - cell [ref=f9e1153]
+                          - row "2026-07-08 22:10:10 Nykaa — UPI Scan & Pay -₹67,481  COMPLETED  LOW" [ref=f9e1154]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1155]
+                            - cell "Nykaa — UPI Scan & Pay" [ref=f9e1156]
+                            - cell "-₹67,481" [ref=f9e1157]
+                            - cell " COMPLETED" [ref=f9e1158]:
+                              - generic [ref=f9e1159]:
+                                - generic [ref=f9e1160]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1161]:
+                              - generic [ref=f9e1162]:
+                                - generic [ref=f9e1163]: 
+                                - text: LOW
+                            - cell [ref=f9e1164]
+                          - 'row "2026-07-08 22:10:10 FLAGGED: UPI Scan & Pay -₹2,369,263  COMPLETED  LOW" [ref=f9e1165]':
+                            - cell "2026-07-08 22:10:10" [ref=f9e1166]
+                            - 'cell "FLAGGED: UPI Scan & Pay" [ref=f9e1167]'
+                            - cell "-₹2,369,263" [ref=f9e1168]
+                            - cell " COMPLETED" [ref=f9e1169]:
+                              - generic [ref=f9e1170]:
+                                - generic [ref=f9e1171]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1172]:
+                              - generic [ref=f9e1173]:
+                                - generic [ref=f9e1174]: 
+                                - text: LOW
+                            - cell [ref=f9e1175]
+                          - row "2026-07-08 22:10:10 UPI Merchant Payment -₹208,419  COMPLETED  LOW" [ref=f9e1176]:
+                            - cell "2026-07-08 22:10:10" [ref=f9e1177]
+                            - cell "UPI Merchant Payment" [ref=f9e1178]
+                            - cell "-₹208,419" [ref=f9e1179]
+                            - cell " COMPLETED" [ref=f9e1180]:
+                              - generic [ref=f9e1181]:
+                                - generic [ref=f9e1182]: 
+                                - text: COMPLETED
+                            - cell " LOW" [ref=f9e1183]:
+                              - generic [ref=f9e1184]:
+                                - generic [ref=f9e1185]: 
+                                - text: LOW
+                            - cell [ref=f9e1186]
+                  - generic [ref=f9e1187]:
+                    - generic [ref=f9e1188]:
+                      - generic [ref=f9e1189]:
+                        - generic [ref=f9e1191]: 
+                        - generic [ref=f9e1192]:
+                          - heading "Goals" [level=3] [ref=f9e1193]
+                          - paragraph [ref=f9e1194]: 4 active goals
+                      - button "Manage " [ref=f9e1196]:
+                        - text: Manage
+                        - generic [ref=f9e1197]: 
+                    - generic [ref=f9e1199]:
+                      - generic [ref=f9e1200]:
+                        - generic [ref=f9e1201]:
+                          - generic [ref=f9e1203]: 
+                          - heading "Financial Goals" [level=3] [ref=f9e1205]
+                        - button "+" [ref=f9e1207]:
+                          - generic [ref=f9e1208]: +
+                      - generic [ref=f9e1210]:
+                        - generic [ref=f9e1211]:
+                          - img [ref=f9e1212]
+                          - paragraph [ref=f9e1216]: Child Education Fund
+                          - generic [ref=f9e1219]: 19%
+                        - generic [ref=f9e1220]:
+                          - img [ref=f9e1221]
+                          - paragraph [ref=f9e1225]: Europe Trip
+                          - generic [ref=f9e1228]: 38%
+                        - generic [ref=f9e1229]:
+                          - img [ref=f9e1230]
+                          - paragraph [ref=f9e1234]: Second Property
+                          - generic [ref=f9e1237]: 46%
+                        - generic [ref=f9e1238]:
+                          - img [ref=f9e1239]
+                          - paragraph [ref=f9e1243]: Emergency Fund
+                          - generic [ref=f9e1246]: 33%
+                - generic [ref=f9e1247]:
+                  - generic [ref=f9e1249]:
+                    - generic [ref=f9e1251]: 
+                    - generic [ref=f9e1252]:
+                      - heading "Smart Actions" [level=3] [ref=f9e1253]
+                      - paragraph [ref=f9e1254]: AI-converted insights
+                  - generic [ref=f9e1256]:
+                    - generic [ref=f9e1257]:
+                      - heading " Smart Action Orchestrator" [level=2] [ref=f9e1258]:
+                        - generic [ref=f9e1259]: 
+                        - text: Smart Action Orchestrator
+                      - paragraph [ref=f9e1260]: AI converts insights into executable money moves
+                    - generic [ref=f9e1261]:
+                      - generic [ref=f9e1264]:
+                        - generic [ref=f9e1265]:
+                          - generic [ref=f9e1267]: 
+                          - heading "Emergency Fund" [level=3] [ref=f9e1268]
+                        - generic [ref=f9e1269]:
+                          - generic [ref=f9e1270]:
+                            - generic [ref=f9e1271]: Needed (6 months)
+                            - generic [ref=f9e1272]: ₹1,920,000
+                          - generic [ref=f9e1273]:
+                            - generic [ref=f9e1274]: Available Liquid
+                            - generic [ref=f9e1275]: ₹3,904,733
+                        - generic [ref=f9e1276]:
+                          - generic [ref=f9e1277]: 
+                          - text: Emergency fund fully covered
+                      - generic [ref=f9e1280]:
+                        - generic [ref=f9e1281]:
+                          - generic [ref=f9e1283]: 
+                          - heading "SIP Date Optimizer" [level=3] [ref=f9e1284]
+                        - paragraph [ref=f9e1285]: Best SIP date based on your salary credit & market volatility.
+                        - generic [ref=f9e1286]:
+                          - paragraph [ref=f9e1287]: Recommended SIP Date
+                          - paragraph [ref=f9e1288]:
+                            - text: "5"
+                            - superscript [ref=f9e1289]: th
+                          - paragraph [ref=f9e1290]: of every month
+                        - button "Set Auto-SIP" [ref=f9e1291]
+                      - generic [ref=f9e1294]:
+                        - generic [ref=f9e1295]:
+                          - generic [ref=f9e1297]: 
+                          - heading "Tax-Loss Harvest" [level=3] [ref=f9e1298]
+                        - paragraph [ref=f9e1299]: No loss-harvesting opportunities right now.
+                        - button "Optimize Taxes" [ref=f9e1300]
+                    - generic [ref=f9e1302]:
+                      - generic [ref=f9e1303]:
+                        - heading " Goal-Fund Allocation Map" [level=3] [ref=f9e1304]:
+                          - generic [ref=f9e1305]: 
+                          - text: Goal-Fund Allocation Map
+                        - button "Manage Goals" [ref=f9e1306]
+                      - generic [ref=f9e1307]:
+                        - generic [ref=f9e1308]:
+                          - generic [ref=f9e1309]:
+                            - generic [ref=f9e1310]: Child Education Fund
+                            - generic [ref=f9e1311]: 100% Debt/Liquid
+                          - generic [ref=f9e1314]: 7 months
+                          - generic [ref=f9e1315]:
+                            - generic [ref=f9e1316]: Monthly SIP needed
+                            - generic [ref=f9e1317]: ₹1,964,679
+                        - generic [ref=f9e1318]:
+                          - generic [ref=f9e1319]:
+                            - generic [ref=f9e1320]: Europe Trip
+                            - generic [ref=f9e1321]: 60% Equity + 40% Debt
+                          - generic [ref=f9e1325]: 57 months
+                          - generic [ref=f9e1326]:
+                            - generic [ref=f9e1327]: Monthly SIP needed
+                            - generic [ref=f9e1328]: ₹203,809
+                        - generic [ref=f9e1329]:
+                          - generic [ref=f9e1330]:
+                            - generic [ref=f9e1331]: Second Property
+                            - generic [ref=f9e1332]: 30% Equity + 70% Debt
+                          - generic [ref=f9e1336]: 35 months
+                          - generic [ref=f9e1337]:
+                            - generic [ref=f9e1338]: Monthly SIP needed
+                            - generic [ref=f9e1339]: ₹484,012
+                        - generic [ref=f9e1340]:
+                          - generic [ref=f9e1341]:
+                            - generic [ref=f9e1342]: Emergency Fund
+                            - generic [ref=f9e1343]: 60% Equity + 40% Debt
+                          - generic [ref=f9e1347]: 78 months
+                          - generic [ref=f9e1348]:
+                            - generic [ref=f9e1349]: Monthly SIP needed
+                            - generic [ref=f9e1350]: ₹209,848
+                    - generic [ref=f9e1352]:
+                      - heading " Smart FD Laddering" [level=3] [ref=f9e1353]:
+                        - generic [ref=f9e1354]: 
+                        - text: Smart FD Laddering
+                      - paragraph [ref=f9e1355]: "Surplus of ₹1,984,733 after emergency fund. Suggested ladder:"
+                      - generic [ref=f9e1356]:
+                        - generic [ref=f9e1357]:
+                          - paragraph [ref=f9e1358]: 1 Year
+                          - paragraph [ref=f9e1359]: ₹396,947
+                          - paragraph [ref=f9e1360]: "@ 7.0%"
+                        - generic [ref=f9e1361]:
+                          - paragraph [ref=f9e1362]: 2 Year
+                          - paragraph [ref=f9e1363]: ₹595,420
+                          - paragraph [ref=f9e1364]: "@ 7.3%"
+                        - generic [ref=f9e1365]:
+                          - paragraph [ref=f9e1366]: 3 Year
+                          - paragraph [ref=f9e1367]: ₹595,420
+                          - paragraph [ref=f9e1368]: "@ 7.5%"
+                        - generic [ref=f9e1369]:
+                          - paragraph [ref=f9e1370]: 5 Year
+                          - paragraph [ref=f9e1371]: ₹396,947
+                          - paragraph [ref=f9e1372]: "@ 7.8%"
+                    - generic [ref=f9e1374]:
+                      - heading " Debt Payment Optimizer" [level=3] [ref=f9e1375]:
+                        - generic [ref=f9e1376]: 
+                        - text: Debt Payment Optimizer
+                      - generic [ref=f9e1377]:
+                        - generic [ref=f9e1378]:
+                          - generic [ref=f9e1379]:
+                            - paragraph [ref=f9e1380]: Card A
+                            - paragraph [ref=f9e1381]: "Outstanding: ₹50,000"
+                          - generic [ref=f9e1382]:
+                            - paragraph [ref=f9e1383]: 36%
+                            - paragraph [ref=f9e1384]: interest
+                          - generic [ref=f9e1385]: PAY FIRST
+                        - generic [ref=f9e1386]:
+                          - generic [ref=f9e1387]:
+                            - paragraph [ref=f9e1388]: Card B
+                            - paragraph [ref=f9e1389]: "Outstanding: ₹30,000"
+                          - generic [ref=f9e1390]:
+                            - paragraph [ref=f9e1391]: 24%
+                            - paragraph [ref=f9e1392]: interest
+                - generic [ref=f9e1393]:
+                  - generic [ref=f9e1394]:
+                    - heading " AI Recommendations" [level=3] [ref=f9e1395]:
+                      - generic [ref=f9e1396]: 
+                      - text: AI Recommendations
+                    - generic [ref=f9e1397]: 3 Active
+                  - generic [ref=f9e1398]:
+                    - generic [ref=f9e1399]:
+                      - generic [ref=f9e1400]:
+                        - generic [ref=f9e1401]: MEDIUM
+                        - generic [ref=f9e1402]: investment
+                      - heading "Inflation Hedge Allocation" [level=4] [ref=f9e1403]
+                      - paragraph [ref=f9e1404]: Inflation is above 6%. Add gold/FD exposure for stability.
+                      - generic [ref=f9e1405]:
+                        - generic [ref=f9e1406]: Preserve 4% real returns
+                        - generic [ref=f9e1407]:
+                          - button " Why?" [ref=f9e1409]:
+                            - generic [ref=f9e1410]: 
+                            - text: Why?
+                          - button "View Options" [ref=f9e1411]
+                    - generic [ref=f9e1412]:
+                      - generic [ref=f9e1413]:
+                        - generic [ref=f9e1414]: HIGH
+                        - generic [ref=f9e1415]: tax
+                      - heading "Maximize 80C Benefits" [level=4] [ref=f9e1416]
+                      - paragraph [ref=f9e1417]: You are in the 30% bracket. ELSS + PPF can save ₹46,800/year.
+                      - generic [ref=f9e1418]:
+                        - generic [ref=f9e1419]: Save ₹46,800 in taxes
+                        - generic [ref=f9e1420]:
+                          - button " Why?" [ref=f9e1422]:
+                            - generic [ref=f9e1423]: 
+                            - text: Why?
+                          - button "Invest Now" [ref=f9e1424]
+                    - generic [ref=f9e1425]:
+                      - generic [ref=f9e1426]:
+                        - generic [ref=f9e1427]: MEDIUM
+                        - generic [ref=f9e1428]: protection
+                      - heading "Build Emergency Corpus" [level=4] [ref=f9e1429]
+                      - paragraph [ref=f9e1430]: Keep 6 months of expenses in liquid funds.
+                      - generic [ref=f9e1431]:
+                        - generic [ref=f9e1432]: Financial resilience
+                        - generic [ref=f9e1433]:
+                          - button " Why?" [ref=f9e1435]:
+                            - generic [ref=f9e1436]: 
+                            - text: Why?
+                          - button "Calculate" [ref=f9e1437]
+              - generic [ref=f9e1438]:
+                - generic [ref=f9e1439]:
+                  - generic [ref=f9e1440]:
+                    - generic [ref=f9e1441]:
+                      - generic [ref=f9e1443]: 
+                      - generic [ref=f9e1444]:
+                        - heading "Protection Status" [level=3] [ref=f9e1445]
+                        - paragraph [ref=f9e1446]: Live security health
+                    - button "Shield " [ref=f9e1448]:
+                      - text: Shield
+                      - generic [ref=f9e1449]: 
+                  - generic [ref=f9e1451]:
+                    - generic [ref=f9e1452]:
+                      - generic [ref=f9e1453]: 
+                      - heading "Security Health" [level=2] [ref=f9e1454]
+                    - generic [ref=f9e1455]:
+                      - generic [ref=f9e1457]: "70"
+                      - generic [ref=f9e1458]:
+                        - paragraph [ref=f9e1459]: Caution
+                        - paragraph [ref=f9e1460]: Trust Score out of 100
+                        - paragraph [ref=f9e1461]: 0 of 9 layers active
+                    - button " Run Security Audit" [ref=f9e1462]:
+                      - generic [ref=f9e1463]: 
+                      - text: Run Security Audit
+                - generic [ref=f9e1464]:
+                  - generic [ref=f9e1465]:
+                    - generic [ref=f9e1466]:
+                      - generic [ref=f9e1468]: 
+                      - generic [ref=f9e1469]:
+                        - heading "Market Pulse" [level=3] [ref=f9e1470]
+                        - paragraph [ref=f9e1471]: Indices & movers
+                    - button "Market " [ref=f9e1473]:
+                      - text: Market
+                      - generic [ref=f9e1474]: 
+                  - generic [ref=f9e1476]:
+                    - generic [ref=f9e1477]:
+                      - generic [ref=f9e1478]:
+                        - generic [ref=f9e1480]: 
+                        - generic [ref=f9e1481]:
+                          - heading "AI Market Intelligence" [level=3] [ref=f9e1482]
+                          - paragraph [ref=f9e1483]: Real-time global indicators → Strategic recommendations
+                      - generic [ref=f9e1486]: LIVE
+                    - generic [ref=f9e1487]:
+                      - generic [ref=f9e1490]:
+                        - generic [ref=f9e1491]:
+                          - generic [ref=f9e1492]: NIFTY P/E
+                          - generic [ref=f9e1493]: 
+                        - generic [ref=f9e1494]:
+                          - generic [ref=f9e1495]: "23.4"
+                          - generic [ref=f9e1496]:
+                            - generic [ref=f9e1497]: 
+                            - text: Fair
+                      - generic [ref=f9e1500]:
+                        - generic [ref=f9e1501]:
+                          - generic [ref=f9e1502]: Inflation
+                          - generic [ref=f9e1503]: 
+                        - generic [ref=f9e1504]:
+                          - generic [ref=f9e1505]: 6.2%
+                          - generic [ref=f9e1506]:
+                            - generic [ref=f9e1507]: 
+                            - text: High
+                      - generic [ref=f9e1510]:
+                        - generic [ref=f9e1511]:
+                          - generic [ref=f9e1512]: Gold / 10g
+                          - generic [ref=f9e1513]: 
+                        - generic [ref=f9e1514]:
+                          - generic [ref=f9e1515]: ₹78.5K
+                          - generic [ref=f9e1516]:
+                            - generic [ref=f9e1517]: 
+                            - text: Rising
+                      - generic [ref=f9e1520]:
+                        - generic [ref=f9e1521]:
+                          - generic [ref=f9e1522]: FD Rate
+                          - generic [ref=f9e1523]: 
+                        - generic [ref=f9e1524]:
+                          - generic [ref=f9e1525]: 7.2%
+                          - generic [ref=f9e1526]:
+                            - generic [ref=f9e1527]: 
+                            - text: Stable
+                    - generic [ref=f9e1528]:
+                      - paragraph [ref=f9e1529]:
+                        - generic [ref=f9e1530]: 
+                        - text: AI Strategic Moves
+                      - generic [ref=f9e1534] [cursor=pointer]:
+                        - generic [ref=f9e1536]: 
+                        - generic [ref=f9e1537]:
+                          - generic [ref=f9e1538]:
+                            - generic [ref=f9e1539]: MAINTAIN BALANCE
+                            - generic [ref=f9e1540]: WATCH
+                          - generic [ref=f9e1541]:
+                            - generic [ref=f9e1542]: Current Mix
+                            - generic [ref=f9e1543]: 
+                            - generic [ref=f9e1544]: 60:40 Equity:Debt
+                        - generic [ref=f9e1545]:
+                          - generic [ref=f9e1546]: 92%
+                          - paragraph [ref=f9e1547]: confidence
+                        - generic [ref=f9e1548]: 
+                    - generic [ref=f9e1550]:
+                      - generic [ref=f9e1551]:
+                        - generic [ref=f9e1552]:
+                          - generic [ref=f9e1554]: 
+                          - generic [ref=f9e1555]:
+                            - heading "Global Macro Radar" [level=3] [ref=f9e1556]
+                            - paragraph [ref=f9e1557]: Macro-economic & geopolitical signals
+                        - generic [ref=f9e1558]: LIVE
+                      - generic [ref=f9e1560]:
+                        - generic [ref=f9e1561]:
+                          - generic [ref=f9e1563]: 
+                          - generic [ref=f9e1564]:
+                            - generic [ref=f9e1565]:
+                              - paragraph [ref=f9e1566]: High Inflation
+                              - generic [ref=f9e1567]: BEARISH
+                            - paragraph [ref=f9e1568]:
+                              - generic [ref=f9e1569]: "Fixed Income:"
+                              - text: Add gold, SGB, inflation-indexed bonds
+                            - generic [ref=f9e1573]: 82%
+                        - generic [ref=f9e1574]:
+                          - generic [ref=f9e1576]: 
+                          - generic [ref=f9e1577]:
+                            - generic [ref=f9e1578]:
+                              - paragraph [ref=f9e1579]: Monsoon Impact
+                              - generic [ref=f9e1580]: BULLISH
+                            - paragraph [ref=f9e1581]:
+                              - generic [ref=f9e1582]: "FMCG / Agri:"
+                              - text: FMCG and agri-input stocks may outperform
+                            - generic [ref=f9e1586]: 58%
+                        - generic [ref=f9e1587]:
+                          - generic [ref=f9e1589]: 
+                          - generic [ref=f9e1590]:
+                            - generic [ref=f9e1591]:
+                              - paragraph [ref=f9e1592]: Global Tech Slowdown
+                              - generic [ref=f9e1593]: BEARISH
+                            - paragraph [ref=f9e1594]:
+                              - generic [ref=f9e1595]: "IT / Tech:"
+                              - text: Underweight IT; prefer domestic cyclicals
+                            - generic [ref=f9e1599]: 61%
+                - generic [ref=f9e1600]:
+                  - generic [ref=f9e1601]:
+                    - generic [ref=f9e1602]:
+                      - generic [ref=f9e1604]: 
+                      - generic [ref=f9e1605]:
+                        - heading "Macro Signal Tower" [level=3] [ref=f9e1606]
+                        - paragraph [ref=f9e1607]: Global indicators → auto actions
+                    - button "Wealth Twin " [ref=f9e1609]:
+                      - text: Wealth Twin
+                      - generic [ref=f9e1610]: 
+                  - generic [ref=f9e1612]:
+                    - generic [ref=f9e1613]: 
+                    - text: Request timeout
+                - generic [ref=f9e1614]:
+                  - generic [ref=f9e1616]:
+                    - generic [ref=f9e1618]: 
+                    - heading "Customer Support" [level=3] [ref=f9e1620]
+                  - generic [ref=f9e1622]:
+                    - button " Call Toll Free" [ref=f9e1623]:
+                      - generic [ref=f9e1624]: 
+                      - text: Call Toll Free
+                    - button " Chat with AI Twin" [ref=f9e1625]:
+                      - generic [ref=f9e1626]: 
+                      - text: Chat with AI Twin
+          - paragraph [ref=f9e1628]:
+            - generic [ref=f9e1629]: 
+            - strong [ref=f9e1630]: Simulation / Demo Only — No Guaranteed Returns.
+            - text: SecureWealth Twin is a hackathon prototype. It is not a licensed bank, SEBI-registered investment advisor, or insurance provider. All projections, recommendations, and market data are for demonstration purposes only. Investments are subject to market risks.
+          - generic [ref=f9e1631]:
+            - generic [ref=f9e1633]:
+              - link "DICGC Insured — Deposits up to ₹5 Lakhs" [ref=f9e1634] [cursor=pointer]:
+                - /url: https://www.dicgc.org.in/
+                - strong [ref=f9e1635]: DICGC Insured
+                - text: — Deposits up to ₹5 Lakhs
+              - link " RBI Licensed — Regulated Bank" [ref=f9e1636] [cursor=pointer]:
+                - /url: https://www.rbi.org.in/
+                - generic [ref=f9e1637]: 
+                - strong [ref=f9e1638]: RBI Licensed
+                - text: — Regulated Bank
+              - generic [ref=f9e1639]:
+                - generic [ref=f9e1640]: 
+                - strong [ref=f9e1641]: 256-bit SSL
+                - text: Encryption
+            - generic [ref=f9e1642]:
+              - generic [ref=f9e1643]:
+                - generic [ref=f9e1644]:
+                  - heading "About PSB" [level=4] [ref=f9e1645]
+                  - list [ref=f9e1646]:
+                    - listitem [ref=f9e1647]:
+                      - link "About Us" [ref=f9e1648] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/about-us
+                    - listitem [ref=f9e1649]:
+                      - link "Our History" [ref=f9e1650] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/history
+                    - listitem [ref=f9e1651]:
+                      - link "Board of Directors" [ref=f9e1652] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/board-of-directors
+                    - listitem [ref=f9e1653]:
+                      - link "Financial Results" [ref=f9e1654] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/financial-results
+                    - listitem [ref=f9e1655]:
+                      - link "Careers" [ref=f9e1656] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/careers
+                - generic [ref=f9e1657]:
+                  - heading "Customer Services" [level=4] [ref=f9e1658]
+                  - list [ref=f9e1659]:
+                    - listitem [ref=f9e1660]:
+                      - link "Internet Banking" [ref=f9e1661] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/internet-banking
+                    - listitem [ref=f9e1662]:
+                      - link "Mobile Banking" [ref=f9e1663] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/mobile-banking
+                    - listitem [ref=f9e1664]:
+                      - link "UPI Services" [ref=f9e1665] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/upi-services
+                    - listitem [ref=f9e1666]:
+                      - link "ATM/Branch Locator" [ref=f9e1667] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/atm-branch-locator
+                    - listitem [ref=f9e1668]:
+                      - link "Download Forms" [ref=f9e1669] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/download-forms
+                - generic [ref=f9e1670]:
+                  - heading "Important Links" [level=4] [ref=f9e1671]
+                  - list [ref=f9e1672]:
+                    - listitem [ref=f9e1673]:
+                      - link "RBI Website" [ref=f9e1674] [cursor=pointer]:
+                        - /url: https://www.rbi.org.in/
+                    - listitem [ref=f9e1675]:
+                      - link "NPCI" [ref=f9e1676] [cursor=pointer]:
+                        - /url: https://www.npci.org.in/
+                    - listitem [ref=f9e1677]:
+                      - link "DICGC" [ref=f9e1678] [cursor=pointer]:
+                        - /url: https://www.dicgc.org.in/
+                    - listitem [ref=f9e1679]:
+                      - link "RBI Ombudsman" [ref=f9e1680] [cursor=pointer]:
+                        - /url: https://cms.rbi.org.in/
+                    - listitem [ref=f9e1681]:
+                      - link "Grievance Redressal" [ref=f9e1682] [cursor=pointer]:
+                        - /url: https://www.psbindia.co.in/grievance-redressal
+                - generic [ref=f9e1683]:
+                  - heading "Contact Us" [level=4] [ref=f9e1684]
+                  - list [ref=f9e1685]:
+                    - listitem [ref=f9e1686]:
+                      - generic [ref=f9e1687]: 
+                      - generic [ref=f9e1688]:
+                        - text: "Toll Free:"
+                        - strong [ref=f9e1689]: 1800-11-2211
+                        - text: "Chargeable: 0120-2490000"
+                    - listitem [ref=f9e1690]:
+                      - generic [ref=f9e1691]: 
+                      - generic [ref=f9e1692]: care@psbindia.co.in
+                    - listitem [ref=f9e1693]:
+                      - generic [ref=f9e1694]: 
+                      - generic [ref=f9e1695]:
+                        - text: "Head Office: 21, Rajendra Place, New Delhi - 110008 ("
+                        - link "View on Map" [ref=f9e1696] [cursor=pointer]:
+                          - /url: https://maps.google.com/?q=21+Rajendra+Place+New+Delhi+110008
+                        - text: )
+              - generic [ref=f9e1698]:
+                - paragraph [ref=f9e1699]: © 2025 Punjab & Sind Bank. Government of India Undertaking. All rights reserved.
+                - generic [ref=f9e1700]:
+                  - button "Disclaimer" [ref=f9e1701]
+                  - generic [ref=f9e1702]: "|"
+                  - generic [ref=f9e1703]: "CIN: U74140HR2021FTC096642"
+      - button "Open Wealth Twin chat" [ref=f9e1704]:
+        - generic [ref=f9e1706]: 
+        - generic [ref=f9e1707]: Wealth Twin
+    - generic [ref=f9e1709]:
+      - generic [ref=f9e1710]:
+        - heading " Privacy & Consent" [level=3] [ref=f9e1711]:
+          - generic [ref=f9e1712]: 
+          - text: Privacy & Consent
+        - paragraph [ref=f9e1713]: SecureWealth Twin - PSB Hackathon 2026
+      - generic [ref=f9e1714]:
+        - paragraph [ref=f9e1715]: SecureWealth Twin uses your financial data to provide personalized wealth insights, fraud protection, and AI-powered recommendations. All data is encrypted in your browser and never shared with third parties.
+        - generic [ref=f9e1716]:
+          - generic [ref=f9e1717]:
+            - generic [ref=f9e1718]: 
+            - text: On-device encryption
+          - generic [ref=f9e1719]:
+            - generic [ref=f9e1720]: 
+            - text: RBI Account Aggregator compliant
+          - generic [ref=f9e1721]:
+            - generic [ref=f9e1722]: 
+            - text: No data sold to advertisers
+          - generic [ref=f9e1723]:
+            - generic [ref=f9e1724]: 
+            - text: You can withdraw consent anytime
+        - generic [ref=f9e1725]:
+          - button " I Agree" [ref=f9e1726]:
+            - generic [ref=f9e1727]: 
+            - text: I Agree
+          - button "Disagree" [ref=f9e1728]
+    - generic [ref=f9e1729]:
+      - button "Judge Demo Tour 60-second walkthrough" [ref=f9e1730]:
+        - img [ref=f9e1732]
+        - generic [ref=f9e1734]:
+          - paragraph [ref=f9e1735]: Judge Demo Tour
+          - paragraph [ref=f9e1736]: 60-second walkthrough
+      - button "Dismiss demo tour prompt" [ref=f9e1737]:
+        - img [ref=f9e1738]
+    - button "Toggle live activity feed" [ref=f9e1742]:
+      - generic [ref=f9e1746]:
+        - generic [ref=f9e1747]: 
+        - generic [ref=f9e1748]: Zero-knowledge proof generated for premium card eligibility
+      - button "Pause live activity rotation" [ref=f9e1749]:
+        - generic [ref=f9e1750]: 
+      - generic [ref=f9e1751]: 
+  - generic [ref=f9e1752]: "0"
