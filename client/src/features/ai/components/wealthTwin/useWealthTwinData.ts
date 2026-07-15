@@ -195,7 +195,8 @@ export function useWealthTwinData() {
     const equity = assets.filter((a: Asset) => a.type === 'stock' || a.type === 'mutualFund').reduce((s, a) => s + a.value, 0);
     const debt = assets.filter((a: Asset) => a.type === 'bank' || a.type === 'gold').reduce((s, a) => s + a.value, 0);
     const property = assets.filter((a: Asset) => a.type === 'property' || a.type === 'vehicle').reduce((s, a) => s + a.value, 0);
-    const total = equity + debt + property || 1;
+    const total = equity + debt + property;
+    const hasAssets = total > 0;
 
     const pe = marketData.niftyPe || 24;
     const equityTarget = pe > 26 ? 50 : pe < 22 ? 65 : 60;
@@ -203,11 +204,17 @@ export function useWealthTwinData() {
     const propertyTarget = 15;
 
     return {
-      current: [
-        { name: 'twinRebalanceSliceEquity', value: Math.round((equity / total) * 100), color: '#0f766e' },
-        { name: 'twinRebalanceSliceDebt', value: Math.round((debt / total) * 100), color: '#f59e0b' },
-        { name: 'twinRebalanceSliceProperty', value: Math.round((property / total) * 100), color: '#8b5cf6' },
-      ] as AllocationSlice[],
+      current: hasAssets
+        ? ([
+            { name: 'twinRebalanceSliceEquity', value: Math.round((equity / total) * 100), color: '#0f766e' },
+            { name: 'twinRebalanceSliceDebt', value: Math.round((debt / total) * 100), color: '#f59e0b' },
+            { name: 'twinRebalanceSliceProperty', value: Math.round((property / total) * 100), color: '#8b5cf6' },
+          ] as AllocationSlice[])
+        : ([
+            { name: 'twinRebalanceSliceEquity', value: equityTarget, color: '#0f766e' },
+            { name: 'twinRebalanceSliceDebt', value: debtTarget, color: '#f59e0b' },
+            { name: 'twinRebalanceSliceProperty', value: propertyTarget, color: '#8b5cf6' },
+          ] as AllocationSlice[]),
       target: [
         { name: 'twinRebalanceSliceEquity', value: equityTarget, color: '#0f766e' },
         { name: 'twinRebalanceSliceDebt', value: debtTarget, color: '#f59e0b' },

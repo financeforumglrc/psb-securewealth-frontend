@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useWealthStore } from '@/shared/store/wealthStore';
@@ -69,6 +69,12 @@ function WealthTwinInner() {
   const [activeTab, setActiveTab] = useState<TwinTab>('overview');
   const { t } = useTranslation();
   const isLoading = useWealthStore((s) => s.isLoading);
+  const assets = useWealthStore((s) => s.assets);
+  const seedRealData = useWealthStore((s) => s.seedRealData);
+
+  useEffect(() => {
+    if (assets.length === 0) seedRealData();
+  }, [assets, seedRealData]);
 
   if (isLoading) {
     return (

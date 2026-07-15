@@ -6,6 +6,9 @@ export default function RebalanceTab() {
   const { rebalance, marketData, setView } = useTwinContext();
   const { t } = useTranslation();
 
+  const currentTotal = rebalance.current.reduce((s, c) => s + c.value, 0);
+  const displayCurrent = currentTotal > 0 ? rebalance.current : rebalance.target;
+
   const niftyStatus =
     marketData.niftyPe > 26
       ? t('twinRebalanceNiftyOvervalued')
@@ -24,7 +27,7 @@ export default function RebalanceTab() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={rebalance.current}
+                  data={displayCurrent}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -33,7 +36,7 @@ export default function RebalanceTab() {
                   dataKey="value"
                   label={({ name, value }) => `${t(name as string)}: ${value}%`}
                 >
-                  {rebalance.current.map((entry, index) => (
+                  {displayCurrent.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
