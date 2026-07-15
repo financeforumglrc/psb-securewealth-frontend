@@ -90,6 +90,7 @@ const RecurringPayments = lazyWithRetry(() => import('@/features/banking/compone
 const AccountStatement = lazyWithRetry(() => import('@/features/banking/components/AccountStatement'));
 const AuditLog = lazyWithRetry(() => import('@/features/banking/components/AuditLog'));
 const CrossDeviceApproval = lazyWithRetry(() => import('@/features/security/components/CrossDeviceApproval'));
+const QuantumKeyExchange = lazyWithRetry(() => import('@/features/security/components/QuantumKeyExchange'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -417,6 +418,7 @@ export default function AuthenticatedApp() {
               {currentView === 'account-statement' && <AccountStatement />}
               {currentView === 'audit-log' && <AuditLog />}
               {currentView === 'cross-device-approval' && <CrossDeviceApproval />}
+              {currentView === 'quantum-key' && <QuantumKeyExchange />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}

@@ -386,4 +386,5 @@ export type ViewType =
   | 'creditbridge-ai'
   | 'loans-hub' | 'loan-research' | 'loan-impact' | 'social-collateral-loan'
   | 'pitch-deck'
-  | 'cross-device-approval';
+  | 'cross-device-approval'
+  | 'quantum-key';
