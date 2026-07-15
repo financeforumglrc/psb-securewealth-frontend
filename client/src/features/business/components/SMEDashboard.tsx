@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import CashFlowTimeline from './CashFlowTimeline';
 import SurplusFundAdvisor from './SurplusFundAdvisor';
 import WorkingCapitalHealth from './WorkingCapitalHealth';
@@ -50,19 +50,17 @@ export default function SMEDashboard() {
         })}
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.25 }}
-        >
-          {activeTab === 'cashflow' && <CashFlowTimeline />}
-          {activeTab === 'surplus' && <SurplusFundAdvisor />}
-          {activeTab === 'working-capital' && <WorkingCapitalHealth />}
-        </motion.div>
-      </AnimatePresence>
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="w-full min-w-0"
+      >
+        {activeTab === 'cashflow' && <CashFlowTimeline />}
+        {activeTab === 'surplus' && <SurplusFundAdvisor />}
+        {activeTab === 'working-capital' && <WorkingCapitalHealth />}
+      </motion.div>
     </div>
   );
 }

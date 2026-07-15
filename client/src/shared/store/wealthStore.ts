@@ -3,6 +3,15 @@ import { persist } from 'zustand/middleware';
 import type { UserProfile, Asset, Goal, ConsentRecord, Badge, Notification, MarketData, ViewType, Transaction, FamilyMember, RecurringBill, InvestmentTrigger, CibilFactor, Challenge, KidProfile, KidTask, SpendRequest, UncategorizedTx, CategoryRule, DuplicateGroup, Subscription, NRIAccount, Remittance, NRIInvestmentRule, MSMEApplication, MSMECreditScore, MSMEOffer } from '@/shared/types';
 import { backendApi } from '@/shared/lib/backendApi';
 
+const DEFAULT_SEED_USER: UserProfile = {
+  name: 'Deepanshu Sharma',
+  riskProfile: 'Aggressive',
+  taxBracket: 30,
+  monthlyIncome: 85000,
+  monthlySavings: 35000,
+  monthlyExpenses: 50000,
+};
+
 interface WealthState {
   user: UserProfile;
   assets: Asset[];
@@ -94,7 +103,7 @@ interface WealthState {
   markNotificationRead: (id: string) => void;
   unlockBadge: (id: string) => void;
   initJudgeMode: () => void;
-  seedRealData: () => void;
+  seedRealData: (overrides?: Partial<UserProfile>) => void;
   loadFromBackend: () => Promise<void>;
   toggleBillPaid: (id: string) => void;
   payBill: (id: string) => void;
@@ -400,8 +409,8 @@ export const useWealthStore = create<WealthState>()(
       setMsmeOffers: (applicationId, offers) => set((s) => ({ msmeOffers: { ...s.msmeOffers, [applicationId]: offers } })),
       setMsmeAdminStats: (stats) => set({ msmeAdminStats: stats }),
       // Seed realistic data for judges
-      seedRealData: () => set({
-        user: { name: 'Deepanshu Sharma', riskProfile: 'Aggressive', taxBracket: 30, monthlyIncome: 85000, monthlySavings: 35000, monthlyExpenses: 50000 },
+      seedRealData: (overrides?: Partial<UserProfile>) => set((state) => ({
+        user: { ...DEFAULT_SEED_USER, ...state.user, ...overrides },
         assets: SEED_ASSETS,
         goals: SEED_GOALS,
         badges: SEED_BADGES,
@@ -420,7 +429,7 @@ export const useWealthStore = create<WealthState>()(
           { id: 'sub-4', name: 'Google One', icon: 'fa-cloud', color: 'bg-sky-500', amount: 195, frequency: 'monthly', status: 'active', nextRenewal: '2026-07-10', daysUntilRenewal: 15, category: 'Utilities', autoDetected: true },
         ],
         cibilScore: 748,
-      }),
+      })),
       // Load from backend API
       loadFromBackend: async () => {
         set({ isLoading: true });

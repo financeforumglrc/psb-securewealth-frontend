@@ -209,7 +209,7 @@ export default function LoginPortal() {
       riskProfile: account.profile.riskProfile,
       taxBracket: account.profile.taxBracket,
     });
-    if (store.assets.length === 0) store.seedRealData();
+    if (store.assets.length === 0) store.seedRealData(account.profile);
     dispatch({ type: 'LOGIN', userId: account.id, userEmail: account.email });
   };
 

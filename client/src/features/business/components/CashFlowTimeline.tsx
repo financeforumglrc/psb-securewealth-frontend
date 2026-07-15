@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  Cell,
 } from 'recharts';
 import { backendApi } from '@/shared/lib/backendApi';
 import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
@@ -20,6 +21,21 @@ interface CashFlowMonth {
   outflow: number;
   net: number;
 }
+
+const DEMO_CASH_FLOW: CashFlowMonth[] = [
+  { month: 'Apr', inflow: 2000000, outflow: 1750000, net: 250000 },
+  { month: 'May', inflow: 1850000, outflow: 1900000, net: -50000 },
+  { month: 'Jun', inflow: 1950000, outflow: 1800000, net: 150000 },
+  { month: 'Jul', inflow: 2250000, outflow: 1850000, net: 400000 },
+  { month: 'Aug', inflow: 1900000, outflow: 2000000, net: -100000 },
+  { month: 'Sep', inflow: 2050000, outflow: 1780000, net: 270000 },
+  { month: 'Oct', inflow: 2150000, outflow: 1820000, net: 330000 },
+  { month: 'Nov', inflow: 1980000, outflow: 1950000, net: 30000 },
+  { month: 'Dec', inflow: 2400000, outflow: 2100000, net: 300000 },
+  { month: 'Jan', inflow: 1900000, outflow: 1880000, net: 20000 },
+  { month: 'Feb', inflow: 2050000, outflow: 1800000, net: 250000 },
+  { month: 'Mar', inflow: 2200000, outflow: 1950000, net: 250000 },
+];
 
 function formatLakh(value: number) {
   return `₹${(value / 1_00_000).toFixed(1)}L`;
@@ -33,6 +49,8 @@ export default function CashFlowTimeline() {
     backendApi.getCashFlow().then((res) => {
       if (res.ok && Array.isArray(res.data?.data)) {
         setData(res.data.data);
+      } else {
+        setData(DEMO_CASH_FLOW);
       }
       setLoading(false);
     });
@@ -74,7 +92,7 @@ export default function CashFlowTimeline() {
         ))}
       </div>
 
-      <div className="h-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
+      <div className="h-72 w-full min-w-0 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
@@ -84,7 +102,12 @@ export default function CashFlowTimeline() {
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="inflow" name="Inflow" fill="#10b981" radius={[4, 4, 0, 0]} />
             <Bar dataKey="outflow" name="Outflow" fill="#ef4444" radius={[4, 4, 0, 0]} />
-            <Line type="monotone" dataKey="net" name="Net" stroke="#3b82f6" strokeWidth={3} dot={{ r: 3 }} />
+            <Bar dataKey="net" name="Net (surplus / shortage)" radius={[4, 4, 0, 0]}>
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.net >= 0 ? '#22c55e' : '#f43f5e'} />
+              ))}
+            </Bar>
+            <Line type="monotone" dataKey="net" name="Net trend" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>

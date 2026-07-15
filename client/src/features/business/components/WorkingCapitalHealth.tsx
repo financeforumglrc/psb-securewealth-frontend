@@ -14,6 +14,17 @@ interface WorkingCapital {
   grade: string;
 }
 
+const DEMO_WORKING_CAPITAL: WorkingCapital = {
+  currentRatio: 1.42,
+  quickRatio: 1.18,
+  receivableDays: 38,
+  payableDays: 32,
+  inventoryDays: 24,
+  cashConversionCycle: 30,
+  score: 78,
+  grade: 'B+',
+};
+
 function getGradeColor(grade: string) {
   const bucket = grade?.[0]?.toUpperCase();
   switch (bucket) {
@@ -24,6 +35,12 @@ function getGradeColor(grade: string) {
   }
 }
 
+function getRatioColor(value: number) {
+  if (value >= 1.5) return 'text-emerald-600';
+  if (value >= 1.0) return 'text-amber-600';
+  return 'text-rose-600';
+}
+
 export default function WorkingCapitalHealth() {
   const [data, setData] = useState<WorkingCapital | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +49,8 @@ export default function WorkingCapitalHealth() {
     backendApi.getWorkingCapital().then((res) => {
       if (res.ok && res.data?.data) {
         setData(res.data.data);
+      } else {
+        setData(DEMO_WORKING_CAPITAL);
       }
       setLoading(false);
     });
@@ -86,12 +105,12 @@ export default function WorkingCapitalHealth() {
 
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: 'Current Ratio', value: data.currentRatio.toFixed(2), suffix: '', info: 'assets/liabilities' },
-            { label: 'Quick Ratio', value: data.quickRatio.toFixed(2), suffix: '', info: 'acid-test' },
-            { label: 'Receivable Days', value: data.receivableDays, suffix: 'd', info: 'DSO' },
-            { label: 'Payable Days', value: data.payableDays, suffix: 'd', info: 'DPO' },
-            { label: 'Inventory Days', value: data.inventoryDays, suffix: 'd', info: 'DIO' },
-            { label: 'Cash Cycle', value: data.cashConversionCycle, suffix: 'd', info: 'CCC' },
+            { label: 'Current Ratio', value: data.currentRatio.toFixed(2), suffix: '', info: 'assets/liabilities', colorClass: getRatioColor(data.currentRatio) },
+            { label: 'Quick Ratio', value: data.quickRatio.toFixed(2), suffix: '', info: 'acid-test', colorClass: getRatioColor(data.quickRatio) },
+            { label: 'Receivable Days', value: data.receivableDays, suffix: 'd', info: 'DSO', colorClass: 'text-slate-800 dark:text-white' },
+            { label: 'Payable Days', value: data.payableDays, suffix: 'd', info: 'DPO', colorClass: 'text-slate-800 dark:text-white' },
+            { label: 'Inventory Days', value: data.inventoryDays, suffix: 'd', info: 'DIO', colorClass: 'text-slate-800 dark:text-white' },
+            { label: 'Cash Cycle', value: data.cashConversionCycle, suffix: 'd', info: 'CCC', colorClass: 'text-slate-800 dark:text-white' },
           ].map((m, i) => (
             <motion.div
               key={m.label}
@@ -101,7 +120,7 @@ export default function WorkingCapitalHealth() {
               className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
             >
               <p className="text-[9px] text-slate-400 uppercase font-bold">{m.label}</p>
-              <p className="text-lg font-black text-slate-800 dark:text-white">{m.value}{m.suffix}</p>
+              <p className={`text-lg font-black ${m.colorClass}`}>{m.value}{m.suffix}</p>
               <p className="text-[9px] text-slate-500">{m.info}</p>
             </motion.div>
           ))}

@@ -598,7 +598,7 @@ export default function LoginPage() {
                     }
                     const store = useWealthStore.getState();
                     store.updateUser({ name: account.profile.name, monthlyIncome: account.profile.monthlyIncome, monthlyExpenses: account.profile.monthlyExpenses, monthlySavings: account.profile.monthlySavings, riskProfile: account.profile.riskProfile, taxBracket: account.profile.taxBracket });
-                    if (store.assets.length === 0) store.seedRealData();
+                    if (store.assets.length === 0) store.seedRealData(account.profile);
                     dispatch({ type: 'LOGIN', userId: account.id, userEmail: account.email });
                   }}
                   className="w-full flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-primary/30 transition-all text-left"

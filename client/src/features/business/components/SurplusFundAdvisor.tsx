@@ -12,6 +12,13 @@ interface Recommendation {
   risk: 'zero' | 'low' | 'medium' | 'high';
 }
 
+const DEMO_SURPLUS = 550000;
+const DEMO_RECOMMENDATIONS: Recommendation[] = [
+  { action: 'Sweep to 91-day Corporate FD', allocation: 300000, returnRate: 7.4, tenure: '3 months', projectedValue: 305550, risk: 'low' },
+  { action: 'Liquid Mutual Fund', allocation: 150000, returnRate: 6.8, tenure: 'Liquid', projectedValue: 152550, risk: 'low' },
+  { action: 'Prepay high-cost vendor credit', allocation: 100000, returnRate: 14.0, tenure: 'Immediate', projectedValue: 114000, risk: 'zero' },
+];
+
 const RISK_COLORS: Record<string, string> = {
   zero: 'bg-slate-100 text-slate-600 border-slate-200',
   low: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -29,6 +36,9 @@ export default function SurplusFundAdvisor() {
       if (res.ok && res.data?.data) {
         setSurplus(res.data.data.currentSurplus || 0);
         setRecommendations(res.data.data.projections || []);
+      } else {
+        setSurplus(DEMO_SURPLUS);
+        setRecommendations(DEMO_RECOMMENDATIONS);
       }
       setLoading(false);
     });
