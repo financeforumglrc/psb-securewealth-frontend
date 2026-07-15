@@ -18,12 +18,12 @@ export default function SMEDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
-            <i className="fas fa-book-open text-primary" /> Khata
+            <i className="fas fa-briefcase text-primary" /> Business & SME Centre
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">Working capital, surplus deployment, and cash flow intelligence.</p>
         </div>
         <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-          <i className="fas fa-building" /> Business
+          <i className="fas fa-building" /> SME
         </span>
       </div>
 

@@ -1,9 +1,0 @@
-- generic [ref=f6e1]:
-  - img [ref=f6e4]
-  - heading "SecureWealth Twin" [level=1] [ref=f6e7]
-  - paragraph [ref=f6e9]:
-    - img [ref=f6e10]
-    - text: Banking that protects you before you know you are under attack.
-  - button "Skip Intro" [ref=f6e14]:
-    - text: Skip Intro
-    - img [ref=f6e15]

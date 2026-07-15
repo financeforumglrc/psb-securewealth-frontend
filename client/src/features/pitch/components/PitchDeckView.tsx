@@ -36,7 +36,7 @@ const STRATEGIES = [
     hook: 'Banks care about AUM growth and fraud-loss reduction. SecureWealth Twin is a revenue protector, not a cost center.',
     bullets: [
       "Smart Sweep (AA Arbitrage) and Life-Shock auto-remediation protect users' liquidity during crises.",
-      'Khata covers the ignored corporate segment: cash flow, surplus fund advisor and working capital health.',
+      'SME Centre covers the ignored corporate segment: cash flow, surplus fund advisor and working capital health.',
       'Macro Signal Tower turns RBI repo, CPI, USD/INR and gold trends into auto-actions like "sell gold, shift to FD".',
       'Advanced Tax Calculator compares Old vs New regimes and tracks 80C/deadlines — driving stickiness.',
       'Rakshak AI + Predictive Fraud Radar reduce social-engineering fraud by an estimated 40%.',

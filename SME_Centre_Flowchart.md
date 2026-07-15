@@ -1,4 +1,4 @@
-# Khata (SME Centre) – Demo Flowchart & Script
+# SME Centre – Demo Flowchart & Script
 
 > Quick reference for the 60-second SME Centre walkthrough during the PSB SecureWealth pitch.
 
@@ -95,7 +95,7 @@ Recommended tab order for the demo:
 | Item | Detail |
 |------|--------|
 | **Demo persona** | Dr. Neha Gupta — enterprise tier, business owner profile |
-| **Entry path** | Login → Dr. Neha Gupta → Family & Lifestyle → Khata (SME Centre) |
+| **Entry path** | Login → Dr. Neha Gupta → Family & Lifestyle → SME Centre |
 | **Tab order** | Cash Flow Timeline → Working Capital Health → Surplus Fund Advisor |
 | **Fallback data** | If the backend is cold/CORS-blocked, realistic demo data loads automatically so the walkthrough never breaks. |
 | **Colour language** | Green = healthy/surplus, Amber = watch, Red = risk/shortage |
