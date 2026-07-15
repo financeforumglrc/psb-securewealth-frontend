@@ -1,7 +1,8 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, ComposedChart } from 'recharts';
+import { Line, XAxis, YAxis, Tooltip, Area, ComposedChart } from 'recharts';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 
 const MARKET_CYCLES = [
   { month: 'Jun', market: 100, optimalEntry: 105, yourTiming: 98 },
@@ -36,6 +37,7 @@ const PREDICTIVE_TIMING = [
 
 export default function MarketIntelligence() {
   const { t } = useTranslation();
+  const { ref: chartRef, width: chartWidth, height: chartHeight } = useChartSize<HTMLDivElement>();
   const [selectedSignal, setSelectedSignal] = useState<number | null>(null);
 
   return (
@@ -79,9 +81,9 @@ export default function MarketIntelligence() {
           </div>
         </div>
 
-        <div className="h-[280px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={MARKET_CYCLES} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+        <div ref={chartRef} className="h-[280px] w-full">
+          {chartWidth > 0 && chartHeight > 0 && (
+            <ComposedChart width={chartWidth} height={chartHeight} data={MARKET_CYCLES} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id="marketGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#1B5E20" stopOpacity={0.2} />
@@ -97,7 +99,7 @@ export default function MarketIntelligence() {
               <Line type="monotone" dataKey="optimalEntry" name={t('marketAiEntry')} stroke="#FFD700" strokeWidth={2.5} strokeDasharray="6 4" dot={{ r: 4, fill: '#FFD700', stroke: '#1B5E20', strokeWidth: 2 }} />
               <Line type="monotone" dataKey="yourTiming" name={t('marketYourTiming')} stroke="#F44336" strokeWidth={2} dot={{ r: 3, fill: '#F44336' }} />
             </ComposedChart>
-          </ResponsiveContainer>
+          )}
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500 dark:text-slate-400">

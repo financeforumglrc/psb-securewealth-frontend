@@ -1,7 +1,8 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { useToast } from '@/shared/components/ui/ToastProvider';
 
@@ -108,6 +109,7 @@ function parseSpend(f: Festival) {
 
 export default function FestivalAwareEngine() {
   const { t } = useTranslation();
+  const { ref: chartRef, width: chartWidth, height: chartHeight } = useChartSize<HTMLDivElement>();
   const [selected, setSelected] = useState<string | null>(null);
   const [showPlanner, setShowPlanner] = useState(false);
   const [view, setView] = useState<'list' | 'calendar'>('list');
@@ -369,9 +371,9 @@ export default function FestivalAwareEngine() {
         <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
           <i className="fas fa-chart-column text-primary" aria-hidden="true" /> {t('festivalChartTitle')}
         </h4>
-        <div className="h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+        <div ref={chartRef} className="h-[220px] w-full">
+          {chartWidth > 0 && chartHeight > 0 && (
+            <BarChart width={chartWidth} height={chartHeight} data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
               <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
               <Tooltip
@@ -385,7 +387,7 @@ export default function FestivalAwareEngine() {
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          )}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-4 text-[10px] text-gray-500 dark:text-slate-400">
           <span className="flex items-center gap-1"><div className="w-3 h-3 bg-teal-700/20 rounded" /> {t('festivalNormal')}</span>

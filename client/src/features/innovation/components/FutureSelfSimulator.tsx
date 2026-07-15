@@ -1,7 +1,8 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 
 interface ProjectionScenario {
   year: number;
@@ -49,6 +50,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function FutureSelfSimulator() {
   const { t } = useTranslation();
+  const { ref: chartRef, width: chartWidth, height: chartHeight } = useChartSize<HTMLDivElement>();
   const [selectedYear, setSelectedYear] = useState(2030);
   const [showAvatar, setShowAvatar] = useState(true);
 
@@ -94,9 +96,9 @@ export default function FutureSelfSimulator() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Chart */}
         <div className="lg:col-span-2">
-          <div className="h-[260px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={PROJECTION_DATA} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+          <div ref={chartRef} className="h-[260px] w-full">
+            {chartWidth > 0 && chartHeight > 0 && (
+              <AreaChart width={chartWidth} height={chartHeight} data={PROJECTION_DATA} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="currentGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#9CA3AF" stopOpacity={0.2} />
@@ -153,7 +155,7 @@ export default function FutureSelfSimulator() {
                   }}
                 />
               </AreaChart>
-            </ResponsiveContainer>
+            )}
           </div>
 
           {/* Year slider */}

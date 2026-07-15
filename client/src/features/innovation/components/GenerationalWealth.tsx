@@ -1,7 +1,8 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 
 const GENERATION_DATA = [
   { year: '2026', you: 45, child: 0, grandchild: 0, milestone: 'You (Age 32)' },
@@ -40,6 +41,7 @@ const TIMELINE_EVENTS = [
 
 export default function GenerationalWealth() {
   const { t } = useTranslation();
+  const { ref: chartRef, width: chartWidth, height: chartHeight } = useChartSize<HTMLDivElement>();
   const [selectedYear, setSelectedYear] = useState('2056');
 
   return (
@@ -83,9 +85,9 @@ export default function GenerationalWealth() {
           </div>
         </div>
 
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={GENERATION_DATA} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+        <div ref={chartRef} className="h-[300px] w-full">
+          {chartWidth > 0 && chartHeight > 0 && (
+            <AreaChart width={chartWidth} height={chartHeight} data={GENERATION_DATA} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id="youGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#1B5E20" stopOpacity={0.3} />
@@ -108,7 +110,7 @@ export default function GenerationalWealth() {
               <Area type="monotone" dataKey="child" name={t('generationalChild')} stroke="#2196F3" strokeWidth={2} fill="url(#childGrad)" />
               <Area type="monotone" dataKey="grandchild" name={t('generationalGrandchild')} stroke="#FFD700" strokeWidth={2} fill="url(#grandGrad)" />
             </AreaChart>
-          </ResponsiveContainer>
+          )}
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500 dark:text-slate-400">

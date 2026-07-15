@@ -1,7 +1,8 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts';
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { useToast } from '@/shared/components/ui/ToastProvider';
 
@@ -44,6 +45,7 @@ const COACHING_INSIGHTS = [
 
 export default function EmotionalResonance() {
   const { t } = useTranslation();
+  const { ref: radarRef, width: radarWidth, height: radarHeight } = useChartSize<HTMLDivElement>();
   const [selectedTrigger, setSelectedTrigger] = useState<number | null>(null);
   const addGoal = useWealthStore((s) => s.addGoal);
   const { showToast } = useToast();
@@ -94,9 +96,9 @@ export default function EmotionalResonance() {
           <h4 className="text-sm font-bold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
             <i className="fas fa-brain text-violet-500" aria-hidden="true" /> {t('emotionalResonanceProfileTitle')}
           </h4>
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={EMOTION_DATA} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+          <div ref={radarRef} className="h-[280px] w-full">
+            {radarWidth > 0 && radarHeight > 0 && (
+              <RadarChart width={radarWidth} height={radarHeight} data={EMOTION_DATA} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
                 <PolarGrid stroke="#E5E7EB" />
                 <PolarAngleAxis dataKey="emotion" tick={{ fontSize: 10, fill: '#6B7280' }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
@@ -109,7 +111,7 @@ export default function EmotionalResonance() {
                   ]}
                 />
               </RadarChart>
-            </ResponsiveContainer>
+            )}
           </div>
         </div>
 
