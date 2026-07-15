@@ -385,4 +385,5 @@ export type ViewType =
   | 'msme-creditbridge'
   | 'creditbridge-ai'
   | 'loans-hub' | 'loan-research' | 'loan-impact' | 'social-collateral-loan'
-  | 'pitch-deck';
+  | 'pitch-deck'
+  | 'cross-device-approval';

@@ -89,6 +89,7 @@ const SocialCollateralLoan = lazyWithRetry(() => import('@/features/loans/compon
 const RecurringPayments = lazyWithRetry(() => import('@/features/banking/components/RecurringPayments'));
 const AccountStatement = lazyWithRetry(() => import('@/features/banking/components/AccountStatement'));
 const AuditLog = lazyWithRetry(() => import('@/features/banking/components/AuditLog'));
+const CrossDeviceApproval = lazyWithRetry(() => import('@/features/security/components/CrossDeviceApproval'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -415,6 +416,7 @@ export default function AuthenticatedApp() {
               {currentView === 'recurring-payments' && <RecurringPayments />}
               {currentView === 'account-statement' && <AccountStatement />}
               {currentView === 'audit-log' && <AuditLog />}
+              {currentView === 'cross-device-approval' && <CrossDeviceApproval />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}

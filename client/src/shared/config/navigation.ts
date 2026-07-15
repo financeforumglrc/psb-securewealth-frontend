@@ -60,6 +60,7 @@ export const VIEW_TITLES: Record<string, string> = {
   challenges: 'Challenges',
   'nri-mode': 'NRI Center',
   'business-mode': 'Khata',
+  'cross-device-approval': 'Cross-Device Approval',
   'msme-creditbridge': 'MSME CreditBridge AI',
   'kids-mode': 'Kids Mode',
   'notification-demo': 'Notifications',
@@ -217,6 +218,7 @@ const innovationGroup: NavGroup = {
     { view: 'fantasy-league', label: 'Fantasy League', icon: 'fa-trophy', description: 'Portfolio fantasy league.' },
     { view: 'boosts', label: 'Boosts', icon: 'fa-rocket', description: 'Rewards and goal accelerators.' },
     { view: 'values-alignment', label: 'Values Alignment', icon: 'fa-heart', description: 'Invest with your values.' },
+    { view: 'cross-device-approval', label: 'Cross-Device Approval', icon: 'fa-mobile-screen-button', description: 'Initiate on one device, approve on another.', badge: 'LIVE DEMO' },
     { view: 'pitch-deck', label: 'Pitch Deck', icon: 'fa-trophy', description: 'Winning strategies & closing script.', badge: 'JUDGES' },
   ],
 };
