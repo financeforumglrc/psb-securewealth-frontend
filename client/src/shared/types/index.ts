@@ -389,4 +389,8 @@ export type ViewType =
   | 'cross-device-approval'
   | 'quantum-key'
   | 'quantum-vault'
-  | 'live-fraud-simulator';
+  | 'live-fraud-simulator'
+  | 'scam-call'
+  | 'voice-panic'
+  | 'wealth-3d'
+  | 'wealth-ar';

@@ -92,7 +92,11 @@ const AuditLog = lazyWithRetry(() => import('@/features/banking/components/Audit
 const CrossDeviceApproval = lazyWithRetry(() => import('@/features/security/components/CrossDeviceApproval'));
 const QuantumKeyExchange = lazyWithRetry(() => import('@/features/security/components/QuantumKeyExchange'));
 const QuantumDocumentVault = lazyWithRetry(() => import('@/features/security/components/QuantumDocumentVault'));
+const VoicePanicTrigger = lazyWithRetry(() => import('@/features/security/components/VoicePanicTrigger'));
 const LiveFraudSimulator = lazyWithRetry(() => import('@/features/fraud/components/LiveFraudSimulator'));
+const ScamCallSimulator = lazyWithRetry(() => import('@/features/fraud/components/ScamCallSimulator'));
+const Wealth3DVisualization = lazyWithRetry(() => import('@/features/dashboard/components/Wealth3DVisualization'));
+const WealthARPreview = lazyWithRetry(() => import('@/features/dashboard/components/WealthARPreview'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -422,7 +426,11 @@ export default function AuthenticatedApp() {
               {currentView === 'cross-device-approval' && <CrossDeviceApproval />}
               {currentView === 'quantum-key' && <QuantumKeyExchange />}
               {currentView === 'quantum-vault' && <QuantumDocumentVault />}
+              {currentView === 'voice-panic' && <VoicePanicTrigger />}
               {currentView === 'live-fraud-simulator' && <LiveFraudSimulator />}
+              {currentView === 'scam-call' && <ScamCallSimulator />}
+              {currentView === 'wealth-3d' && <Wealth3DVisualization />}
+              {currentView === 'wealth-ar' && <WealthARPreview />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}
