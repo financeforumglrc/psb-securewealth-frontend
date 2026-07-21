@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Brain, Send, Mic, MicOff, Sparkles, TrendingUp, Shield, Target, Home, GraduationCap, Heart } from 'lucide-react';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { callAI } from '@/shared/services/aiOrchestrator';
+import { callLocalAI } from '@/shared/services/localAI';
 
 interface Message {
   id: string;
@@ -175,16 +176,29 @@ export default function WealthTwinGPT() {
     setLoading(true);
 
     try {
-      const response = await callAI(text, {
-        userContext: {
+      let response;
+      try {
+        response = await callAI(text, {
+          userContext: {
+            name: user.name,
+            income: financialContext.monthlyIncome,
+            expenses: financialContext.monthlyIncome - financialContext.monthlySavings,
+            savings: financialContext.monthlySavings,
+            netWorth: financialContext.netWorth,
+            goals: goals.map((g) => ({ name: g.name, targetAmount: g.targetAmount, currentAmount: g.currentAmount })),
+          },
+        });
+      } catch {
+        // Fallback to local AI when external providers fail
+        response = await callLocalAI(text, {
           name: user.name,
           income: financialContext.monthlyIncome,
           expenses: financialContext.monthlyIncome - financialContext.monthlySavings,
           savings: financialContext.monthlySavings,
           netWorth: financialContext.netWorth,
           goals: goals.map((g) => ({ name: g.name, targetAmount: g.targetAmount, currentAmount: g.currentAmount })),
-        },
-      });
+        });
+      }
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
