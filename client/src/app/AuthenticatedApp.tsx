@@ -97,6 +97,7 @@ const CoercionDetectionEngine = lazyWithRetry(() => import('@/features/security/
 const ExplainableRiskScore = lazyWithRetry(() => import('@/features/security/components/ExplainableRiskScore'));
 const EmotionAdaptiveGate = lazyWithRetry(() => import('@/features/security/components/EmotionAdaptiveGate'));
 const VoiceAuthenticatedCommands = lazyWithRetry(() => import('@/features/security/components/VoiceAuthenticatedCommands'));
+const SecureWealthGuardian = lazyWithRetry(() => import('@/features/security/components/SecureWealthGuardian'));
 const LiveFraudSimulator = lazyWithRetry(() => import('@/features/fraud/components/LiveFraudSimulator'));
 const ScamCallSimulator = lazyWithRetry(() => import('@/features/fraud/components/ScamCallSimulator'));
 const Wealth3DVisualization = lazyWithRetry(() => import('@/features/dashboard/components/Wealth3DVisualization'));
@@ -436,6 +437,7 @@ export default function AuthenticatedApp() {
               {currentView === 'emotion-gate' && <EmotionAdaptiveGate />}
               {currentView === 'risk-score' && <ExplainableRiskScore />}
               {currentView === 'voice-commands' && <VoiceAuthenticatedCommands />}
+              {currentView === 'guardian' && <SecureWealthGuardian />}
               {currentView === 'live-fraud-simulator' && <LiveFraudSimulator />}
               {currentView === 'scam-call' && <ScamCallSimulator />}
               {currentView === 'wealth-3d' && <Wealth3DVisualization />}

@@ -153,6 +153,7 @@ const fraudProtectionGroup: NavGroup = {
     { view: 'payments', label: 'Payments', icon: 'fa-bolt', description: 'UPI, NEFT, cards and QR payments.' },
     { view: 'transactions', label: 'Transactions', icon: 'fa-list', description: 'AI-categorized history.' },
     { view: 'protection', label: 'Protection', icon: 'fa-shield-halved', description: 'Fraud shields and insurance.' },
+    { view: 'guardian', label: 'SecureWealth Guardian', icon: 'fa-shield-halved', description: 'Unified fraud protection dashboard.', badge: 'FLAGSHIP' },
     { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon', description: 'Threat radar and biometrics.' },
     { view: 'coercion-detection', label: 'Coercion Detection', icon: 'fa-fingerprint', description: 'Multi-modal forced transaction detection.', badge: 'PATENT' },
     { view: 'emotion-gate', label: 'Emotion-Adaptive Gate', icon: 'fa-heart', description: 'Transaction limits adapt to emotional state.', badge: 'PATENT' },

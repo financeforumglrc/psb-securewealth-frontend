@@ -398,4 +398,5 @@ export type ViewType =
   | 'emotion-gate'
   | 'risk-score'
   | 'generational-wealth'
-  | 'voice-commands';
+  | 'voice-commands'
+  | 'guardian';
