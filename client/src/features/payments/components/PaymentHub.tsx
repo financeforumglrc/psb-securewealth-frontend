@@ -246,11 +246,15 @@ export default function PaymentHub() {
     setPendingTx(null);
   };
 
-  const handleMPINSubmit = (pin: string) => {
+  const handleMPINSubmit = async (pin: string) => {
     setShowMPIN(false);
     if (!pendingTx) return;
-    const isSuccess = pin.length === 6;
-    if (!isSuccess) {
+    if (pin.length !== 6) {
+      showToast('error', 'Payment Failed', 'Incorrect MPIN. Please try again.');
+      return;
+    }
+    const res = await backendApi.verifyMpin(pin);
+    if (!res.ok || !res.data?.success) {
       showToast('error', 'Payment Failed', 'Incorrect MPIN. Please try again.');
       return;
     }

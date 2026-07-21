@@ -70,6 +70,9 @@ export function useBehavioralBiometrics(): BehavioralBiometricsReturn {
     mouseCurvatures: [],
   });
 
+  const MAX_SAMPLES = 200;
+  const lastFinalizeRef = useRef<number>(0);
+
   const baselineRef = useRef<BiometricProfile | null>(loadBaseline());
   const mouseStateRef = useRef<{
     lastX: number;
@@ -82,11 +85,15 @@ export function useBehavioralBiometrics(): BehavioralBiometricsReturn {
   const reportedRef = useRef(false);
 
   const finalizeProfile = useCallback(() => {
+    const now = Date.now();
+    if (now - lastFinalizeRef.current < 1000) return;
+    lastFinalizeRef.current = now;
+
     const m = metricsRef.current;
     if (m.keystrokeDurations.length < 10) return;
     if (
       mouseStartTimeRef.current === 0 ||
-      Date.now() - mouseStartTimeRef.current < 5000
+      now - mouseStartTimeRef.current < 5000
     )
       return;
 
@@ -103,7 +110,7 @@ export function useBehavioralBiometrics(): BehavioralBiometricsReturn {
           ? m.mouseCurvatures.reduce((a, b) => a + b, 0) /
             m.mouseCurvatures.length
           : 0,
-      recordedAt: Date.now(),
+      recordedAt: now,
     };
 
     const existing = baselineRef.current;
@@ -137,6 +144,9 @@ export function useBehavioralBiometrics(): BehavioralBiometricsReturn {
       const duration = Date.now() - start;
       delete keystrokeMapRef.current[e.code];
       metricsRef.current.keystrokeDurations.push(duration);
+      if (metricsRef.current.keystrokeDurations.length > MAX_SAMPLES) {
+        metricsRef.current.keystrokeDurations.shift();
+      }
       finalizeProfile();
     };
 
@@ -165,6 +175,9 @@ export function useBehavioralBiometrics(): BehavioralBiometricsReturn {
       if (dt > 0) {
         const speed = dist / dt;
         metricsRef.current.mouseSpeeds.push(speed);
+        if (metricsRef.current.mouseSpeeds.length > MAX_SAMPLES) {
+          metricsRef.current.mouseSpeeds.shift();
+        }
       }
 
       if (dist > 2) {
@@ -173,6 +186,9 @@ export function useBehavioralBiometrics(): BehavioralBiometricsReturn {
           let diff = Math.abs(angle - state.lastAngle);
           if (diff > Math.PI) diff = 2 * Math.PI - diff;
           metricsRef.current.mouseCurvatures.push(diff);
+          if (metricsRef.current.mouseCurvatures.length > MAX_SAMPLES) {
+            metricsRef.current.mouseCurvatures.shift();
+          }
         }
         mouseStateRef.current = {
           lastX: e.clientX,

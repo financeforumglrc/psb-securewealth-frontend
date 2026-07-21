@@ -85,7 +85,11 @@ export default function DashboardView() {
   }
 
   const rawNetWorth = assets.reduce((sum, a) => sum + a.value, 0);
-  const healthScore = coercedMode ? 15 : Math.min(Math.round((user.monthlySavings / user.monthlyIncome) * 200 + 40), 100);
+  const healthScore = coercedMode
+    ? 15
+    : user.monthlyIncome > 0
+      ? Math.min(Math.round((user.monthlySavings / user.monthlyIncome) * 200 + 40), 100)
+      : 0;
   const activeGoals = goals.filter((g) => g.currentAmount < g.targetAmount).length;
   const savingsRate = user.monthlyIncome > 0 ? ((user.monthlySavings / user.monthlyIncome) * 100).toFixed(1) : '0';
   const netWorthChangePct = rawNetWorth > 0 ? ((user.monthlySavings / rawNetWorth) * 100).toFixed(1) : '0.0';

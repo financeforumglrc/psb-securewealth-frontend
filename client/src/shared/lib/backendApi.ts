@@ -439,13 +439,16 @@ export const backendApi = {
       if (res.ok && res.data?.success) return res;
     }
 
-    // 3. Demo fallback — keeps the admin portal usable even if backend rejects/ignores login
-    console.warn('[backendApi] Admin login failed, using demo fallback');
-    return {
-      ok: true,
-      status: 200,
-      data: { success: true, token: 'sw-demo-admin-token', offline: true },
-    };
+    // 3. Demo fallback — only in local development, never in production
+    if (import.meta.env.DEV) {
+      console.warn('[backendApi] Admin login failed, using demo fallback');
+      return {
+        ok: true,
+        status: 200,
+        data: { success: true, token: 'sw-demo-admin-token', offline: true },
+      };
+    }
+    return res;
   },
 
   async adminGetUsers(params?: { q?: string; sort?: string; order?: string; page?: number; limit?: number }) {

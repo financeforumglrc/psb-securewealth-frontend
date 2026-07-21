@@ -35,6 +35,8 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const busyRef = useRef(false);
   const countRef = useRef(0);
+  const isOpenRef = useRef(isOpen);
+  useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
 
   const stopCamera = useCallback(() => {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
@@ -68,6 +70,10 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       });
+      if (!isOpenRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return false;
+      }
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;

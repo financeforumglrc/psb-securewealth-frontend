@@ -53,10 +53,7 @@ export async function registerPasskey(username: string): Promise<void> {
 
   const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions =
     {
-      challenge: Uint8Array.from(
-        'random-challenge-string',
-        (c) => c.charCodeAt(0)
-      ),
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
       rp: { name: 'SecureWealth Twin', id: location.hostname },
       user: {
         id: Uint8Array.from(username, (c) => c.charCodeAt(0)),
@@ -97,10 +94,7 @@ export async function authenticateWithPasskey(): Promise<string> {
 
   const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions =
     {
-      challenge: Uint8Array.from(
-        'auth-challenge-string',
-        (c) => c.charCodeAt(0)
-      ),
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
       allowCredentials: [
         {
           id: base64urlDecode(credentialId) as BufferSource,
