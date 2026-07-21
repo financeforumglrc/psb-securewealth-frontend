@@ -156,6 +156,7 @@ const fraudProtectionGroup: NavGroup = {
     { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon', description: 'Threat radar and biometrics.' },
     { view: 'coercion-detection', label: 'Coercion Detection', icon: 'fa-fingerprint', description: 'Multi-modal forced transaction detection.', badge: 'PATENT' },
     { view: 'emotion-gate', label: 'Emotion-Adaptive Gate', icon: 'fa-heart', description: 'Transaction limits adapt to emotional state.', badge: 'PATENT' },
+    { view: 'voice-commands', label: 'Voice Commands', icon: 'fa-microphone-lines', description: 'Execute transactions with voice biometrics.', badge: 'PATENT' },
     { view: 'risk-score', label: 'Risk Score Explainer', icon: 'fa-gauge-high', description: 'Transparent AI risk factor breakdown.', badge: 'PATENT' },
     { view: 'quantum-vault', label: 'Quantum Vault', icon: 'fa-vault', description: 'Post-quantum encrypted document storage.', badge: 'LIVE DEMO' },
     { view: 'live-fraud-simulator', label: 'Live Fraud Simulator', icon: 'fa-bug', description: 'Watch AI block real-time attacks.', badge: 'LIVE DEMO' },

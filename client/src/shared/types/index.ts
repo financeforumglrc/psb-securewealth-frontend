@@ -397,4 +397,5 @@ export type ViewType =
   | 'coercion-detection'
   | 'emotion-gate'
   | 'risk-score'
-  | 'generational-wealth';
+  | 'generational-wealth'
+  | 'voice-commands';
