@@ -103,6 +103,7 @@ const ScamCallSimulator = lazyWithRetry(() => import('@/features/fraud/component
 const Wealth3DVisualization = lazyWithRetry(() => import('@/features/dashboard/components/Wealth3DVisualization'));
 const WealthARPreview = lazyWithRetry(() => import('@/features/dashboard/components/WealthARPreview'));
 const GenerationalWealthOptimizer = lazyWithRetry(() => import('@/features/innovation/components/GenerationalWealthOptimizer'));
+const WealthTwinGPT = lazyWithRetry(() => import('@/features/ai/components/WealthTwinGPT'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -443,6 +444,7 @@ export default function AuthenticatedApp() {
               {currentView === 'wealth-3d' && <Wealth3DVisualization />}
               {currentView === 'wealth-ar' && <WealthARPreview />}
               {currentView === 'generational-wealth' && <GenerationalWealthOptimizer />}
+              {currentView === 'wealth-twin-gpt' && <WealthTwinGPT />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}

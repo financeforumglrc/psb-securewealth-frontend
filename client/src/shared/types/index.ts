@@ -399,4 +399,5 @@ export type ViewType =
   | 'risk-score'
   | 'generational-wealth'
   | 'voice-commands'
-  | 'guardian';
+  | 'guardian'
+  | 'wealth-twin-gpt';
