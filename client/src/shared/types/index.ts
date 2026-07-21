@@ -393,4 +393,7 @@ export type ViewType =
   | 'scam-call'
   | 'voice-panic'
   | 'wealth-3d'
-  | 'wealth-ar';
+  | 'wealth-ar'
+  | 'coercion-detection'
+  | 'emotion-gate'
+  | 'risk-score';

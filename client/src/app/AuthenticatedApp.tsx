@@ -93,6 +93,9 @@ const CrossDeviceApproval = lazyWithRetry(() => import('@/features/security/comp
 const QuantumKeyExchange = lazyWithRetry(() => import('@/features/security/components/QuantumKeyExchange'));
 const QuantumDocumentVault = lazyWithRetry(() => import('@/features/security/components/QuantumDocumentVault'));
 const VoicePanicTrigger = lazyWithRetry(() => import('@/features/security/components/VoicePanicTrigger'));
+const CoercionDetectionEngine = lazyWithRetry(() => import('@/features/security/components/CoercionDetectionEngine'));
+const ExplainableRiskScore = lazyWithRetry(() => import('@/features/security/components/ExplainableRiskScore'));
+const EmotionAdaptiveGate = lazyWithRetry(() => import('@/features/security/components/EmotionAdaptiveGate'));
 const LiveFraudSimulator = lazyWithRetry(() => import('@/features/fraud/components/LiveFraudSimulator'));
 const ScamCallSimulator = lazyWithRetry(() => import('@/features/fraud/components/ScamCallSimulator'));
 const Wealth3DVisualization = lazyWithRetry(() => import('@/features/dashboard/components/Wealth3DVisualization'));
@@ -427,6 +430,9 @@ export default function AuthenticatedApp() {
               {currentView === 'quantum-key' && <QuantumKeyExchange />}
               {currentView === 'quantum-vault' && <QuantumDocumentVault />}
               {currentView === 'voice-panic' && <VoicePanicTrigger />}
+              {currentView === 'coercion-detection' && <CoercionDetectionEngine />}
+              {currentView === 'emotion-gate' && <EmotionAdaptiveGate />}
+              {currentView === 'risk-score' && <ExplainableRiskScore />}
               {currentView === 'live-fraud-simulator' && <LiveFraudSimulator />}
               {currentView === 'scam-call' && <ScamCallSimulator />}
               {currentView === 'wealth-3d' && <Wealth3DVisualization />}
