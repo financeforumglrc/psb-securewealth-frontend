@@ -151,6 +151,8 @@ const fraudProtectionGroup: NavGroup = {
     { view: 'transactions', label: 'Transactions', icon: 'fa-list', description: 'AI-categorized history.' },
     { view: 'protection', label: 'Protection', icon: 'fa-shield-halved', description: 'Fraud shields and insurance.' },
     { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon', description: 'Threat radar and biometrics.' },
+    { view: 'quantum-vault', label: 'Quantum Vault', icon: 'fa-vault', description: 'Post-quantum encrypted document storage.', badge: 'LIVE DEMO' },
+    { view: 'live-fraud-simulator', label: 'Live Fraud Simulator', icon: 'fa-bug', description: 'Watch AI block real-time attacks.', badge: 'LIVE DEMO' },
     { view: 'privacy', label: 'Privacy', icon: 'fa-lock', description: 'Consent and data controls.' },
     { view: 'audit-log', label: 'Audit Log', icon: 'fa-clipboard-check', description: 'Immutable security ledger.' },
   ],

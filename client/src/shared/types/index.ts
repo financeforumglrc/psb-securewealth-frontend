@@ -387,4 +387,6 @@ export type ViewType =
   | 'loans-hub' | 'loan-research' | 'loan-impact' | 'social-collateral-loan'
   | 'pitch-deck'
   | 'cross-device-approval'
-  | 'quantum-key';
+  | 'quantum-key'
+  | 'quantum-vault'
+  | 'live-fraud-simulator';

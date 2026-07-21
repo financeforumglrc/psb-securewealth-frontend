@@ -91,6 +91,8 @@ const AccountStatement = lazyWithRetry(() => import('@/features/banking/componen
 const AuditLog = lazyWithRetry(() => import('@/features/banking/components/AuditLog'));
 const CrossDeviceApproval = lazyWithRetry(() => import('@/features/security/components/CrossDeviceApproval'));
 const QuantumKeyExchange = lazyWithRetry(() => import('@/features/security/components/QuantumKeyExchange'));
+const QuantumDocumentVault = lazyWithRetry(() => import('@/features/security/components/QuantumDocumentVault'));
+const LiveFraudSimulator = lazyWithRetry(() => import('@/features/fraud/components/LiveFraudSimulator'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -419,6 +421,8 @@ export default function AuthenticatedApp() {
               {currentView === 'audit-log' && <AuditLog />}
               {currentView === 'cross-device-approval' && <CrossDeviceApproval />}
               {currentView === 'quantum-key' && <QuantumKeyExchange />}
+              {currentView === 'quantum-vault' && <QuantumDocumentVault />}
+              {currentView === 'live-fraud-simulator' && <LiveFraudSimulator />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}
