@@ -14,6 +14,7 @@ import { SkeletonDashboard } from '@/shared/components/Skeleton';
 
 import WealthTwinHero from '@/features/dashboard/components/WealthTwinHero';
 import FinancialPulse from '@/features/dashboard/components/FinancialPulse';
+import FinancialTwinAvatar from '@/features/ai/components/FinancialTwinAvatar';
 import QuickActions from '@/features/dashboard/components/QuickActions';
 import QuickPayCard from '@/features/psb/components/QuickPayCard';
 import RecentTransactionsTable from '@/features/psb/components/RecentTransactionsTable';
@@ -256,6 +257,11 @@ export default function DashboardView() {
         {/* Hero */}
         <WealthTwinHero />
         <FinancialPulse />
+
+        {/* Financial Twin Avatar */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <FinancialTwinAvatar />
+        </div>
 
         {/* Quick actions */}
         <SectionHeader icon="fa-bolt" title={t('quickActions')} subtitle={t('frequentTasks')} />

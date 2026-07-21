@@ -83,7 +83,7 @@ export default function QuantumDocumentVault() {
       setPublicKeyHex(bufToHex(publicKey));
       setSecretKeyHex(bufToHex(secretKey));
       setStatus('Keypair ready. Upload documents to encrypt.');
-    } catch (err) {
+    } catch (_err) {
       setStatus('Key generation failed.');
     } finally {
       setEncrypting(false);
@@ -124,7 +124,7 @@ export default function QuantumDocumentVault() {
           return next;
         });
         setStatus(`${file.name} encrypted and stored.`);
-      } catch (err) {
+      } catch (_err) {
         setStatus(`Failed to encrypt ${file.name}`);
       }
     }
@@ -153,7 +153,7 @@ export default function QuantumDocumentVault() {
       a.click();
       URL.revokeObjectURL(url);
       setStatus(`${vaultFile.name} decrypted and downloaded.`);
-    } catch (err) {
+    } catch (_err) {
       setStatus('Decryption failed.');
     } finally {
       setDecrypting(null);
