@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
+import DemoRoomSocket, { generateRoomId } from '@/shared/services/demoRoomSocket';
 
 interface TxRequest {
   id: string;
@@ -15,6 +16,10 @@ interface TxRequest {
 }
 
 const CHANNEL_NAME = 'psb-cross-device-approval';
+
+const LS_KEYS = {
+  room: 'psb-cross-device-room',
+};
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -34,6 +39,10 @@ function deviceName() {
 
 export default function CrossDeviceApproval() {
   const [role, setRole] = useState<'initiator' | 'approver'>('initiator');
+  const [roomId, setRoomId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(LS_KEYS.room) || generateRoomId();
+  });
   const [amount, setAmount] = useState('500000');
   const [recipient, setRecipient] = useState('Vendor Pvt Ltd');
   const [purpose, setPurpose] = useState('Medical equipment purchase');
@@ -41,6 +50,23 @@ export default function CrossDeviceApproval() {
   const [inputId, setInputId] = useState('');
   const [auditLog, setAuditLog] = useState<string[]>([]);
   const [showPasskey, setShowPasskey] = useState(false);
+  const socketRef = useRef<DemoRoomSocket | null>(null);
+
+  const handleRemoteMessage = (data: { type: string; payload: string }) => {
+    try {
+      if (data.type === 'tx-request') {
+        const payload = JSON.parse(data.payload) as TxRequest;
+        setRequest(payload);
+        addAudit(`Received request ${payload.id}`);
+      } else if (data.type === 'tx-update') {
+        const updated = JSON.parse(data.payload) as TxRequest;
+        setRequest((prev) => (prev?.id === updated.id ? updated : prev));
+        addAudit(`Status updated: ${updated.status.toUpperCase()}`);
+      }
+    } catch {
+      // ignore stale/corrupt messages
+    }
+  };
 
   const channel = useMemo(() => {
     if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return null;
@@ -48,16 +74,24 @@ export default function CrossDeviceApproval() {
   }, []);
 
   useEffect(() => {
+    localStorage.setItem(LS_KEYS.room, roomId);
+  }, [roomId]);
+
+  useEffect(() => {
+    socketRef.current?.close();
+    if (!roomId) return;
+    socketRef.current = new DemoRoomSocket(roomId, handleRemoteMessage);
+    return () => { socketRef.current?.close(); };
+  }, [roomId]);
+
+  useEffect(() => {
     if (!channel) return;
     channel.onmessage = (event) => {
       const data = event.data as { type: string; payload: TxRequest | string };
       if (data.type === 'tx-request') {
-        setRequest(data.payload as TxRequest);
-        addAudit(`Received request ${(data.payload as TxRequest).id}`);
+        handleRemoteMessage({ type: data.type, payload: JSON.stringify(data.payload) });
       } else if (data.type === 'tx-update') {
-        const updated = data.payload as TxRequest;
-        setRequest((prev) => (prev?.id === updated.id ? updated : prev));
-        addAudit(`Status updated: ${updated.status.toUpperCase()}`);
+        handleRemoteMessage({ type: data.type, payload: JSON.stringify(data.payload) });
       }
     };
     return () => channel.close();
@@ -100,6 +134,7 @@ export default function CrossDeviceApproval() {
     setRequest(newRequest);
     localStorage.setItem('psb-cross-device-request', JSON.stringify(newRequest));
     channel?.postMessage({ type: 'tx-request', payload: newRequest });
+    socketRef.current?.publish('tx-request', JSON.stringify(newRequest));
     addAudit(`Initiated request ${newRequest.id}`);
   };
 
@@ -127,6 +162,7 @@ export default function CrossDeviceApproval() {
     setRequest(updated);
     localStorage.setItem('psb-cross-device-request', JSON.stringify(updated));
     channel?.postMessage({ type: 'tx-update', payload: updated });
+    socketRef.current?.publish('tx-update', JSON.stringify(updated));
     setShowPasskey(false);
     addAudit(`Approver ${status.toUpperCase()} request ${updated.id}`);
   };
@@ -159,6 +195,39 @@ export default function CrossDeviceApproval() {
           >
             Device B: Approve
           </button>
+        </div>
+      </div>
+
+      <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1">
+            <label className="text-[10px] text-indigo-600 dark:text-indigo-300 uppercase font-bold block mb-1">Demo Room ID</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))}
+                placeholder="Enter room ID"
+                className="flex-1 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-slate-900 text-sm font-mono font-bold text-indigo-800 dark:text-indigo-200 outline-none focus:ring-2 focus:ring-indigo-400/30"
+              />
+              <button
+                onClick={() => { setRoomId(generateRoomId()); addAudit('New room created'); }}
+                className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+              >
+                New
+              </button>
+              <button
+                onClick={() => { navigator.clipboard.writeText(roomId); addAudit('Room ID copied'); }}
+                disabled={!roomId}
+                className="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs font-bold disabled:opacity-50"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-indigo-700 dark:text-indigo-300 sm:max-w-[220px]">
+            Open this same room on Device B. Both devices can be on different networks/IPs.
+          </p>
         </div>
       </div>
 

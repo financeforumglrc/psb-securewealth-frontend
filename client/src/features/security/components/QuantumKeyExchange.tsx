@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MlKem768 } from 'mlkem';
 import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
-import QuantumSocket, { generateRoomId } from '@/shared/services/quantumSocket';
+import DemoRoomSocket, { generateRoomId } from '@/shared/services/demoRoomSocket';
 
 const CHANNEL_NAME = 'psb-quantum-key-exchange';
 
@@ -96,7 +96,7 @@ export default function QuantumKeyExchange() {
   const publicKeyRef = useRef<HTMLTextAreaElement>(null);
   const ciphertextRef = useRef<HTMLTextAreaElement>(null);
   const encryptedMsgRef = useRef<HTMLTextAreaElement>(null);
-  const socketRef = useRef<QuantumSocket | null>(null);
+  const socketRef = useRef<DemoRoomSocket | null>(null);
 
   const handleRemoteMessage = (data: { type: string; payload: string }) => {
     if (data.type === 'public-key') {
@@ -136,7 +136,7 @@ export default function QuantumKeyExchange() {
   useEffect(() => {
     socketRef.current?.close();
     if (!roomId) return;
-    socketRef.current = new QuantumSocket(roomId, handleRemoteMessage);
+    socketRef.current = new DemoRoomSocket(roomId, handleRemoteMessage);
     return () => { socketRef.current?.close(); };
   }, [roomId]);
 

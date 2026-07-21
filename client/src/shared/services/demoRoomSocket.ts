@@ -1,7 +1,7 @@
-type QuantumMessageType = 'public-key' | 'ciphertext' | 'message';
+type DemoMessageType = string;
 
-interface QuantumSocketMessage {
-  type: QuantumMessageType;
+interface DemoSocketMessage {
+  type: DemoMessageType;
   payload: string;
 }
 
@@ -15,15 +15,15 @@ function getWsUrl(): string {
   return 'ws://localhost:5000/ws/demo';
 }
 
-export class QuantumSocket {
+export class DemoRoomSocket {
   private ws: WebSocket | null = null;
   private room: string;
   private senderId: string;
-  private onMessage: (msg: QuantumSocketMessage) => void;
+  private onMessage: (msg: DemoSocketMessage) => void;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private closed = false;
 
-  constructor(room: string, onMessage: (msg: QuantumSocketMessage) => void) {
+  constructor(room: string, onMessage: (msg: DemoSocketMessage) => void) {
     this.room = room;
     this.senderId = generateRoomId();
     this.onMessage = onMessage;
@@ -67,7 +67,7 @@ export class QuantumSocket {
     }, 2000);
   }
 
-  publish(type: QuantumMessageType, payload: string) {
+  publish(type: DemoMessageType, payload: string) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type: 'publish', channel: this.room, payload: { type, payload, senderId: this.senderId } }));
     }
@@ -88,4 +88,4 @@ export function generateRoomId(): string {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
-export default QuantumSocket;
+export default DemoRoomSocket;
