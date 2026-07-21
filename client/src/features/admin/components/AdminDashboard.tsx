@@ -286,7 +286,6 @@ function AuditLogsTab() {
       if (!cancelled) { setApiLogs(null); setApiLoading(false); }
     });
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logsPage, logsLimit]);
 
   // Map backend audit log to frontend AuditLog format
@@ -979,7 +978,6 @@ export default function AdminDashboard() {
   // Audit admin role changes
   useEffect(() => {
     adminActivityService.log('Role Switched', ROLE_LABELS[role], `Admin switched role to ${ROLE_LABELS[role]}`, role);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
   const handleLogin = async (adminId: string, password: string) => {
@@ -1205,7 +1203,6 @@ export default function AdminDashboard() {
       }
     }, 500);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, isLoggedIn]);
 
   const handleToggleUserStatus = async (u: UserRecord) => {

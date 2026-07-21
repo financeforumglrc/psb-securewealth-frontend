@@ -62,7 +62,6 @@ export default function FraudCorrelationPanel({ timeRange = '7d', onViewCases }:
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   const stats = useMemo(() => {

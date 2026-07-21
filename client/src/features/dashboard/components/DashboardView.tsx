@@ -51,6 +51,31 @@ export default function DashboardView() {
   const kycVerified = useWealthStore((s) => s.kycVerified);
   const isLoading = useWealthStore((s) => s.isLoading);
 
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t('goodMorning');
+    if (hour < 17) return t('goodAfternoon');
+    return t('goodEvening');
+  }, [t]);
+
+  const [showAdvanced, setShowAdvanced] = useState(() => dashboardDensity !== 'simple');
+  const [agenticActions, setAgenticActions] = useState([
+    {
+      actionId: 'agent-001',
+      actionType: 'sweep' as const,
+      description: 'Move ₹40,000 from Savings Account (4.0%) to Sweep FD (7.2%) and earn ₹1,280 extra interest per year.',
+      potentialGain: '₹1,280 / year',
+      riskLevel: 'low' as const,
+    },
+    {
+      actionId: 'agent-002',
+      actionType: 'sip_start' as const,
+      description: 'Top-up your Nifty Index SIP by ₹5,000/month based on your rising monthly savings trend.',
+      potentialGain: '₹2.4L in 10 yrs',
+      riskLevel: 'medium' as const,
+    },
+  ]);
+
   if (isLoading) {
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -67,13 +92,6 @@ export default function DashboardView() {
   const isCashbackPositive = cashbackBalance > 0;
   const isStreakHot = streak.days > 5;
   const isHealthGood = healthScore > 70;
-
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('goodMorning');
-    if (hour < 17) return t('goodAfternoon');
-    return t('goodEvening');
-  }, [t]);
 
   const statCards = [
     {
@@ -131,23 +149,6 @@ export default function DashboardView() {
   ];
 
   const isSimple = dashboardDensity === 'simple';
-  const [showAdvanced, setShowAdvanced] = useState(!isSimple);
-  const [agenticActions, setAgenticActions] = useState([
-    {
-      actionId: 'agent-001',
-      actionType: 'sweep' as const,
-      description: 'Move ₹40,000 from Savings Account (4.0%) to Sweep FD (7.2%) and earn ₹1,280 extra interest per year.',
-      potentialGain: '₹1,280 / year',
-      riskLevel: 'low' as const,
-    },
-    {
-      actionId: 'agent-002',
-      actionType: 'sip_start' as const,
-      description: 'Top-up your Nifty Index SIP by ₹5,000/month based on your rising monthly savings trend.',
-      potentialGain: '₹2.4L in 10 yrs',
-      riskLevel: 'medium' as const,
-    },
-  ]);
 
   const removeAction = (id: string) => setAgenticActions((prev) => prev.filter((a) => a.actionId !== id));
 

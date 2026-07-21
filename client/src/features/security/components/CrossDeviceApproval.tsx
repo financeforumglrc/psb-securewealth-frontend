@@ -69,7 +69,9 @@ export default function CrossDeviceApproval() {
       try {
         const parsed = JSON.parse(saved) as TxRequest;
         if (parsed.status === 'pending') setRequest(parsed);
-      } catch {}
+      } catch {
+        // ignore stale/corrupt saved request
+      }
     }
   }, []);
 
@@ -110,7 +112,9 @@ export default function CrossDeviceApproval() {
         setRequest(parsed);
         addAudit(`Loaded request ${parsed.id}`);
       }
-    } catch {}
+    } catch {
+      // ignore stale/corrupt saved request
+    }
   };
 
   const updateStatus = (status: 'approved' | 'rejected') => {

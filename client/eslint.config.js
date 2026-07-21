@@ -29,7 +29,7 @@ export default defineConfig([
       'react-hooks/refs': 'off',
       // Explicit any is pervasive across service boundaries; disabled for this prototype.
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       // Fast refresh and missing hook dependency warnings are too noisy for this
       // state-driven prototype and create many false positives; disabled permanently.
       'react-refresh/only-export-components': 'off',

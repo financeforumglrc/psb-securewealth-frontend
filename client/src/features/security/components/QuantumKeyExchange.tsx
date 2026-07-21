@@ -56,14 +56,36 @@ interface QuantumState {
   encryptedMessage?: string;
   decryptedMessage?: string;
   plainMessage?: string;
+  receivedPublicKey?: string;
+  receivedCiphertext?: string;
+  receivedMessage?: string;
 }
 
+const LS_KEYS = {
+  role: 'psb-qk-role',
+  publicKey: 'psb-qk-public-key',
+  ciphertext: 'psb-qk-ciphertext',
+  message: 'psb-qk-message',
+};
+
 export default function QuantumKeyExchange() {
-  const [role, setRole] = useState<'alice' | 'bob'>('alice');
-  const [state, setState] = useState<QuantumState>({});
+  const [role, setRole] = useState<'alice' | 'bob'>(() => {
+    if (typeof window === 'undefined') return 'alice';
+    return localStorage.getItem(LS_KEYS.role) === 'bob' ? 'bob' : 'alice';
+  });
+  const [state, setState] = useState<QuantumState>(() => {
+    if (typeof window === 'undefined') return {};
+    return {
+      receivedPublicKey: localStorage.getItem(LS_KEYS.publicKey) || undefined,
+      receivedCiphertext: localStorage.getItem(LS_KEYS.ciphertext) || undefined,
+      receivedMessage: localStorage.getItem(LS_KEYS.message) || undefined,
+    };
+  });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('Hello from the quantum-safe future 🔐');
   const [logs, setLogs] = useState<string[]>([]);
+  const [integrity, setIntegrity] = useState<'passed' | 'failed' | null>(null);
+  const [tampered, setTampered] = useState(false);
 
   const publicKeyRef = useRef<HTMLTextAreaElement>(null);
   const ciphertextRef = useRef<HTMLTextAreaElement>(null);
@@ -79,17 +101,46 @@ export default function QuantumKeyExchange() {
   };
 
   useEffect(() => {
+    localStorage.setItem(LS_KEYS.role, role);
+  }, [role]);
+
+  // Keep manual textarea refs in sync with received/auto-sync state so values
+  // survive Framer Motion remounts and page refreshes.
+  useEffect(() => {
+    if (publicKeyRef.current && state.receivedPublicKey) {
+      publicKeyRef.current.value = state.receivedPublicKey;
+    }
+  }, [state.receivedPublicKey]);
+
+  useEffect(() => {
+    if (ciphertextRef.current && state.receivedCiphertext) {
+      ciphertextRef.current.value = state.receivedCiphertext;
+    }
+  }, [state.receivedCiphertext]);
+
+  useEffect(() => {
+    if (encryptedMsgRef.current && state.receivedMessage) {
+      encryptedMsgRef.current.value = state.receivedMessage;
+    }
+  }, [state.receivedMessage]);
+
+  useEffect(() => {
     if (!channel) return;
     channel.onmessage = (event) => {
       const data = event.data as { type: string; payload: string };
       if (data.type === 'public-key') {
-        if (publicKeyRef.current) publicKeyRef.current.value = data.payload;
+        localStorage.setItem(LS_KEYS.publicKey, data.payload);
+        setState((s) => ({ ...s, receivedPublicKey: data.payload }));
         addLog('Received public key from Device A');
       } else if (data.type === 'ciphertext') {
-        if (ciphertextRef.current) ciphertextRef.current.value = data.payload;
+        localStorage.setItem(LS_KEYS.ciphertext, data.payload);
+        setState((s) => ({ ...s, receivedCiphertext: data.payload }));
         addLog('Received ciphertext from Device B');
       } else if (data.type === 'message') {
-        if (encryptedMsgRef.current) encryptedMsgRef.current.value = data.payload;
+        localStorage.setItem(LS_KEYS.message, data.payload);
+        setState((s) => ({ ...s, receivedMessage: data.payload }));
+        setIntegrity(null);
+        setTampered(false);
         addLog(`Received encrypted message: ${data.payload.slice(0, 24)}…`);
       }
     };
@@ -104,10 +155,10 @@ export default function QuantumKeyExchange() {
       const publicKeyHex = bufToHex(publicKey);
       const secretKeyHex = bufToHex(secretKey);
       setState((s) => ({ ...s, publicKey: publicKeyHex, secretKey: secretKeyHex }));
-      localStorage.setItem('psb-qk-public-key', publicKeyHex);
+      localStorage.setItem(LS_KEYS.publicKey, publicKeyHex);
       channel?.postMessage({ type: 'public-key', payload: publicKeyHex });
       addLog('Device A generated ML-KEM-768 keypair');
-    } catch (e) {
+    } catch (_) {
       addLog('Key generation failed');
     } finally {
       setLoading(false);
@@ -124,10 +175,10 @@ export default function QuantumKeyExchange() {
       const ciphertextHex = bufToHex(ciphertext);
       const sharedSecretHex = bufToHex(sharedSecret);
       setState((s) => ({ ...s, ciphertext: ciphertextHex, sharedSecretB: sharedSecretHex }));
-      localStorage.setItem('psb-qk-ciphertext', ciphertextHex);
+      localStorage.setItem(LS_KEYS.ciphertext, ciphertextHex);
       channel?.postMessage({ type: 'ciphertext', payload: ciphertextHex });
       addLog('Device B encapsulated shared secret with public key');
-    } catch (e) {
+    } catch (_) {
       addLog('Encapsulation failed — check public key');
     } finally {
       setLoading(false);
@@ -144,7 +195,7 @@ export default function QuantumKeyExchange() {
       const sharedSecretHex = bufToHex(sharedSecret);
       setState((s) => ({ ...s, sharedSecretA: sharedSecretHex }));
       addLog('Device A decapsulated shared secret from ciphertext');
-    } catch (e) {
+    } catch (_) {
       addLog('Decapsulation failed');
     } finally {
       setLoading(false);
@@ -157,10 +208,10 @@ export default function QuantumKeyExchange() {
     try {
       const encrypted = await encryptMessage(hexToBuf(state.sharedSecretB), message);
       setState((s) => ({ ...s, encryptedMessage: encrypted, plainMessage: message }));
-      localStorage.setItem('psb-qk-message', encrypted);
+      localStorage.setItem(LS_KEYS.message, encrypted);
       channel?.postMessage({ type: 'message', payload: encrypted });
       addLog('Device B encrypted message with AES-GCM derived from shared secret');
-    } catch (e) {
+    } catch (_) {
       addLog('Encryption failed');
     } finally {
       setLoading(false);
@@ -174,12 +225,30 @@ export default function QuantumKeyExchange() {
     try {
       const decrypted = await decryptMessage(hexToBuf(state.sharedSecretA), em);
       setState((s) => ({ ...s, decryptedMessage: decrypted }));
+      setIntegrity('passed');
       addLog('Device A decrypted message with AES-GCM');
-    } catch (e) {
-      addLog('Decryption failed');
+    } catch (_) {
+      setState((s) => ({ ...s, decryptedMessage: undefined }));
+      setIntegrity('failed');
+      addLog('AES-GCM authentication failed — ciphertext rejected');
     } finally {
       setLoading(false);
     }
+  };
+
+  const simulateTamper = () => {
+    const current = encryptedMsgRef.current?.value.trim() || state.receivedMessage || state.encryptedMessage || '';
+    if (!/^[0-9a-f]+$/i.test(current) || current.length < 16) return;
+    const hexChars = '0123456789abcdef';
+    const idx = Math.floor(current.length * 0.6);
+    const orig = current[idx].toLowerCase();
+    const flipped = hexChars[(hexChars.indexOf(orig) + 1) % 16];
+    const tamperedHex = current.slice(0, idx) + flipped + current.slice(idx + 1);
+    if (encryptedMsgRef.current) encryptedMsgRef.current.value = tamperedHex;
+    setTampered(true);
+    setIntegrity(null);
+    setState((s) => ({ ...s, decryptedMessage: undefined }));
+    addLog(`⚠️ Attacker modified 1 hex nibble at position ${idx} — ciphertext tampered`);
   };
 
   const secretsMatch = state.sharedSecretA && state.sharedSecretB && state.sharedSecretA === state.sharedSecretB;
@@ -291,16 +360,49 @@ export default function QuantumKeyExchange() {
                       className="w-full mt-1 h-20 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/30 resize-none"
                     />
                   </div>
-                  <button
-                    onClick={aliceDecrypt}
-                    disabled={loading}
-                    className="w-full py-2 rounded-xl bg-emerald-600 text-white text-xs font-black disabled:opacity-50"
-                  >
-                    Decrypt with AES-GCM
-                  </button>
-                  {state.decryptedMessage && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={aliceDecrypt}
+                      disabled={loading}
+                      className="flex-1 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black disabled:opacity-50"
+                    >
+                      Decrypt with AES-GCM
+                    </button>
+                    <button
+                      onClick={simulateTamper}
+                      disabled={loading}
+                      title="Flip 1 hex nibble to simulate an attacker modifying the ciphertext in transit"
+                      className="px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-black shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-shadow disabled:opacity-50"
+                    >
+                      ⚠️ Tamper
+                    </button>
+                  </div>
+                  {tampered && integrity !== 'failed' && (
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
+                      <p className="text-[10px] text-amber-600 dark:text-amber-300 uppercase font-bold">Attacker Modified the Ciphertext</p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">1 hex nibble flipped. Hit Decrypt to see AEAD reject it.</p>
+                    </div>
+                  )}
+                  {integrity === 'failed' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800"
+                    >
+                      <p className="text-[10px] text-rose-600 dark:text-rose-300 uppercase font-bold flex items-center gap-1">
+                        <i className="fas fa-shield-halved" /> Integrity Check FAILED — Message Rejected
+                      </p>
+                      <p className="text-xs text-rose-700 dark:text-rose-300 mt-1">
+                        AES-GCM authentication tag mismatch. The tampered ciphertext was <strong>detected and rejected</strong> —
+                        no forged data can ever be decrypted under this key.
+                      </p>
+                    </motion.div>
+                  )}
+                  {state.decryptedMessage && integrity === 'passed' && (
                     <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800">
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-300 uppercase font-bold">Decrypted Message</p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-300 uppercase font-bold flex items-center gap-1">
+                        <i className="fas fa-check-circle" /> Decrypted Message — Integrity Verified
+                      </p>
                       <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mt-1">{state.decryptedMessage}</p>
                     </div>
                   )}
