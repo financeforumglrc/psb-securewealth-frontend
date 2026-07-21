@@ -13,6 +13,7 @@ import DashboardWidget from './DashboardWidget';
 import { SkeletonDashboard } from '@/shared/components/Skeleton';
 
 import WealthTwinHero from '@/features/dashboard/components/WealthTwinHero';
+import DashboardHero from '@/features/dashboard/components/DashboardHero';
 import FinancialPulse from '@/features/dashboard/components/FinancialPulse';
 import FinancialTwinAvatar from '@/features/ai/components/FinancialTwinAvatar';
 import QuickActions from '@/features/dashboard/components/QuickActions';
@@ -255,6 +256,7 @@ export default function DashboardView() {
         />
 
         {/* Hero */}
+        <DashboardHero />
         <WealthTwinHero />
         <FinancialPulse />
 
