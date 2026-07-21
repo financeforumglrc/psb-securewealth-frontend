@@ -139,6 +139,7 @@ const wealthIntelligenceGroup: NavGroup = {
     { view: 'forecast', label: 'Forecast', icon: 'fa-chart-line', description: 'Scenario and Monte Carlo forecasts.' },
     { view: 'wealth-3d', label: '3D Wealth City', icon: 'fa-city', description: 'Net worth as an interactive metropolis.', badge: 'NEW' },
     { view: 'wealth-ar', label: 'AR Wealth Preview', icon: 'fa-camera', description: 'Augmented reality wealth overlay.', badge: 'NEW' },
+    { view: 'generational-wealth', label: 'Generational Wealth', icon: 'fa-people-roof', description: '3-generation wealth projection.', badge: 'PATENT' },
   ],
 };
 

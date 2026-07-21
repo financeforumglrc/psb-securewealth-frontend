@@ -396,4 +396,5 @@ export type ViewType =
   | 'wealth-ar'
   | 'coercion-detection'
   | 'emotion-gate'
-  | 'risk-score';
+  | 'risk-score'
+  | 'generational-wealth';

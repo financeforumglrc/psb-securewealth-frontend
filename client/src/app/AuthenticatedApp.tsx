@@ -100,6 +100,7 @@ const LiveFraudSimulator = lazyWithRetry(() => import('@/features/fraud/componen
 const ScamCallSimulator = lazyWithRetry(() => import('@/features/fraud/components/ScamCallSimulator'));
 const Wealth3DVisualization = lazyWithRetry(() => import('@/features/dashboard/components/Wealth3DVisualization'));
 const WealthARPreview = lazyWithRetry(() => import('@/features/dashboard/components/WealthARPreview'));
+const GenerationalWealthOptimizer = lazyWithRetry(() => import('@/features/innovation/components/GenerationalWealthOptimizer'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -437,6 +438,7 @@ export default function AuthenticatedApp() {
               {currentView === 'scam-call' && <ScamCallSimulator />}
               {currentView === 'wealth-3d' && <Wealth3DVisualization />}
               {currentView === 'wealth-ar' && <WealthARPreview />}
+              {currentView === 'generational-wealth' && <GenerationalWealthOptimizer />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}
