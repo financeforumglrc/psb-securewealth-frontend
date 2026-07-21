@@ -84,7 +84,7 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://api.gst.gov.in", "https://openrouter.ai", "https://api.groq.com", "https://api-inference.huggingface.co", "https://api.anthropic.com", "https://generativelanguage.googleapis.com", "https://api.openai.com"]
+            connectSrc: ["'self'", "https://api.gst.gov.in", "https://openrouter.ai", "https://api.groq.com", "https://api-inference.huggingface.co", "https://api.anthropic.com", "https://generativelanguage.googleapis.com", "https://api.openai.com", "ws://localhost:5000", "wss://psb-securewealth-backend.onrender.com"]
         }
     },
     hsts: {
@@ -370,7 +370,8 @@ app.use(errorHandler);
 // Start server only when run directly (not when imported by tests)
 if (require.main === module) {
     // WebSocket alert server for real-time fraud notifications
-    const wss = new WebSocket.Server({ server: httpServer, path: '/ws/alerts' });
+    const wss = new WebSocket.Server({ noServer: true });
+    const demoWss = new WebSocket.Server({ noServer: true });
 
     global.broadcastFraudAlert = (alert) => {
         const payload = JSON.stringify({ type: 'FRAUD_ALERT', data: alert, ts: Date.now() });
@@ -400,6 +401,45 @@ if (require.main === module) {
             ws.send(JSON.stringify({ type: 'CONNECTED', ts: Date.now() }));
         } catch {
             ws.close(1008, 'Invalid token');
+        }
+    });
+
+    // Public demo WebSocket for cross-device feature sync (Quantum Key Exchange, etc.)
+    demoWss.on('connection', (ws) => {
+        ws.subscriptions = [];
+        ws.on('message', (message) => {
+            try {
+                const data = JSON.parse(message);
+                if (data.type === 'subscribe') {
+                    ws.subscriptions.push(data.channel);
+                    ws.send(JSON.stringify({ type: 'subscribed', channel: data.channel }));
+                } else if (data.type === 'publish') {
+                    const payload = JSON.stringify({ channel: data.channel, ...data.payload });
+                    demoWss.clients.forEach((client) => {
+                        if (client.readyState === WebSocket.OPEN && client.subscriptions?.includes(data.channel)) {
+                            client.send(payload);
+                        }
+                    });
+                }
+            } catch (_) {
+                // ignore malformed messages
+            }
+        });
+    });
+
+    // Route WebSocket upgrade requests to the correct server by path
+    httpServer.on('upgrade', (request, socket, head) => {
+        const pathname = new URL(request.url, `http://${request.headers.host || 'localhost'}`).pathname;
+        if (pathname === '/ws/alerts') {
+            wss.handleUpgrade(request, socket, head, (ws) => {
+                wss.emit('connection', ws, request);
+            });
+        } else if (pathname === '/ws/demo') {
+            demoWss.handleUpgrade(request, socket, head, (ws) => {
+                demoWss.emit('connection', ws, request);
+            });
+        } else {
+            socket.destroy();
         }
     });
 

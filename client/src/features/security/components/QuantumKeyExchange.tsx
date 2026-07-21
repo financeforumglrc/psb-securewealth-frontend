@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MlKem768 } from 'mlkem';
 import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
+import QuantumSocket, { generateRoomId } from '@/shared/services/quantumSocket';
 
 const CHANNEL_NAME = 'psb-quantum-key-exchange';
 
@@ -63,6 +64,7 @@ interface QuantumState {
 
 const LS_KEYS = {
   role: 'psb-qk-role',
+  room: 'psb-qk-room',
   publicKey: 'psb-qk-public-key',
   ciphertext: 'psb-qk-ciphertext',
   message: 'psb-qk-message',
@@ -72,6 +74,10 @@ export default function QuantumKeyExchange() {
   const [role, setRole] = useState<'alice' | 'bob'>(() => {
     if (typeof window === 'undefined') return 'alice';
     return localStorage.getItem(LS_KEYS.role) === 'bob' ? 'bob' : 'alice';
+  });
+  const [roomId, setRoomId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(LS_KEYS.room) || generateRoomId();
   });
   const [state, setState] = useState<QuantumState>(() => {
     if (typeof window === 'undefined') return {};
@@ -90,6 +96,25 @@ export default function QuantumKeyExchange() {
   const publicKeyRef = useRef<HTMLTextAreaElement>(null);
   const ciphertextRef = useRef<HTMLTextAreaElement>(null);
   const encryptedMsgRef = useRef<HTMLTextAreaElement>(null);
+  const socketRef = useRef<QuantumSocket | null>(null);
+
+  const handleRemoteMessage = (data: { type: string; payload: string }) => {
+    if (data.type === 'public-key') {
+      localStorage.setItem(LS_KEYS.publicKey, data.payload);
+      setState((s) => ({ ...s, receivedPublicKey: data.payload }));
+      addLog('Received public key from Device A');
+    } else if (data.type === 'ciphertext') {
+      localStorage.setItem(LS_KEYS.ciphertext, data.payload);
+      setState((s) => ({ ...s, receivedCiphertext: data.payload }));
+      addLog('Received ciphertext from Device B');
+    } else if (data.type === 'message') {
+      localStorage.setItem(LS_KEYS.message, data.payload);
+      setState((s) => ({ ...s, receivedMessage: data.payload }));
+      setIntegrity(null);
+      setTampered(false);
+      addLog(`Received encrypted message: ${data.payload.slice(0, 24)}…`);
+    }
+  };
 
   const channel = useMemo(() => {
     if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return null;
@@ -103,6 +128,17 @@ export default function QuantumKeyExchange() {
   useEffect(() => {
     localStorage.setItem(LS_KEYS.role, role);
   }, [role]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEYS.room, roomId);
+  }, [roomId]);
+
+  useEffect(() => {
+    socketRef.current?.close();
+    if (!roomId) return;
+    socketRef.current = new QuantumSocket(roomId, handleRemoteMessage);
+    return () => { socketRef.current?.close(); };
+  }, [roomId]);
 
   // Keep manual textarea refs in sync with received/auto-sync state so values
   // survive Framer Motion remounts and page refreshes.
@@ -128,21 +164,7 @@ export default function QuantumKeyExchange() {
     if (!channel) return;
     channel.onmessage = (event) => {
       const data = event.data as { type: string; payload: string };
-      if (data.type === 'public-key') {
-        localStorage.setItem(LS_KEYS.publicKey, data.payload);
-        setState((s) => ({ ...s, receivedPublicKey: data.payload }));
-        addLog('Received public key from Device A');
-      } else if (data.type === 'ciphertext') {
-        localStorage.setItem(LS_KEYS.ciphertext, data.payload);
-        setState((s) => ({ ...s, receivedCiphertext: data.payload }));
-        addLog('Received ciphertext from Device B');
-      } else if (data.type === 'message') {
-        localStorage.setItem(LS_KEYS.message, data.payload);
-        setState((s) => ({ ...s, receivedMessage: data.payload }));
-        setIntegrity(null);
-        setTampered(false);
-        addLog(`Received encrypted message: ${data.payload.slice(0, 24)}…`);
-      }
+      handleRemoteMessage(data);
     };
     return () => channel.close();
   }, [channel]);
@@ -157,6 +179,7 @@ export default function QuantumKeyExchange() {
       setState((s) => ({ ...s, publicKey: publicKeyHex, secretKey: secretKeyHex }));
       localStorage.setItem(LS_KEYS.publicKey, publicKeyHex);
       channel?.postMessage({ type: 'public-key', payload: publicKeyHex });
+      socketRef.current?.publish('public-key', publicKeyHex);
       addLog('Device A generated ML-KEM-768 keypair');
     } catch (_) {
       addLog('Key generation failed');
@@ -177,6 +200,7 @@ export default function QuantumKeyExchange() {
       setState((s) => ({ ...s, ciphertext: ciphertextHex, sharedSecretB: sharedSecretHex }));
       localStorage.setItem(LS_KEYS.ciphertext, ciphertextHex);
       channel?.postMessage({ type: 'ciphertext', payload: ciphertextHex });
+      socketRef.current?.publish('ciphertext', ciphertextHex);
       addLog('Device B encapsulated shared secret with public key');
     } catch (_) {
       addLog('Encapsulation failed — check public key');
@@ -210,6 +234,7 @@ export default function QuantumKeyExchange() {
       setState((s) => ({ ...s, encryptedMessage: encrypted, plainMessage: message }));
       localStorage.setItem(LS_KEYS.message, encrypted);
       channel?.postMessage({ type: 'message', payload: encrypted });
+      socketRef.current?.publish('message', encrypted);
       addLog('Device B encrypted message with AES-GCM derived from shared secret');
     } catch (_) {
       addLog('Encryption failed');
@@ -281,6 +306,39 @@ export default function QuantumKeyExchange() {
           >
             Device B: Bob
           </button>
+        </div>
+      </div>
+
+      <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1">
+            <label className="text-[10px] text-indigo-600 dark:text-indigo-300 uppercase font-bold block mb-1">Demo Room ID</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))}
+                placeholder="Enter room ID"
+                className="flex-1 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-slate-900 text-sm font-mono font-bold text-indigo-800 dark:text-indigo-200 outline-none focus:ring-2 focus:ring-indigo-400/30"
+              />
+              <button
+                onClick={() => { setRoomId(generateRoomId()); addLog('New room created'); }}
+                className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+              >
+                New
+              </button>
+              <button
+                onClick={() => { navigator.clipboard.writeText(roomId); addLog('Room ID copied'); }}
+                disabled={!roomId}
+                className="px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs font-bold disabled:opacity-50"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-indigo-700 dark:text-indigo-300 sm:max-w-[220px]">
+            Open this same room on Device B. Both devices can be on different networks/IPs.
+          </p>
         </div>
       </div>
 

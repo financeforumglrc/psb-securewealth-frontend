@@ -59,5 +59,7 @@ services:
     envVars:
       - key: VITE_BACKEND_URL
         value: https://psb-securewealth-backend.onrender.com/api/v1
+      - key: VITE_WS_URL
+        value: wss://psb-securewealth-backend.onrender.com/ws/demo
       - key: VITE_API_BASE_URL
         value: https://psb-securewealth-backend.onrender.com/api/v1
