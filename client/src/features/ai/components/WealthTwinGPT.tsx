@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Brain, Send, Mic, MicOff, Sparkles, TrendingUp, Shield, Target, Home, GraduationCap, Heart } from 'lucide-react';
 import { useWealthStore } from '@/shared/store/wealthStore';
-import { callAI } from '@/shared/services/aiOrchestrator';
 import { callLocalAI } from '@/shared/services/localAI';
 
 interface Message {
@@ -176,21 +175,33 @@ export default function WealthTwinGPT() {
     setLoading(true);
 
     try {
-      let response;
+      let responseText = '';
       try {
-        response = await callAI(text, {
-          userContext: {
-            name: user.name,
-            income: financialContext.monthlyIncome,
-            expenses: financialContext.monthlyIncome - financialContext.monthlySavings,
-            savings: financialContext.monthlySavings,
-            netWorth: financialContext.netWorth,
-            goals: goals.map((g) => ({ name: g.name, targetAmount: g.targetAmount, currentAmount: g.currentAmount })),
-          },
+        // Call backend AI endpoint with financial context
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://psb-securewealth-backend.onrender.com/api/v1'}/ai/ask`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: text,
+            context: {
+              name: user.name,
+              monthlyIncome: financialContext.monthlyIncome,
+              monthlySavings: financialContext.monthlySavings,
+              netWorth: financialContext.netWorth,
+              activeGoals: financialContext.activeGoals,
+              savingsRate: financialContext.savingsRate,
+            },
+          }),
         });
+        const data = await res.json();
+        if (data.success && data.data?.answer) {
+          responseText = data.data.answer;
+        } else {
+          throw new Error(data.error || 'AI service unavailable');
+        }
       } catch {
-        // Fallback to local AI when external providers fail
-        response = await callLocalAI(text, {
+        // Fallback to local AI when backend AI fails
+        const localRes = await callLocalAI(text, {
           name: user.name,
           income: financialContext.monthlyIncome,
           expenses: financialContext.monthlyIncome - financialContext.monthlySavings,
@@ -198,11 +209,13 @@ export default function WealthTwinGPT() {
           netWorth: financialContext.netWorth,
           goals: goals.map((g) => ({ name: g.name, targetAmount: g.targetAmount, currentAmount: g.currentAmount })),
         });
+        responseText = localRes.text;
       }
+
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.text || 'I apologize, but I am unable to process your request at the moment. Please try again.',
+        content: responseText || 'I apologize, but I am unable to process your request at the moment. Please try again.',
         timestamp: Date.now(),
         type: 'text',
       };

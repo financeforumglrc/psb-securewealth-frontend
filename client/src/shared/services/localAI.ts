@@ -33,6 +33,19 @@ function analyzeQuery(query: string, context: UserContext): string {
   const savingsRate = getSavingsRate(income, savings);
   const goalProgress = getGoalProgress(goals);
 
+  // Date/time questions
+  if (q.includes('date') || q.includes('today') || q.includes('what day') || q.includes('current date')) {
+    const now = new Date();
+    return `Today's date is ${now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
+
+Current time: ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+
+For financial planning, note that:
+• Market closes at 3:30 PM IST
+• SIP dates are usually 1st-10th of each month
+• Tax filing deadline is July 31st`;
+  }
+
   // Wealth forecast
   if (q.includes('wealth') && (q.includes('5 year') || q.includes('forecast') || q.includes('future'))) {
     const projected = netWorth * Math.pow(1.08 + savingsRate / 1000, 5);
