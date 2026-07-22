@@ -984,6 +984,17 @@ export default function AdminDashboard() {
     setLoginError('');
     if (!adminId || !password) { setLoginError('Admin ID and Password are required'); return; }
     setLoading(true);
+
+    // Hardcoded demo credentials — works instantly without backend
+    if (adminId === 'admin' && password === '1234') {
+      setIsLoggedIn(true);
+      sessionStorage.setItem('sw-admin-session', 'true');
+      sessionStorage.setItem('sw-admin-token', 'demo-admin-token');
+      setOfflineMode(false);
+      setLoading(false);
+      return;
+    }
+
     const res = await backendApi.adminLogin(adminId, password);
     setLoading(false);
     if (res.ok && res.data?.success) {
