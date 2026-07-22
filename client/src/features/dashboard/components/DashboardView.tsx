@@ -45,8 +45,6 @@ export default function DashboardView() {
   const setView = useWealthStore((s) => s.setView);
   const dashboardDensity = useWealthStore((s) => s.dashboardDensity);
   const setDashboardDensity = useWealthStore((s) => s.setDashboardDensity);
-  const quickAccessEnabled = useWealthStore((s) => s.quickAccessEnabled);
-  const setQuickAccessEnabled = useWealthStore((s) => s.setQuickAccessEnabled);
   const { t, language, setLanguage } = useTranslation();
   const { cashbackBalance } = useRewards();
   const streak = getStreak();
@@ -219,19 +217,6 @@ export default function DashboardView() {
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${!isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
               >{t('comprehensiveMode')}</button>
             </div>
-            <button
-              onClick={() => setQuickAccessEnabled(!quickAccessEnabled)}
-              aria-pressed={quickAccessEnabled}
-              aria-label="Toggle quick access"
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
-                quickAccessEnabled
-                  ? 'bg-primary/10 border-primary/20 text-primary'
-                  : 'bg-white dark:bg-slate-900 border-psb-border dark:border-slate-700 text-slate-600 dark:text-slate-300'
-              }`}
-            >
-              <i className={`fas ${quickAccessEnabled ? 'fa-bolt' : 'fa-bolt-slash'}`} />
-              {quickAccessEnabled ? 'Quick Access On' : 'Quick Access Off'}
-            </button>
           </div>
         </div>
 

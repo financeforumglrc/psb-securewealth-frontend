@@ -18,7 +18,6 @@ export default function QuickActions({ children }: { children: React.ReactNode }
   const toggleDarkMode = useWealthStore((s) => s.toggleDarkMode);
   const darkMode = useWealthStore((s) => s.darkMode);
   const duressModeActive = useWealthStore((s) => s.duressModeActive);
-  const quickAccessEnabled = useWealthStore((s) => s.quickAccessEnabled);
 
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -99,14 +98,12 @@ export default function QuickActions({ children }: { children: React.ReactNode }
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    if (!quickAccessEnabled) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     setMenuPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  }, [quickAccessEnabled]);
+  }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!quickAccessEnabled) return;
     longPressTimer.current = setTimeout(() => {
       const touch = e.touches[0];
       const rect = containerRef.current?.getBoundingClientRect();
@@ -114,7 +111,7 @@ export default function QuickActions({ children }: { children: React.ReactNode }
         setMenuPos({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
       }
     }, 600);
-  }, [quickAccessEnabled]);
+  }, []);
 
   const handleTouchEnd = useCallback(() => {
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
