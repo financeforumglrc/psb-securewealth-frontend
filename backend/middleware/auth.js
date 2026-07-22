@@ -205,7 +205,7 @@ const ADMIN_ID = process.env.ADMIN_ID;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 function isInsecureDefault() {
-    return ADMIN_ID === 'admin' && ADMIN_PASSWORD === 'admin123';
+    return ADMIN_ID === 'admin' && ADMIN_PASSWORD === '1234';
 }
 
 function validateSecurityConfig() {
@@ -229,7 +229,7 @@ function validateSecurityConfig() {
  */
 const adminApiAuth = (req, res, next) => {
     const id = ADMIN_ID || 'admin';
-    const password = ADMIN_PASSWORD || 'admin123';
+    const password = ADMIN_PASSWORD || '1234';
     if (!id || !password) {
         return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
     }

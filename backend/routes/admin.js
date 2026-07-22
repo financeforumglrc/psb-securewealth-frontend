@@ -15,7 +15,7 @@ const router = express.Router();
 // Default credentials are intentionally NOT provided here; they are handled in middleware/auth.js
 // for non-production environments, but production requires explicit configuration.
 const ADMIN_ID = process.env.ADMIN_ID || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234';
 
 function basicAuth(req, res, next) {
     if (!ADMIN_ID || !ADMIN_PASSWORD) {
