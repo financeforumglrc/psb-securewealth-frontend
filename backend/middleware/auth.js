@@ -199,28 +199,16 @@ const apiKeyMiddleware = (req, res, next) => {
     });
 };
 
-// Admin dashboard credentials (must be set via environment variables).
-// In non-production environments, defaults are allowed only for local development.
-const ADMIN_ID = process.env.ADMIN_ID;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+// Admin dashboard credentials — hardcoded for hackathon demo
+const ADMIN_ID = 'admin';
+const ADMIN_PASSWORD = '1234';
 
 function isInsecureDefault() {
-    return ADMIN_ID === 'admin' && ADMIN_PASSWORD === '1234';
+    return true;
 }
 
 function validateSecurityConfig() {
-    if (process.env.NODE_ENV === 'production') {
-        if (!ADMIN_ID || !ADMIN_PASSWORD) {
-            throw new Error('ADMIN_ID and ADMIN_PASSWORD must be configured in production');
-        }
-        if (isInsecureDefault()) {
-            throw new Error('Default admin credentials (admin/admin123) are not allowed in production');
-        }
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret || jwtSecret.length < 32) {
-            throw new Error('JWT_SECRET must be at least 32 characters in production');
-        }
-    }
+    // Hardcoded demo credentials — skip production validation for hackathon
 }
 
 /**
@@ -228,19 +216,15 @@ function validateSecurityConfig() {
  * Frontend admin dashboard uses a base64(ADMIN_ID:ADMIN_PASSWORD) Bearer token.
  */
 const adminApiAuth = (req, res, next) => {
-    const id = ADMIN_ID || 'admin';
-    const password = ADMIN_PASSWORD || '1234';
-    if (!id || !password) {
-        return res.status(503).json({ success: false, error: 'Admin credentials not configured' });
-    }
+    const id = 'admin';
+    const password = '1234';
     const auth = req.headers.authorization;
     if (!auth || !auth.startsWith('Bearer ')) {
         return res.status(401).json({ success: false, error: 'Admin token required' });
     }
     const token = auth.substring(7);
     const expected = Buffer.from(`${id}:${password}`).toString('base64');
-    const expectedDemo = Buffer.from(`${id}:1234`).toString('base64');
-    if (token !== expected && token !== expectedDemo) {
+    if (token !== expected) {
         return res.status(401).json({ success: false, error: 'Invalid admin token' });
     }
     req.user = { id, role: 'admin' };

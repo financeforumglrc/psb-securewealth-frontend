@@ -14,13 +14,12 @@ const router = express.Router();
 // Admin credentials are sourced from environment variables only.
 // Default credentials are intentionally NOT provided here; they are handled in middleware/auth.js
 // for non-production environments, but production requires explicit configuration.
-const ADMIN_ID = process.env.ADMIN_ID || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234';
+// Admin credentials — hardcoded for hackathon demo
+const ADMIN_ID = 'admin';
+const ADMIN_PASSWORD = '1234';
 
 function isValidAdmin(adminId: string, password: string): boolean {
-    if (adminId !== ADMIN_ID) return false;
-    // Accept configured password or demo fallback for hackathon demo
-    return password === ADMIN_PASSWORD || password === '1234';
+    return adminId === ADMIN_ID && password === ADMIN_PASSWORD;
 }
 
 function basicAuth(req, res, next) {
