@@ -140,7 +140,7 @@ const wealthIntelligenceGroup: NavGroup = {
     { view: 'forecast', label: 'Forecast', icon: 'fa-chart-line', description: 'Scenario and Monte Carlo forecasts.' },
     { view: 'wealth-3d', label: '3D Wealth City', icon: 'fa-city', description: 'Net worth as an interactive metropolis.', badge: 'NEW' },
     { view: 'wealth-ar', label: 'AR Wealth Preview', icon: 'fa-camera', description: 'Augmented reality wealth overlay.', badge: 'NEW' },
-    { view: 'generational-wealth', label: 'Generational Wealth', icon: 'fa-people-roof', description: '3-generation wealth projection.', badge: 'PATENT' },
+    { view: 'generational-wealth', label: 'Generational Wealth', icon: 'fa-people-roof', description: '3-generation wealth projection.', badge: 'NEW' },
   ],
 };
 
@@ -156,10 +156,10 @@ const fraudProtectionGroup: NavGroup = {
     { view: 'protection', label: 'Protection', icon: 'fa-shield-halved', description: 'Fraud shields and insurance.' },
     { view: 'guardian', label: 'SecureWealth Guardian', icon: 'fa-shield-halved', description: 'Unified fraud protection dashboard.', badge: 'FLAGSHIP' },
     { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon', description: 'Threat radar and biometrics.' },
-    { view: 'coercion-detection', label: 'Coercion Detection', icon: 'fa-fingerprint', description: 'Multi-modal forced transaction detection.', badge: 'PATENT' },
-    { view: 'emotion-gate', label: 'Emotion-Adaptive Gate', icon: 'fa-heart', description: 'Transaction limits adapt to emotional state.', badge: 'PATENT' },
-    { view: 'voice-commands', label: 'Voice Commands', icon: 'fa-microphone-lines', description: 'Execute transactions with voice biometrics.', badge: 'PATENT' },
-    { view: 'risk-score', label: 'Risk Score Explainer', icon: 'fa-gauge-high', description: 'Transparent AI risk factor breakdown.', badge: 'PATENT' },
+    { view: 'coercion-detection', label: 'Coercion Detection', icon: 'fa-fingerprint', description: 'Multi-modal forced transaction detection.', badge: 'NEW' },
+    { view: 'emotion-gate', label: 'Emotion-Adaptive Gate', icon: 'fa-heart', description: 'Transaction limits adapt to emotional state.', badge: 'NEW' },
+    { view: 'voice-commands', label: 'Voice Commands', icon: 'fa-microphone-lines', description: 'Execute transactions with voice biometrics.', badge: 'NEW' },
+    { view: 'risk-score', label: 'Risk Score Explainer', icon: 'fa-gauge-high', description: 'Transparent AI risk factor breakdown.', badge: 'NEW' },
     { view: 'quantum-vault', label: 'Quantum Vault', icon: 'fa-vault', description: 'Post-quantum encrypted document storage.', badge: 'LIVE DEMO' },
     { view: 'live-fraud-simulator', label: 'Live Fraud Simulator', icon: 'fa-bug', description: 'Watch AI block real-time attacks.', badge: 'LIVE DEMO' },
     { view: 'scam-call', label: 'Scam Call Detection', icon: 'fa-phone-slash', description: 'AI detects scam calls in real-time.', badge: 'LIVE DEMO' },

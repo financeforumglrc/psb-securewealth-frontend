@@ -94,7 +94,7 @@ export default function GenerationalWealthOptimizer() {
         <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
           <Users className="w-5 h-5 text-violet-600" /> Generational Wealth Optimizer
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">Patent-pending: Plan wealth across 3 generations with life-event aware AI.</p>
+        <p className="text-xs text-slate-500 mt-0.5">Plan wealth across 3 generations with life-event aware AI.</p>
       </div>
 
       {/* Inputs */}

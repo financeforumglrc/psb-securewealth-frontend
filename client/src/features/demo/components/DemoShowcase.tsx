@@ -1538,7 +1538,7 @@ const presentationSlides = [
   { title: 'Account Aggregation', description: 'One consent unifies every bank, broker and insurer.', section: 'aa' },
   { title: '7-Layer Fraud Shield', description: 'Real-time scoring blocks fraud before money moves.', section: 'protection' },
   { title: 'AI Wealth Twin', description: 'Personalized insights, tax alerts and goal tracking.', section: 'insights' },
-  { title: 'SecureWealth Universe', description: '15 patent-grade innovations orbiting one intelligent core.', section: 'universe' },
+  { title: 'SecureWealth Universe', description: '15 innovations orbiting one intelligent core.', section: 'universe' },
   { title: 'Behavioral Biometrics', description: 'Typing and mouse behavior detect bots and coercion.', section: 'biometrics' },
   { title: 'Built for Bharat', description: 'Multilingual, accessible, offline-first public-sector banking.', section: 'compare' },
 ];

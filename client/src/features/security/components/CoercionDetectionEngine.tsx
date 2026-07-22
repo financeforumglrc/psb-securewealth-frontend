@@ -242,7 +242,7 @@ export default function CoercionDetectionEngine() {
           <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
             <Shield className="w-5 h-5 text-indigo-600" /> Multi-Modal Coercion Detection
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">Patent-pending: 5-signal fusion to detect forced transactions.</p>
+          <p className="text-xs text-slate-500 mt-0.5">5-signal fusion to detect forced transactions.</p>
         </div>
         {result && (
           <span className={`px-3 py-1 rounded-lg text-xs font-black ${getActionColor(result.action)}`}>
@@ -314,7 +314,7 @@ export default function CoercionDetectionEngine() {
 
       {/* How it works */}
       <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-        <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-2">Patent-Pending Technology</p>
+        <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-2">Advanced Technology</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px] text-slate-500">
           <div className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Typing biometrics</div>
           <div className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Mouse dynamics</div>

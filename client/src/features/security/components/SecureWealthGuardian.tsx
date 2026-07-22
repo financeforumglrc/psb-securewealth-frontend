@@ -145,7 +145,7 @@ export default function SecureWealthGuardian() {
           <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
             <Shield className="w-5 h-5 text-indigo-600" /> SecureWealth Guardian
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">Patent-pending unified fraud protection dashboard. Trigger attacks, watch AI defend.</p>
+          <p className="text-xs text-slate-500 mt-0.5">unified fraud protection dashboard. Trigger attacks, watch AI defend.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">

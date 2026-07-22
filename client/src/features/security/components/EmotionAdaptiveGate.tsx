@@ -96,7 +96,7 @@ export default function EmotionAdaptiveGate() {
         <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
           <Heart className="w-5 h-5 text-rose-600" /> Emotion-Adaptive Transaction Gate
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">Patent-pending: Transaction limits adapt to your emotional state in real-time.</p>
+        <p className="text-xs text-slate-500 mt-0.5">Transaction limits adapt to your emotional state in real-time.</p>
       </div>
 
       {/* Emotional State */}

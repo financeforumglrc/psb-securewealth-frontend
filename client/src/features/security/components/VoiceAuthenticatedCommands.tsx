@@ -107,7 +107,7 @@ export default function VoiceAuthenticatedCommands() {
         <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
           <Mic className="w-5 h-5 text-indigo-600" /> Voice-Authenticated Wealth Commands
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">Patent-pending: Execute financial actions with voice biometrics and liveness detection.</p>
+        <p className="text-xs text-slate-500 mt-0.5">Execute financial actions with voice biometrics and liveness detection.</p>
       </div>
 
       {/* Voice Control */}

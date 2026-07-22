@@ -105,7 +105,7 @@ export default function ExplainableRiskScore() {
         <h2 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
           <Shield className="w-5 h-5 text-indigo-600" /> Explainable Wealth Protection Score
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">Patent-pending: Transparent AI that shows exactly why each transaction is risky.</p>
+        <p className="text-xs text-slate-500 mt-0.5">Transparent AI that shows exactly why each transaction is risky.</p>
       </div>
 
       {/* Score Hero */}
