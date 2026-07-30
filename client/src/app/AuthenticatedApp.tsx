@@ -105,6 +105,7 @@ const Wealth3DVisualization = lazyWithRetry(() => import('@/features/dashboard/c
 const WealthARPreview = lazyWithRetry(() => import('@/features/dashboard/components/WealthARPreview'));
 const GenerationalWealthOptimizer = lazyWithRetry(() => import('@/features/innovation/components/GenerationalWealthOptimizer'));
 const WealthTwinGPT = lazyWithRetry(() => import('@/features/ai/components/WealthTwinGPT'));
+const AgeGroupView = lazyWithRetry(() => import('@/features/dashboard/components/AgeGroupView'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -446,6 +447,7 @@ export default function AuthenticatedApp() {
               {currentView === 'wealth-ar' && <WealthARPreview />}
               {currentView === 'generational-wealth' && <GenerationalWealthOptimizer />}
               {currentView === 'wealth-twin-gpt' && <WealthTwinGPT />}
+              {currentView === 'age-group' && <AgeGroupView />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}

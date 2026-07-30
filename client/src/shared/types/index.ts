@@ -400,4 +400,5 @@ export type ViewType =
   | 'generational-wealth'
   | 'voice-commands'
   | 'guardian'
-  | 'wealth-twin-gpt';
+  | 'wealth-twin-gpt'
+  | 'age-group';
