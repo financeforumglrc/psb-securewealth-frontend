@@ -131,6 +131,7 @@ const wealthIntelligenceGroup: NavGroup = {
   items: [
     { view: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie', description: 'Net worth, cashflow and quick actions.' },
     { view: 'wealth-twin-gpt', label: 'Wealth Twin GPT', icon: 'fa-brain', description: 'Comprehensive AI financial advisor.', badge: 'FLAGSHIP' },
+    { view: 'customer-value', label: 'Value Tiering', icon: 'fa-crown', description: 'Features based on customer value.', badge: 'NEW' },
     { view: 'etb-ntb', label: 'Customer Segments', icon: 'fa-users', description: 'ETB/NTB personalized experience.', badge: 'NEW' },
     { view: 'age-group', label: 'Age-Based Experience', icon: 'fa-user', description: 'Personalized UX by life stage.', badge: 'NEW' },
     { view: 'bhavishya', label: 'BHAVISHYA AI', icon: 'fa-infinity', description: 'Predictive life-cycle AI engine.', badge: 'FLAGSHIP', alert: true },

@@ -403,4 +403,5 @@ export type ViewType =
   | 'wealth-twin-gpt'
   | 'age-group'
   | 'simplified-security'
-  | 'etb-ntb';
+  | 'etb-ntb'
+  | 'customer-value';
