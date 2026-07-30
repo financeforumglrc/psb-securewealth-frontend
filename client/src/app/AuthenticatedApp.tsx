@@ -27,6 +27,7 @@ import FeaturesUniverse from '@/features/architecture/components/FeaturesUnivers
 import ReportGeneratorModal from '@/features/report/components/ReportGeneratorModal';
 import FinancialReport from '@/features/report/components/FinancialReport';
 import ConsentModal from '@/features/compliance/components/ConsentModal';
+import SupportWidget from '@/shared/components/SupportWidget';
 import ForecastView from '@/features/forecast/components/ForecastView';
 import ManualAssetForm from '@/features/assets/components/ManualAssetForm';
 import LinkAccountModal from '@/features/assets/components/LinkAccountModal';
@@ -456,6 +457,7 @@ export default function AuthenticatedApp() {
       <Suspense fallback={null}>
         <PitchMode />
       </Suspense>
+      <SupportWidget />
       <ReportGeneratorModal
         show={showReportModal}
         onClose={() => setShowReportModal(false)}
