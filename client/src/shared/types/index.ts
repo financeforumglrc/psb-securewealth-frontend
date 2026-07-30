@@ -404,4 +404,6 @@ export type ViewType =
   | 'age-group'
   | 'simplified-security'
   | 'etb-ntb'
-  | 'customer-value';
+  | 'customer-value'
+  | 'zero-balance'
+  | 'receiving-money';

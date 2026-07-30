@@ -109,6 +109,8 @@ const AgeGroupView = lazyWithRetry(() => import('@/features/dashboard/components
 const SimplifiedSecurityView = lazyWithRetry(() => import('@/features/security/components/SimplifiedSecurityView'));
 const ETBNTBSegmentation = lazyWithRetry(() => import('@/features/innovation/components/ETBNTBSegmentation'));
 const CustomerValueTiering = lazyWithRetry(() => import('@/features/innovation/components/CustomerValueTiering'));
+const ZeroBalanceRetention = lazyWithRetry(() => import('@/features/innovation/components/ZeroBalanceRetention'));
+const ReceivingMoneyFocus = lazyWithRetry(() => import('@/features/innovation/components/ReceivingMoneyFocus'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -457,6 +459,8 @@ export default function AuthenticatedApp() {
               {currentView === 'simplified-security' && <SimplifiedSecurityView />}
               {currentView === 'etb-ntb' && <ETBNTBSegmentation />}
               {currentView === 'customer-value' && <CustomerValueTiering />}
+              {currentView === 'zero-balance' && <ZeroBalanceRetention />}
+              {currentView === 'receiving-money' && <ReceivingMoneyFocus />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}
