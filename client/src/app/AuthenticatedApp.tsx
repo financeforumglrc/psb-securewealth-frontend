@@ -182,7 +182,10 @@ function AssetsView() {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {assets.map((asset) => {
+          {assets
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5)
+            .map((asset) => {
             const AssetIcon = assetTypeIcons[asset.type] || ChartPie;
             return (
               <div key={asset.id} className="card relative">
