@@ -111,6 +111,8 @@ const ETBNTBSegmentation = lazyWithRetry(() => import('@/features/innovation/com
 const CustomerValueTiering = lazyWithRetry(() => import('@/features/innovation/components/CustomerValueTiering'));
 const ZeroBalanceRetention = lazyWithRetry(() => import('@/features/innovation/components/ZeroBalanceRetention'));
 const ReceivingMoneyFocus = lazyWithRetry(() => import('@/features/innovation/components/ReceivingMoneyFocus'));
+const TransactionFailureFaceID = lazyWithRetry(() => import('@/features/security/components/TransactionFailureFaceID'));
+const AppLockWithoutAuth = lazyWithRetry(() => import('@/features/security/components/AppLockWithoutAuth'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -461,6 +463,8 @@ export default function AuthenticatedApp() {
               {currentView === 'customer-value' && <CustomerValueTiering />}
               {currentView === 'zero-balance' && <ZeroBalanceRetention />}
               {currentView === 'receiving-money' && <ReceivingMoneyFocus />}
+              {currentView === 'transaction-failure-faceid' && <TransactionFailureFaceID />}
+              {currentView === 'app-lock' && <AppLockWithoutAuth />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}

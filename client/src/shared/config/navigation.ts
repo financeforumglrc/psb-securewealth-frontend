@@ -163,6 +163,8 @@ const fraudProtectionGroup: NavGroup = {
     { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon', description: 'Threat radar and biometrics.' },
     { view: 'coercion-detection', label: 'Coercion Detection', icon: 'fa-fingerprint', description: 'Multi-modal forced transaction detection.', badge: 'NEW' },
     { view: 'simplified-security', label: 'Simplified Security', icon: 'fa-shield-halved', description: 'Security tailored to customer tier.', badge: 'NEW' },
+    { view: 'transaction-failure-faceid', label: 'Transaction Failure FaceID', icon: 'fa-face-id', description: 'Face ID on failed transactions.', badge: 'NEW' },
+    { view: 'app-lock', label: 'App Lock', icon: 'fa-lock', description: 'Authentication gate for app access.', badge: 'NEW' },
     { view: 'emotion-gate', label: 'Emotion-Adaptive Gate', icon: 'fa-heart', description: 'Transaction limits adapt to emotional state.', badge: 'NEW' },
     { view: 'voice-commands', label: 'Voice Commands', icon: 'fa-microphone-lines', description: 'Execute transactions with voice biometrics.', badge: 'NEW' },
     { view: 'risk-score', label: 'Risk Score Explainer', icon: 'fa-gauge-high', description: 'Transparent AI risk factor breakdown.', badge: 'NEW' },

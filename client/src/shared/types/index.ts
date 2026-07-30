@@ -406,4 +406,6 @@ export type ViewType =
   | 'etb-ntb'
   | 'customer-value'
   | 'zero-balance'
-  | 'receiving-money';
+  | 'receiving-money'
+  | 'transaction-failure-faceid'
+  | 'app-lock';
