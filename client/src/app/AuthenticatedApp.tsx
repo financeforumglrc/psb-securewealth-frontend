@@ -107,6 +107,7 @@ const GenerationalWealthOptimizer = lazyWithRetry(() => import('@/features/innov
 const WealthTwinGPT = lazyWithRetry(() => import('@/features/ai/components/WealthTwinGPT'));
 const AgeGroupView = lazyWithRetry(() => import('@/features/dashboard/components/AgeGroupView'));
 const SimplifiedSecurityView = lazyWithRetry(() => import('@/features/security/components/SimplifiedSecurityView'));
+const ETBNTBSegmentation = lazyWithRetry(() => import('@/features/innovation/components/ETBNTBSegmentation'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -453,6 +454,7 @@ export default function AuthenticatedApp() {
               {currentView === 'wealth-twin-gpt' && <WealthTwinGPT />}
               {currentView === 'age-group' && <AgeGroupView />}
               {currentView === 'simplified-security' && <SimplifiedSecurityView />}
+              {currentView === 'etb-ntb' && <ETBNTBSegmentation />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}

@@ -402,4 +402,5 @@ export type ViewType =
   | 'guardian'
   | 'wealth-twin-gpt'
   | 'age-group'
-  | 'simplified-security';
+  | 'simplified-security'
+  | 'etb-ntb';
