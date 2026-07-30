@@ -401,4 +401,5 @@ export type ViewType =
   | 'voice-commands'
   | 'guardian'
   | 'wealth-twin-gpt'
-  | 'age-group';
+  | 'age-group'
+  | 'simplified-security';

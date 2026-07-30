@@ -158,6 +158,7 @@ const fraudProtectionGroup: NavGroup = {
     { view: 'guardian', label: 'SecureWealth Guardian', icon: 'fa-shield-halved', description: 'Unified fraud protection dashboard.', badge: 'FLAGSHIP' },
     { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon', description: 'Threat radar and biometrics.' },
     { view: 'coercion-detection', label: 'Coercion Detection', icon: 'fa-fingerprint', description: 'Multi-modal forced transaction detection.', badge: 'NEW' },
+    { view: 'simplified-security', label: 'Simplified Security', icon: 'fa-shield-halved', description: 'Security tailored to customer tier.', badge: 'NEW' },
     { view: 'emotion-gate', label: 'Emotion-Adaptive Gate', icon: 'fa-heart', description: 'Transaction limits adapt to emotional state.', badge: 'NEW' },
     { view: 'voice-commands', label: 'Voice Commands', icon: 'fa-microphone-lines', description: 'Execute transactions with voice biometrics.', badge: 'NEW' },
     { view: 'risk-score', label: 'Risk Score Explainer', icon: 'fa-gauge-high', description: 'Transparent AI risk factor breakdown.', badge: 'NEW' },
