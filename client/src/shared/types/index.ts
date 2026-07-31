@@ -408,4 +408,5 @@ export type ViewType =
   | 'zero-balance'
   | 'receiving-money'
   | 'transaction-failure-faceid'
-  | 'app-lock';
+  | 'app-lock'
+  | 'panic-process';

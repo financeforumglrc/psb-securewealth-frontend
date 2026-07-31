@@ -113,6 +113,7 @@ const ZeroBalanceRetention = lazyWithRetry(() => import('@/features/innovation/c
 const ReceivingMoneyFocus = lazyWithRetry(() => import('@/features/innovation/components/ReceivingMoneyFocus'));
 const TransactionFailureFaceID = lazyWithRetry(() => import('@/features/security/components/TransactionFailureFaceID'));
 const AppLockWithoutAuth = lazyWithRetry(() => import('@/features/security/components/AppLockWithoutAuth'));
+const PanicSituationProcess = lazyWithRetry(() => import('@/features/security/components/PanicSituationProcess'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -465,6 +466,7 @@ export default function AuthenticatedApp() {
               {currentView === 'receiving-money' && <ReceivingMoneyFocus />}
               {currentView === 'transaction-failure-faceid' && <TransactionFailureFaceID />}
               {currentView === 'app-lock' && <AppLockWithoutAuth />}
+              {currentView === 'panic-process' && <PanicSituationProcess />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}

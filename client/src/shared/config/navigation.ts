@@ -165,6 +165,7 @@ const fraudProtectionGroup: NavGroup = {
     { view: 'simplified-security', label: 'Simplified Security', icon: 'fa-shield-halved', description: 'Security tailored to customer tier.', badge: 'NEW' },
     { view: 'transaction-failure-faceid', label: 'Transaction Failure FaceID', icon: 'fa-face-id', description: 'Face ID on failed transactions.', badge: 'NEW' },
     { view: 'app-lock', label: 'App Lock', icon: 'fa-lock', description: 'Authentication gate for app access.', badge: 'NEW' },
+    { view: 'panic-process', label: 'Panic 5-Step Process', icon: 'fa-heart-pulse', description: 'De-escalation for financial panic.', badge: 'NEW' },
     { view: 'emotion-gate', label: 'Emotion-Adaptive Gate', icon: 'fa-heart', description: 'Transaction limits adapt to emotional state.', badge: 'NEW' },
     { view: 'voice-commands', label: 'Voice Commands', icon: 'fa-microphone-lines', description: 'Execute transactions with voice biometrics.', badge: 'NEW' },
     { view: 'risk-score', label: 'Risk Score Explainer', icon: 'fa-gauge-high', description: 'Transparent AI risk factor breakdown.', badge: 'NEW' },
