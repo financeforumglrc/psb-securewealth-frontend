@@ -409,4 +409,5 @@ export type ViewType =
   | 'receiving-money'
   | 'transaction-failure-faceid'
   | 'app-lock'
-  | 'panic-process';
+  | 'panic-process'
+  | 'hotspot-fraud';
