@@ -5,6 +5,7 @@ import { formatCroreMask } from '@/shared/utils/duressMask';
 import { syncAssetToSupabase } from '@/shared/hooks/useSupabaseSync';
 import { supabase } from '@/shared/lib/supabase';
 import CosmosCard from '@/shared/components/ui/CosmosCard';
+import FaceIDSettings from '@/features/profile/components/FaceIDSettings';
 
 export default function ProfileSettings() {
   const user = useWealthStore((s) => s.user);
@@ -255,6 +256,11 @@ export default function ProfileSettings() {
             />
           </label>
         </div>
+      </CosmosCard>
+
+      {/* Face ID Settings */}
+      <CosmosCard variant="default" padding="md">
+        <FaceIDSettings />
       </CosmosCard>
 
       {/* Data Info */}

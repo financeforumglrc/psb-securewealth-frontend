@@ -26,7 +26,8 @@ function base64urlDecode(str: string): Uint8Array {
 export function isWebAuthnSupported(): boolean {
   return (
     typeof window !== 'undefined' &&
-    typeof window.PublicKeyCredential !== 'undefined'
+    typeof window.PublicKeyCredential !== 'undefined' &&
+    (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   );
 }
 
@@ -48,7 +49,7 @@ export function clearPasskey(): void {
 
 export async function registerPasskey(username: string): Promise<void> {
   if (!isWebAuthnSupported()) {
-    throw new Error('WebAuthn is not supported in this browser.');
+    throw new Error('WebAuthn is not supported in this browser or requires HTTPS. Please use a supported browser or access the site via HTTPS.');
   }
 
   const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions =
@@ -69,17 +70,30 @@ export async function registerPasskey(username: string): Promise<void> {
       attestation: 'none',
     };
 
-  const credential = (await navigator.credentials.create({
-    publicKey: publicKeyCredentialCreationOptions,
-  })) as PublicKeyCredential | null;
+  try {
+    const credential = (await navigator.credentials.create({
+      publicKey: publicKeyCredentialCreationOptions,
+    })) as PublicKeyCredential | null;
 
-  if (!credential) {
-    throw new Error('Passkey registration was cancelled or failed.');
+    if (!credential) {
+      throw new Error('Passkey registration was cancelled or failed.');
+    }
+
+    const credentialId = base64urlEncode(credential.rawId);
+    localStorage.setItem(PASSKEY_STORAGE_KEY, credentialId);
+    localStorage.setItem(PASSKEY_USER_KEY, username);
+  } catch (error: any) {
+    if (error.name === 'NotAllowedError') {
+      throw new Error('Passkey registration was cancelled. Please allow the browser to create a passkey.');
+    } else if (error.name === 'NotSupportedError') {
+      throw new Error('Passkeys are not supported on this device. Please use a device with biometric authentication.');
+    } else if (error.name === 'SecurityError') {
+      throw new Error('Passkey registration requires a secure context (HTTPS). Please access the site via HTTPS.');
+    } else if (error.name === 'InvalidStateError') {
+      throw new Error('A passkey already exists for this account. Please sign in with your existing passkey or delete it first.');
+    }
+    throw error;
   }
-
-  const credentialId = base64urlEncode(credential.rawId);
-  localStorage.setItem(PASSKEY_STORAGE_KEY, credentialId);
-  localStorage.setItem(PASSKEY_USER_KEY, username);
 }
 
 export async function authenticateWithPasskey(): Promise<string> {
