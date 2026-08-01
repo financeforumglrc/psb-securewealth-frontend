@@ -38,15 +38,27 @@ function calculateQuality(box: { x: number; y: number; width: number; height: nu
   const videoArea = videoWidth * videoHeight;
   const sizeRatio = faceArea / videoArea;
   
-  // Ideal size is 20-40% of video
-  const idealSize = 0.3;
-  const sizeScore = 1 - Math.abs(sizeRatio - idealSize) / idealSize;
+  // Ideal size is 10-30% of video (smaller is better)
+  const minSize = 0.1;
+  const maxSize = 0.3;
+  const idealSize = 0.2;
+  
+  let sizeScore = 0;
+  if (sizeRatio >= minSize && sizeRatio <= maxSize) {
+    sizeScore = 1 - Math.abs(sizeRatio - idealSize) / idealSize;
+  } else if (sizeRatio > maxSize) {
+    // Face too large - penalize heavily
+    sizeScore = Math.max(0, 1 - (sizeRatio - maxSize) / maxSize);
+  }
   
   // Center position
   const centerX = box.x + box.width / 2;
-  const centerScore = 1 - Math.abs(centerX - videoWidth / 2) / (videoWidth / 2);
+  const centerY = box.y + box.height / 2;
+  const centerScoreX = 1 - Math.abs(centerX - videoWidth / 2) / (videoWidth / 2);
+  const centerScoreY = 1 - Math.abs(centerY - videoHeight / 2) / (videoHeight / 2);
+  const centerScore = (centerScoreX + centerScoreY) / 2;
   
-  return Math.max(0, Math.min(1, (sizeScore * 0.6 + centerScore * 0.4)));
+  return Math.max(0, Math.min(1, (sizeScore * 0.7 + centerScore * 0.3)));
 }
 
 export default function FaceIDSettings() {
@@ -138,8 +150,21 @@ export default function FaceIDSettings() {
     try {
       const result = await detectFace(videoRef.current);
       if (result.detected && result.descriptor && result.box) {
-        setFaceBox(result.box);
-        const q = calculateQuality(result.box, videoRef.current.videoWidth, videoRef.current.videoHeight);
+        // Limit face box size to reasonable bounds
+        const videoWidth = videoRef.current.videoWidth;
+        const videoHeight = videoRef.current.videoHeight;
+        const maxWidth = videoWidth * 0.6;
+        const maxHeight = videoHeight * 0.6;
+        
+        const box = {
+          x: Math.max(0, result.box.x),
+          y: Math.max(0, result.box.y),
+          width: Math.min(result.box.width, maxWidth),
+          height: Math.min(result.box.height, maxHeight),
+        };
+        
+        setFaceBox(box);
+        const q = calculateQuality(box, videoWidth, videoHeight);
         setQuality(q);
       } else {
         setFaceBox(null);
