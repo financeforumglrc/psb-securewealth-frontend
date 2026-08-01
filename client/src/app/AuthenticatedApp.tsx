@@ -116,6 +116,8 @@ const AppLockWithoutAuth = lazyWithRetry(() => import('@/features/security/compo
 const PanicSituationProcess = lazyWithRetry(() => import('@/features/security/components/PanicSituationProcess'));
 const HotspotFraudAreas = lazyWithRetry(() => import('@/features/fraud/components/HotspotFraudAreas'));
 const FRIMRIClassifications = lazyWithRetry(() => import('@/features/fraud/components/FRIMRIClassifications'));
+const I4CIntegration = lazyWithRetry(() => import('@/features/fraud/components/I4CIntegration'));
+const ForeignTransactionsSupport = lazyWithRetry(() => import('@/features/fraud/components/ForeignTransactionsSupport'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -471,6 +473,8 @@ export default function AuthenticatedApp() {
               {currentView === 'panic-process' && <PanicSituationProcess />}
               {currentView === 'hotspot-fraud' && <HotspotFraudAreas />}
               {currentView === 'fri-mri' && <FRIMRIClassifications />}
+              {currentView === 'i4c-integration' && <I4CIntegration />}
+              {currentView === 'foreign-transactions' && <ForeignTransactionsSupport />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}

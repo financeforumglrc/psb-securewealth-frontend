@@ -411,4 +411,6 @@ export type ViewType =
   | 'app-lock'
   | 'panic-process'
   | 'hotspot-fraud'
-  | 'fri-mri';
+  | 'fri-mri'
+  | 'i4c-integration'
+  | 'foreign-transactions';

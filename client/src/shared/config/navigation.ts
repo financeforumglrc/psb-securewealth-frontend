@@ -174,6 +174,8 @@ const fraudProtectionGroup: NavGroup = {
     { view: 'scam-call', label: 'Scam Call Detection', icon: 'fa-phone-slash', description: 'AI detects scam calls in real-time.', badge: 'LIVE DEMO' },
     { view: 'hotspot-fraud', label: 'Hotspot Fraud Areas', icon: 'fa-map-location-dot', description: 'Geographic fraud detection.', badge: 'NEW' },
     { view: 'fri-mri', label: 'FRI/MRI Classifications', icon: 'fa-shield-halved', description: 'Government fraud classifications.', badge: 'NEW' },
+    { view: 'i4c-integration', label: 'I4C Integration', icon: 'fa-globe', description: 'Indian Cyber Crime Centre integration.', badge: 'NEW' },
+    { view: 'foreign-transactions', label: 'Foreign Transactions', icon: 'fa-dollar-sign', description: 'International money transfer.', badge: 'NEW' },
     { view: 'voice-panic', label: 'Voice Panic Trigger', icon: 'fa-microphone', description: 'Say a secret word to activate duress mode.', badge: 'LIVE DEMO' },
     { view: 'privacy', label: 'Privacy', icon: 'fa-lock', description: 'Consent and data controls.' },
     { view: 'audit-log', label: 'Audit Log', icon: 'fa-clipboard-check', description: 'Immutable security ledger.' },
