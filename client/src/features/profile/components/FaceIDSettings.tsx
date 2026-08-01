@@ -66,6 +66,12 @@ export default function FaceIDSettings() {
 
   const startCamera = useCallback(async () => {
     try {
+      // Stop any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+
       const constraints = {
         video: {
           facingMode: 'user',
@@ -78,14 +84,37 @@ export default function FaceIDSettings() {
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        
+        // Wait for video to be ready
+        await new Promise<void>((resolve, reject) => {
+          if (!videoRef.current) {
+            reject(new Error('Video element not found'));
+            return;
+          }
+          
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play()
+              .then(() => resolve())
+              .catch((e) => reject(e));
+          };
+          
+          videoRef.current.onerror = () => {
+            reject(new Error('Video failed to load'));
+          };
+          
+          // Timeout after 5 seconds
+          setTimeout(() => reject(new Error('Video load timeout')), 5000);
+        });
       }
       return true;
     } catch (_err) {
       setStatus('error');
-      setMessage('Unable to start camera. Please check permissions.');
+      setMessage('Unable to start camera. Please check permissions and ensure no other app is using the camera.');
       return false;
     }
   }, [hdMode]);
@@ -127,11 +156,7 @@ export default function FaceIDSettings() {
     detectionIntervalRef.current = setInterval(detectFaceInFrame, 200);
   }, [detectFaceInFrame]);
 
-  const handleRegister = async () => {
-    if (!registerName.trim()) {
-      setMessage('Please enter a name for this face.');
-      return;
-    }
+  const handleStartRegistration = async () => {
     setRegistering(true);
     setStatus('scanning');
     setMessage('Loading HD face recognition...');
@@ -145,6 +170,13 @@ export default function FaceIDSettings() {
 
     setMessage('Position your face in the center of the camera...');
     startDetection();
+  };
+
+  const handleRegister = async () => {
+    if (!registerName.trim()) {
+      setMessage('Please enter a name for this face.');
+      return;
+    }
 
     // Wait for face detection with quality check
     let attempts = 0;
@@ -305,7 +337,7 @@ export default function FaceIDSettings() {
               className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-400/30"
             />
             <button
-              onClick={() => setRegistering(true)}
+              onClick={handleStartRegistration}
               disabled={!registerName.trim()}
               className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
             >
