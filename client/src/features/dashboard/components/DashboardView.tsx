@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { useRewards } from '@/shared/context/RewardsContext';
 import { getStreak } from '@/shared/services/streakService';
 
 import { formatCurrencyMask, formatCroreMask } from '@/shared/utils/duressMask';
@@ -39,6 +38,7 @@ export default function DashboardView() {
   const user = useWealthStore((s) => s.user);
   const assets = useWealthStore((s) => s.assets);
   const goals = useWealthStore((s) => s.goals);
+  const transactions = useWealthStore((s) => s.transactions);
   const coercedMode = useWealthStore((s) => s.coercedMode);
   const duressModeActive = useWealthStore((s) => s.duressModeActive);
   const setCoercedMode = useWealthStore((s) => s.setCoercedMode);
@@ -46,7 +46,6 @@ export default function DashboardView() {
   const dashboardDensity = useWealthStore((s) => s.dashboardDensity);
   const setDashboardDensity = useWealthStore((s) => s.setDashboardDensity);
   const { t, language, setLanguage } = useTranslation();
-  const { cashbackBalance } = useRewards();
   const streak = getStreak();
   const kycVerified = useWealthStore((s) => s.kycVerified);
   const isLoading = useWealthStore((s) => s.isLoading);
@@ -58,7 +57,15 @@ export default function DashboardView() {
     return t('goodEvening');
   }, [t]);
 
-  const [showAdvanced, setShowAdvanced] = useState(() => dashboardDensity !== 'simple');
+  const today = useMemo(() => {
+    return new Date().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+  }, [language]);
+
+  const [showAdvanced, setShowAdvanced] = useState(true);
   const [agenticActions, setAgenticActions] = useState([
     {
       actionId: 'agent-001',
@@ -93,9 +100,9 @@ export default function DashboardView() {
   const activeGoals = goals.filter((g) => g.currentAmount < g.targetAmount).length;
   const savingsRate = user.monthlyIncome > 0 ? ((user.monthlySavings / user.monthlyIncome) * 100).toFixed(1) : '0';
   const netWorthChangePct = rawNetWorth > 0 ? ((user.monthlySavings / rawNetWorth) * 100).toFixed(1) : '0.0';
-  const isCashbackPositive = cashbackBalance > 0;
   const isStreakHot = streak.days > 5;
   const isHealthGood = healthScore > 70;
+  const securityScore = coercedMode ? 25 : 92;
 
   const statCards = [
     {
@@ -131,14 +138,15 @@ export default function DashboardView() {
       trendColorClass: isHealthGood ? 'text-emerald-500' : 'text-amber-500',
     },
     {
-      label: t('cashback'),
-      value: formatCurrencyMask(cashbackBalance, duressModeActive),
-      icon: 'fa-gift',
-      color: 'from-pink-500/20 to-pink-500/5',
-      text: 'text-pink-500',
-      trend: isCashbackPositive ? t('available') : t('noCashbackYet'),
-      trendIcon: isCashbackPositive ? 'fa-arrow-up' : 'fa-minus',
-      trendColorClass: isCashbackPositive ? 'text-emerald-500' : 'text-slate-400',
+      label: 'Security Score',
+      value: `${securityScore}/100`,
+      icon: 'fa-shield-halved',
+      color: 'from-sky-500/20 to-sky-500/5',
+      text: 'text-sky-600',
+      trend: securityScore > 80 ? 'Protected' : 'At Risk',
+      trendIcon: securityScore > 80 ? 'fa-lock' : 'fa-triangle-exclamation',
+      trendColorClass: securityScore > 80 ? 'text-emerald-500' : 'text-rose-500',
+      trendPeriod: 'live',
     },
     {
       label: t('streak'),
@@ -152,17 +160,15 @@ export default function DashboardView() {
     },
   ];
 
+  const simpleStatCards = statCards.slice(0, 4);
   const isSimple = dashboardDensity === 'simple';
-
   const removeAction = (id: string) => setAgenticActions((prev) => prev.filter((a) => a.actionId !== id));
-
-  const openPaymentHub = () => {
-    window.dispatchEvent(new CustomEvent('sw-open-payment-hub'));
-  };
+  const openPaymentHub = () => window.dispatchEvent(new CustomEvent('sw-open-payment-hub'));
+  const recentTxns = transactions.slice(0, 5);
 
   return (
     <QuickActions>
-      <div className="space-y-5 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* Coerced Mode Warning */}
         {coercedMode && (
           <motion.div
@@ -182,11 +188,13 @@ export default function DashboardView() {
           </motion.div>
         )}
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Premium Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-psb-muted dark:text-slate-400 font-medium">{greeting}</p>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{user.name || t('welcome')}</h1>
+            <p className="text-[11px] text-psb-muted dark:text-slate-400 font-medium uppercase tracking-wider">{today}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+              {greeting}, <span className="gradient-text">{user.name || t('welcome')}</span>
+            </h1>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center bg-white dark:bg-slate-900 border border-psb-border dark:border-slate-700 rounded-xl p-1" role="group" aria-label="Language">
@@ -203,164 +211,392 @@ export default function DashboardView() {
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${language === 'hi' ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
               >हिं</button>
             </div>
-            <div className="flex items-center bg-white dark:bg-slate-900 border border-psb-border dark:border-slate-700 rounded-xl p-1" role="group" aria-label="Dashboard density">
-              <button
-                onClick={() => setDashboardDensity('simple')}
-                aria-pressed={isSimple}
-                aria-label={t('simpleMode')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-              >{t('simpleMode')}</button>
-              <button
-                onClick={() => setDashboardDensity('comprehensive')}
-                aria-pressed={!isSimple}
-                aria-label={t('comprehensiveMode')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${!isSimple ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-              >{t('comprehensiveMode')}</button>
-            </div>
+            <ModeToggle isSimple={isSimple} onToggle={(mode) => setDashboardDensity(mode)} />
           </div>
         </div>
 
         <ComplianceBar />
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {statCards.map((card, i) => (
-            <motion.div key={card.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}>
-              <StatCardV2 {...card} />
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Contextual Quick Actions */}
-        <QuickActionBar
-          kycVerified={kycVerified}
-          onKyc={() => setView('profile')}
-          onPay={() => setView('payments')}
-          onGoal={() => setView('goals')}
-          onPortfolio={() => setView('portfolio')}
-        />
-
-        {/* Hero */}
-        <DashboardHero />
-        <WealthTwinHero />
-        <FinancialPulse />
-
-        {/* Financial Twin Avatar */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <FinancialTwinAvatar />
-        </div>
-
-        {/* Quick actions */}
-        <SectionHeader icon="fa-bolt" title={t('quickActions')} subtitle={t('frequentTasks')} />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2"><QuickPayCard onExpand={openPaymentHub} /></div>
-          <VirtualCard />
-        </div>
-
-        {/* Agentic AI Actions */}
-        {agenticActions.length > 0 && (
-          <div className="space-y-3">
-            <SectionHeader icon="fa-robot" title="AI Autonomous Actions Pending Approval" subtitle="1-tap execution drafted by Wealth Twin" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {agenticActions.map((action) => (
-                <AgenticActionCard
-                  key={action.actionId}
-                  {...action}
-                  onApprove={() => removeAction(action.actionId)}
-                  onDismiss={() => removeAction(action.actionId)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Main grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 space-y-5">
-            <DashboardWidget title="Wealth Overview" subtitle="Net worth & allocation" icon="fa-chart-line" action={{ label: 'Details', onClick: () => setView('wealth-twin') }}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <CosmosCard variant="default" padding="none"><ChartWidget type="area" /></CosmosCard>
-                <CosmosCard variant="default" padding="none"><ChartWidget type="pie" /></CosmosCard>
-              </div>
-            </DashboardWidget>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <DashboardWidget title="Recent Activity" subtitle="Last 5 transactions" icon="fa-list" action={{ label: 'All', onClick: () => setView('transactions') }}>
-                <RecentTransactionsTable />
-              </DashboardWidget>
-              <DashboardWidget title="Goals" subtitle={`${activeGoals} active goal${activeGoals === 1 ? '' : 's'}`} icon="fa-bullseye" action={{ label: 'Manage', onClick: () => setView('goals') }}>
-                <GoalTracker asWidget />
-              </DashboardWidget>
-            </div>
-
-            <DashboardWidget title="Smart Actions" subtitle="AI-converted insights" icon="fa-wand-magic-sparkles">
-              <SmartActionOrchestrator />
-            </DashboardWidget>
-
-            <RecommendationCard />
-          </div>
-
-          <div className="space-y-5">
-            <DashboardWidget title="Protection Status" subtitle="Live security health" icon="fa-shield-halved" action={{ label: 'Shield', onClick: () => setView('security-beast') }}>
-              <SecurityHealthWidget />
-            </DashboardWidget>
-
-            <DashboardWidget title="Market Pulse" subtitle="Indices & movers" icon="fa-globe" action={{ label: 'Market', onClick: () => setView('market') }}>
-              <MarketIntelligenceHero />
-            </DashboardWidget>
-
-            <DashboardWidget title="Macro Signal Tower" subtitle="Global indicators → auto actions" icon="fa-tower-broadcast" action={{ label: 'Wealth Twin', onClick: () => setView('wealth-twin') }}>
-              <MacroSignalTower compact />
-            </DashboardWidget>
-
-            <CosmosCard
-              variant="default"
-              header={{ icon: 'fa-headset', iconColor: '#0f766e', title: 'Customer Support' }}
-            >
-              <div className="space-y-2">
-                <button onClick={() => alert('Calling 1800-123-4567...')} className="w-full py-2.5 bg-primary text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition-all">
-                  <i className="fas fa-phone" /> {t('callTollFree')}
-                </button>
-                <button onClick={() => setView('wealth-twin')} className="w-full py-2.5 bg-primary-light text-primary rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary/10 transition-all">
-                  <i className="fas fa-robot" /> {t('chatWithTwin')}
-                </button>
-              </div>
-            </CosmosCard>
-          </div>
-        </div>
-
-        {/* Advanced insights (expandable) */}
-        {!isSimple && (
-          <div className="space-y-5">
-            <button
-              onClick={() => setShowAdvanced((s) => !s)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-            >
-              <span className="flex items-center gap-2"><i className="fas fa-layer-group text-primary" /> Advanced Insights</span>
-              <i className={`fas fa-chevron-down transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-            </button>
-
-            {showAdvanced && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <ScenarioSimulator />
-                  <WhatIfSimulator />
-                </div>
-                <WealthDNA />
-                <AIDecisionLog />
-                <FinancialLiteracyCards />
-              </motion.div>
-            )}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {isSimple ? (
+            <SimpleDashboard
+              key="simple"
+              statCards={simpleStatCards}
+              kycVerified={kycVerified}
+              onKyc={() => setView('profile')}
+              onPay={() => setView('payments')}
+              onGoal={() => setView('goals')}
+              onPortfolio={() => setView('portfolio')}
+              onWealthTwin={() => setView('wealth-twin')}
+              onSecurity={() => setView('security-beast')}
+              onTransactions={() => setView('transactions')}
+              recentTxns={recentTxns}
+              openPaymentHub={openPaymentHub}
+            />
+          ) : (
+            <ComprehensiveDashboard
+              key="comprehensive"
+              statCards={statCards}
+              kycVerified={kycVerified}
+              setView={setView}
+              openPaymentHub={openPaymentHub}
+              agenticActions={agenticActions}
+              removeAction={removeAction}
+              showAdvanced={showAdvanced}
+              setShowAdvanced={setShowAdvanced}
+              activeGoals={activeGoals}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </QuickActions>
   );
 }
 
-function StatCardV2({
-  label, value, icon, color, text, trend, trendUp, trendIcon, trendColorClass, trendPeriod,
+function ModeToggle({ isSimple, onToggle }: { isSimple: boolean; onToggle: (mode: 'simple' | 'comprehensive') => void }) {
+  return (
+    <div className="relative flex items-center bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl p-1">
+      <motion.div
+        layoutId="dashboard-mode-pill"
+        className="absolute inset-y-1 rounded-lg bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-600"
+        initial={false}
+        animate={{
+          left: isSimple ? '4px' : '50%',
+          width: 'calc(50% - 6px)',
+        }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      />
+      <button
+        onClick={() => onToggle('simple')}
+        aria-pressed={isSimple}
+        className={`relative z-10 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 flex items-center gap-1.5 ${isSimple ? 'text-primary' : 'text-slate-500 dark:text-slate-400'}`}
+      >
+        <i className="fas fa-compress" /> Simple
+      </button>
+      <button
+        onClick={() => onToggle('comprehensive')}
+        aria-pressed={!isSimple}
+        className={`relative z-10 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 flex items-center gap-1.5 ${!isSimple ? 'text-primary' : 'text-slate-500 dark:text-slate-400'}`}
+      >
+        <i className="fas fa-expand" /> Comprehensive
+      </button>
+    </div>
+  );
+}
+
+function SimpleDashboard({
+  statCards,
+  kycVerified,
+  onKyc,
+  onPay,
+  onGoal,
+  onPortfolio,
+  onWealthTwin,
+  onSecurity,
+  onTransactions,
+  recentTxns,
+  openPaymentHub,
 }: {
+  statCards: StatCardProps[];
+  kycVerified: boolean;
+  onKyc: () => void;
+  onPay: () => void;
+  onGoal: () => void;
+  onPortfolio: () => void;
+  onWealthTwin: () => void;
+  onSecurity: () => void;
+  onTransactions: () => void;
+  recentTxns: any[];
+  openPaymentHub: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6"
+    >
+      {/* Key Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((card, i) => (
+          <motion.div key={card.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}>
+            <StatCardV2 {...card} />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Quick Actions */}
+      <QuickActionBar kycVerified={kycVerified} onKyc={onKyc} onPay={onPay} onGoal={onGoal} onPortfolio={onPortfolio} />
+
+      {/* Main Focus Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2 space-y-5">
+          <DashboardWidget title="Wealth Snapshot" subtitle="Net worth & allocation" icon="fa-chart-line" action={{ label: 'Details', onClick: onPortfolio }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CosmosCard variant="default" padding="none"><ChartWidget type="area" /></CosmosCard>
+              <CosmosCard variant="default" padding="none"><ChartWidget type="pie" /></CosmosCard>
+            </div>
+          </DashboardWidget>
+
+          <DashboardWidget title="Recent Activity" subtitle="Last 5 transactions" icon="fa-list" action={{ label: 'All', onClick: onTransactions }}>
+            {recentTxns.length > 0 ? <SimpleTransactionList transactions={recentTxns} /> : <EmptyState icon="fa-receipt" title="No transactions" subtitle="Your recent activity will appear here" />}
+          </DashboardWidget>
+        </div>
+
+        <div className="space-y-5">
+          <DashboardWidget title="Protection Status" subtitle="Live security health" icon="fa-shield-halved" action={{ label: 'Shield', onClick: onSecurity }}>
+            <SecurityHealthWidget />
+          </DashboardWidget>
+
+          <CosmosCard variant="gradient" padding="md" glow glowColor="#1B5E20">
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                  <i className="fas fa-robot text-primary text-sm" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white">Wealth Twin</h3>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                Your savings rate is strong. Consider topping up your emergency fund by ₹15,000 this month.
+              </p>
+              <button onClick={onWealthTwin} className="w-full py-2.5 bg-primary text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition-all">
+                <i className="fas fa-comments" /> Ask Wealth Twin
+              </button>
+            </div>
+          </CosmosCard>
+
+          <CosmosCard
+            variant="default"
+            header={{ icon: 'fa-headset', iconColor: '#0f766e', title: 'Customer Support' }}
+          >
+            <div className="space-y-2">
+              <button onClick={() => alert('Calling 1800-123-4567...')} className="w-full py-2.5 bg-primary text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition-all">
+                <i className="fas fa-phone" /> Call Toll-Free
+              </button>
+              <button onClick={onWealthTwin} className="w-full py-2.5 bg-primary-light text-primary rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary/10 transition-all">
+                <i className="fas fa-robot" /> Chat with Twin
+              </button>
+            </div>
+          </CosmosCard>
+        </div>
+      </div>
+
+      {/* Quick Pay Strip */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2"><QuickPayCard onExpand={openPaymentHub} /></div>
+        <VirtualCard />
+      </div>
+    </motion.div>
+  );
+}
+
+function ComprehensiveDashboard({
+  statCards,
+  kycVerified,
+  setView,
+  openPaymentHub,
+  agenticActions,
+  removeAction,
+  showAdvanced,
+  setShowAdvanced,
+  activeGoals,
+}: {
+  statCards: StatCardProps[];
+  kycVerified: boolean;
+  setView: (v: any) => void;
+  openPaymentHub: () => void;
+  agenticActions: any[];
+  removeAction: (id: string) => void;
+  showAdvanced: boolean;
+  setShowAdvanced: (v: boolean | ((prev: boolean) => boolean)) => void;
+  activeGoals: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6"
+    >
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {statCards.map((card, i) => (
+          <motion.div key={card.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}>
+            <StatCardV2 {...card} />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Contextual Quick Actions */}
+      <QuickActionBar
+        kycVerified={kycVerified}
+        onKyc={() => setView('profile')}
+        onPay={() => setView('payments')}
+        onGoal={() => setView('goals')}
+        onPortfolio={() => setView('portfolio')}
+      />
+
+      {/* Hero Intelligence */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2 space-y-5">
+          <DashboardHero />
+          <WealthTwinHero />
+        </div>
+        <div className="space-y-5">
+          <FinancialPulse />
+          <FinancialTwinAvatar />
+        </div>
+      </div>
+
+      {/* Quick actions */}
+      <SectionHeader icon="fa-bolt" title="Quick Actions" subtitle="Frequent tasks & payments" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2"><QuickPayCard onExpand={openPaymentHub} /></div>
+        <VirtualCard />
+      </div>
+
+      {/* Agentic AI Actions */}
+      {agenticActions.length > 0 && (
+        <div className="space-y-3">
+          <SectionHeader icon="fa-robot" title="AI Autonomous Actions Pending Approval" subtitle="1-tap execution drafted by Wealth Twin" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {agenticActions.map((action) => (
+              <AgenticActionCard
+                key={action.actionId}
+                {...action}
+                onApprove={() => removeAction(action.actionId)}
+                onDismiss={() => removeAction(action.actionId)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Main grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2 space-y-5">
+          <DashboardWidget title="Wealth Overview" subtitle="Net worth & allocation" icon="fa-chart-line" action={{ label: 'Details', onClick: () => setView('wealth-twin') }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CosmosCard variant="default" padding="none"><ChartWidget type="area" /></CosmosCard>
+              <CosmosCard variant="default" padding="none"><ChartWidget type="pie" /></CosmosCard>
+            </div>
+          </DashboardWidget>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <DashboardWidget title="Recent Activity" subtitle="Last 5 transactions" icon="fa-list" action={{ label: 'All', onClick: () => setView('transactions') }}>
+              <RecentTransactionsTable />
+            </DashboardWidget>
+            <DashboardWidget title="Goals" subtitle={`${activeGoals} active goal${activeGoals === 1 ? '' : 's'}`} icon="fa-bullseye" action={{ label: 'Manage', onClick: () => setView('goals') }}>
+              <GoalTracker asWidget />
+            </DashboardWidget>
+          </div>
+
+          <DashboardWidget title="Smart Actions" subtitle="AI-converted insights" icon="fa-wand-magic-sparkles">
+            <SmartActionOrchestrator />
+          </DashboardWidget>
+
+          <RecommendationCard />
+        </div>
+
+        <div className="space-y-5">
+          <DashboardWidget title="Protection Status" subtitle="Live security health" icon="fa-shield-halved" action={{ label: 'Shield', onClick: () => setView('security-beast') }}>
+            <SecurityHealthWidget />
+          </DashboardWidget>
+
+          <DashboardWidget title="Market Pulse" subtitle="Indices & movers" icon="fa-globe" action={{ label: 'Market', onClick: () => setView('market') }}>
+            <MarketIntelligenceHero />
+          </DashboardWidget>
+
+          <DashboardWidget title="Macro Signal Tower" subtitle="Global indicators → auto actions" icon="fa-tower-broadcast" action={{ label: 'Wealth Twin', onClick: () => setView('wealth-twin') }}>
+            <MacroSignalTower compact />
+          </DashboardWidget>
+
+          <CosmosCard
+            variant="default"
+            header={{ icon: 'fa-headset', iconColor: '#0f766e', title: 'Customer Support' }}
+          >
+            <div className="space-y-2">
+              <button onClick={() => alert('Calling 1800-123-4567...')} className="w-full py-2.5 bg-primary text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition-all">
+                <i className="fas fa-phone" /> Call Toll-Free
+              </button>
+              <button onClick={() => setView('wealth-twin')} className="w-full py-2.5 bg-primary-light text-primary rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary/10 transition-all">
+                <i className="fas fa-robot" /> Chat with Twin
+              </button>
+            </div>
+          </CosmosCard>
+        </div>
+      </div>
+
+      {/* Advanced insights (expandable) */}
+      <div className="space-y-5">
+        <button
+          onClick={() => setShowAdvanced((s) => !s)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        >
+          <span className="flex items-center gap-2"><i className="fas fa-layer-group text-primary" /> Advanced Insights</span>
+          <i className={`fas fa-chevron-down transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+        </button>
+
+        {showAdvanced && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <ScenarioSimulator />
+              <WhatIfSimulator />
+            </div>
+            <WealthDNA />
+            <AIDecisionLog />
+            <FinancialLiteracyCards />
+          </motion.div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function SimpleTransactionList({ transactions }: { transactions: any[] }) {
+  return (
+    <div className="space-y-2">
+      {transactions.map((tx, i) => (
+        <motion.div
+          key={tx.id}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.05 }}
+          className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${tx.type === 'credit' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600'}`}>
+              <i className={`fas fa-${tx.type === 'credit' ? 'arrow-down' : 'arrow-up'} rotate-45 text-xs`} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{tx.description}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">{tx.date} · {tx.category}</p>
+            </div>
+          </div>
+          <span className={`text-xs font-bold flex-shrink-0 ${tx.status === 'BLOCKED' ? 'text-rose-500' : tx.type === 'credit' ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-200'}`}>
+            {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+          </span>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+      <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center mb-3">
+        <i className={`fas ${icon} text-lg text-slate-400 dark:text-slate-500`} />
+      </div>
+      <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{title}</h4>
+      <p className="text-[10px] text-slate-500 dark:text-slate-500 max-w-xs">{subtitle}</p>
+    </div>
+  );
+}
+
+type StatCardProps = {
   label: string;
   value: string;
   icon: string;
@@ -371,7 +607,11 @@ function StatCardV2({
   trendIcon?: string;
   trendColorClass?: string;
   trendPeriod?: string;
-}) {
+};
+
+function StatCardV2({
+  label, value, icon, color, text, trend, trendUp, trendIcon, trendColorClass, trendPeriod,
+}: StatCardProps) {
   const iconClass = trendIcon ?? `fa-arrow-${trendUp ? 'up' : 'down'}`;
   const colorClass = trendColorClass ?? (trendUp ? 'text-emerald-500' : 'text-rose-500');
   return (

@@ -526,6 +526,7 @@ export const useWealthStore = create<WealthState>()(
         msmeAdminStats: state.msmeAdminStats,
         onboardingComplete: state.onboardingComplete,
         aaFetchComplete: state.aaFetchComplete,
+        dashboardDensity: state.dashboardDensity,
       }),
     }
   )
