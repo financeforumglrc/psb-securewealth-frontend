@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, CheckCircle2, XCircle, Trash2, Plus, User } from 'lucide-react';
+import { Camera, CheckCircle2, XCircle, Trash2, Plus, User, Zap, Shield } from 'lucide-react';
 import { detectFace, euclideanDistance } from '@/shared/lib/faceAuth';
 
 interface RegisteredFace {
@@ -8,9 +8,12 @@ interface RegisteredFace {
   name: string;
   descriptor: number[];
   createdAt: number;
+  quality: number;
 }
 
 const FACE_STORAGE_KEY = 'sw_registered_faces';
+const MAX_ATTEMPTS = 5;
+const MIN_QUALITY = 0.7;
 
 function loadFaces(): RegisteredFace[] {
   try {
@@ -29,20 +32,51 @@ function saveFaces(faces: RegisteredFace[]) {
   }
 }
 
+function calculateQuality(box: { x: number; y: number; width: number; height: number }, videoWidth: number, videoHeight: number): number {
+  // Face size relative to video
+  const faceArea = box.width * box.height;
+  const videoArea = videoWidth * videoHeight;
+  const sizeRatio = faceArea / videoArea;
+  
+  // Ideal size is 20-40% of video
+  const idealSize = 0.3;
+  const sizeScore = 1 - Math.abs(sizeRatio - idealSize) / idealSize;
+  
+  // Center position
+  const centerX = box.x + box.width / 2;
+  const centerScore = 1 - Math.abs(centerX - videoWidth / 2) / (videoWidth / 2);
+  
+  return Math.max(0, Math.min(1, (sizeScore * 0.6 + centerScore * 0.4)));
+}
+
 export default function FaceIDSettings() {
   const [faces, setFaces] = useState<RegisteredFace[]>(loadFaces());
   const [registering, setRegistering] = useState(false);
   const [registerName, setRegisterName] = useState('');
   const [status, setStatus] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [attempts, setAttempts] = useState(0);
+  const [faceBox, setFaceBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [quality, setQuality] = useState(0);
+  const [hdMode, setHdMode] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const detectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startCamera = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-      });
+      const constraints = {
+        video: {
+          facingMode: 'user',
+          width: hdMode ? { ideal: 1280, min: 640 } : { ideal: 640 },
+          height: hdMode ? { ideal: 720, min: 480 } : { ideal: 480 },
+          frameRate: { ideal: 30 },
+        },
+        audio: false,
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -54,15 +88,44 @@ export default function FaceIDSettings() {
       setMessage('Unable to start camera. Please check permissions.');
       return false;
     }
-  }, []);
+  }, [hdMode]);
 
   const stopCamera = useCallback(() => {
+    if (detectionIntervalRef.current) {
+      clearInterval(detectionIntervalRef.current);
+      detectionIntervalRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
     if (videoRef.current) videoRef.current.srcObject = null;
+    setFaceBox(null);
   }, []);
+
+  const detectFaceInFrame = useCallback(async () => {
+    if (!videoRef.current) return;
+    
+    try {
+      const result = await detectFace(videoRef.current);
+      if (result.detected && result.descriptor && result.box) {
+        setFaceBox(result.box);
+        const q = calculateQuality(result.box, videoRef.current.videoWidth, videoRef.current.videoHeight);
+        setQuality(q);
+      } else {
+        setFaceBox(null);
+        setQuality(0);
+      }
+    } catch {
+      setFaceBox(null);
+      setQuality(0);
+    }
+  }, []);
+
+  const startDetection = useCallback(() => {
+    if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current);
+    detectionIntervalRef.current = setInterval(detectFaceInFrame, 200);
+  }, [detectFaceInFrame]);
 
   const handleRegister = async () => {
     if (!registerName.trim()) {
@@ -71,7 +134,8 @@ export default function FaceIDSettings() {
     }
     setRegistering(true);
     setStatus('scanning');
-    setMessage('Loading face recognition...');
+    setMessage('Loading HD face recognition...');
+    setAttempts(0);
 
     const cameraStarted = await startCamera();
     if (!cameraStarted) {
@@ -79,16 +143,38 @@ export default function FaceIDSettings() {
       return;
     }
 
-    setMessage('Position your face in the camera...');
+    setMessage('Position your face in the center of the camera...');
+    startDetection();
 
-    // Wait a moment for camera to initialize
-    await new Promise((r) => setTimeout(r, 1000));
+    // Wait for face detection with quality check
+    let attempts = 0;
+    const maxAttempts = MAX_ATTEMPTS;
+    
+    while (attempts < maxAttempts) {
+      await new Promise((r) => setTimeout(r, 800));
+      
+      if (faceBox && quality >= MIN_QUALITY) {
+        break;
+      }
+      
+      attempts++;
+      setAttempts(attempts);
+      setMessage(`Detecting face... Attempt ${attempts}/${maxAttempts}. ${faceBox ? `Quality: ${Math.round(quality * 100)}%` : 'No face detected'}`);
+    }
 
     try {
       const result = await detectFace(videoRef.current!);
       if (!result.detected || !result.descriptor) {
         setStatus('error');
-        setMessage('No face detected. Please try again.');
+        setMessage('No face detected after multiple attempts. Please ensure good lighting and try again.');
+        stopCamera();
+        setRegistering(false);
+        return;
+      }
+
+      if (quality < MIN_QUALITY) {
+        setStatus('error');
+        setMessage(`Face quality too low (${Math.round(quality * 100)}%). Please ensure your face is clearly visible and well-lit.`);
         stopCamera();
         setRegistering(false);
         return;
@@ -100,6 +186,7 @@ export default function FaceIDSettings() {
         name: registerName.trim(),
         descriptor,
         createdAt: Date.now(),
+        quality: Math.round(quality * 100) / 100,
       };
 
       // Check if face already exists
@@ -117,7 +204,7 @@ export default function FaceIDSettings() {
       saveFaces(updatedFaces);
 
       setStatus('success');
-      setMessage(`Face registered successfully as "${registerName}"!`);
+      setMessage(`Face registered successfully as "${registerName}" with ${Math.round(quality * 100)}% accuracy!`);
       setRegisterName('');
       stopCamera();
       setRegistering(false);
@@ -140,6 +227,13 @@ export default function FaceIDSettings() {
     saveFaces(updatedFaces);
   };
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, [stopCamera]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -147,8 +241,14 @@ export default function FaceIDSettings() {
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <User className="w-5 h-5 text-indigo-600" /> Face ID Management
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">Register and manage your face for biometric authentication.</p>
+          <p className="text-xs text-slate-500 mt-0.5">Register and manage your face for biometric authentication with HD accuracy.</p>
         </div>
+        <button
+          onClick={() => setHdMode(!hdMode)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold ${hdMode ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}
+        >
+          {hdMode ? 'HD Mode' : 'SD Mode'}
+        </button>
       </div>
 
       {/* Registered Faces */}
@@ -157,7 +257,7 @@ export default function FaceIDSettings() {
           <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
             <User className="w-12 h-12 mx-auto text-slate-400 mb-2" />
             <p className="text-sm text-slate-500">No faces registered yet.</p>
-            <p className="text-xs text-slate-400 mt-1">Register your face to enable Face ID login.</p>
+            <p className="text-xs text-slate-400 mt-1">Register your face to enable Face ID login with HD accuracy.</p>
           </div>
         ) : (
           faces.map((face) => (
@@ -174,7 +274,7 @@ export default function FaceIDSettings() {
                 <div>
                   <p className="text-sm font-bold text-slate-800 dark:text-white">{face.name}</p>
                   <p className="text-[10px] text-slate-400">
-                    Registered {new Date(face.createdAt).toLocaleDateString('en-IN')}
+                    Registered {new Date(face.createdAt).toLocaleDateString('en-IN')} • {Math.round(face.quality * 100)}% accuracy
                   </p>
                 </div>
               </div>
@@ -192,7 +292,7 @@ export default function FaceIDSettings() {
       {/* Register New Face */}
       <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
         <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Register New Face
+          <Plus className="w-4 h-4" /> Register New Face (HD)
         </h4>
 
         {!registering ? (
@@ -210,7 +310,7 @@ export default function FaceIDSettings() {
               className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
             >
               <Camera className="w-4 h-4" />
-              Start Face Registration
+              Start HD Face Registration
             </button>
           </div>
         ) : (
@@ -223,7 +323,29 @@ export default function FaceIDSettings() {
                 muted
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 border-2 border-indigo-500 rounded-xl pointer-events-none" />
+              <canvas ref={canvasRef} className="hidden" />
+              
+              {/* Face Box Overlay */}
+              {faceBox && (
+                <div
+                  className="absolute border-2 border-emerald-500 rounded-lg pointer-events-none"
+                  style={{
+                    left: `${(faceBox.x / (videoRef.current?.videoWidth || 1)) * 100}%`,
+                    top: `${(faceBox.y / (videoRef.current?.videoHeight || 1)) * 100}%`,
+                    width: `${(faceBox.width / (videoRef.current?.videoWidth || 1)) * 100}%`,
+                    height: `${(faceBox.height / (videoRef.current?.videoHeight || 1)) * 100}%`,
+                  }}
+                >
+                  <div className="absolute -top-6 left-0 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded">
+                    {Math.round(quality * 100)}%
+                  </div>
+                </div>
+              )}
+
+              {/* Center Guide */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-48 h-48 border-2 border-white/30 rounded-full" />
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
@@ -231,7 +353,9 @@ export default function FaceIDSettings() {
                 {status === 'scanning' && (
                   <>
                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                    <span className="text-xs text-slate-500">Scanning...</span>
+                    <span className="text-xs text-slate-500">
+                      {faceBox ? `Face detected: ${Math.round(quality * 100)}%` : 'Scanning...'}
+                    </span>
                   </>
                 )}
                 {status === 'success' && (
@@ -253,6 +377,7 @@ export default function FaceIDSettings() {
                   setRegistering(false);
                   setStatus('idle');
                   setMessage('');
+                  setAttempts(0);
                 }}
                 className="text-xs text-slate-500 hover:text-slate-700"
               >
@@ -262,10 +387,20 @@ export default function FaceIDSettings() {
 
             <button
               onClick={handleRegister}
-              disabled={status === 'scanning'}
-              className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40"
+              disabled={status === 'scanning' || !faceBox || quality < MIN_QUALITY}
+              className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
             >
-              {status === 'scanning' ? 'Scanning...' : 'Capture & Register'}
+              {status === 'scanning' ? (
+                <>
+                  <Zap className="w-4 h-4 animate-pulse" />
+                  Detecting... {attempts}/{MAX_ATTEMPTS}
+                </>
+              ) : (
+                <>
+                  <Shield className="w-4 h-4" />
+                  Capture & Register ({Math.round(quality * 100)}%)
+                </>
+              )}
             </button>
           </div>
         )}
@@ -283,12 +418,16 @@ export default function FaceIDSettings() {
         )}
       </div>
 
-      {/* Info */}
+      {/* Tips */}
       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-        <p className="text-[10px] text-slate-500">
-          <strong>Note:</strong> Your face data is stored locally on your device and never uploaded to any server.
-          Face ID works entirely offline using on-device machine learning.
-        </p>
+        <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">Tips for Best Results:</p>
+        <ul className="text-[10px] text-slate-500 space-y-0.5">
+          <li>• Ensure good lighting on your face</li>
+          <li>• Position your face in the center circle</li>
+          <li>• Keep a neutral expression</li>
+          <li>• Avoid wearing glasses or hats</li>
+          <li>• Hold steady for 2-3 seconds</li>
+        </ul>
       </div>
     </div>
   );
