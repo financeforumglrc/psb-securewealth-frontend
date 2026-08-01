@@ -410,4 +410,5 @@ export type ViewType =
   | 'transaction-failure-faceid'
   | 'app-lock'
   | 'panic-process'
-  | 'hotspot-fraud';
+  | 'hotspot-fraud'
+  | 'fri-mri';

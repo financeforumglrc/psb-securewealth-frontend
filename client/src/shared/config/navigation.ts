@@ -173,6 +173,7 @@ const fraudProtectionGroup: NavGroup = {
     { view: 'live-fraud-simulator', label: 'Live Fraud Simulator', icon: 'fa-bug', description: 'Watch AI block real-time attacks.', badge: 'LIVE DEMO' },
     { view: 'scam-call', label: 'Scam Call Detection', icon: 'fa-phone-slash', description: 'AI detects scam calls in real-time.', badge: 'LIVE DEMO' },
     { view: 'hotspot-fraud', label: 'Hotspot Fraud Areas', icon: 'fa-map-location-dot', description: 'Geographic fraud detection.', badge: 'NEW' },
+    { view: 'fri-mri', label: 'FRI/MRI Classifications', icon: 'fa-shield-halved', description: 'Government fraud classifications.', badge: 'NEW' },
     { view: 'voice-panic', label: 'Voice Panic Trigger', icon: 'fa-microphone', description: 'Say a secret word to activate duress mode.', badge: 'LIVE DEMO' },
     { view: 'privacy', label: 'Privacy', icon: 'fa-lock', description: 'Consent and data controls.' },
     { view: 'audit-log', label: 'Audit Log', icon: 'fa-clipboard-check', description: 'Immutable security ledger.' },

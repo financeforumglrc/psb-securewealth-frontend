@@ -115,6 +115,7 @@ const TransactionFailureFaceID = lazyWithRetry(() => import('@/features/security
 const AppLockWithoutAuth = lazyWithRetry(() => import('@/features/security/components/AppLockWithoutAuth'));
 const PanicSituationProcess = lazyWithRetry(() => import('@/features/security/components/PanicSituationProcess'));
 const HotspotFraudAreas = lazyWithRetry(() => import('@/features/fraud/components/HotspotFraudAreas'));
+const FRIMRIClassifications = lazyWithRetry(() => import('@/features/fraud/components/FRIMRIClassifications'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -469,6 +470,7 @@ export default function AuthenticatedApp() {
               {currentView === 'app-lock' && <AppLockWithoutAuth />}
               {currentView === 'panic-process' && <PanicSituationProcess />}
               {currentView === 'hotspot-fraud' && <HotspotFraudAreas />}
+              {currentView === 'fri-mri' && <FRIMRIClassifications />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}
