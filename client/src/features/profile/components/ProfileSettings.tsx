@@ -17,6 +17,8 @@ export default function ProfileSettings() {
   const notificationsPopup = useWealthStore((s) => s.notificationsPopup);
   const setNotificationsDnd = useWealthStore((s) => s.setNotificationsDnd);
   const setNotificationsPopup = useWealthStore((s) => s.setNotificationsPopup);
+  const behavioralBiometricsEnabled = useWealthStore((s) => s.behavioralBiometricsEnabled);
+  const setBehavioralBiometricsEnabled = useWealthStore((s) => s.setBehavioralBiometricsEnabled);
 
   const [form, setForm] = useState({ ...user });
   const [saved, setSaved] = useState(false);
@@ -26,6 +28,7 @@ export default function ProfileSettings() {
   const handleSave = async () => {
     const updates = {
       name: form.name,
+      age: Number(form.age) || undefined,
       monthlyIncome: Number(form.monthlyIncome) || 0,
       monthlyExpenses: Number(form.monthlyExpenses) || 0,
       monthlySavings: Number(form.monthlyIncome) - Number(form.monthlyExpenses),
@@ -40,6 +43,7 @@ export default function ProfileSettings() {
       await supabase.from('profiles').upsert({
         id: user.id,
         name: updates.name,
+        age: updates.age,
         risk_profile: updates.riskProfile,
         tax_bracket: updates.taxBracket,
         monthly_income: updates.monthlyIncome,
@@ -93,6 +97,16 @@ export default function ProfileSettings() {
             <input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 mb-1 block">Age</label>
+            <input
+              type="number"
+              value={form.age || ''}
+              onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
+              placeholder="Enter your age"
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
             />
           </div>
@@ -237,6 +251,18 @@ export default function ProfileSettings() {
           <i className="fas fa-sliders text-primary" /> Preferences
         </h2>
         <div className="space-y-3">
+          <label className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 cursor-pointer">
+            <div>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Behavioral Biometrics</span>
+              <p className="text-[10px] text-slate-500 mt-0.5">Track typing & mouse speed for anomaly detection</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={behavioralBiometricsEnabled}
+              onChange={(e) => setBehavioralBiometricsEnabled(e.target.checked)}
+              className="w-5 h-5 accent-primary"
+            />
+          </label>
           <label className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 cursor-pointer">
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Notification Do Not Disturb</span>
             <input

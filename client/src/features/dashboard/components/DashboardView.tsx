@@ -33,6 +33,7 @@ import WhatIfSimulator from '@/features/forecast/components/WhatIfSimulator';
 import WealthDNA from '@/features/dashboard/components/WealthDNA';
 import AIDecisionLog from '@/features/ai/components/AIDecisionLog';
 import FinancialLiteracyCards from '@/features/ai/components/FinancialLiteracyCards';
+import AgeGroupView from '@/features/dashboard/components/AgeGroupView';
 
 export default function DashboardView() {
   const user = useWealthStore((s) => s.user);
@@ -83,6 +84,40 @@ export default function DashboardView() {
     },
   ]);
 
+  const ageGroup = useMemo(() => {
+    const age = user.age;
+    if (age === undefined || age === null) return 'middle';
+    if (age < 40) return 'young';
+    if (age < 60) return 'middle';
+    return 'senior';
+  }, [user.age]);
+
+  const ageTheme = useMemo(() => {
+    switch (ageGroup) {
+      case 'young':
+        return {
+          badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+          accent: 'blue',
+          cardAccent: 'from-blue-500/20 to-blue-500/5',
+          textAccent: 'text-blue-600',
+        };
+      case 'senior':
+        return {
+          badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+          accent: 'emerald',
+          cardAccent: 'from-emerald-500/20 to-emerald-500/5',
+          textAccent: 'text-emerald-600',
+        };
+      default:
+        return {
+          badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+          accent: 'amber',
+          cardAccent: 'from-amber-500/20 to-amber-500/5',
+          textAccent: 'text-amber-600',
+        };
+    }
+  }, [ageGroup]);
+
   if (isLoading) {
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -98,7 +133,6 @@ export default function DashboardView() {
       ? Math.min(Math.round((user.monthlySavings / user.monthlyIncome) * 200 + 40), 100)
       : 0;
   const activeGoals = goals.filter((g) => g.currentAmount < g.targetAmount).length;
-  const savingsRate = user.monthlyIncome > 0 ? ((user.monthlySavings / user.monthlyIncome) * 100).toFixed(1) : '0';
   const netWorthChangePct = rawNetWorth > 0 ? ((user.monthlySavings / rawNetWorth) * 100).toFixed(1) : '0.0';
   const isStreakHot = streak.days > 5;
   const isHealthGood = healthScore > 70;
@@ -109,8 +143,8 @@ export default function DashboardView() {
       label: t('netWorth'),
       value: coercedMode ? '₹5,000' : formatCroreMask(rawNetWorth, duressModeActive),
       icon: 'fa-wallet',
-      color: 'from-primary/20 to-primary/5',
-      text: 'text-primary',
+      color: ageTheme.cardAccent,
+      text: ageTheme.textAccent,
       trend: `+${netWorthChangePct}%`,
       trendIcon: 'fa-arrow-up',
       trendColorClass: 'text-emerald-500',
@@ -122,10 +156,10 @@ export default function DashboardView() {
       icon: 'fa-piggy-bank',
       color: 'from-emerald-500/20 to-emerald-500/5',
       text: 'text-emerald-600',
-      trend: `+${savingsRate}%`,
-      trendIcon: 'fa-arrow-up',
+      trend: 'Saved this month',
+      trendIcon: 'fa-check',
       trendColorClass: 'text-emerald-500',
-      trendPeriod: t('ofIncome'),
+      trendPeriod: '',
     },
     {
       label: t('healthScore'),
@@ -191,8 +225,14 @@ export default function DashboardView() {
         {/* Premium Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <p className="text-[11px] text-psb-muted dark:text-slate-400 font-medium uppercase tracking-wider">{today}</p>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-[11px] text-psb-muted dark:text-slate-400 font-medium uppercase tracking-wider">{today}</p>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${ageTheme.badge}`}>
+                <i className={`fas fa-${ageGroup === 'young' ? 'rocket' : ageGroup === 'senior' ? 'leaf' : 'briefcase'} mr-1`} />
+                {ageGroup === 'young' ? 'Young Professional' : ageGroup === 'senior' ? 'Senior Citizen' : 'Mid-Career'}
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
               {greeting}, <span className="gradient-text">{user.name || t('welcome')}</span>
             </h1>
           </div>
@@ -222,6 +262,7 @@ export default function DashboardView() {
             <SimpleDashboard
               key="simple"
               statCards={simpleStatCards}
+              ageGroup={ageGroup}
               kycVerified={kycVerified}
               onKyc={() => setView('profile')}
               onPay={() => setView('payments')}
@@ -286,6 +327,7 @@ function ModeToggle({ isSimple, onToggle }: { isSimple: boolean; onToggle: (mode
 
 function SimpleDashboard({
   statCards,
+  ageGroup,
   kycVerified,
   onKyc,
   onPay,
@@ -298,6 +340,7 @@ function SimpleDashboard({
   openPaymentHub,
 }: {
   statCards: StatCardProps[];
+  ageGroup: 'young' | 'middle' | 'senior';
   kycVerified: boolean;
   onKyc: () => void;
   onPay: () => void;
@@ -358,7 +401,11 @@ function SimpleDashboard({
                 <h3 className="text-sm font-bold text-slate-800 dark:text-white">Wealth Twin</h3>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
-                Your savings rate is strong. Consider topping up your emergency fund by ₹15,000 this month.
+                {ageGroup === 'young'
+                  ? 'You are in the wealth-building phase. Consider increasing your equity SIP for long-term growth.'
+                  : ageGroup === 'senior'
+                    ? 'Stability matters now. Focus on fixed income and preserve your retirement corpus.'
+                    : 'Your savings rate is strong. Consider topping up your emergency fund by ₹15,000 this month.'}
               </p>
               <button onClick={onWealthTwin} className="w-full py-2.5 bg-primary text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition-all">
                 <i className="fas fa-comments" /> Ask Wealth Twin
@@ -501,6 +548,8 @@ function ComprehensiveDashboard({
         </div>
 
         <div className="space-y-5">
+          <AgeGroupView />
+
           <DashboardWidget title="Protection Status" subtitle="Live security health" icon="fa-shield-halved" action={{ label: 'Shield', onClick: () => setView('security-beast') }}>
             <SecurityHealthWidget />
           </DashboardWidget>

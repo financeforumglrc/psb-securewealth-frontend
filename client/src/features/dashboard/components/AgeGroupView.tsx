@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, TrendingUp, Briefcase, Heart } from 'lucide-react';
 import { useWealthStore } from '@/shared/store/wealthStore';
@@ -48,9 +48,22 @@ const AGE_GROUPS: AgeGroup[] = [
 ];
 
 export default function AgeGroupView() {
-  const [selectedGroup, setSelectedGroup] = useState<string>('middle');
   const user = useWealthStore((s) => s.user);
   const goals = useWealthStore((s) => s.goals);
+
+  const defaultGroup = useMemo(() => {
+    if (user.age === undefined || user.age === null) return 'middle';
+    if (user.age < 40) return 'young';
+    if (user.age < 60) return 'middle';
+    return 'senior';
+  }, [user.age]);
+
+  const [selectedGroup, setSelectedGroup] = useState<string>(defaultGroup);
+
+  // Sync if user.age changes
+  useEffect(() => {
+    setSelectedGroup(defaultGroup);
+  }, [defaultGroup]);
 
   const currentGroup = AGE_GROUPS.find((g) => g.id === selectedGroup) || AGE_GROUPS[1];
   const Icon = currentGroup.icon;

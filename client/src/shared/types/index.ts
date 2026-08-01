@@ -1,5 +1,6 @@
 export interface UserProfile {
   name: string;
+  age?: number;
   riskProfile: 'Conservative' | 'Moderate' | 'Aggressive';
   taxBracket: 0 | 10 | 20 | 30;
   monthlyIncome: number;

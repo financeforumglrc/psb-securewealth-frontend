@@ -5,6 +5,7 @@ import { backendApi } from '@/shared/lib/backendApi';
 
 const DEFAULT_SEED_USER: UserProfile = {
   name: 'Deepanshu Sharma',
+  age: 35,
   riskProfile: 'Aggressive',
   taxBracket: 30,
   monthlyIncome: 85000,
@@ -66,6 +67,7 @@ interface WealthState {
   aaFetchComplete: boolean;
   onboardingComplete: boolean;
   dashboardDensity: 'simple' | 'comprehensive';
+  behavioralBiometricsEnabled: boolean;
   behavioralDeviation: number;
   isLoading: boolean;
   loginAt: number;
@@ -140,6 +142,7 @@ interface WealthState {
   setAAFetchComplete: (val: boolean) => void;
   setOnboardingComplete: (val: boolean) => void;
   setDashboardDensity: (density: 'simple' | 'comprehensive') => void;
+  setBehavioralBiometricsEnabled: (val: boolean) => void;
   setBehavioralDeviation: (val: number) => void;
   setLoginAt: (val: number) => void;
   setQuickAccessEnabled: (val: boolean) => void;
@@ -274,6 +277,7 @@ export const useWealthStore = create<WealthState>()(
       aaFetchComplete: false,
       onboardingComplete: false,
       dashboardDensity: 'simple',
+      behavioralBiometricsEnabled: false,
       behavioralDeviation: 0,
       loginAt: Date.now(),
       quickAccessEnabled: true,
@@ -398,6 +402,7 @@ export const useWealthStore = create<WealthState>()(
       setAAFetchComplete: (val) => set({ aaFetchComplete: val }),
       setOnboardingComplete: (val) => set({ onboardingComplete: val }),
       setDashboardDensity: (density) => set({ dashboardDensity: density }),
+      setBehavioralBiometricsEnabled: (val) => set({ behavioralBiometricsEnabled: val }),
       setBehavioralDeviation: (val) => set({ behavioralDeviation: val }),
       setLoginAt: (val) => set({ loginAt: val }),
       setQuickAccessEnabled: (val) => set({ quickAccessEnabled: val }),
@@ -527,6 +532,7 @@ export const useWealthStore = create<WealthState>()(
         onboardingComplete: state.onboardingComplete,
         aaFetchComplete: state.aaFetchComplete,
         dashboardDensity: state.dashboardDensity,
+        behavioralBiometricsEnabled: state.behavioralBiometricsEnabled,
       }),
     }
   )
