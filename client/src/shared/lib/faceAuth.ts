@@ -8,6 +8,7 @@ const FACE_API_CDN = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-
 const FACE_API_WEIGHTS = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
 let loaded = false;
+let loadingPromise: Promise<void> | null = null;
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -24,29 +25,41 @@ function loadScript(src: string): Promise<void> {
 
 export async function initFaceAuthEngine(): Promise<void> {
   if (loaded) return;
-  if (!(window as any).faceapi) {
-    await loadScript(FACE_API_CDN);
+  if (loadingPromise) return loadingPromise;
+
+  loadingPromise = (async () => {
+    if (!(window as any).faceapi) {
+      await loadScript(FACE_API_CDN);
+    }
+    const faceapi = (window as any).faceapi;
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(FACE_API_WEIGHTS),
+      faceapi.nets.faceLandmark68Net.loadFromUri(FACE_API_WEIGHTS),
+      faceapi.nets.faceRecognitionNet.loadFromUri(FACE_API_WEIGHTS),
+    ]);
+    loaded = true;
+  })();
+
+  try {
+    await loadingPromise;
+  } catch (err) {
+    loadingPromise = null;
+    throw err;
   }
-  const faceapi = (window as any).faceapi;
-  await Promise.all([
-    faceapi.nets.tinyFaceDetector.loadFromUri(FACE_API_WEIGHTS),
-    faceapi.nets.faceLandmark68Net.loadFromUri(FACE_API_WEIGHTS),
-    faceapi.nets.faceRecognitionNet.loadFromUri(FACE_API_WEIGHTS),
-  ]);
-  loaded = true;
 }
 
 export interface FaceResult {
   detected: boolean;
   descriptor?: Float32Array;
   box?: { x: number; y: number; width: number; height: number };
+  score?: number;
 }
 
 export async function detectFace(video: HTMLVideoElement): Promise<FaceResult> {
   await initFaceAuthEngine();
   const faceapi = (window as any).faceapi;
   const detection = await faceapi
-    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }))
+    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 }))
     .withFaceLandmarks()
     .withFaceDescriptor();
 
@@ -56,6 +69,7 @@ export async function detectFace(video: HTMLVideoElement): Promise<FaceResult> {
     detected: true,
     descriptor: detection.descriptor,
     box: detection.detection.box,
+    score: detection.detection.score,
   };
 }
 
