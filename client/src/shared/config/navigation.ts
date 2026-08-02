@@ -171,34 +171,28 @@ const fraudProtectionGroup: NavGroup = {
 
 const financialToolsGroup: NavGroup = {
   id: 'financial-tools',
-  title: 'Financial Tools',
-  subtitle: 'Plan, calculate and optimise',
+  title: 'Plan & Tools',
+  subtitle: 'Tax, calculators and money management',
   colorClass: 'text-blue-600',
   bgClass: 'bg-blue-50',
   items: [
-    { view: 'tax', label: 'Tax Planner', icon: 'fa-file-invoice-dollar', description: 'Deductions, IT returns and reports.' },
-    { view: 'calculators', label: 'Calculators', icon: 'fa-calculator', description: 'EMI, SIP, FD and retirement.' },
-    { view: 'bills', label: 'Bill Calendar', icon: 'fa-calendar-check', description: 'Due dates and autopay.' },
-    { view: 'recurring-payments', label: 'Recurring', icon: 'fa-rotate', description: 'Standing instructions and e-mandates.' },
-    { view: 'account-statement', label: 'Statement', icon: 'fa-file-invoice', description: 'Download and reconcile.' },
+    { view: 'tax', label: 'Tax Planner', icon: 'fa-file-invoice-dollar', description: 'Deductions, IT returns and tax-saving suggestions.' },
+    { view: 'calculators', label: 'Calculators', icon: 'fa-calculator', description: 'EMI, SIP, FD and retirement planning.' },
+    { view: 'bills', label: 'Bills & Recurring', icon: 'fa-calendar-check', description: 'Due dates, autopay and standing instructions.' },
+    { view: 'account-statement', label: 'Statement', icon: 'fa-file-invoice', description: 'Download and reconcile account statements.' },
   ],
 };
 
 const loanHubGroup: NavGroup = {
   id: 'loans-hub',
   title: 'Loans & Credit',
-  subtitle: 'Borrow, score and monitor credit',
+  subtitle: 'Credit scoring and borrowing',
   colorClass: 'text-emerald-600',
   bgClass: 'bg-emerald-50',
   items: [
-    { view: 'loans-hub', label: 'Loans Hub', icon: 'fa-hand-holding-dollar', description: 'All loan and credit products in one place.', badge: 'NEW' },
     { view: 'creditbridge-ai', label: 'CreditBridge AI', icon: 'fa-bridge', description: 'Explainable retail & MSME credit scoring with XAI.', badge: 'FLAGSHIP' },
     { view: 'msme-creditbridge', label: 'MSME CreditBridge AI', icon: 'fa-building-columns', description: 'Collateral-free MSME loans via alternative data & XAI.', badge: 'FLAGSHIP' },
-    { view: 'loan-research', label: 'Research & Accountability', icon: 'fa-book-open', description: 'Our INFINITY 2025 published research.', badge: 'PUBLISHED' },
-    { view: 'loan-impact', label: 'Impact Simulator', icon: 'fa-chart-pie', description: 'Estimate MSME credit impact on jobs & GDP.' },
-    { view: 'loan-center', label: 'Loan Center', icon: 'fa-file-contract', description: 'Apply and track loans.' },
-    { view: 'credit-health', label: 'Credit Health', icon: 'fa-file-invoice', description: 'Score, factors and tips.' },
-    { view: 'social-collateral-loan', label: 'Social Collateral', icon: 'fa-people-group', description: 'Community-backed trust-circle lending.' },
+    { view: 'loans-hub', label: 'Loans Hub', icon: 'fa-hand-holding-dollar', description: 'All loan and credit products in one place.', badge: 'NEW' },
   ],
 };
 
