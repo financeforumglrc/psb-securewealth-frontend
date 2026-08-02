@@ -454,10 +454,10 @@ export const useWealthStore = create<WealthState>()(
             category: t.type,
             amount: t.amount,
             type: t.type,
-            status: t.riskLevel === 'HIGH' ? 'BLOCKED' : (t.status?.toUpperCase() || 'ALLOWED'),
+            status: t.riskLevel === 'CRITICAL' || t.riskLevel === 'HIGH' ? 'BLOCKED' : (t.status?.toUpperCase() || 'ALLOWED'),
             riskLevel: t.riskLevel || 'LOW',
-            score: t.riskLevel === 'HIGH' ? 85 : undefined,
-            signals: t.riskLevel === 'HIGH' ? { newDevice: true, rushedAction: true, unusualAmount: true, otpRetries: false, firstTimeInvest: false, abnormalBehavior: true } : undefined,
+            score: t.riskLevel === 'CRITICAL' ? 92 : t.riskLevel === 'HIGH' ? 85 : undefined,
+            signals: t.riskLevel === 'CRITICAL' || t.riskLevel === 'HIGH' ? { newDevice: true, rushedAction: true, unusualAmount: true, otpRetries: false, firstTimeInvest: false, abnormalBehavior: true } : undefined,
           });
 
           const txns = txOk && txData?.data

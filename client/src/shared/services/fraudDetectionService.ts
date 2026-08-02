@@ -12,7 +12,7 @@ export interface TransactionLike {
   amount: number;
   type?: string;
   status?: string;
-  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   description?: string;
 }
 
@@ -69,7 +69,7 @@ export function analyzeTransactions(transactions: TransactionLike[]): FraudAnaly
 
   // OTP retries / blocked / delayed statuses
   const blockedOrDelayed = recent.filter(
-    (t) => t.status === 'BLOCKED' || t.status === 'DELAYED' || t.riskLevel === 'HIGH'
+    (t) => t.status === 'BLOCKED' || t.status === 'DELAYED' || t.riskLevel === 'HIGH' || t.riskLevel === 'CRITICAL'
   );
   if (blockedOrDelayed.length > 0) {
     signals.otpRetries = true;
@@ -78,7 +78,7 @@ export function analyzeTransactions(transactions: TransactionLike[]): FraudAnaly
   }
 
   // Abnormal behavior: mix of high risk levels
-  const highRiskCount = recent.filter((t) => t.riskLevel === 'HIGH').length;
+  const highRiskCount = recent.filter((t) => t.riskLevel === 'HIGH' || t.riskLevel === 'CRITICAL').length;
   if (highRiskCount >= 2) {
     signals.abnormalBehavior = true;
     reasons.push('Repeated high-risk transaction patterns');

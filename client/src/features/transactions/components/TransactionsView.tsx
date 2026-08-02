@@ -23,6 +23,7 @@ const RISK_STYLES: Record<string, string> = {
   LOW: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800',
   MEDIUM: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800',
   HIGH: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-800',
+  CRITICAL: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900',
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -275,7 +276,7 @@ export default function TransactionsView() {
                         return (
                           <div className="relative group">
                             <div className={`w-5 h-5 rounded flex items-center justify-center cursor-help ${
-                              t.riskLevel === 'HIGH' ? 'bg-rose-100 text-rose-500' :
+                              t.riskLevel === 'HIGH' || t.riskLevel === 'CRITICAL' ? 'bg-rose-100 text-rose-500' :
                               t.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-500' :
                               'bg-slate-100 text-slate-400'
                             }`}>

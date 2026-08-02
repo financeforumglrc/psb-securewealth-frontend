@@ -29,21 +29,22 @@ export default function FraudDetectionEngine({ onSignalsChange, onAudit }: Props
     setShowModal(true);
 
     const amount = signals.unusualAmount ? 50000 : signals.rushedAction ? 25000 : 15000;
+    const status = decision.level === 'CRITICAL' || decision.level === 'HIGH' ? 'BLOCKED' : decision.action === 'HOLD' || decision.level === 'MEDIUM' ? 'DELAYED' : 'ALLOWED';
     addTransaction({
       id: 'tx-' + Date.now(),
       date: new Date().toISOString().split('T')[0],
       description:
-        decision.level === 'HIGH'
+        status === 'BLOCKED'
           ? `Blocked: ₹${amount.toLocaleString()} transfer - fraud detected`
-          : decision.level === 'MEDIUM'
+          : status === 'DELAYED'
           ? `Delayed: ₹${amount.toLocaleString()} to new payee`
           : `Transfer: ₹${amount.toLocaleString()}`,
       category: 'Transfer',
       amount,
       type: 'debit',
-      status: decision.level === 'HIGH' ? 'BLOCKED' : decision.level === 'MEDIUM' ? 'DELAYED' : 'ALLOWED',
+      status,
       riskLevel: decision.level,
-      score: decision.level === 'HIGH' ? 85 : decision.level === 'MEDIUM' ? 70 : 35,
+      score: decision.level === 'CRITICAL' ? 92 : decision.level === 'HIGH' ? 85 : decision.level === 'MEDIUM' ? 70 : 35,
       signals: { ...signals },
       decision: { ...decision },
       referenceId: decision.referenceId,

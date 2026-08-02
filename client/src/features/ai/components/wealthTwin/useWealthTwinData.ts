@@ -124,7 +124,7 @@ export function useWealthTwinData() {
         desc: t('twinDnaCapitalPreserverDesc'),
       });
 
-    const highRiskTxns = transactions.filter((txn) => txn.riskLevel === 'HIGH').length;
+    const highRiskTxns = transactions.filter((txn) => txn.riskLevel === 'HIGH' || txn.riskLevel === 'CRITICAL').length;
     if (highRiskTxns === 0)
       dna.push({
         label: t('twinDnaSafetyFirst'),

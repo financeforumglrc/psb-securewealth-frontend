@@ -133,7 +133,8 @@ export default function FraudMapView({
     let introTimer: number | null = null;
     loadLeaflet().then((L) => {
       if (!mounted || !containerRef.current) return;
-      const map = L.map(containerRef.current, { zoomControl: false }).setView([20, 0], 2);
+      const INDIA_BOUNDS = L.latLngBounds([[6.5, 68.0], [37.5, 97.5]]);
+      const map = L.map(containerRef.current, { zoomControl: false, maxBounds: INDIA_BOUNDS, minZoom: 4 }).setView([22.5, 80.5], 5);
       mapRef.current = map;
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       L.control.scale({ position: 'bottomright', imperial: false }).addTo(map);

@@ -55,8 +55,8 @@ export interface ProtectionRequest {
 
 export interface ProtectionResponse {
   risk_score: number;
-  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
-  action: 'ALLOW' | 'WARN_COOL_OFF' | 'BLOCK';
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  action: 'ALLOW' | 'WARN_COOL_OFF' | 'HOLD' | 'BLOCK';
   explainable_factors: string[];
   user_message: string;
   reference_id: string;
@@ -99,8 +99,8 @@ export interface AAFetchResponse {
 }
 
 export interface GuardianMessageRequest {
-  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
-  action: 'ALLOW' | 'WARN_COOL_OFF' | 'BLOCK';
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  action: 'ALLOW' | 'WARN' | 'WARN_COOL_OFF' | 'HOLD' | 'BLOCK';
   factors: string[];
   amount: number;
   payee?: string;

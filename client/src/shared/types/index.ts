@@ -37,8 +37,8 @@ export interface RiskSignals {
 }
 
 export interface ProtectionDecision {
-  level: 'LOW' | 'MEDIUM' | 'HIGH';
-  action: 'ALLOW' | 'WARN' | 'BLOCK';
+  level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  action: 'ALLOW' | 'WARN' | 'HOLD' | 'BLOCK';
   cooldown?: number;
   delay?: number;
   message: string;
@@ -113,7 +113,7 @@ export interface Transaction {
   category: string;
   type: 'credit' | 'debit';
   status: 'ALLOWED' | 'BLOCKED' | 'DELAYED';
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   signals?: RiskSignals;
   score?: number;
   decision?: ProtectionDecision;

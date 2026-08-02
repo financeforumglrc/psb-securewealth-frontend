@@ -26,22 +26,31 @@ export default function ProtectionModal({ decision, onProceed, onCancel }: Props
     );
   }
 
+  const isHold = decision.action === 'HOLD';
+  const isHigh = decision.level === 'HIGH' || decision.level === 'CRITICAL' || decision.action === 'BLOCK' || isHold;
+  const iconClass = isHold ? 'fa-user-clock' : isHigh ? 'fa-shield-virus' : 'fa-triangle-exclamation';
+  const title = isHold ? 'Transaction Held for Review' : isHigh ? 'Action Blocked' : 'Security Warning';
+  const btnClass = isHold ? 'bg-amber-500 hover:bg-amber-600' : 'bg-rose-500 hover:bg-rose-600';
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
       <div className="bg-white dark:bg-dark-light rounded-2xl shadow-2xl max-w-md w-full p-6" style={{ animation: 'modalIn 0.3s ease-out' }}>
-        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${decision.level === 'HIGH' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
-          <i className={`fas fa-${decision.level === 'HIGH' ? 'shield-virus' : 'triangle-exclamation'} text-2xl`} />
+        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${isHold ? 'bg-amber-100 text-amber-600' : isHigh ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
+          <i className={`fas ${iconClass} text-2xl`} />
         </div>
         <h3 className="text-xl font-bold text-center text-slate-800 dark:text-white mb-2">
-          {decision.level === 'HIGH' ? 'Action Blocked' : 'Security Warning'}
+          {title}
         </h3>
         <p className="text-sm text-slate-600 dark:text-slate-300 text-center mb-4">{decision.message}</p>
         <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 mb-4 text-xs text-slate-500">
           <p><strong>Reference ID:</strong> {decision.referenceId}</p>
           <p><strong>Time:</strong> {new Date().toLocaleString('en-IN')}</p>
+          {decision.delay && (
+            <p><strong>Hold Duration:</strong> Up to {Math.ceil(decision.delay / 60)} min</p>
+          )}
         </div>
 
-        {decision.level === 'MEDIUM' && (
+        {decision.action === 'WARN' && (
           <>
             <label className="flex items-start gap-2 mb-4 cursor-pointer">
               <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-0.5 accent-primary" />
@@ -60,9 +69,9 @@ export default function ProtectionModal({ decision, onProceed, onCancel }: Props
           </>
         )}
 
-        {decision.level === 'HIGH' && (
-          <button onClick={onCancel} className="w-full py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors">
-            Contact Support
+        {(decision.action === 'BLOCK' || isHold) && (
+          <button onClick={onCancel} className={`w-full py-3 ${btnClass} text-white rounded-xl font-medium transition-colors`}>
+            {isHold ? 'Under Review — Contact Support' : 'Contact Support'}
           </button>
         )}
 

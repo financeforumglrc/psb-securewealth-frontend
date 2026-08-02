@@ -63,16 +63,17 @@ export default function WealthTwinHero() {
     return Math.min(Math.round(score), 100);
   }, [transactions, savingsRate, marketData, assets]);
 
-  const riskLevel = riskScore < 40 ? 'LOW' : riskScore < 70 ? 'MEDIUM' : 'HIGH';
-  const riskColor = riskScore < 40 ? 'emerald' : riskScore < 70 ? 'amber' : 'rose';
-  const riskText = riskScore < 40 ? 'text-emerald-600' : riskScore < 70 ? 'text-amber-600' : 'text-rose-600';
-  const riskBg = riskScore < 40 ? 'bg-emerald-500' : riskScore < 70 ? 'bg-amber-500' : 'bg-rose-500';
-  const riskRing = riskScore < 40 ? 'ring-emerald-400' : riskScore < 70 ? 'ring-amber-400' : 'ring-rose-400';
-  const riskGlow = riskScore < 40 ? 'shadow-emerald-500/30' : riskScore < 70 ? 'shadow-amber-500/30' : 'shadow-rose-500/30';
+  const riskLevel = riskScore < 40 ? 'LOW' : riskScore < 70 ? 'MEDIUM' : riskScore < 85 ? 'HIGH' : 'CRITICAL';
+  const riskColor = riskScore < 40 ? 'emerald' : riskScore < 70 ? 'amber' : riskScore < 85 ? 'rose' : 'red';
+  const riskText = riskScore < 40 ? 'text-emerald-600' : riskScore < 70 ? 'text-amber-600' : riskScore < 85 ? 'text-rose-600' : 'text-red-700';
+  const riskBg = riskScore < 40 ? 'bg-emerald-500' : riskScore < 70 ? 'bg-amber-500' : riskScore < 85 ? 'bg-rose-500' : 'bg-red-700';
+  const riskRing = riskScore < 40 ? 'ring-emerald-400' : riskScore < 70 ? 'ring-amber-400' : riskScore < 85 ? 'ring-rose-400' : 'ring-red-600';
+  const riskGlow = riskScore < 40 ? 'shadow-emerald-500/30' : riskScore < 70 ? 'shadow-amber-500/30' : riskScore < 85 ? 'shadow-rose-500/30' : 'shadow-red-600/30';
   const riskStyles: Record<string, { gradient: string; icon: string }> = {
     emerald: { gradient: 'from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-900/10', icon: 'text-emerald-500' },
     amber:   { gradient: 'from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-900/10', icon: 'text-amber-500' },
     rose:    { gradient: 'from-rose-100 to-rose-50 dark:from-rose-900/30 dark:to-rose-900/10', icon: 'text-rose-500' },
+    red:    { gradient: 'from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-900/10', icon: 'text-red-600' },
   };
   const rs = riskStyles[riskColor];
 
@@ -152,7 +153,7 @@ export default function WealthTwinHero() {
         className="relative overflow-hidden"
         padding="lg"
         glow
-        glowColor={riskScore < 40 ? '#10b981' : riskScore < 70 ? '#f59e0b' : '#f43f5e'}
+        glowColor={riskScore < 40 ? '#10b981' : riskScore < 70 ? '#f59e0b' : riskScore < 85 ? '#f43f5e' : '#b91c1c'}
       >
         {/* Animated background orbs */}
         <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl pointer-events-none" />
