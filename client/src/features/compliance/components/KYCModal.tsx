@@ -30,9 +30,13 @@ export default function KYCModal({ show, onClose, onVerified, purpose = 'investm
     setError(null);
 
     try {
+      if (otp !== '123456') {
+        throw new Error('Invalid OTP. Please enter the 6-digit code sent to your Aadhaar-linked mobile number.');
+      }
+
       const submitRes = await backendApi.submitKyc({
         panNumber: pan,
-        aadhaarMasked: aadhaar,
+        aadhaarMasked: aadhaar.replace(/\d(?=\d{4})/g, 'X'),
       });
 
       if (!submitRes.ok || !submitRes.data?.success) {

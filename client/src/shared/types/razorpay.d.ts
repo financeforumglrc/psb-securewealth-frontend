@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface RazorpayOptions {
   key: string;
   amount: number;

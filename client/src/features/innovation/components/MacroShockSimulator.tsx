@@ -7,10 +7,10 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   ReferenceLine,
   Legend,
 } from 'recharts';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import RegulatoryDisclaimer from '@/shared/components/ui/RegulatoryDisclaimer';
 
@@ -59,6 +59,7 @@ function formatCr(value: number) {
 export default function MacroShockSimulator() {
   const user = useWealthStore((s) => s.user);
   const assets = useWealthStore((s) => s.assets);
+  const { ref: chartRef, width: chartWidth, height: chartHeight } = useChartSize<HTMLDivElement>();
   const [activeShock, setActiveShock] = useState<ShockType | null>(null);
 
   const baseNW = useMemo(() => assets.reduce((sum, a) => sum + a.value, 0), [assets]);
@@ -154,9 +155,9 @@ export default function MacroShockSimulator() {
               <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Next 12 Months</span>
             </div>
 
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+            <div ref={chartRef} className="h-64 w-full">
+              {chartWidth > 0 && chartHeight > 0 && (
+                <LineChart width={chartWidth} height={chartHeight} data={chartData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
                   <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                   <YAxis
@@ -192,7 +193,7 @@ export default function MacroShockSimulator() {
                     activeDot={{ r: 5 }}
                   />
                 </LineChart>
-              </ResponsiveContainer>
+              )}
             </div>
 
             <motion.div

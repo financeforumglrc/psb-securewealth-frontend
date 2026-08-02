@@ -45,11 +45,13 @@ export default function AACallbackHandler({ onComplete }: Props) {
       // Poll status up to ~30 seconds.
       let attempts = 0;
       const maxAttempts = 15;
+      let becameActive = false;
       while (attempts < maxAttempts) {
         const statusRes = await backendApi.getAaConsentStatus(match.id);
         if (cancelled) return;
         const consentStatus = statusRes.data?.data?.status;
         if (consentStatus === 'active') {
+          becameActive = true;
           break;
         }
         if (consentStatus === 'revoked') {
@@ -63,6 +65,11 @@ export default function AACallbackHandler({ onComplete }: Props) {
       }
 
       if (cancelled) return;
+
+      if (!becameActive) {
+        setError('Consent verification timed out. Please try linking your account again.');
+        return;
+      }
 
       // Sync accounts + transactions.
       const syncRes = await backendApi.aaSync();

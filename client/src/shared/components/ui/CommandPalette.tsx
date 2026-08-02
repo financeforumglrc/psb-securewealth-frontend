@@ -32,6 +32,7 @@ export default function CommandPalette({ defaultOpen = false, onClose }: Command
     { id: 'market', title: 'Market', subtitle: 'Live prices & outlook', icon: 'fa-globe', category: 'Navigation', action: () => setView('market') },
     { id: 'tax', title: 'Tax', subtitle: 'Tax optimization', icon: 'fa-file-invoice-dollar', category: 'Navigation', action: () => setView('tax') },
     { id: 'credit', title: 'Credit Health', subtitle: 'CIBIL & score analysis', icon: 'fa-file-invoice', category: 'Navigation', action: () => setView('credit-health') },
+    { id: 'creditbridge-ai', title: 'CreditBridge AI', subtitle: 'Explainable retail & MSME scoring', icon: 'fa-bridge', category: 'Navigation', action: () => setView('creditbridge-ai') },
     { id: 'protection', title: 'Protection', subtitle: 'Security dashboard', icon: 'fa-shield-halved', category: 'Navigation', action: () => setView('protection') },
     { id: 'privacy', title: 'Privacy', subtitle: 'Data controls', icon: 'fa-lock', category: 'Navigation', action: () => setView('privacy') },
     { id: 'ai-tax', title: 'Ask: How do I save tax?', subtitle: 'AI Tax Optimization', icon: 'fa-receipt', category: 'AI Queries', action: () => { setView('wealth-twin'); setTimeout(() => window.dispatchEvent(new CustomEvent('sw-ai-query', { detail: 'How do I save tax?' })), 400); } },

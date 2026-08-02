@@ -3,8 +3,9 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine
 } from 'recharts';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 
 interface Scenario {
   key: string;
@@ -72,6 +73,7 @@ export default function MonteCarloSimulator() {
   const { t } = useTranslation();
   const user = useWealthStore((s) => s.user);
   const netWorth = useWealthStore((s) => s.assets.reduce((sum, a) => sum + a.value, 0));
+  const { ref: chartRef, width: chartWidth, height: chartHeight } = useChartSize<HTMLDivElement>();
   const [activeScenario, setActiveScenario] = useState('none');
   const [startAge] = useState(35);
   const [endAge] = useState(80);
@@ -174,9 +176,9 @@ export default function MonteCarloSimulator() {
             {showDetail ? t('monteHideMilestones') : t('monteShowMilestones')}
           </button>
         </div>
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+        <div ref={chartRef} className="h-80 w-full">
+          {chartWidth > 0 && chartHeight > 0 && (
+            <AreaChart width={chartWidth} height={chartHeight} data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id="p90grad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
@@ -208,7 +210,7 @@ export default function MonteCarloSimulator() {
                 <ReferenceLine key={m.age} x={m.age} stroke="#94a3b8" strokeDasharray="2 2" label={{ value: m.label, position: 'top', fontSize: 9, fill: '#64748b' }} />
               ))}
             </AreaChart>
-          </ResponsiveContainer>
+          )}
         </div>
         <div className="flex flex-wrap gap-3 mt-2 justify-center">
           {[

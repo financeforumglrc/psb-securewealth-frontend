@@ -112,9 +112,9 @@ export default function OverviewTab() {
             </p>
             <div className="mt-3 p-2 bg-white/50 dark:bg-slate-800/50 rounded-lg">
               <p className="text-[10px] text-slate-500">15-year range</p>
-              <p className="text-sm font-bold text-emerald-600">{formatCr(monteCarloData[15].optimistic)}</p>
-              <p className="text-xs text-slate-700 dark:text-slate-200">Base: {formatCr(monteCarloData[15].base)}</p>
-              <p className="text-xs text-rose-500">Pessimistic: {formatCr(monteCarloData[15].pessimistic)}</p>
+              <p className="text-sm font-bold text-emerald-600">{formatCr(monteCarloData.at(-1)?.optimistic ?? 0)}</p>
+              <p className="text-xs text-slate-700 dark:text-slate-200">Base: {formatCr(monteCarloData.at(-1)?.base ?? 0)}</p>
+              <p className="text-xs text-rose-500">Pessimistic: {formatCr(monteCarloData.at(-1)?.pessimistic ?? 0)}</p>
             </div>
           </div>
 

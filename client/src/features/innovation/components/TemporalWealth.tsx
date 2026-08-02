@@ -1,7 +1,8 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } from 'recharts';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import CosmosCard from '@/shared/components/ui/CosmosCard';
 
@@ -60,6 +61,7 @@ export default function TemporalWealth() {
   const currentAge = 30; // would come from user profile
   const startYear = new Date().getFullYear();
 
+  const { ref: chartRef, width: chartWidth, height: chartHeight } = useChartSize<HTMLDivElement>();
   const [sliderYear, setSliderYear] = useState(10);
   const [scenario, setScenario] = useState<'actual' | 'early' | 'late'>('actual');
 
@@ -169,9 +171,9 @@ export default function TemporalWealth() {
 
       {/* Wealth Trajectory Chart */}
       <CosmosCard variant="default" header={{ icon: 'fa-chart-area', iconColor: '#0f766e', title: t('temporalWealthTrajectory'), subtitle: t('temporalWealthTrajectorySubtitle') }}>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={activeData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <div ref={chartRef} className="h-72 w-full">
+          {chartWidth > 0 && chartHeight > 0 && (
+            <AreaChart width={chartWidth} height={chartHeight} data={activeData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="wealthGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#0f766e" stopOpacity={0.15} />
@@ -188,7 +190,7 @@ export default function TemporalWealth() {
               ))}
               <Area type="monotone" dataKey="netWorth" stroke="#0f766e" fill="url(#wealthGrad)" strokeWidth={2.5} />
             </AreaChart>
-          </ResponsiveContainer>
+          )}
         </div>
         <div className="flex flex-wrap gap-2 mt-3">
           {activeData.filter((d) => d.milestone).map((d) => (

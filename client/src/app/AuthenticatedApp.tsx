@@ -26,6 +26,7 @@ import FeaturesUniverse from '@/features/architecture/components/FeaturesUnivers
 import ReportGeneratorModal from '@/features/report/components/ReportGeneratorModal';
 import FinancialReport from '@/features/report/components/FinancialReport';
 import ConsentModal from '@/features/compliance/components/ConsentModal';
+import SupportWidget from '@/shared/components/SupportWidget';
 import ForecastView from '@/features/forecast/components/ForecastView';
 import ManualAssetForm from '@/features/assets/components/ManualAssetForm';
 import LinkAccountModal from '@/features/assets/components/LinkAccountModal';
@@ -69,6 +70,7 @@ const CalculatorsView = lazyWithRetry(() => import('@/features/calculators/compo
 const TransactionsView = lazyWithRetry(() => import('@/features/transactions/components/TransactionsView'));
 const BillCalendar = lazyWithRetry(() => import('@/features/bills/components/BillCalendar'));
 const CreditHealth = lazyWithRetry(() => import('@/features/credit/components/CreditHealth'));
+const CreditBridgeAI = lazyWithRetry(() => import('@/features/credit/components/CreditBridgeAI'));
 const BhavishyaEngine = lazyWithRetry(() => import('@/features/innovation/components/BhavishyaEngine'));
 const InnovationLabView = lazyWithRetry(() => import('@/features/innovation/components/InnovationLabView'));
 const FantasyLeague = lazyWithRetry(() => import('@/features/gamification/components/FantasyLeague'));
@@ -87,6 +89,32 @@ const SocialCollateralLoan = lazyWithRetry(() => import('@/features/loans/compon
 const RecurringPayments = lazyWithRetry(() => import('@/features/banking/components/RecurringPayments'));
 const AccountStatement = lazyWithRetry(() => import('@/features/banking/components/AccountStatement'));
 const AuditLog = lazyWithRetry(() => import('@/features/banking/components/AuditLog'));
+const CrossDeviceApproval = lazyWithRetry(() => import('@/features/security/components/CrossDeviceApproval'));
+const QuantumKeyExchange = lazyWithRetry(() => import('@/features/security/components/QuantumKeyExchange'));
+const QuantumDocumentVault = lazyWithRetry(() => import('@/features/security/components/QuantumDocumentVault'));
+const VoicePanicTrigger = lazyWithRetry(() => import('@/features/security/components/VoicePanicTrigger'));
+const CoercionDetectionEngine = lazyWithRetry(() => import('@/features/security/components/CoercionDetectionEngine'));
+const ExplainableRiskScore = lazyWithRetry(() => import('@/features/security/components/ExplainableRiskScore'));
+const EmotionAdaptiveGate = lazyWithRetry(() => import('@/features/security/components/EmotionAdaptiveGate'));
+const VoiceAuthenticatedCommands = lazyWithRetry(() => import('@/features/security/components/VoiceAuthenticatedCommands'));
+const SecureWealthGuardian = lazyWithRetry(() => import('@/features/security/components/SecureWealthGuardian'));
+const LiveFraudSimulator = lazyWithRetry(() => import('@/features/fraud/components/LiveFraudSimulator'));
+const ScamCallSimulator = lazyWithRetry(() => import('@/features/fraud/components/ScamCallSimulator'));
+const GenerationalWealthOptimizer = lazyWithRetry(() => import('@/features/innovation/components/GenerationalWealthOptimizer'));
+const WealthTwinGPT = lazyWithRetry(() => import('@/features/ai/components/WealthTwinGPT'));
+const AgeGroupView = lazyWithRetry(() => import('@/features/dashboard/components/AgeGroupView'));
+const SimplifiedSecurityView = lazyWithRetry(() => import('@/features/security/components/SimplifiedSecurityView'));
+const ETBNTBSegmentation = lazyWithRetry(() => import('@/features/innovation/components/ETBNTBSegmentation'));
+const CustomerValueTiering = lazyWithRetry(() => import('@/features/innovation/components/CustomerValueTiering'));
+const ZeroBalanceRetention = lazyWithRetry(() => import('@/features/innovation/components/ZeroBalanceRetention'));
+const ReceivingMoneyFocus = lazyWithRetry(() => import('@/features/innovation/components/ReceivingMoneyFocus'));
+const TransactionFailureFaceID = lazyWithRetry(() => import('@/features/security/components/TransactionFailureFaceID'));
+const AppLockWithoutAuth = lazyWithRetry(() => import('@/features/security/components/AppLockWithoutAuth'));
+const PanicSituationProcess = lazyWithRetry(() => import('@/features/security/components/PanicSituationProcess'));
+const HotspotFraudAreas = lazyWithRetry(() => import('@/features/fraud/components/HotspotFraudAreas'));
+const FRIMRIClassifications = lazyWithRetry(() => import('@/features/fraud/components/FRIMRIClassifications'));
+const I4CIntegration = lazyWithRetry(() => import('@/features/fraud/components/I4CIntegration'));
+const ForeignTransactionsSupport = lazyWithRetry(() => import('@/features/fraud/components/ForeignTransactionsSupport'));
 
 import { NBAProvider } from '@/shared/context/NBAContext';
 import { RewardsProvider } from '@/shared/context/RewardsContext';
@@ -163,7 +191,10 @@ function AssetsView() {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {assets.map((asset) => {
+          {assets
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5)
+            .map((asset) => {
             const AssetIcon = assetTypeIcons[asset.type] || ChartPie;
             return (
               <div key={asset.id} className="card relative">
@@ -387,6 +418,7 @@ export default function AuthenticatedApp() {
               {currentView === 'architecture' && <SystemArchitecture />}
               {currentView === 'bills' && <BillCalendar />}
               {currentView === 'credit-health' && <CreditHealth />}
+              {currentView === 'creditbridge-ai' && <CreditBridgeAI />}
               {currentView === 'notification-demo' && <NotificationDemo />}
               {currentView === 'digital-gold' && <DigitalGold />}
               {currentView === 'challenges' && <ChallengesView />}
@@ -411,6 +443,32 @@ export default function AuthenticatedApp() {
               {currentView === 'recurring-payments' && <RecurringPayments />}
               {currentView === 'account-statement' && <AccountStatement />}
               {currentView === 'audit-log' && <AuditLog />}
+              {currentView === 'cross-device-approval' && <CrossDeviceApproval />}
+              {currentView === 'quantum-key' && <QuantumKeyExchange />}
+              {currentView === 'quantum-vault' && <QuantumDocumentVault />}
+              {currentView === 'voice-panic' && <VoicePanicTrigger />}
+              {currentView === 'coercion-detection' && <CoercionDetectionEngine />}
+              {currentView === 'emotion-gate' && <EmotionAdaptiveGate />}
+              {currentView === 'risk-score' && <ExplainableRiskScore />}
+              {currentView === 'voice-commands' && <VoiceAuthenticatedCommands />}
+              {currentView === 'guardian' && <SecureWealthGuardian />}
+              {currentView === 'live-fraud-simulator' && <LiveFraudSimulator />}
+              {currentView === 'scam-call' && <ScamCallSimulator />}
+              {currentView === 'generational-wealth' && <GenerationalWealthOptimizer />}
+              {currentView === 'wealth-twin-gpt' && <WealthTwinGPT />}
+              {currentView === 'age-group' && <AgeGroupView />}
+              {currentView === 'simplified-security' && <SimplifiedSecurityView />}
+              {currentView === 'etb-ntb' && <ETBNTBSegmentation />}
+              {currentView === 'customer-value' && <CustomerValueTiering />}
+              {currentView === 'zero-balance' && <ZeroBalanceRetention />}
+              {currentView === 'receiving-money' && <ReceivingMoneyFocus />}
+              {currentView === 'transaction-failure-faceid' && <TransactionFailureFaceID />}
+              {currentView === 'app-lock' && <AppLockWithoutAuth />}
+              {currentView === 'panic-process' && <PanicSituationProcess />}
+              {currentView === 'hotspot-fraud' && <HotspotFraudAreas />}
+              {currentView === 'fri-mri' && <FRIMRIClassifications />}
+              {currentView === 'i4c-integration' && <I4CIntegration />}
+              {currentView === 'foreign-transactions' && <ForeignTransactionsSupport />}
               {currentView === 'profile' && <ProfileSettings />}
             </>
           )}
@@ -422,6 +480,7 @@ export default function AuthenticatedApp() {
       <Suspense fallback={null}>
         <PitchMode />
       </Suspense>
+      <SupportWidget />
       <ReportGeneratorModal
         show={showReportModal}
         onClose={() => setShowReportModal(false)}

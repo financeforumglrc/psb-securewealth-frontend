@@ -26,10 +26,14 @@ router.post('/submit', authMiddleware, (req, res) => {
             return res.status(400).json({ success: false, error: 'Invalid Aadhaar. Expected 12 digits.' });
         }
 
+        const aadhaarToStore = aadhaarMasked && /^\d{12}$/.test(aadhaarMasked)
+            ? `XXXX-XXXX-${aadhaarMasked.slice(-4)}`
+            : aadhaarMasked;
+
         bankingDb.createOrUpdateKyc({
             userId: req.user.id,
             panNumber,
-            aadhaarMasked,
+            aadhaarMasked: aadhaarToStore,
             kycStatus: 'pending' // Always pending — real eKYC verification required
         });
 

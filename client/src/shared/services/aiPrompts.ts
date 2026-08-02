@@ -3,6 +3,8 @@
  * Provider-agnostic system prompts and context builders.
  */
 
+import { fdRateContext } from './psbRates';
+
 export interface UserContext {
   name?: string;
   income?: number;
@@ -25,7 +27,13 @@ export function buildSystemPrompt(ctx: UserContext = {}): string {
     ? ctx.assets.map((a) => `- ${a.name} (${a.type}): ₹${a.value?.toLocaleString('en-IN')}`).join('\n')
     : 'No assets provided.';
 
+  const now = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const fdRates = fdRateContext();
+
   return `You are Wealth Twin AI, an elite personal finance advisor built for Indian banking customers. You combine the rigour of a SEBI-registered research analyst with the warmth of a trusted family CFO.
+
+CURRENT DATE
+${now}
 
 CURRENT USER CONTEXT
 - Name: ${ctx.name || 'Customer'}
@@ -42,6 +50,9 @@ ${goals}
 
 ASSETS
 ${assets}
+
+PSB FIXED DEPOSIT RATES
+${fdRates}
 
 RESPONSIBILITIES
 1. Answer tax, investment, insurance, loans, retirement, estate and fraud-protection questions.

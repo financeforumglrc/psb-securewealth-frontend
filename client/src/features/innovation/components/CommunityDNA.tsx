@@ -1,6 +1,7 @@
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { useChartSize } from '@/shared/hooks/useChartSize';
 
 const PEER_BENCHMARK = [
   { metric: 'Savings Rate', you: 28, peerAvg: 18, top10: 42 },
@@ -39,6 +40,7 @@ const LOCAL_ECONOMY = [
 
 export default function CommunityDNA() {
   const { t } = useTranslation();
+  const { ref: chartRef, width: chartWidth, height: chartHeight } = useChartSize<HTMLDivElement>();
 
   return (
     <div className="space-y-5">
@@ -81,9 +83,9 @@ export default function CommunityDNA() {
           </div>
         </div>
 
-        <div className="h-[280px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={PEER_BENCHMARK} margin={{ top: 5, right: 5, left: 0, bottom: 5 }} barGap={4}>
+        <div ref={chartRef} className="h-[280px] w-full">
+          {chartWidth > 0 && chartHeight > 0 && (
+            <BarChart width={chartWidth} height={chartHeight} data={PEER_BENCHMARK} margin={{ top: 5, right: 5, left: 0, bottom: 5 }} barGap={4}>
               <XAxis dataKey="metric" tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
               <Tooltip
@@ -94,7 +96,7 @@ export default function CommunityDNA() {
               <Bar dataKey="you" name="You" fill="#1B5E20" radius={[4, 4, 0, 0]} barSize={20} />
               <Bar dataKey="top10" name="Top 10%" fill="#FFD700" radius={[4, 4, 0, 0]} barSize={20} />
             </BarChart>
-          </ResponsiveContainer>
+          )}
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-[10px] text-gray-500 dark:text-slate-400">

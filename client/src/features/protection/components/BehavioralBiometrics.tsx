@@ -7,12 +7,15 @@ export default function BehavioralBiometrics() {
   const monitorRef = useRef<BehavioralMonitor | null>(null);
   const [state, setState] = useState<BehavioralState | null>(null);
   const setBehavioralDeviation = useWealthStore((s) => s.setBehavioralDeviation);
+  const behavioralBiometricsEnabled = useWealthStore((s) => s.behavioralBiometricsEnabled);
   const [locked, setLocked] = useState(false);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [anomalyLog, setAnomalyLog] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!behavioralBiometricsEnabled) return;
+
     const monitor = new BehavioralMonitor((s) => {
       setState(s);
       setBehavioralDeviation(s.deviation);
@@ -44,7 +47,7 @@ export default function BehavioralBiometrics() {
     setState(monitor.getState());
     monitorRef.current = monitor;
     return () => monitor.stop();
-  }, [locked]);
+  }, [locked, behavioralBiometricsEnabled, setBehavioralDeviation]);
 
   const handleCalibrate = useCallback(() => {
     monitorRef.current?.calibrate();
@@ -92,10 +95,18 @@ export default function BehavioralBiometrics() {
           <h3 className="font-semibold text-slate-800 dark:text-white">
             <i className="fas fa-brain text-primary mr-2" /> Behavioral Biometrics
           </h3>
-          <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium">
-            <i className="fas fa-shield-halved mr-1" /> Live
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${behavioralBiometricsEnabled ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
+            <i className={`fas ${behavioralBiometricsEnabled ? 'fa-shield-halved' : 'fa-power-off'} mr-1`} /> {behavioralBiometricsEnabled ? 'Live' : 'Disabled'}
           </span>
         </div>
+
+        {!behavioralBiometricsEnabled && (
+          <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              <i className="fas fa-circle-info mr-1" /> Enable behavioral biometrics in Profile & Settings to start monitoring.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-3">
           <div

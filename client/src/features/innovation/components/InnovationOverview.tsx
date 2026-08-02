@@ -73,7 +73,7 @@ export default function InnovationOverview({ onSelect }: { onSelect: (key: strin
           <div className="flex flex-wrap gap-4 mt-5">
             {[
               { value: '10', label: t('innovationOverviewWorldFirsts'), icon: 'fa-globe' },
-              { value: '5', label: t('innovationOverviewPatents'), icon: 'fa-certificate' },
+              { value: '5', label: t('innovationOverviewInnovations'), icon: 'fa-certificate' },
               { value: '2.8M+', label: t('innovationOverviewProtected'), icon: 'fa-users' },
               { value: '₹6,725', label: t('innovationOverviewAgentSavings'), icon: 'fa-piggy-bank' },
             ].map((s) => (

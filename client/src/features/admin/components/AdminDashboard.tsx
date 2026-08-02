@@ -286,7 +286,6 @@ function AuditLogsTab() {
       if (!cancelled) { setApiLogs(null); setApiLoading(false); }
     });
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logsPage, logsLimit]);
 
   // Map backend audit log to frontend AuditLog format
@@ -979,13 +978,23 @@ export default function AdminDashboard() {
   // Audit admin role changes
   useEffect(() => {
     adminActivityService.log('Role Switched', ROLE_LABELS[role], `Admin switched role to ${ROLE_LABELS[role]}`, role);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
   const handleLogin = async (adminId: string, password: string) => {
     setLoginError('');
     if (!adminId || !password) { setLoginError('Admin ID and Password are required'); return; }
     setLoading(true);
+
+    // Hardcoded demo credentials — works instantly without backend
+    if (adminId === 'admin' && password === '1234') {
+      setIsLoggedIn(true);
+      sessionStorage.setItem('sw-admin-session', 'true');
+      sessionStorage.setItem('sw-admin-token', 'demo-admin-token');
+      setOfflineMode(false);
+      setLoading(false);
+      return;
+    }
+
     const res = await backendApi.adminLogin(adminId, password);
     setLoading(false);
     if (res.ok && res.data?.success) {
@@ -1205,7 +1214,6 @@ export default function AdminDashboard() {
       }
     }, 500);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, isLoggedIn]);
 
   const handleToggleUserStatus = async (u: UserRecord) => {

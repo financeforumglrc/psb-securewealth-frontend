@@ -1,5 +1,6 @@
 export interface UserProfile {
   name: string;
+  age?: number;
   riskProfile: 'Conservative' | 'Moderate' | 'Aggressive';
   taxBracket: 0 | 10 | 20 | 30;
   monthlyIncome: number;
@@ -383,4 +384,31 @@ export type ViewType =
   | 'profile'
   | 'loan-center' | 'recurring-payments' | 'account-statement' | 'audit-log' | 'admin'
   | 'msme-creditbridge'
-  | 'loans-hub' | 'loan-research' | 'loan-impact' | 'social-collateral-loan';
+  | 'creditbridge-ai'
+  | 'loans-hub' | 'loan-research' | 'loan-impact' | 'social-collateral-loan'
+  | 'cross-device-approval'
+  | 'quantum-key'
+  | 'quantum-vault'
+  | 'live-fraud-simulator'
+  | 'scam-call'
+  | 'voice-panic'
+  | 'coercion-detection'
+  | 'emotion-gate'
+  | 'risk-score'
+  | 'generational-wealth'
+  | 'voice-commands'
+  | 'guardian'
+  | 'wealth-twin-gpt'
+  | 'age-group'
+  | 'simplified-security'
+  | 'etb-ntb'
+  | 'customer-value'
+  | 'zero-balance'
+  | 'receiving-money'
+  | 'transaction-failure-faceid'
+  | 'app-lock'
+  | 'panic-process'
+  | 'hotspot-fraud'
+  | 'fri-mri'
+  | 'i4c-integration'
+  | 'foreign-transactions';

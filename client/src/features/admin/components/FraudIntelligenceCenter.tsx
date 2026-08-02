@@ -68,7 +68,6 @@ export default function FraudIntelligenceCenter() {
     if (activeTab === 'map' && filters.timeRange !== 'live') {
       setTimeRange('live');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {

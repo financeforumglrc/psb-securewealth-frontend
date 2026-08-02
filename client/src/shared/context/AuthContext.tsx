@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Check initial session
+    // Check initial session (Supabase only; demo sessions are no longer auto-restored)
     supabase.auth.getSession().then(({ data: { session } }) => {
       const passkeyRegistered = hasRegisteredPasskey();
       const passkeyUserId = getPasskeyUser();
@@ -101,22 +101,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             passkeyUserId,
           },
         });
-      } else {
-        dispatch({
-          type: 'INIT',
-          state: {
-            isAuthenticated: false,
-            userId: null,
-            userEmail: null,
-            lockoutUntil: null,
-            failedAttempts: 0,
-            loading: false,
-            deviceFingerprint: null,
-            passkeyRegistered,
-            passkeyUserId,
-          },
-        });
+        return;
       }
+
+      // Stop auto-restoring demo sessions so the login/portal page is always shown first.
+      // Existing stored demo credentials are cleared for a clean slate.
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('sw-demo-user');
+      }
+
+      dispatch({
+        type: 'INIT',
+        state: {
+          isAuthenticated: false,
+          userId: null,
+          userEmail: null,
+          lockoutUntil: null,
+          failedAttempts: 0,
+          loading: false,
+          deviceFingerprint: null,
+          passkeyRegistered,
+          passkeyUserId,
+        },
+      });
     }).catch((err) => {
       console.error('Auth session init failed:', err);
       dispatch({ type: 'SET_LOADING', payload: false });

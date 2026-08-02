@@ -179,6 +179,13 @@ router.get('/macro-signals', (req, res) => {
         res.json({
             success: true,
             data: {
+                // Scalar fields matching the frontend MarketData type
+                niftyPe: 26.4,
+                repoRate: 6.5,
+                inflation: 5.2,
+                goldPrice: 75800,
+                usdInr: 86.7,
+                fdRate: 7.25,
                 signals,
                 recommendations,
                 lastUpdated: new Date().toISOString(),

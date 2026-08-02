@@ -22,9 +22,9 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_ID
-        sync: false
+        value: admin
       - key: ADMIN_PASSWORD
-        sync: false
+        value: "1234"
       - key: OPENAI_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
@@ -59,3 +59,19 @@ services:
     envVars:
       - key: VITE_BACKEND_URL
         value: https://psb-securewealth-backend.onrender.com/api/v1
+      - key: VITE_WS_URL
+        value: wss://psb-securewealth-backend.onrender.com/ws/demo
+      - key: VITE_API_BASE_URL
+        value: https://psb-securewealth-backend.onrender.com/api/v1
+      - key: VITE_DEFAULT_GROQ_KEY
+        sync: false
+      - key: VITE_DEFAULT_GEMINI_KEY
+        sync: false
+      - key: VITE_DEFAULT_OPENAI_KEY
+        sync: false
+      - key: VITE_DEFAULT_ANTHROPIC_KEY
+        sync: false
+      - key: VITE_DEFAULT_OPENROUTER_KEY
+        sync: false
+      - key: VITE_DEFAULT_DEEPSEEK_KEY
+        sync: false

@@ -55,6 +55,10 @@ class WebSocketService {
                             channel: data.channel
                         }));
                     }
+                    
+                    if (data.type === 'publish') {
+                        this.broadcast(data.channel, data.payload);
+                    }
                 } catch (error) {
                     ws.send(JSON.stringify({
                         type: 'error',

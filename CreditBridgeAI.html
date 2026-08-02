@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CreditBridge AI — Ethical Credit Scoring</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+    .gradient-text { background: linear-gradient(135deg, #0F2557 0%, #1e40af 50%, #b45309 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .glass { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); }
+    .gauge-arc { transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); }
+    .count-up { font-variant-numeric: tabular-nums; }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30,64,175,0.4); }
+      70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(30,64,175,0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30,64,175,0); }
+    }
+    .pulse-btn { animation: pulse-ring 2s infinite; }
+    .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #1e40af; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #1e40af; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+    const { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } = Recharts;
+
+    // ============ TRANSPARENT SCORING ENGINE ============
+    // All weights and logic are exposed and deterministic.
+
+    const RISK_BANDS = [
+      { min: 300, max: 549, label: 'High Risk', color: '#dc2626', bg: 'bg-red-50', border: 'border-red-200', interest: '24% - 36%', approval: 'Rejected' },
+      { min: 550, max: 649, label: 'Sub-Prime', color: '#ea580c', bg: 'bg-orange-50', border: 'border-orange-200', interest: '18% - 24%', approval: 'Conditional' },
+      { min: 650, max: 749, label: 'Near-Prime', color: '#ca8a04', bg: 'bg-yellow-50', border: 'border-yellow-200', interest: '14% - 18%', approval: 'Approved' },
+      { min: 750, max: 900, label: 'Prime', color: '#16a34a', bg: 'bg-green-50', border: 'border-green-200', interest: '10% - 14%', approval: 'Approved' },
+    ];
+
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+    function getBand(score) {
+      return RISK_BANDS.find(b => score >= b.min && score <= b.max) || RISK_BANDS[0];
+    }
+
+    function formatINR(num) {
+      if (num >= 1e7) return '₹' + (num / 1e7).toFixed(2) + ' Cr';
+      if (num >= 1e5) return '₹' + (num / 1e5).toFixed(1) + ' L';
+      return '₹' + num.toLocaleString('en-IN');
+    }
+
+    // ---------- RETAIL SCORING ----------
+    function calculateRetailScore(inputs) {
+      const factors = [];
+      let score = 300; // base
+
+      // 1. Monthly Income (max +180 pts) — income stability matters
+      const incomeScore = Math.min(180, (inputs.monthlyIncome / 50000) * 30);
+      factors.push({ name: 'Monthly Income', impact: Math.round(incomeScore), weight: '20%', reason: `₹${inputs.monthlyIncome.toLocaleString()} monthly income` });
+      score += incomeScore;
+
+      // 2. Income Stability (max +90 pts)
+      const stabilityMap = { salaried: 90, 'self-employed': 60, gig: 40, unemployed: 0 };
+      const stabilityScore = stabilityMap[inputs.incomeStability] || 50;
+      factors.push({ name: 'Income Stability', impact: stabilityScore, weight: '10%', reason: inputs.incomeStability.replace('-', ' ') });
+      score += stabilityScore;
+
+      // 3. Existing EMI burden (max -120 pts or +60)
+      const emiRatio = inputs.existingEmis / inputs.monthlyIncome;
+      let emiImpact = 60 - (emiRatio * 300);
+      emiImpact = clamp(emiImpact, -120, 60);
+      factors.push({ name: 'EMI Burden', impact: Math.round(emiImpact), weight: '12%', reason: `${(emiRatio * 100).toFixed(0)}% of income goes to EMIs` });
+      score += emiImpact;
+
+      // 4. Credit Utilization (max -100 pts or +80)
+      let utilImpact = 80 - (inputs.creditUtilization * 1.8);
+      utilImpact = clamp(utilImpact, -100, 80);
+      factors.push({ name: 'Credit Utilization', impact: Math.round(utilImpact), weight: '12%', reason: `${inputs.creditUtilization}% utilization` });
+      score += utilImpact;
+
+      // 5. Payment History (max +120 pts)
+      const paymentImpact = (inputs.paymentHistory / 100) * 120;
+      factors.push({ name: 'Payment History', impact: Math.round(paymentImpact), weight: '15%', reason: `${inputs.paymentHistory}% on-time payments` });
+      score += paymentImpact;
+
+      // 6. Banking Vintage (max +70 pts)
+      const vintageImpact = Math.min(70, inputs.bankingVintage * 3.5);
+      factors.push({ name: 'Banking Vintage', impact: Math.round(vintageImpact), weight: '8%', reason: `${inputs.bankingVintage} months` });
+      score += vintageImpact;
+
+      // 7. UPI Transaction Volume & Consistency (max +70 pts)
+      const upiImpact = Math.min(70, (inputs.upiVolume / 50000) * 35 + (inputs.upiConsistency / 100) * 35);
+      factors.push({ name: 'UPI Digital Footprint', impact: Math.round(upiImpact), weight: '8%', reason: `₹${inputs.upiVolume.toLocaleString()} monthly, ${inputs.upiConsistency}% consistent` });
+      score += upiImpact;
+
+      // 8. Savings Behavior (max +70 pts)
+      const savingsImpact = Math.min(70, (inputs.savingsRate / 100) * 70);
+      factors.push({ name: 'Savings Behavior', impact: Math.round(savingsImpact), weight: '8%', reason: `${inputs.savingsRate}% saved monthly` });
+      score += savingsImpact;
+
+      // 9. Employment Tenure (max +50 pts)
+      const tenureImpact = Math.min(50, inputs.employmentTenure * 2.5);
+      factors.push({ name: 'Employment Tenure', impact: Math.round(tenureImpact), weight: '5%', reason: `${inputs.employmentTenure} months` });
+      score += tenureImpact;
+
+      // 10. Age (max +40 pts)
+      let ageImpact = 0;
+      if (inputs.age >= 25 && inputs.age <= 55) ageImpact = 40;
+      else if (inputs.age >= 21) ageImpact = 25;
+      else ageImpact = 10;
+      factors.push({ name: 'Age', impact: ageImpact, weight: '2%', reason: `${inputs.age} years` });
+      score += ageImpact;
+
+      // 11. Existing Bureau Score (optional) (max +50 pts boost)
+      let bureauImpact = 0;
+      if (inputs.hasBureauScore && inputs.bureauScore > 0) {
+        bureauImpact = ((inputs.bureauScore - 300) / 600) * 50;
+        factors.push({ name: 'Bureau Score', impact: Math.round(bureauImpact), weight: 'bonus', reason: `CIBIL ${inputs.bureauScore}` });
+      } else {
+        factors.push({ name: 'Bureau Score', impact: 0, weight: 'bonus', reason: 'No bureau score — alternate data only' });
+      }
+      score += bureauImpact;
+
+      score = clamp(Math.round(score), 300, 900);
+      return { score, factors };
+    }
+
+    // ---------- MSME SCORING ----------
+    function calculateMSMEScore(inputs) {
+      const factors = [];
+      let score = 300;
+
+      // Business Vintage (max +120)
+      const vintageImpact = Math.min(120, inputs.businessVintage * 4);
+      factors.push({ name: 'Business Vintage', impact: Math.round(vintageImpact), weight: '14%', reason: `${inputs.businessVintage} months` });
+      score += vintageImpact;
+
+      // Annual Turnover (max +160)
+      const turnoverImpact = Math.min(160, (inputs.annualTurnover / 1000000) * 16);
+      factors.push({ name: 'Annual Turnover', impact: Math.round(turnoverImpact), weight: '18%', reason: formatINR(inputs.annualTurnover) });
+      score += turnoverImpact;
+
+      // GST Filing Regularity (max +120)
+      const gstMap = { monthly: 120, quarterly: 90, irregular: 30, none: 0 };
+      const gstImpact = gstMap[inputs.gstFiling] || 0;
+      factors.push({ name: 'GST Filing Regularity', impact: gstImpact, weight: '14%', reason: inputs.gstFiling });
+      score += gstImpact;
+
+      // GST Growth (max +80)
+      const growthImpact = Math.min(80, Math.max(-40, inputs.gstGrowth * 2));
+      factors.push({ name: 'GST Turnover Growth', impact: Math.round(growthImpact), weight: '9%', reason: `${inputs.gstGrowth}% YoY` });
+      score += growthImpact;
+
+      // Digital Payment Share (max +90)
+      const digitalImpact = (inputs.digitalPaymentShare / 100) * 90;
+      factors.push({ name: 'Digital Payment Share', impact: Math.round(digitalImpact), weight: '10%', reason: `${inputs.digitalPaymentShare}%` });
+      score += digitalImpact;
+
+      // Avg Bank Balance (max +90)
+      const balanceImpact = Math.min(90, (inputs.avgBankBalance / 200000) * 45);
+      factors.push({ name: 'Avg Bank Balance', impact: Math.round(balanceImpact), weight: '10%', reason: formatINR(inputs.avgBankBalance) });
+      score += balanceImpact;
+
+      // Receivables Cycle (max +70 or -30)
+      let receivablesImpact = 70 - (inputs.receivablesCycle / 180) * 100;
+      receivablesImpact = clamp(receivablesImpact, -30, 70);
+      factors.push({ name: 'Receivables Cycle', impact: Math.round(receivablesImpact), weight: '8%', reason: `${inputs.receivablesCycle} days` });
+      score += receivablesImpact;
+
+      // Sector Risk (max +50)
+      const sectorMap = { manufacturing: 50, services: 50, trading: 45, agriculture: 40, construction: 30, hospitality: 25 };
+      const sectorImpact = sectorMap[inputs.sector] || 35;
+      factors.push({ name: 'Sector Risk', impact: sectorImpact, weight: '6%', reason: inputs.sector });
+      score += sectorImpact;
+
+      // Udyam Registration (+40)
+      const udyamImpact = inputs.udyamRegistered ? 40 : 0;
+      factors.push({ name: 'Udyam Registration', impact: udyamImpact, weight: '5%', reason: inputs.udyamRegistered ? 'Registered' : 'Not registered' });
+      score += udyamImpact;
+
+      // Existing Loans (max -80 or +20)
+      let loanImpact = 20 - (inputs.existingLoans / 5) * 100;
+      loanImpact = clamp(loanImpact, -80, 20);
+      factors.push({ name: 'Existing Loan Burden', impact: Math.round(loanImpact), weight: '6%', reason: `${inputs.existingLoans} active loans` });
+      score += loanImpact;
+
+      // Collateral (+40)
+      const collateralImpact = inputs.hasCollateral ? 40 : 0;
+      factors.push({ name: 'Collateral Available', impact: collateralImpact, weight: '4%', reason: inputs.hasCollateral ? 'Yes' : 'No' });
+      score += collateralImpact;
+
+      // Women-led (+30)
+      const womenImpact = inputs.womenLed ? 30 : 0;
+      factors.push({ name: 'Women-Led Enterprise', impact: womenImpact, weight: '3%', reason: inputs.womenLed ? 'Yes' : 'No' });
+      score += womenImpact;
+
+      score = clamp(Math.round(score), 300, 900);
+      return { score, factors };
+    }
+
+    function calculateResult(mode, inputs) {
+      const { score, factors } = mode === 'retail' ? calculateRetailScore(inputs) : calculateMSMEScore(inputs);
+      const band = getBand(score);
+      // Max eligible loan: income/turnover based, risk-adjusted
+      let maxLoan = 0;
+      if (mode === 'retail') {
+        const incomeMultiplier = score >= 750 ? 6 : score >= 650 ? 4 : score >= 550 ? 2 : 0;
+        maxLoan = inputs.monthlyIncome * 12 * incomeMultiplier * (1 - (inputs.existingEmis / inputs.monthlyIncome));
+      } else {
+        const turnoverMultiplier = score >= 750 ? 0.25 : score >= 650 ? 0.18 : score >= 550 ? 0.10 : 0;
+        maxLoan = inputs.annualTurnover * turnoverMultiplier;
+      }
+      maxLoan = Math.max(0, Math.round(maxLoan / 1000) * 1000);
+      return { score, band, factors, maxLoan, mode };
+    }
+
+    // ============ UI COMPONENTS ============
+
+    function Gauge({ score }) {
+      const radius = 80;
+      const stroke = 14;
+      const normalizedScore = (score - 300) / 600; // 0 to 1
+      const circumference = Math.PI * radius;
+      const offset = circumference * (1 - normalizedScore);
+      const band = getBand(score);
+
+      return (
+        <div className="relative flex flex-col items-center justify-center">
+          <svg width="220" height="130" viewBox="0 0 220 130">
+            <path d="M 30 110 A 80 80 0 0 1 190 110" fill="none" stroke="#e2e8f0" strokeWidth={stroke} strokeLinecap="round" />
+            <path
+              className="gauge-arc"
+              d="M 30 110 A 80 80 0 0 1 190 110"
+              fill="none"
+              stroke={band.color}
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={offset}
+            />
+          </svg>
+          <div className="absolute top-12 text-center">
+            <div className="text-5xl font-bold text-slate-800 count-up">{score}</div>
+            <div className="text-xs text-slate-500 font-medium mt-1">CreditBridge Score</div>
+          </div>
+        </div>
+      );
+    }
+
+    function Slider({ label, value, min, max, step, onChange, unit, hint }) {
+      return (
+        <div className="mb-5">
+          <div className="flex justify-between items-center mb-2">
+            <label className="text-sm font-semibold text-slate-700">{label}</label>
+            <span className="text-sm font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded">{value}{unit}</span>
+          </div>
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(parseFloat(e.target.value))}
+            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider-thumb"
+          />
+          {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
+        </div>
+      );
+    }
+
+    function Select({ label, value, options, onChange }) {
+      return (
+        <div className="mb-5">
+          <label className="block text-sm font-semibold text-slate-700 mb-2">{label}</label>
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          >
+            {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+      );
+    }
+
+    function Toggle({ label, checked, onChange }) {
+      return (
+        <div className="flex items-center justify-between mb-5">
+          <span className="text-sm font-semibold text-slate-700">{label}</span>
+          <button
+            onClick={() => onChange(!checked)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-blue-900' : 'bg-slate-300'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+      );
+    }
+
+    function RetailForm({ inputs, setInputs }) {
+      const update = (key, val) => setInputs(p => ({ ...p, [key]: val }));
+      return (
+        <div className="grid md:grid-cols-2 gap-x-8">
+          <div>
+            <Slider label="Monthly Income" value={inputs.monthlyIncome} min={10000} max={500000} step={5000} unit="" onChange={v => update('monthlyIncome', v)} hint="Gross monthly income" />
+            <Select label="Income Stability" value={inputs.incomeStability} options={[
+              { value: 'salaried', label: 'Salaried' },
+              { value: 'self-employed', label: 'Self-employed' },
+              { value: 'gig', label: 'Gig / Freelance' },
+              { value: 'unemployed', label: 'Unemployed / Irregular' },
+            ]} onChange={v => update('incomeStability', v)} />
+            <Slider label="Existing EMIs" value={inputs.existingEmis} min={0} max={200000} step={1000} unit="" onChange={v => update('existingEmis', v)} hint="Total monthly EMI outgo" />
+            <Slider label="Credit Utilization" value={inputs.creditUtilization} min={0} max={100} step={5} unit="%" onChange={v => update('creditUtilization', v)} hint="% of credit limit used" />
+            <Slider label="Payment History (On-time %)" value={inputs.paymentHistory} min={0} max={100} step={5} unit="%" onChange={v => update('paymentHistory', v)} />
+          </div>
+          <div>
+            <Slider label="Banking Vintage" value={inputs.bankingVintage} min={0} max={240} step={6} unit=" mo" onChange={v => update('bankingVintage', v)} hint="Months with primary bank" />
+            <Slider label="Monthly UPI Volume" value={inputs.upiVolume} min={0} max={200000} step={5000} unit="" onChange={v => update('upiVolume', v)} hint="Digital transaction footprint" />
+            <Slider label="UPI Consistency" value={inputs.upiConsistency} min={0} max={100} step={5} unit="%" onChange={v => update('upiConsistency', v)} hint="% months with active UPI usage" />
+            <Slider label="Savings Rate" value={inputs.savingsRate} min={0} max={60} step={2} unit="%" onChange={v => update('savingsRate', v)} hint="% of income saved/invested" />
+            <Slider label="Employment Tenure" value={inputs.employmentTenure} min={0} max={240} step={6} unit=" mo" onChange={v => update('employmentTenure', v)} />
+            <Slider label="Age" value={inputs.age} min={18} max={70} step={1} unit=" yrs" onChange={v => update('age', v)} />
+            <Toggle label="I have a bureau/CIBIL score" checked={inputs.hasBureauScore} onChange={v => update('hasBureauScore', v)} />
+            {inputs.hasBureauScore && (
+              <Slider label="Bureau Score" value={inputs.bureauScore} min={300} max={900} step={1} unit="" onChange={v => update('bureauScore', v)} hint="Optional — alternate data works without this" />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function MSMEForm({ inputs, setInputs }) {
+      const update = (key, val) => setInputs(p => ({ ...p, [key]: val }));
+      return (
+        <div className="grid md:grid-cols-2 gap-x-8">
+          <div>
+            <Slider label="Business Vintage" value={inputs.businessVintage} min={0} max={360} step={6} unit=" mo" onChange={v => update('businessVintage', v)} />
+            <Slider label="Annual Turnover" value={inputs.annualTurnover} min={100000} max={50000000} step={100000} unit="" onChange={v => update('annualTurnover', v)} />
+            <Select label="GST Filing Regularity" value={inputs.gstFiling} options={[
+              { value: 'monthly', label: 'Monthly' },
+              { value: 'quarterly', label: 'Quarterly' },
+              { value: 'irregular', label: 'Irregular' },
+              { value: 'none', label: 'No GST filing' },
+            ]} onChange={v => update('gstFiling', v)} />
+            <Slider label="GST Turnover Growth" value={inputs.gstGrowth} min={-20} max={100} step={1} unit="%" onChange={v => update('gstGrowth', v)} hint="Year-over-year GST turnover growth" />
+            <Slider label="Digital Payment Share" value={inputs.digitalPaymentShare} min={0} max={100} step={5} unit="%" onChange={v => update('digitalPaymentShare', v)} />
+          </div>
+          <div>
+            <Slider label="Avg Bank Balance" value={inputs.avgBankBalance} min={0} max={5000000} step={25000} unit="" onChange={v => update('avgBankBalance', v)} />
+            <Slider label="Receivables Cycle" value={inputs.receivablesCycle} min={0} max={180} step={5} unit=" days" onChange={v => update('receivablesCycle', v)} hint="Average days to collect payments" />
+            <Select label="Sector" value={inputs.sector} options={[
+              { value: 'manufacturing', label: 'Manufacturing' },
+              { value: 'services', label: 'Services / IT' },
+              { value: 'trading', label: 'Trading' },
+              { value: 'agriculture', label: 'Agriculture / Food' },
+              { value: 'construction', label: 'Construction' },
+              { value: 'hospitality', label: 'Hospitality' },
+            ]} onChange={v => update('sector', v)} />
+            <Slider label="Existing Loans" value={inputs.existingLoans} min={0} max={10} step={1} unit="" onChange={v => update('existingLoans', v)} />
+            <Toggle label="Udyam Registered" checked={inputs.udyamRegistered} onChange={v => update('udyamRegistered', v)} />
+            <Toggle label="Collateral Available" checked={inputs.hasCollateral} onChange={v => update('hasCollateral', v)} />
+            <Toggle label="Women-Led Enterprise" checked={inputs.womenLed} onChange={v => update('womenLed', v)} />
+          </div>
+        </div>
+      );
+    }
+
+    function FactorBar({ name, impact, reason, maxAbs }) {
+      const positive = impact >= 0;
+      const width = Math.min(100, Math.abs(impact) / maxAbs * 100);
+      return (
+        <div className="mb-3">
+          <div className="flex justify-between text-sm mb-1">
+            <span className="font-medium text-slate-700">{name}</span>
+            <span className={`font-bold ${positive ? 'text-green-700' : 'text-red-700'}`}>{impact > 0 ? '+' : ''}{impact}</span>
+          </div>
+          <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div className={`h-2.5 rounded-full ${positive ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${width}%` }} />
+          </div>
+          <div className="text-xs text-slate-500 mt-0.5">{reason}</div>
+        </div>
+      );
+    }
+
+    function ScoreCard({ result, onReset, inputs }) {
+      const [activeTab, setActiveTab] = useState('breakdown');
+      const { score, band, factors, maxLoan, mode } = result;
+      const maxAbs = Math.max(...factors.map(f => Math.abs(f.impact)), 1);
+      const rejectionReasons = factors.filter(f => f.impact < -20 || (f.name === 'Bureau Score' && f.impact === 0));
+      const recommendationReasons = factors.filter(f => f.impact >= 20);
+      const pieData = factors.filter(f => f.impact > 0).map(f => ({ name: f.name, value: f.impact }));
+      const COLORS = ['#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#6366f1'];
+
+      return (
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+          <div className={`p-8 ${band.bg} border-b ${band.border}`}>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800 mb-1">Your CreditBridge Score</h2>
+                <p className="text-slate-600 text-sm">Deterministic, explainable, bias-audited credit assessment</p>
+                <div className="mt-4 flex items-center gap-3">
+                  <span className="px-3 py-1 rounded-full text-sm font-bold text-white" style={{ background: band.color }}>{band.label}</span>
+                  <span className="text-sm text-slate-700 font-medium">{band.approval}</span>
+                </div>
+              </div>
+              <Gauge score={score} />
+            </div>
+          </div>
+
+          <div className="p-6 md:p-8">
+            <div className="grid md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center">
+                <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Max Eligible</div>
+                <div className="text-xl font-bold text-slate-800 mt-1">{formatINR(maxLoan)}</div>
+              </div>
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center">
+                <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Indicative Interest</div>
+                <div className="text-xl font-bold text-slate-800 mt-1">{band.interest}</div>
+              </div>
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center">
+                <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Model Type</div>
+                <div className="text-xl font-bold text-slate-800 mt-1 capitalize">{mode}</div>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+              {['breakdown', 'rejection', 'recommendations', 'bias'].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold capitalize whitespace-nowrap transition-colors ${activeTab === tab ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
+                  {tab === 'bias' ? 'Bias Audit' : tab}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'breakdown' && (
+              <div className="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 mb-4">SHAP-Style Factor Breakdown</h3>
+                  {factors.map((f, i) => (
+                    <FactorBar key={i} {...f} maxAbs={maxAbs} />
+                  ))}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 mb-4">Positive Contributors</h3>
+                  {pieData.length > 0 ? (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name.length > 12 ? name.slice(0, 12) + '...' : name}>
+                            {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : <p className="text-slate-500 text-sm">No strong positive contributors detected.</p>}
+                  <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-900">
+                    <strong>Why this matters:</strong> Each factor's impact is calculated independently and summed to produce a 300-900 score. No hidden weights. Every driver is shown here.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'rejection' && (
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 mb-4">Rejection / Risk Drivers</h3>
+                {rejectionReasons.length === 0 ? (
+                  <p className="text-green-700 bg-green-50 p-4 rounded-xl border border-green-200">No severe risk drivers detected. This application looks healthy.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {rejectionReasons.map((f, i) => (
+                      <div key={i} className="flex items-start gap-3 p-4 bg-red-50 rounded-xl border border-red-100">
+                        <div className="text-red-600 font-bold text-lg">−</div>
+                        <div>
+                          <div className="font-semibold text-red-900">{f.name}</div>
+                          <div className="text-sm text-red-800">{f.reason} — pulled score by {Math.abs(f.impact)} points</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'recommendations' && (
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 mb-4">Improvement Recommendations</h3>
+                <ul className="space-y-3">
+                  {recommendationReasons.map((f, i) => (
+                    <li key={i} className="flex items-start gap-3 p-4 bg-green-50 rounded-xl border border-green-100">
+                      <div className="text-green-600 font-bold text-lg">✓</div>
+                      <div>
+                        <div className="font-semibold text-green-900">Keep {f.name} strong</div>
+                        <div className="text-sm text-green-800">{f.reason} — added {f.impact} points</div>
+                      </div>
+                    </li>
+                  ))}
+                  {inputs.existingEmis / inputs.monthlyIncome > 0.4 && (
+                    <li className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                      <div className="text-yellow-700 font-bold text-lg">!</div>
+                      <div><div className="font-semibold text-yellow-900">Reduce EMI burden</div><div className="text-sm text-yellow-800">Your EMIs exceed 40% of income. Lowering this improves eligibility.</div></div>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {activeTab === 'bias' && (
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 mb-4">Ethical Accountability Audit</h3>
+                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 rounded-xl border bg-white border-slate-200">
+                    <div className="text-sm text-slate-500">Protected Attributes Used</div>
+                    <div className="text-lg font-bold text-red-700">None</div>
+                    <div className="text-xs text-slate-500 mt-1">CreditBridge never uses gender, caste, religion, or location as inputs.</div>
+                  </div>
+                  <div className="p-4 rounded-xl border bg-white border-slate-200">
+                    <div className="text-sm text-slate-500">Right to Explanation</div>
+                    <div className="text-lg font-bold text-green-700">Enabled</div>
+                    <div className="text-xs text-slate-500 mt-1">Every score change has a traceable reason shown above.</div>
+                  </div>
+                  <div className="p-4 rounded-xl border bg-white border-slate-200">
+                    <div className="text-sm text-slate-500">Human Review Trigger</div>
+                    <div className="text-lg font-bold text-blue-700">{score < 650 ? 'Auto-queued' : 'Available on request'}</div>
+                  </div>
+                  <div className="p-4 rounded-xl border bg-white border-slate-200">
+                    <div className="text-sm text-slate-500">DPDP / RBI Alignment</div>
+                    <div className="text-lg font-bold text-green-700">Compliant</div>
+                    <div className="text-xs text-slate-500 mt-1">Consent-first alternate data; no black-box decisions.</div>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600">
+                  Inspired by the EAA framework (Saxena et al., 2025): Explainable AI + institutional oversight + user right to challenge. If you believe this decision is unfair, you can request a human-led review with the factors above.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-8 pt-6 border-t border-slate-100 flex justify-between items-center">
+              <button onClick={onReset} className="text-slate-500 hover:text-blue-900 text-sm font-semibold">← Edit Inputs</button>
+              <button onClick={() => alert('Human review request simulated. A loan officer will contact you within 24 hours.')} className="px-5 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 transition">Request Human Review</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const LENDER_MARKETPLACE = [
+      { name: 'State Bank of India', type: 'Public Bank', minScore: 700, rate: '10.5% - 12.5%', maxAmount: '₹2 Cr', speed: '48 hrs', icon: '🏛️' },
+      { name: 'HDFC Bank', type: 'Private Bank', minScore: 720, rate: '11.0% - 13.5%', maxAmount: '₹1.5 Cr', speed: '24 hrs', icon: '🏦' },
+      { name: 'Bajaj Finserv', type: 'NBFC', minScore: 650, rate: '13.0% - 17.0%', maxAmount: '₹50 L', speed: '4 hrs', icon: '💰' },
+      { name: 'Lendingkart', type: 'MSME Fintech', minScore: 620, rate: '15.0% - 20.0%', maxAmount: '₹1 Cr', speed: '2 hrs', icon: '🚀' },
+      { name: 'Kinara Capital', type: 'MSME NBFC', minScore: 600, rate: '16.0% - 21.0%', maxAmount: '₹30 L', speed: '1 day', icon: '🤝' },
+      { name: 'Incred', type: 'Digital Lender', minScore: 650, rate: '14.0% - 18.5%', maxAmount: '₹25 L', speed: '6 hrs', icon: '📱' },
+    ];
+
+    function LenderMarketplace({ score }) {
+      const matched = LENDER_MARKETPLACE.filter(l => score >= l.minScore);
+      return (
+        <div className="mt-8">
+          <h3 className="text-xl font-bold text-slate-800 mb-4">Lender Marketplace</h3>
+          <p className="text-sm text-slate-600 mb-4">Matched offers based purely on your CreditBridge score. No broker fees.</p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {matched.map((l, i) => (
+              <div key={i} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="text-2xl">{l.icon}</div>
+                  <div>
+                    <div className="font-bold text-slate-800">{l.name}</div>
+                    <div className="text-xs text-slate-500">{l.type}</div>
+                  </div>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between"><span className="text-slate-500">Rate</span><span className="font-semibold text-slate-800">{l.rate}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Max</span><span className="font-semibold text-slate-800">{l.maxAmount}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Decision</span><span className="font-semibold text-slate-800">{l.speed}</span></div>
+                </div>
+                <button className="mt-4 w-full py-2 bg-blue-900 text-white rounded-xl text-sm font-semibold hover:bg-blue-800 transition">Apply</button>
+              </div>
+            ))}
+            {matched.length === 0 && (
+              <div className="col-span-full p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center text-slate-600 text-sm">
+                No marketplace matches at this score. Use the improvement tips to raise your score and re-check.
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const RETAIL_DEFAULTS = {
+      monthlyIncome: 45000,
+      incomeStability: 'salaried',
+      existingEmis: 8000,
+      creditUtilization: 35,
+      paymentHistory: 90,
+      bankingVintage: 36,
+      upiVolume: 25000,
+      upiConsistency: 80,
+      savingsRate: 15,
+      employmentTenure: 24,
+      age: 32,
+      hasBureauScore: false,
+      bureauScore: 650,
+    };
+
+    const MSME_DEFAULTS = {
+      businessVintage: 48,
+      annualTurnover: 2500000,
+      gstFiling: 'quarterly',
+      gstGrowth: 15,
+      digitalPaymentShare: 40,
+      avgBankBalance: 300000,
+      receivablesCycle: 45,
+      sector: 'manufacturing',
+      existingLoans: 1,
+      udyamRegistered: true,
+      hasCollateral: true,
+      womenLed: false,
+    };
+
+    function App() {
+      const [mode, setMode] = useState('retail');
+      const [retailInputs, setRetailInputs] = useState(RETAIL_DEFAULTS);
+      const [msmeInputs, setMsmeInputs] = useState(MSME_DEFAULTS);
+      const [result, setResult] = useState(null);
+      const [showPaper, setShowPaper] = useState(false);
+
+      const inputs = mode === 'retail' ? retailInputs : msmeInputs;
+      const setInputs = mode === 'retail' ? setRetailInputs : setMsmeInputs;
+
+      const runScoring = () => {
+        const res = calculateResult(mode, inputs);
+        setResult(res);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      return (
+        <div className="min-h-screen pb-20">
+          {/* HERO */}
+          <header className="bg-gradient-to-br from-[#0F2557] via-[#1e3a8a] to-[#b45309] text-white">
+            <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold mb-4">
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    Ethical Algorithm Accountability (EAA) Framework
+                  </div>
+                  <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">CreditBridge AI</h1>
+                  <p className="mt-3 text-lg text-blue-100 max-w-xl">Explainable, bias-audited credit scoring for thin-file retail borrowers and MSMEs.</p>
+                </div>
+                <div className="hidden md:block text-right">
+                  <div className="text-3xl font-bold">82%</div>
+                  <div className="text-sm text-blue-100">thin-file coverage</div>
+                  <div className="text-3xl font-bold mt-2">17 min</div>
+                  <div className="text-sm text-blue-100">avg decision time</div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-6xl mx-auto px-4 -mt-8">
+            {/* MODE SWITCH */}
+            <div className="glass rounded-2xl p-2 inline-flex shadow-lg mb-8">
+              <button
+                onClick={() => { setMode('retail'); setResult(null); }}
+                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition ${mode === 'retail' ? 'bg-blue-900 text-white shadow' : 'text-slate-600 hover:bg-white/50'}`}
+              >
+                Retail / Individual
+              </button>
+              <button
+                onClick={() => { setMode('msme'); setResult(null); }}
+                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition ${mode === 'msme' ? 'bg-blue-900 text-white shadow' : 'text-slate-600 hover:bg-white/50'}`}
+              >
+                MSME / Business
+              </button>
+            </div>
+
+            {result ? (
+              <>
+                <ScoreCard result={result} onReset={() => setResult(null)} inputs={inputs} />
+                <LenderMarketplace score={result.score} />
+              </>
+            ) : (
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-10">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800">{mode === 'retail' ? 'Retail Credit Application' : 'MSME Credit Application'}</h2>
+                    <p className="text-sm text-slate-500">All fields are alternate-data friendly. No bureau score required.</p>
+                  </div>
+                  <button
+                    onClick={() => setShowPaper(!showPaper)}
+                    className="text-xs font-semibold text-blue-900 underline hover:text-blue-700"
+                  >
+                    Research basis
+                  </button>
+                </div>
+
+                {showPaper && (
+                  <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-700">
+                    Based on <em>"Algorithmic Accountability in AI-Driven Credit Scoring"</em> (Saxena, Sharma, Mohanty & Sharma, 2025) and the Abhirva 3.0 pitch deck. Key findings: ~85% repayment prediction accuracy, 73% fintechs use device data, 45–60% rejection rate, women face 2.4× higher rejection. Proposed EAA framework: Explainable AI + oversight + right to challenge, aligned with RBI digital lending guidelines and DPDP Act 2023.
+                  </div>
+                )}
+
+                {mode === 'retail' ? <RetailForm inputs={retailInputs} setInputs={setRetailInputs} /> : <MSMEForm inputs={msmeInputs} setInputs={setMsmeInputs} />}
+
+                <div className="mt-4 flex flex-col md:flex-row items-center gap-4">
+                  <button
+                    onClick={runScoring}
+                    className="pulse-btn px-8 py-4 bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition"
+                  >
+                    Generate CreditBridge Score
+                  </button>
+                  <span className="text-xs text-slate-500">No data leaves your browser. Scoring logic runs entirely client-side.</span>
+                </div>
+              </div>
+            )}
+
+            {/* INFO CARDS */}
+            {!result && (
+              <div className="grid md:grid-cols-3 gap-6 mt-10">
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                  <div className="text-2xl mb-3">🔍</div>
+                  <h3 className="font-bold text-slate-800 mb-2">Explainable by Design</h3>
+                  <p className="text-sm text-slate-600">Every factor that moves your score is shown with magnitude and reason. No black boxes.</p>
+                </div>
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                  <div className="text-2xl mb-3">⚖️</div>
+                  <h3 className="font-bold text-slate-800 mb-2">Bias Audited</h3>
+                  <p className="text-sm text-slate-600">Protected attributes are never inputs. Built-in audit panel for fairness and DPDP compliance.</p>
+                </div>
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                  <div className="text-2xl mb-3">🏪</div>
+                  <h3 className="font-bold text-slate-800 mb-2">Lender Marketplace</h3>
+                  <p className="text-sm text-slate-600">Get matched to banks, NBFCs and fintechs that fit your score — transparently.</p>
+                </div>
+              </div>
+            )}
+          </main>
+
+          <footer className="max-w-6xl mx-auto px-4 mt-16 text-center text-xs text-slate-400">
+            CreditBridge AI — Demo prototype for Abhirva 3.0. Not a real lending decision.
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

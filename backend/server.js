@@ -32,6 +32,7 @@ const adminRoutes = require('./routes/admin');
 const fraudRoutes = require('./routes/fraud');
 const chartRoutes = require('./routes/charts');
 const marketDataRoutes = require('./routes/market-data');
+const realDataRoutes = require('./routes/realData');
 const scenarioRoutes = require('./routes/scenarios');
 const nlpQueryRoutes = require('./routes/nlp-query');
 const screenerRoutes  = require('./routes/screener');
@@ -40,6 +41,8 @@ const businessRoutes = require('./routes/business');
 const kycRoutes = require('./routes/kyc');
 const msmeRoutes = require('./routes/msme');
 const { seedAll } = require('./scripts/seedDemoData');
+const { seedComprehensiveDemo } = require('./scripts/seedComprehensiveDemo');
+const { db, dbPath } = require('./services/database');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -81,7 +84,7 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://api.gst.gov.in", "https://openrouter.ai", "https://api.groq.com", "https://api-inference.huggingface.co", "https://api.anthropic.com", "https://generativelanguage.googleapis.com", "https://api.openai.com"]
+            connectSrc: ["'self'", "https://api.gst.gov.in", "https://openrouter.ai", "https://api.groq.com", "https://api-inference.huggingface.co", "https://api.anthropic.com", "https://generativelanguage.googleapis.com", "https://api.openai.com", "ws://localhost:5000", "wss://psb-securewealth-backend.onrender.com"]
         }
     },
     hsts: {
@@ -91,10 +94,15 @@ app.use(helmet({
     }
 }));
 
+const defaultOrigins = process.env.NODE_ENV === 'production'
+    ? ['https://dsfinancial.in', 'https://www.dsfinancial.in', 'https://dsfinancial-47556.surge.sh', 'https://psb-securewealth-2026-new.surge.sh', 'https://psb-securewealth-frontend.onrender.com']
+    : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5500', 'https://dsfinancial-47556.surge.sh', 'https://psb-securewealth-2026-new.surge.sh', 'https://psb-securewealth-frontend.onrender.com'];
+const corsOrigins = process.env.CORS_ORIGINS
+    ? [...defaultOrigins, ...process.env.CORS_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)]
+    : defaultOrigins;
+
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-        ? ['https://dsfinancial.in', 'https://www.dsfinancial.in', 'https://dsfinancial-47556.surge.sh', 'https://psb-securewealth-2026-new.surge.sh'] 
-        : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5500', 'https://dsfinancial-47556.surge.sh', 'https://psb-securewealth-2026-new.surge.sh'],
+    origin: corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: process.env.NODE_ENV === 'production'
@@ -193,12 +201,32 @@ app.get('/extracted_functions.js', (req, res) => {
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {
+    const count = (table) => { try { return db.prepare(`SELECT COUNT(*) as c FROM ${table}`).get().c; } catch { return -1; } };
+    const userCount = count('users');
+    const accountCount = count('bank_accounts');
+    const txnCount = count('transactions');
+    const instrumentCount = count('market_instruments');
+    const priceCount = count('market_prices');
+    const rbiMacroCount = count('rbi_macro_data');
+    const forexCount = count('forex_rates');
+    const datasetCount = count('external_datasets');
     res.json({
         success: true,
         message: 'DS Financial API is running',
         version: '2.0.0',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV,
+        dbPath: dbPath,
+        userCount,
+        accountCount,
+        txnCount,
+        realData: {
+            instruments: instrumentCount,
+            prices: priceCount,
+            rbiMacro: rbiMacroCount,
+            forex: forexCount,
+            externalDatasets: datasetCount
+        },
         patents: {
             total: 47,
             phase1: 7,
@@ -239,6 +267,7 @@ app.use('/api/v1/financial-model', authMiddleware, financialModelRoutes);
 // Phase 4: World-class features
 app.use('/api/v1/charts', chartRoutes);
 app.use('/api/v1/market', marketDataRoutes);
+app.use('/api/v1/real-data', realDataRoutes);
 app.use('/api/v1/scenarios', scenarioRoutes);
 app.use('/api/v1/query', nlpQueryRoutes);
 app.use('/api/v1/screener', screenerRoutes);
@@ -341,7 +370,8 @@ app.use(errorHandler);
 // Start server only when run directly (not when imported by tests)
 if (require.main === module) {
     // WebSocket alert server for real-time fraud notifications
-    const wss = new WebSocket.Server({ server: httpServer, path: '/ws/alerts' });
+    const wss = new WebSocket.Server({ noServer: true });
+    const demoWss = new WebSocket.Server({ noServer: true });
 
     global.broadcastFraudAlert = (alert) => {
         const payload = JSON.stringify({ type: 'FRAUD_ALERT', data: alert, ts: Date.now() });
@@ -374,6 +404,45 @@ if (require.main === module) {
         }
     });
 
+    // Public demo WebSocket for cross-device feature sync (Quantum Key Exchange, etc.)
+    demoWss.on('connection', (ws) => {
+        ws.subscriptions = [];
+        ws.on('message', (message) => {
+            try {
+                const data = JSON.parse(message);
+                if (data.type === 'subscribe') {
+                    ws.subscriptions.push(data.channel);
+                    ws.send(JSON.stringify({ type: 'subscribed', channel: data.channel }));
+                } else if (data.type === 'publish') {
+                    const payload = JSON.stringify({ channel: data.channel, ...data.payload });
+                    demoWss.clients.forEach((client) => {
+                        if (client.readyState === WebSocket.OPEN && client.subscriptions?.includes(data.channel)) {
+                            client.send(payload);
+                        }
+                    });
+                }
+            } catch (_) {
+                // ignore malformed messages
+            }
+        });
+    });
+
+    // Route WebSocket upgrade requests to the correct server by path
+    httpServer.on('upgrade', (request, socket, head) => {
+        const pathname = new URL(request.url, `http://${request.headers.host || 'localhost'}`).pathname;
+        if (pathname === '/ws/alerts') {
+            wss.handleUpgrade(request, socket, head, (ws) => {
+                wss.emit('connection', ws, request);
+            });
+        } else if (pathname === '/ws/demo') {
+            demoWss.handleUpgrade(request, socket, head, (ws) => {
+                demoWss.emit('connection', ws, request);
+            });
+        } else {
+            socket.destroy();
+        }
+    });
+
     // Cleanup AI cache once a day
     setInterval(() => {
         try {
@@ -383,7 +452,24 @@ if (require.main === module) {
         }
     }, 24 * 60 * 60 * 1000);
 
-    seedAll()
+    // Seed demo data in stages. Comprehensive personas first (needed for the
+    // hackathon demo), then generic demo data. Errors are isolated so a seed
+    // stage failure never prevents the API from accepting traffic.
+    (async () => {
+        try {
+            const result = await seedComprehensiveDemo();
+            logger.info(`[seed] comprehensive personas: ${result.seeded ? 'seeded' : (result.reason || 'skipped')}`);
+        } catch (err) {
+            logger.error('[seed] comprehensive personas failed:', err.message);
+        }
+
+        try {
+            await seedAll();
+            logger.info('[seed] generic demo data complete');
+        } catch (err) {
+            logger.error('[seed] generic demo data failed:', err.message);
+        }
+    })()
         .then(() => {
             httpServer.listen(PORT, () => {
                 logger.info(`DS Financial API Server running on port ${PORT}`);
@@ -393,13 +479,8 @@ if (require.main === module) {
             });
         })
         .catch((err) => {
-            logger.error('Demo seed failed, starting server anyway:', err);
-            httpServer.listen(PORT, () => {
-                logger.info(`DS Financial API Server running on port ${PORT}`);
-                logger.info(`Environment: ${process.env.NODE_ENV}`);
-                logger.info(`Patent Portfolio: 47 innovations ready`);
-                require('./scripts/keepAlive').start();
-            });
+            logger.error('Server startup failed:', err);
+            process.exit(1);
         });
 }
 

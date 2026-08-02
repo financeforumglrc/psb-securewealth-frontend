@@ -58,7 +58,6 @@ export async function syncQueuedActions(): Promise<void> {
   for (const action of queue) {
     try {
       await processAction(action);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_err) {
       failed.push(action);
     }

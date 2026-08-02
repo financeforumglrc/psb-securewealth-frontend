@@ -9,6 +9,8 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "seed:fraud": "node scripts/seedFraudCases.js",
+    "seed:comprehensive": "node scripts/seedComprehensiveDemo.js",
+    "seed:force": "FORCE_SEED=1 node scripts/seedComprehensiveDemo.js",
     "demo:start": "DEMO_MODE=true node server.js"
   },
   "keywords": [

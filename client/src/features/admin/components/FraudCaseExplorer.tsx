@@ -91,7 +91,7 @@ export default function FraudCaseExplorer({
             <Share2 className="w-3.5 h-3.5" />
             {t('fraudIntelCorrelateFilterChip')} · {filters.ids.length}
             <button
-              onClick={() => setFilters(prev => { const { ids, ...rest } = prev; return { ...rest, page: 1 }; })}
+              onClick={() => setFilters(prev => { const { ids: _, ...rest } = prev; return { ...rest, page: 1 }; })}
               className="ml-1 p-0.5 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-800"
               aria-label={t('fraudIntelClear')}
             >

@@ -72,10 +72,10 @@ export default function WhatIfTab() {
           <div className="card bg-gradient-to-br from-emerald-50 to-primary/5 dark:from-emerald-900/10 dark:to-primary/10 border border-emerald-100 dark:border-emerald-800/20">
             <h4 className="font-semibold text-slate-800 dark:text-white mb-2">{t('twinWhatIfProjectedWealth')}</h4>
             <p className="text-2xl font-black text-emerald-600">
-              {formatCr(whatIfData[whatIfData.length - 1].netWorth)}
+              {whatIfData.length ? formatCr(whatIfData[whatIfData.length - 1].netWorth) : '—'}
             </p>
             <p className="text-xs text-slate-500 mt-1">{t('twinWhatIfAfterYears').replace('{years}', String(whatIfYears))}</p>
-            {whatIfData[whatIfData.length - 1].netWorth >= 1e7 && (
+            {whatIfData.length && whatIfData[whatIfData.length - 1].netWorth >= 1e7 && (
               <p className="text-xs font-bold text-primary mt-2">
                 <i className="fas fa-trophy mr-1" aria-hidden="true" />{' '}
                 {t('twinWhatIfCrorepatiBy').replace('{year}', String(projectedYear))}

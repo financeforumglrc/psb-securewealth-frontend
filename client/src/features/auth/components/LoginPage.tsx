@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Fingerprint, KeyRound, Search, Shield, ShieldCheck, ShieldX, Smartphone, Users } from 'lucide-react';
+import { Fingerprint, KeyRound, Search, Shield, ShieldCheck, ShieldX, Smartphone, Users, Building2 } from 'lucide-react';
 import { useAuth } from '@/shared/context/AuthContext';
 import { supabase } from '@/shared/lib/supabase';
 import {
@@ -598,7 +598,7 @@ export default function LoginPage() {
                     }
                     const store = useWealthStore.getState();
                     store.updateUser({ name: account.profile.name, monthlyIncome: account.profile.monthlyIncome, monthlyExpenses: account.profile.monthlyExpenses, monthlySavings: account.profile.monthlySavings, riskProfile: account.profile.riskProfile, taxBracket: account.profile.taxBracket });
-                    if (store.assets.length === 0) store.seedRealData();
+                    if (store.assets.length === 0) store.seedRealData(account.profile);
                     dispatch({ type: 'LOGIN', userId: account.id, userEmail: account.email });
                   }}
                   className="w-full flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-primary/30 transition-all text-left"
@@ -630,6 +630,62 @@ export default function LoginPage() {
           </div>
           <p className="text-[10px] text-slate-400 text-center mt-3">
             Password for all demo accounts: <strong className="text-slate-600 dark:text-slate-300">Firstname@123</strong>
+          </p>
+        </div>
+
+        {/* Corporate Account Login */}
+        <div className="mt-5">
+          <p className="text-xs text-slate-400 text-center mb-3 font-medium">
+            <Building2 className="inline h-3.5 w-3.5 mr-1" /> Corporate Account — Quick Login
+          </p>
+          <div className="space-y-2">
+            {[
+              { id: 'aarav-enterprises', email: 'cfo@aaraventerprises.in', name: 'Aarav Enterprises Pvt Ltd', turnover: 48000000, tagline: 'Manufacturing · 47 employees · Delhi NCR', avatar: 'AE' },
+              { id: 'mehta-traders', email: 'accounts@mehatraders.co.in', name: 'Mehta Traders', turnover: 12000000, tagline: 'Retail distribution · 8 employees · Mumbai', avatar: 'MT' },
+              { id: 'nexus-tech', email: 'finance@nexustech.io', name: 'Nexus Tech Solutions', turnover: 84000000, tagline: 'IT services · 112 employees · Bangalore', avatar: 'NT' },
+            ].map((corp) => (
+              <motion.button
+                key={corp.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={async () => {
+                  const res = await backendApi.demoLogin({ email: corp.email, name: corp.name });
+                  if (!res.ok) {
+                    setError(res.data?.error || 'Corporate demo login failed');
+                    return;
+                  }
+                  const store = useWealthStore.getState();
+                  store.updateUser({
+                    name: corp.name,
+                    monthlyIncome: Math.round(corp.turnover / 12),
+                    monthlyExpenses: Math.round(corp.turnover / 12 * 0.7),
+                    monthlySavings: Math.round(corp.turnover / 12 * 0.3),
+                    riskProfile: 'Moderate',
+                    taxBracket: 30,
+                  });
+                  if (store.assets.length === 0) store.seedRealData();
+                  store.setView('business-mode');
+                  localStorage.setItem('sw_corporate_mode', 'true');
+                  dispatch({ type: 'LOGIN', userId: corp.id, userEmail: corp.email });
+                }}
+                className="w-full flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-primary/30 transition-all text-left"
+              >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br ${avatarGradient(corp.id)}`}>
+                  {corp.avatar}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{corp.name}</p>
+                  <p className="text-[11px] text-slate-500 truncate">{corp.tagline}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">₹{(corp.turnover / 1e7).toFixed(1)}Cr</p>
+                  <p className="text-[9px] text-slate-400">Annual Turnover</p>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-400 text-center mt-3">
+            Corporate login lands in <strong className="text-slate-600 dark:text-slate-300">Khata</strong> with quantum security tabs.
           </p>
         </div>
       </div>
