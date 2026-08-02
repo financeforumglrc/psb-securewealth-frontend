@@ -101,13 +101,9 @@ const SecureWealthGuardian = lazyWithRetry(() => import('@/features/security/com
 const LiveFraudSimulator = lazyWithRetry(() => import('@/features/fraud/components/LiveFraudSimulator'));
 const ScamCallSimulator = lazyWithRetry(() => import('@/features/fraud/components/ScamCallSimulator'));
 const GenerationalWealthOptimizer = lazyWithRetry(() => import('@/features/innovation/components/GenerationalWealthOptimizer'));
-const WealthTwinGPT = lazyWithRetry(() => import('@/features/ai/components/WealthTwinGPT'));
 const AgeGroupView = lazyWithRetry(() => import('@/features/dashboard/components/AgeGroupView'));
 const SimplifiedSecurityView = lazyWithRetry(() => import('@/features/security/components/SimplifiedSecurityView'));
 const ETBNTBSegmentation = lazyWithRetry(() => import('@/features/innovation/components/ETBNTBSegmentation'));
-const CustomerValueTiering = lazyWithRetry(() => import('@/features/innovation/components/CustomerValueTiering'));
-const ZeroBalanceRetention = lazyWithRetry(() => import('@/features/innovation/components/ZeroBalanceRetention'));
-const ReceivingMoneyFocus = lazyWithRetry(() => import('@/features/innovation/components/ReceivingMoneyFocus'));
 const TransactionFailureFaceID = lazyWithRetry(() => import('@/features/security/components/TransactionFailureFaceID'));
 const AppLockWithoutAuth = lazyWithRetry(() => import('@/features/security/components/AppLockWithoutAuth'));
 const PanicSituationProcess = lazyWithRetry(() => import('@/features/security/components/PanicSituationProcess'));
@@ -455,13 +451,9 @@ export default function AuthenticatedApp() {
               {currentView === 'live-fraud-simulator' && <LiveFraudSimulator />}
               {currentView === 'scam-call' && <ScamCallSimulator />}
               {currentView === 'generational-wealth' && <GenerationalWealthOptimizer />}
-              {currentView === 'wealth-twin-gpt' && <WealthTwinGPT />}
               {currentView === 'age-group' && <AgeGroupView />}
               {currentView === 'simplified-security' && <SimplifiedSecurityView />}
               {currentView === 'etb-ntb' && <ETBNTBSegmentation />}
-              {currentView === 'customer-value' && <CustomerValueTiering />}
-              {currentView === 'zero-balance' && <ZeroBalanceRetention />}
-              {currentView === 'receiving-money' && <ReceivingMoneyFocus />}
               {currentView === 'transaction-failure-faceid' && <TransactionFailureFaceID />}
               {currentView === 'app-lock' && <AppLockWithoutAuth />}
               {currentView === 'panic-process' && <PanicSituationProcess />}

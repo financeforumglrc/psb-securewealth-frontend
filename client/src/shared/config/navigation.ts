@@ -120,6 +120,17 @@ export const TOP_NAV_LINKS: { view: string; label: string }[] = [
   { view: 'innovation-lab', label: 'Innovation Lab' },
 ];
 
+const overviewGroup: NavGroup = {
+  id: 'overview',
+  title: 'Home',
+  subtitle: 'Your overview',
+  colorClass: 'text-primary',
+  bgClass: 'bg-primary/5',
+  items: [
+    { view: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie', description: 'Net worth, cashflow and quick actions.' },
+  ],
+};
+
 const wealthIntelligenceGroup: NavGroup = {
   id: 'wealth-intelligence',
   title: 'Wealth Intelligence',
@@ -127,21 +138,13 @@ const wealthIntelligenceGroup: NavGroup = {
   colorClass: 'text-primary',
   bgClass: 'bg-primary/5',
   items: [
-    { view: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie', description: 'Net worth, cashflow and quick actions.' },
-    { view: 'wealth-twin-gpt', label: 'Wealth Twin GPT', icon: 'fa-brain', description: 'Comprehensive AI financial advisor.', badge: 'FLAGSHIP' },
-    { view: 'customer-value', label: 'Value Tiering', icon: 'fa-crown', description: 'Features based on customer value.', badge: 'NEW' },
-    { view: 'zero-balance', label: 'Zero-Balance Offers', icon: 'fa-gift', description: 'Retention offers for low balance.', badge: 'NEW' },
-    { view: 'receiving-money', label: 'Receiving Money', icon: 'fa-arrow-trend-down', description: 'Focus on income growth.', badge: 'NEW' },
-    { view: 'etb-ntb', label: 'Customer Segments', icon: 'fa-users', description: 'ETB/NTB personalized experience.', badge: 'NEW' },
-    { view: 'age-group', label: 'Age-Based Experience', icon: 'fa-user', description: 'Personalized UX by life stage.', badge: 'NEW' },
+    { view: 'wealth-twin', label: 'Wealth Twin', icon: 'fa-brain', description: 'Your financial DNA and simulations.', badge: 'FLAGSHIP' },
     { view: 'bhavishya', label: 'BHAVISHYA AI', icon: 'fa-infinity', description: 'Predictive life-cycle AI engine.', badge: 'FLAGSHIP', alert: true },
-    { view: 'wealth-twin', label: 'Wealth Twin', icon: 'fa-brain', description: 'Your financial DNA and simulations.' },
     { view: 'goals', label: 'Goals', icon: 'fa-bullseye', description: 'Track goals with AI coaching.' },
     { view: 'portfolio', label: 'Portfolio', icon: 'fa-layer-group', description: 'Holdings, allocation and rebalancing.' },
     { view: 'assets', label: 'Assets', icon: 'fa-gem', description: 'All physical and digital assets.' },
     { view: 'market', label: 'Market', icon: 'fa-globe', description: 'Live markets, news and movers.' },
     { view: 'forecast', label: 'Forecast', icon: 'fa-chart-line', description: 'Scenario and Monte Carlo forecasts.' },
-    { view: 'generational-wealth', label: 'Generational Wealth', icon: 'fa-people-roof', description: '3-generation wealth projection.', badge: 'NEW' },
   ],
 };
 
@@ -245,6 +248,7 @@ const innovationGroup: NavGroup = {
 };
 
 export const SIDEBAR_GROUPS: NavGroup[] = [
+  overviewGroup,
   wealthIntelligenceGroup,
   fraudProtectionGroup,
   financialToolsGroup,
@@ -255,11 +259,19 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
 
 export const MEGA_MENU: TopNavCategory[] = [
   {
+    id: 'home',
+    label: 'Home',
+    icon: 'fa-house',
+    colorClass: 'text-primary',
+    description: 'Dashboard and overview.',
+    groups: [overviewGroup],
+  },
+  {
     id: 'wealth',
     label: 'Wealth Intelligence',
     icon: 'fa-chart-line',
     colorClass: 'text-primary',
-    description: 'Dashboards, AI, goals, portfolio and forecasts.',
+    description: 'AI, goals, portfolio, assets, market and forecasts.',
     groups: [wealthIntelligenceGroup],
   },
   {
