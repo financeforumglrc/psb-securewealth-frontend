@@ -383,5 +383,4 @@ export type ViewType =
   | 'profile'
   | 'loan-center' | 'recurring-payments' | 'account-statement' | 'audit-log' | 'admin'
   | 'msme-creditbridge'
-  | 'loans-hub' | 'loan-research' | 'loan-impact' | 'social-collateral-loan'
-  | 'pitch-deck';
+  | 'loans-hub' | 'loan-research' | 'loan-impact' | 'social-collateral-loan';

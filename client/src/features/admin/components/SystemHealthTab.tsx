@@ -1,3 +1,4 @@
+import type { ComponentType, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -27,6 +28,33 @@ interface HealthState {
   latency: number | null;
   db: 'healthy' | 'unknown' | 'unhealthy';
   message: string;
+}
+
+interface StatusCardProps {
+  title: string;
+  value: ReactNode;
+  subtitle: string;
+  icon: ComponentType<{ className?: string }>;
+  variant?: string;
+}
+
+function StatusCard({ title, value, subtitle, icon: Icon, variant }: StatusCardProps) {
+  const variantMap: Record<string, string> = {
+    success: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300',
+    warning: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300',
+    danger: 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300',
+    neutral: 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300',
+  };
+  return (
+    <div className={`rounded-2xl border p-5 shadow-sm ${variantMap[variant || 'neutral']}`}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-bold uppercase tracking-wider opacity-70">{title}</span>
+        <Icon className="w-4 h-4 opacity-70" />
+      </div>
+      <div className="text-2xl font-bold mb-1">{value}</div>
+      <div className="text-xs font-medium opacity-80">{subtitle}</div>
+    </div>
+  );
 }
 
 function fmtDuration(ms: number) {
@@ -113,24 +141,6 @@ export default function SystemHealthTab({ stats }: { stats: SystemStats | null }
     { label: 'Account Frozen', active: security.accountFrozen, icon: Lock },
   ], [security]);
 
-  const StatusCard = ({ title, value, subtitle, icon: Icon, variant }: any) => {
-    const variantMap: Record<string, string> = {
-      success: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300',
-      warning: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300',
-      danger: 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300',
-      neutral: 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300',
-    };
-    return (
-      <div className={`rounded-2xl border p-5 shadow-sm ${variantMap[variant || 'neutral']}`}>
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-bold uppercase tracking-wider opacity-70">{title}</span>
-          <Icon className="w-4 h-4 opacity-70" />
-        </div>
-        <div className="text-2xl font-bold mb-1">{value}</div>
-        <div className="text-xs font-medium opacity-80">{subtitle}</div>
-      </div>
-    );
-  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5 max-w-[1600px]">

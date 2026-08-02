@@ -65,7 +65,6 @@ export const VIEW_TITLES: Record<string, string> = {
   profile: 'Profile',
   accessibility: 'Accessibility',
   admin: 'Admin Panel',
-  'pitch-deck': 'Pitch Deck',
 };
 
 export const VIEW_DESCRIPTIONS: Record<string, string> = {
@@ -104,7 +103,6 @@ export const VIEW_DESCRIPTIONS: Record<string, string> = {
   'kids-mode': 'Safe money lessons for children.',
   'notification-demo': 'Simulate alerts and push notifications.',
   'innovation-lab': 'World-first prototypes and experiments.',
-  'pitch-deck': 'Judge-facing pitch strategies and closing script.',
 };
 
 // Quick flat links for compact top-bar scenarios
@@ -214,7 +212,6 @@ const innovationGroup: NavGroup = {
     { view: 'fantasy-league', label: 'Fantasy League', icon: 'fa-trophy', description: 'Portfolio fantasy league.' },
     { view: 'boosts', label: 'Boosts', icon: 'fa-rocket', description: 'Rewards and goal accelerators.' },
     { view: 'values-alignment', label: 'Values Alignment', icon: 'fa-heart', description: 'Invest with your values.' },
-    { view: 'pitch-deck', label: 'Pitch Deck', icon: 'fa-trophy', description: 'Winning strategies & closing script.', badge: 'JUDGES' },
   ],
 };
 

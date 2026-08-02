@@ -165,7 +165,7 @@ function playAlertSound() {
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.3);
-  } catch {}
+  } catch { /* ignored */ }
 }
 
 function sendDesktopNotification(title: string, message: string) {
@@ -256,7 +256,7 @@ class AlertService {
           }
         }
       }
-    } catch {}
+    } catch { /* ignored */ }
   }
 
   updateStatus(id: number, status: AlertStatus) {
