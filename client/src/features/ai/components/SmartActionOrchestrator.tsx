@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import CosmosCard from '@/shared/components/ui/CosmosCard';
+import { getPSBFDLadder } from '@/shared/services/psbRates';
 
 /* ═══════════════════════════════════════════════════════════════
    SMART ACTION ORCHESTRATOR — Requirement #6 Advanced Solution
@@ -57,16 +58,17 @@ export default function SmartActionOrchestrator() {
     return { losingInvestments, totalLoss, taxSaving };
   }, [assets, user.taxBracket]);
 
-  // FD laddering
+  // FD laddering (live PSB rates)
   const fdLadder = useMemo(() => {
     const lumpsum = liquidAssets > emergencyFundNeeded ? liquidAssets - emergencyFundNeeded : 0;
     if (lumpsum < 100000) return null;
-    return [
-      { tenure: '1 Year', amount: lumpsum * 0.2, rate: '7.0%' },
-      { tenure: '2 Year', amount: lumpsum * 0.3, rate: '7.3%' },
-      { tenure: '3 Year', amount: lumpsum * 0.3, rate: '7.5%' },
-      { tenure: '5 Year', amount: lumpsum * 0.2, rate: '7.8%' },
-    ];
+    const rungs = getPSBFDLadder();
+    const weights = [0.2, 0.3, 0.3, 0.2];
+    return rungs.map((rung, i) => ({
+      tenure: rung.tenure.replace('Years', 'Yr').replace('Year', 'Yr'),
+      amount: lumpsum * weights[i],
+      rate: `${rung.rate}%`,
+    }));
   }, [liquidAssets, emergencyFundNeeded]);
 
   // Credit card optimizer (simulated)

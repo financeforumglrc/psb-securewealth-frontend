@@ -1,7 +1,7 @@
 /**
  * AI Orchestrator
  * Routes chat requests across configured providers using fallback, fastest-first,
- * ensemble, or cost-aware strategies. Tracks health and implements a simple circuit breaker.
+ * or ensemble strategies. Tracks health and implements a simple circuit breaker.
  */
 
 import type { ProviderConfig, RoutingMode } from '@/shared/services/aiConfig';
@@ -215,50 +215,6 @@ async function ensemble(
   };
 }
 
-const COMPLEX_KEYWORDS = [
-  'retirement',
-  'fire',
-  'portfolio',
-  'rebalance',
-  'tax plan',
-  'estate',
-  'comprehensive',
-  'strategy',
-  'allocation',
-  'monte carlo',
-  'scenario',
-];
-
-function isComplexQuery(message: string): boolean {
-  const lower = message.toLowerCase();
-  return COMPLEX_KEYWORDS.some((k) => lower.includes(k));
-}
-
-async function costAware(
-  providers: ProviderConfig[],
-  message: string,
-  opts: { history?: { user: string; bot: string }[]; userContext?: UserContext }
-): Promise<AIResponse> {
-  const cheapOrder = ['gemini', 'groq', 'openrouter', 'mistral', 'cohere', 'huggingface', 'openai', 'anthropic', 'grok', 'nvidia', 'deepseek'];
-  const complex = isComplexQuery(message);
-
-  const sorted = [...providers].sort((a, b) => {
-    const idxA = cheapOrder.indexOf(a.id);
-    const idxB = cheapOrder.indexOf(b.id);
-    return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-  });
-
-  // For complex queries, promote premium providers to the front
-  if (complex) {
-    const premium = ['openai', 'anthropic', 'grok', 'nvidia', 'deepseek'];
-    const premiumSorted = sorted.filter((p) => premium.includes(p.id));
-    const rest = sorted.filter((p) => !premium.includes(p.id));
-    return fallbackChain([...premiumSorted, ...rest], message, opts);
-  }
-
-  return fallbackChain(sorted, message, opts);
-}
-
 export interface OrchestratorOptions {
   mode?: RoutingMode;
   history?: { user: string; bot: string }[];
@@ -285,8 +241,6 @@ export async function callAI(
       return fastestFirst(providers, message, { history, userContext });
     case 'ensemble':
       return ensemble(providers, message, { history, userContext }, opts.ensembleCount || getEnsembleCount());
-    case 'cost-aware':
-      return costAware(providers, message, { history, userContext });
     case 'fallback':
     default:
       return fallbackChain(providers, message, { history, userContext });

@@ -4,7 +4,6 @@ import TpmAttestation from '@/features/security/components/TpmAttestation';
 import EbpfMonitor from '@/features/security/components/EbpfMonitor';
 import HoneytokenManager from '@/features/security/components/HoneytokenManager';
 import PasskeyAuth from '@/features/security/components/PasskeyAuth';
-import PostQuantumCrypto from '@/features/security/components/PostQuantumCrypto';
 import BehavioralBiometrics from '@/features/protection/components/BehavioralBiometrics';
 import DecentralizedId from '@/features/security/components/DecentralizedId';
 import TransactionTrap from '@/features/security/components/TransactionTrap';
@@ -15,7 +14,7 @@ import DeviceFingerprintPanel from '@/features/security/components/DeviceFingerp
 const LAYER_GROUPS = [
   { title: 'Hardware Root of Trust', subtitle: 'TPM attestation + browser threat monitor', components: [<TpmAttestation key="tpm" />, <EbpfMonitor key="ebpf" />] },
   { title: 'Identity & Access', subtitle: 'Decoy assets + FIDO2 passkeys', components: [<HoneytokenManager key="honey" />, <PasskeyAuth key="passkey" />] },
-  { title: 'Quantum & Behavior', subtitle: 'ML-KEM-768 + biometric anomaly', components: [<PostQuantumCrypto key="pq" />, <BehavioralBiometrics key="bio" />] },
+  { title: 'Behavior & Anomaly', subtitle: 'Biometric anomaly detection + continuous trust', components: [<BehavioralBiometrics key="bio" />, <DeviceFingerprintPanel key="fp" />] },
   { title: 'Deception & DID', subtitle: 'Phishing trap + verifiable credentials', components: [<DecentralizedId key="did" />, <TransactionTrap key="trap" />] },
   { title: 'Immutable Audit', subtitle: 'Secure enclave + blockchain ledger', components: [<SecureEnclaveCheck key="enclave" />, <BlockchainAudit key="chain" />] },
 ];
@@ -29,7 +28,7 @@ export default function SecurityBeastView() {
           <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <i className="fas fa-dragon text-rose-500" /> Security Beast
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">10-layer unbreakable security — zero trust, hardware attestation, AI deception, post-quantum crypto</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">9-layer unbreakable security — zero trust, hardware attestation, AI deception, immutable audit</p>
         </div>
         <span className="text-[10px] px-2 py-1 bg-rose-500/10 text-rose-600 rounded-full font-medium">
           <i className="fas fa-bolt mr-1" />Active Defense
@@ -38,11 +37,6 @@ export default function SecurityBeastView() {
 
       {/* Score Dashboard */}
       <SecurityScoreDashboard />
-
-      {/* Device Fingerprint */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-        <DeviceFingerprintPanel />
-      </motion.div>
 
       {/* Layer Groups */}
       {LAYER_GROUPS.map((group, gi) => (

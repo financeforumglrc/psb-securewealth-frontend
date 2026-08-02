@@ -14,7 +14,7 @@ export interface ProviderConfig {
   temperature: number;
 }
 
-export type RoutingMode = 'fallback' | 'fastest' | 'ensemble' | 'cost-aware';
+export type RoutingMode = 'fallback' | 'fastest' | 'ensemble';
 
 interface AIStore {
   providers: ProviderConfig[];
@@ -222,7 +222,9 @@ export function setRoutingMode(mode: RoutingMode) {
 }
 
 export function getRoutingMode(): RoutingMode {
-  return getAIStore().mode;
+  const mode = getAIStore().mode;
+  if ((mode as string) === 'cost-aware') return 'fallback';
+  return mode;
 }
 
 export function setEnsembleCount(count: number) {

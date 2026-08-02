@@ -18,6 +18,7 @@ import {
 import type { AIResponse } from '@/shared/services/aiRouter';
 import { speak, isSpeechSupported } from '@/shared/services/voiceService';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { getPSBFDLadder, getBestPSBFDTenure, formatPSBFDInfo } from '@/shared/services/psbRates';
 
 /* ═══════════════════════════════════════════════════════════════
    TYPEWRITER HOOK — ChatGPT-style text reveal
@@ -553,6 +554,66 @@ Where P = monthly SIP, r = monthly return rate, n = number of months`,
           { label: '15Y', value: Math.round(fv15), color: '#2E7D32' },
           { label: '20Y', value: Math.round(fv20), color: '#1B5E20' },
         ],
+      };
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       2b. PSB FIXED DEPOSIT RATES & LADDER
+       ═══════════════════════════════════════════════════════ */
+    if (lower.includes('fd') || lower.includes('fixed deposit') || lower.includes('psb fd') || lower.includes('deposit rate') || lower.includes('fd rates')) {
+      const age = user.age || 35;
+      const isSenior = age >= 60;
+      const ladder = getPSBFDLadder(isSenior);
+      const best = getBestPSBFDTenure(isSenior);
+      const bestRate = isSenior ? best.senior : best.general;
+      const lumpSum = Math.max(100000, user.monthlySavings * 6);
+      const weights = [0.2, 0.3, 0.3, 0.2];
+      const weightedRate = ladder.reduce((sum, rung, i) => sum + rung.rate * weights[i], 0);
+      const annualInterest = lumpSum * (weightedRate / 100);
+
+      return {
+        id: Date.now().toString(), role: 'bot',
+        text: `### PSB Fixed Deposit Rates (Punjab & Sind Bank)
+
+${formatPSBFDInfo()}
+
+### Best Rate
+**${bestRate}% p.a.** for **${best.tenure}** ${isSenior ? '(senior citizen)' : '(general public)'}
+
+### Suggested FD Ladder for ₹${(lumpSum / 1e5).toFixed(1)}L
+${ladder.map((rung, i) => `${i + 1}. **${rung.tenure}** @ **${rung.rate}%** → ₹${Math.round(lumpSum * weights[i]).toLocaleString()}`).join('\n')}
+
+*Laddering splits your corpus across tenures so you get liquidity every year while locking the highest rates.*
+
+### Estimated Returns
+- Average blended rate: **${weightedRate.toFixed(2)}%**
+- Annual interest on ₹${(lumpSum / 1e5).toFixed(1)}L: **₹${Math.round(annualInterest).toLocaleString()}**
+- 5-year maturity value: **₹${Math.round(lumpSum * Math.pow(1 + weightedRate / 100, 5)).toLocaleString()}** (compounded annually)
+
+### Tax Note
+Interest above ₹40,000/year is subject to TDS @ 10% (₹50,000 for senior citizens). Submit Form 15G/15H if eligible.`,
+        time: now, confidence: 98,
+        reasoning: [
+          { step: 1, title: 'Fetch PSB Rate Card', description: 'Loaded latest published Punjab & Sind Bank FD rates for general and senior citizens.', formula: 'PSB public rate card', result: `${bestRate}% best rate` },
+          { step: 2, title: 'Build Ladder', description: 'Split deployable corpus across 1-2-3-5 year buckets to balance liquidity and yield.', formula: '20% / 30% / 30% / 20%', result: `${weightedRate.toFixed(2)}% weighted blended rate` },
+          { step: 3, title: 'Project Maturity', description: 'Applied compound interest formula to blended rate.', formula: `A = P × (1 + r)ⁿ`, result: `₹${Math.round(lumpSum * Math.pow(1 + weightedRate / 100, 5)).toLocaleString()}` },
+        ],
+        evidence: [
+          { label: 'Best Rate', value: `${bestRate}%`, source: 'PSB FD Rate Card', icon: 'fa-percent' },
+          { label: 'Best Tenure', value: best.tenure, source: 'PSB FD Rate Card', icon: 'fa-calendar' },
+          { label: 'Blended Rate', value: `${weightedRate.toFixed(2)}%`, source: 'Ladder Weighted Avg', icon: 'fa-calculator' },
+          { label: 'Lump Sum', value: `₹${(lumpSum / 1e5).toFixed(1)}L`, source: 'Deployable Corpus', icon: 'fa-wallet' },
+          { label: '5Y Value', value: `₹${Math.round(lumpSum * Math.pow(1 + weightedRate / 100, 5)).toLocaleString()}`, source: 'Compound Interest', icon: 'fa-coins' },
+        ],
+        citations: [
+          { id: 'PSB-FD', text: 'Punjab & Sind Bank — Fixed Deposit Interest Rates (General & Senior Citizens)' },
+          { id: 'RBI-TDS', text: 'RBI — TDS on Interest Income (Section 194A) and Form 15G/15H provisions' },
+        ],
+        chartData: ladder.map((rung, i) => ({
+          label: rung.tenure,
+          value: rung.rate,
+          color: ['#1B5E20', '#2E7D32', '#43A047', '#66BB6A'][i],
+        })),
       };
     }
 
@@ -1632,7 +1693,7 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
           <div className="mb-5 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
             <label className="text-xs font-bold text-slate-700 dark:text-slate-200 mb-2 block">Routing Strategy</label>
             <div className="flex flex-wrap gap-2">
-              {(['fallback', 'fastest', 'ensemble', 'cost-aware'] as RoutingMode[]).map((m) => (
+              {(['fallback', 'fastest', 'ensemble'] as RoutingMode[]).map((m) => (
                 <button
                   key={m}
                   onClick={() => handleModeChange(m)}
@@ -1645,7 +1706,6 @@ export default function WealthChat({ initialCompact = false }: WealthChatProps) 
                   {m === 'fallback' && 'Fallback Chain'}
                   {m === 'fastest' && 'Fastest First'}
                   {m === 'ensemble' && 'Ensemble'}
-                  {m === 'cost-aware' && 'Cost Aware'}
                 </button>
               ))}
             </div>

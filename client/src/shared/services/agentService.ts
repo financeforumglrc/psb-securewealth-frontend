@@ -44,7 +44,7 @@ export async function simulateCancellation(subscriptionName: string): Promise<Ag
   try {
     const result = await callAI(
       `Write one friendly sentence confirming cancellation of ${subscriptionName} subscription and what the user should expect next.`,
-      { mode: 'cost-aware' }
+      { mode: 'fallback' }
     );
     message = result.text;
   } catch {
@@ -77,7 +77,7 @@ export async function simulateNegotiation(subscriptionName: string): Promise<Age
   try {
     const result = await callAI(
       `Write one sentence summarizing the negotiation outcome for ${subscriptionName}. Success: ${success}.`,
-      { mode: 'cost-aware' }
+      { mode: 'fallback' }
     );
     message = result.text;
   } catch {

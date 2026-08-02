@@ -28,7 +28,7 @@ const SEGMENTS: CustomerSegment[] = [
       'Priority support',
       'Advanced AI features',
       'Cross-device approval',
-      'Quantum security',
+      'Corporate-grade security',
     ],
     benefits: [
       'Higher transaction limits',
@@ -44,12 +44,12 @@ const SEGMENTS: CustomerSegment[] = [
     icon: UserPlus,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
-    description: 'New customers onboarding with PSB',
+    description: 'New customers onboarding with PSB — AI builds your baseline from declared profile',
     features: [
-      'Basic feature access',
-      'Guided onboarding',
-      'Educational content',
-      'Simple AI assistant',
+      'AI onboarding engine',
+      'Goal-based baseline planning',
+      'Guided tutorials',
+      'Income-derived risk profiling',
       'Standard security',
       'Basic fraud protection',
     ],
@@ -57,7 +57,7 @@ const SEGMENTS: CustomerSegment[] = [
       'Welcome offers',
       'Zero balance benefits',
       'Simplified UI',
-      'Step-by-step guidance',
+      'No-history AI suggestions',
       'Trust building program',
     ],
   },
@@ -67,6 +67,7 @@ export default function ETBNTBSegmentation() {
   const [selectedSegment, setSelectedSegment] = useState<string>('etb');
   const user = useWealthStore((s) => s.user);
   const assets = useWealthStore((s) => s.assets);
+  const goals = useWealthStore((s) => s.goals);
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
 
   // Determine segment based on account age or net worth (simplified)
@@ -182,21 +183,51 @@ export default function ETBNTBSegmentation() {
                 <div>• Crisis scenario simulation</div>
                 <div>• Personalized AI recommendations</div>
                 <div>• Multi-device sync</div>
-                <div>• Quantum-encrypted data</div>
+                <div>• AES-256 encrypted data vault</div>
               </>
             )}
             {selectedSegment === 'ntb' && (
               <>
-                <div>• Basic financial planning</div>
-                <div>• Goal setting guidance</div>
-                <div>• Educational content</div>
-                <div>• Simple AI assistant</div>
-                <div>• Step-by-step tutorials</div>
-                <div>• Trust building program</div>
+                <div>• Declared income + age → risk baseline</div>
+                <div>• Goal templates → personalized SIP</div>
+                <div>• Cashflow inference → 50-30-20 budget</div>
+                <div>• AI onboarding assistant</div>
+                <div>• Progressive feature unlock</div>
+                <div>• First-30-day trust journey</div>
               </>
             )}
           </div>
         </div>
+
+        {/* AI Onboarding Engine — NTB no-history case */}
+        {selectedSegment === 'ntb' && (
+          <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
+            <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+              <i className="fas fa-wand-magic-sparkles text-blue-600" /> AI Onboarding Engine — No Transaction History
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+              Bhavishya AI still builds a personalised plan using your declared profile. It never needs historical transactions to start.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-400">
+              <div className="p-2.5 bg-white/60 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-blue-700 dark:text-blue-300 block mb-1">Age → Risk Baseline</span>
+                Age {user.age || 'not set'} mapped to {user.riskProfile} profile.
+              </div>
+              <div className="p-2.5 bg-white/60 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-blue-700 dark:text-blue-300 block mb-1">Income → 50-30-20 Budget</span>
+                Needs ₹{Math.round((user.monthlyIncome || 0) * 0.5).toLocaleString()} · Wants ₹{Math.round((user.monthlyIncome || 0) * 0.3).toLocaleString()} · Saves ₹{Math.round((user.monthlyIncome || 0) * 0.2).toLocaleString()}
+              </div>
+              <div className="p-2.5 bg-white/60 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-blue-700 dark:text-blue-300 block mb-1">Income → Emergency Fund Target</span>
+                6-month target: ₹{Math.round((user.monthlyIncome || 0) * 6).toLocaleString()}
+              </div>
+              <div className="p-2.5 bg-white/60 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-blue-700 dark:text-blue-300 block mb-1">Goals → First SIP</span>
+                {goals.length > 0 ? `Goal "${goals[0].name}" → start SIP ₹${Math.round((user.monthlySavings || (user.monthlyIncome || 0) * 0.2) * 0.5).toLocaleString()}/mo` : 'No goals set yet — AI suggests starting an Emergency Fund SIP'}
+              </div>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Value Proposition */}

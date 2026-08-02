@@ -68,7 +68,7 @@ function localAskTwin(question: string, context: TwinContext): TwinMessage {
 export async function askTwin(question: string, context: TwinContext): Promise<TwinMessage> {
   try {
     const result = await callAI(question, {
-      mode: 'cost-aware',
+      mode: 'fallback',
       userContext: {
         income: context.monthlyIncome,
         savings: context.monthlySavings,
@@ -99,7 +99,7 @@ export async function generateMonthSummary(context: TwinContext): Promise<string
         riskAppetite: 'moderate',
       }
     );
-    const result = await callAI(prompt, { mode: 'cost-aware' });
+    const result = await callAI(prompt, { mode: 'fallback' });
     return result.text;
   } catch {
     return new Promise((resolve) => {

@@ -8,6 +8,8 @@ import KhataOverview from './KhataOverview';
 import GSTEstimator from './GSTEstimator';
 import InvoiceTracker from './InvoiceTracker';
 import VendorPaymentPlanner from './VendorPaymentPlanner';
+import QuantumKeyExchange from '@/features/security/components/QuantumKeyExchange';
+import QuantumDocumentVault from '@/features/security/components/QuantumDocumentVault';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: 'fa-grid-2' },
@@ -17,6 +19,8 @@ const TABS = [
   { id: 'gst', label: 'GST Estimator', icon: 'fa-calculator' },
   { id: 'invoices', label: 'Invoices', icon: 'fa-file-invoice-dollar' },
   { id: 'vendors', label: 'Vendor Payments', icon: 'fa-handshake' },
+  { id: 'quantum-key', label: 'Quantum Key Exchange', icon: 'fa-atom' },
+  { id: 'quantum-vault', label: 'Quantum Vault', icon: 'fa-vault' },
 ];
 
 export default function SMEDashboard() {
@@ -106,6 +110,8 @@ export default function SMEDashboard() {
         {activeTab === 'gst' && <GSTEstimator />}
         {activeTab === 'invoices' && <InvoiceTracker />}
         {activeTab === 'vendors' && <VendorPaymentPlanner />}
+        {activeTab === 'quantum-key' && <QuantumKeyExchange />}
+        {activeTab === 'quantum-vault' && <QuantumDocumentVault />}
       </motion.div>
     </div>
   );

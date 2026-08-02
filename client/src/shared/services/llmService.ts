@@ -122,7 +122,7 @@ function localMonthlyNarrative(metrics: {
 
 export async function explainLikeImFive(term: string): Promise<ELI5Response> {
   try {
-    const result = await callAI(buildELI5Prompt(term), { mode: 'cost-aware' });
+    const result = await callAI(buildELI5Prompt(term), { mode: 'fallback' });
     const parsed = JSON.parse(result.text);
     if (parsed?.term && parsed?.explanation && parsed?.analogy) {
       return parsed as ELI5Response;
@@ -145,7 +145,7 @@ export async function generateMonthlyNarrative(metrics: {
   fraudBlocked: number;
 }): Promise<MonthlyNarrative> {
   try {
-    const result = await callAI(buildMonthlyNarrativePrompt(metrics), { mode: 'cost-aware' });
+    const result = await callAI(buildMonthlyNarrativePrompt(metrics), { mode: 'fallback' });
     const parsed = JSON.parse(result.text);
     if (parsed?.headline && Array.isArray(parsed?.paragraphs) && parsed?.emojiMood && parsed?.highlight) {
       return parsed as MonthlyNarrative;
