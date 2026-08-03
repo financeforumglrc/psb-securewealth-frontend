@@ -90,7 +90,8 @@ lint/tmp/
 *.hprof
 
 # Cordova plugins for Capacitor
-capacitor-cordova-android-plugins
+# NOTE: kept tracked so CI can build the APK without running cap update
+# capacitor-cordova-android-plugins
 
 # Copied web assets
 app/src/main/assets/public
