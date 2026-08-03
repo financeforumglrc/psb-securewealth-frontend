@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, CheckCircle2, XCircle, Trash2, Plus, User, Shield, ScanFace } from 'lucide-react';
+import { Camera, CheckCircle2, XCircle, Trash2, Plus, User, Shield, ScanFace, RotateCcw } from 'lucide-react';
 import { detectFace, euclideanDistance } from '@/shared/lib/faceAuth';
 
 interface RegisteredFace {
@@ -14,6 +14,10 @@ interface RegisteredFace {
 const FACE_STORAGE_KEY = 'sw_registered_faces';
 const MIN_QUALITY = 0.72;
 const AUTO_CAPTURE_MS = 1200;
+const GUIDE_RX = 25;
+const GUIDE_RY = 35;
+const RING_R = 38;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R;
 
 function loadFaces(): RegisteredFace[] {
   try {
@@ -42,51 +46,24 @@ function calculateQuality(
   const videoArea = videoWidth * videoHeight;
   const sizeRatio = faceArea / videoArea;
 
-  // Ideal face occupies 18–35% of the frame
+  // Ideal face occupies 15–30% of the frame
   let sizeScore = 0;
   if (sizeRatio >= 0.10 && sizeRatio <= 0.40) {
-    sizeScore = 1 - Math.abs(sizeRatio - 0.25) / 0.25;
+    sizeScore = 1 - Math.abs(sizeRatio - 0.20) / 0.20;
   } else if (sizeRatio < 0.10) {
     sizeScore = Math.max(0, sizeRatio / 0.10);
   } else {
     sizeScore = Math.max(0, 1 - (sizeRatio - 0.40) / 0.40);
   }
 
-  // Center position
   const centerX = box.x + box.width / 2;
   const centerY = box.y + box.height / 2;
   const centerScoreX = 1 - Math.min(1, Math.abs(centerX - videoWidth / 2) / (videoWidth / 3));
   const centerScoreY = 1 - Math.min(1, Math.abs(centerY - videoHeight / 2) / (videoHeight / 3));
   const centerScore = (centerScoreX + centerScoreY) / 2;
-
-  // Detection confidence
   const confidenceScore = Math.max(0, Math.min(1, score));
 
   return Math.max(0, Math.min(1, sizeScore * 0.45 + centerScore * 0.35 + confidenceScore * 0.2));
-}
-
-/** Map an intrinsic video coordinate box to a CSS-mirrored display overlay. */
-function mapFaceBoxToOverlay(
-  box: { x: number; y: number; width: number; height: number },
-  videoWidth: number,
-  videoHeight: number,
-  overlayWidth: number,
-  overlayHeight: number
-) {
-  const scale = Math.max(overlayWidth / videoWidth, overlayHeight / videoHeight);
-  const drawW = videoWidth * scale;
-  const drawH = videoHeight * scale;
-  const offsetX = (overlayWidth - drawW) / 2;
-  const offsetY = (overlayHeight - drawH) / 2;
-
-  const x = box.x * scale + offsetX;
-  const y = box.y * scale + offsetY;
-  const w = box.width * scale;
-  const h = box.height * scale;
-
-  // Mirror because the video is flipped via CSS
-  const mirroredX = overlayWidth - (x + w);
-  return { x: mirroredX, y, w, h };
 }
 
 export default function FaceIDSettings() {
@@ -95,104 +72,26 @@ export default function FaceIDSettings() {
   const [registerName, setRegisterName] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'scanning' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  const [faceBox, setFaceBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [quality, setQuality] = useState(0);
-  const [cameraReady, setCameraReady] = useState(false);
   const [tooClose, setTooClose] = useState(false);
+  const [faceDetected, setFaceDetected] = useState(false);
   const [captureProgress, setCaptureProgress] = useState(0);
+  const [cameraReady, setCameraReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const rafRef = useRef<number | null>(null);
   const captureStartRef = useRef<number | null>(null);
-
-  const drawOverlay = useCallback(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) {
-      rafRef.current = requestAnimationFrame(drawOverlay);
-      return;
-    }
-
-    const rect = container.getBoundingClientRect();
-    const width = Math.round(rect.width);
-    const height = Math.round(rect.height);
-
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-    }
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.clearRect(0, 0, width, height);
-
-    const minDim = Math.min(width, height);
-    const ovalW = minDim * 0.55;
-    const ovalH = minDim * 0.70;
-    const cx = width / 2;
-    const cy = height / 2;
-
-    // Draw a darkened mask with a clear oval cut-out for the guide
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fillRect(0, 0, width, height);
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, ovalW / 2, ovalH / 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // Guide oval border
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, ovalW / 2, ovalH / 2, 0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Face box + status
-    if (faceBox && video && video.videoWidth && video.videoHeight) {
-      const { x, y, w, h } = mapFaceBoxToOverlay(faceBox, video.videoWidth, video.videoHeight, width, height);
-      const isGood = quality >= MIN_QUALITY && !tooClose;
-      ctx.strokeStyle = isGood ? '#10B981' : tooClose ? '#EF4444' : '#F59E0B';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(x, y, w, h);
-
-      // Label
-      const label = isGood ? 'HOLD STEADY' : tooClose ? 'MOVE BACK' : 'CENTER FACE';
-      ctx.font = 'bold 13px Inter, sans-serif';
-      const textWidth = ctx.measureText(label).width;
-      const pad = 8;
-      ctx.fillStyle = isGood ? '#10B981' : tooClose ? '#EF4444' : '#F59E0B';
-      ctx.fillRect(x, y - 28, textWidth + pad * 2, 26);
-      ctx.fillStyle = '#000';
-      ctx.fillText(label, x + pad, y - 9);
-    }
-
-    // Auto-capture progress ring around the oval
-    if (captureProgress > 0 && quality >= MIN_QUALITY) {
-      ctx.strokeStyle = '#10B981';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, ovalW / 2 + 8, ovalH / 2 + 8, 0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * captureProgress);
-      ctx.stroke();
-    }
-
-    rafRef.current = requestAnimationFrame(drawOverlay);
-  }, [faceBox, quality, tooClose, captureProgress]);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopCamera = useCallback(() => {
     if (detectionIntervalRef.current) {
       clearInterval(detectionIntervalRef.current);
       detectionIntervalRef.current = null;
     }
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
@@ -201,69 +100,73 @@ export default function FaceIDSettings() {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    setFaceBox(null);
     setQuality(0);
-    setCameraReady(false);
     setTooClose(false);
+    setFaceDetected(false);
     setCaptureProgress(0);
+    setCameraReady(false);
     captureStartRef.current = null;
   }, []);
 
   const startCamera = useCallback(async () => {
     stopCamera();
 
-    const constraints: MediaStreamConstraints = {
-      video: {
-        facingMode: 'user',
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        frameRate: { ideal: 30 },
-      },
-      audio: false,
+    const tryGetMedia = async (constraints: MediaStreamConstraints): Promise<MediaStream> => {
+      return navigator.mediaDevices.getUserMedia(constraints);
     };
 
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      stream = await tryGetMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+        audio: false,
+      });
     } catch {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+        stream = await tryGetMedia({
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
           audio: false,
         });
       } catch {
         try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-            audio: false,
-          });
+          stream = await tryGetMedia({ video: { facingMode: 'user' }, audio: false });
         } catch {
           try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            stream = await tryGetMedia({ video: true, audio: false });
           } catch (err) {
-            setStatus('error');
-            setMessage('Camera access denied. Allow camera permission and use HTTPS. Close any other app using the camera.');
-            setRegistering(false);
-            return false;
+            throw err;
           }
         }
       }
     }
 
     streamRef.current = stream;
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
-      videoRef.current.muted = true;
-      videoRef.current.playsInline = true;
-      videoRef.current.setAttribute('playsinline', 'true');
-      videoRef.current.setAttribute('webkit-playsinline', 'true');
+    const video = videoRef.current;
+    if (!video) return false;
 
+    video.srcObject = stream;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
+    video.autoplay = true;
+
+    try {
+      await video.play();
+    } catch (playErr) {
+      // Some browsers block play until the user gesture is fully resolved.
       try {
-        await videoRef.current.play();
+        await new Promise<void>((resolve, reject) => {
+          const onPlaying = () => {
+            video.removeEventListener('playing', onPlaying);
+            resolve();
+          };
+          video.addEventListener('playing', onPlaying);
+          video.play().catch(reject);
+          setTimeout(() => reject(new Error('play timeout')), 2500);
+        });
       } catch {
-        setStatus('error');
-        setMessage('Camera started but video playback failed. Please try again.');
-        return false;
+        throw playErr;
       }
     }
 
@@ -271,67 +174,18 @@ export default function FaceIDSettings() {
     return true;
   }, [stopCamera]);
 
-  const detectLoop = useCallback(async () => {
+  const handleRegister = useCallback(async () => {
     const video = videoRef.current;
-    if (!video || video.readyState < 2) return;
-
-    try {
-      const result = await detectFace(video);
-      if (result.detected && result.box && result.descriptor) {
-        const q = calculateQuality(
-          result.box,
-          video.videoWidth || 640,
-          video.videoHeight || 480,
-          result.score || 0
-        );
-        const faceArea = result.box.width * result.box.height;
-        const videoArea = (video.videoWidth || 640) * (video.videoHeight || 480);
-        setTooClose(faceArea / videoArea > 0.45);
-        setFaceBox(result.box);
-        setQuality(q);
-      } else {
-        setFaceBox(null);
-        setQuality(0);
-        setTooClose(false);
-      }
-    } catch {
-      setFaceBox(null);
-      setQuality(0);
-      setTooClose(false);
-    }
-  }, []);
-
-  const handleStartRegistration = async () => {
-    if (!registerName.trim()) {
-      setMessage('Please enter a name for this face.');
-      return;
-    }
-
-    setRegistering(true);
-    setStatus('loading');
-    setMessage('Loading face recognition models…');
-    setCaptureProgress(0);
-
-    const cameraStarted = await startCamera();
-    if (!cameraStarted) return;
-
-    setStatus('scanning');
-    setMessage('Position your face inside the oval. Hold steady when the box turns green.');
-
-    detectionIntervalRef.current = setInterval(detectLoop, 250);
-    rafRef.current = requestAnimationFrame(drawOverlay);
-  };
-
-  const handleRegister = async () => {
-    const video = videoRef.current;
-    if (!video || !faceBox || quality < MIN_QUALITY || tooClose) {
+    if (!video || !faceDetected || quality < MIN_QUALITY || tooClose) {
       setStatus('error');
-      setMessage('No clear face detected. Move back, adjust lighting and position.');
+      setMessage('Face not clear. Move back, adjust lighting and center your face.');
       return;
     }
 
     setStatus('loading');
     setMessage('Capturing HD face descriptor…');
+    setCaptureProgress(0);
+    captureStartRef.current = null;
 
     try {
       const result = await detectFace(video);
@@ -376,18 +230,117 @@ export default function FaceIDSettings() {
       setStatus('error');
       setMessage('Registration failed. Please try again.');
     }
+  }, [faceDetected, quality, tooClose, faces, registerName, stopCamera]);
+
+  const detectLoop = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2 || video.paused) return;
+
+    try {
+      const result = await detectFace(video);
+      if (result.detected && result.box && result.descriptor) {
+        const q = calculateQuality(result.box, video.videoWidth || 640, video.videoHeight || 480, result.score || 0);
+        const faceArea = result.box.width * result.box.height;
+        const videoArea = (video.videoWidth || 640) * (video.videoHeight || 480);
+        setTooClose(faceArea / videoArea > 0.45);
+        setQuality(q);
+        setFaceDetected(true);
+      } else {
+        setFaceDetected(false);
+        setQuality(0);
+        setTooClose(false);
+      }
+    } catch {
+      setFaceDetected(false);
+      setQuality(0);
+      setTooClose(false);
+    }
+  }, []);
+
+  const handleStartRegistration = async () => {
+    if (!registerName.trim()) {
+      setMessage('Please enter a name for this face.');
+      return;
+    }
+
+    setRegistering(true);
+    setStatus('loading');
+    setMessage('Loading face recognition models…');
+    setCaptureProgress(0);
+
+    try {
+      const cameraStarted = await startCamera();
+      if (!cameraStarted) {
+        setStatus('error');
+        setMessage('Camera could not start. Make sure you have granted camera permission and are on HTTPS.');
+        return;
+      }
+      setStatus('scanning');
+      setMessage('Position your face inside the oval. Hold steady when the ring completes.');
+      detectionIntervalRef.current = setInterval(detectLoop, 200);
+    } catch (err) {
+      setStatus('error');
+      setMessage('Camera access denied or unavailable. Close any other app using the camera and allow permission.');
+      setRegistering(false);
+      stopCamera();
+    }
+  };
+
+  const handleRetryCamera = async () => {
+    if (!registerName.trim()) {
+      setMessage('Please enter a name first.');
+      return;
+    }
+    setStatus('loading');
+    setMessage('Retrying camera…');
+    try {
+      const started = await startCamera();
+      if (!started) {
+        setStatus('error');
+        setMessage('Camera still unavailable.');
+        return;
+      }
+      setStatus('scanning');
+      setMessage('Camera ready. Position your face inside the oval.');
+      detectionIntervalRef.current = setInterval(detectLoop, 200);
+    } catch {
+      setStatus('error');
+      setMessage('Camera retry failed.');
+    }
+  };
+
+  const handleCancel = () => {
+    stopCamera();
+    setRegistering(false);
+    setStatus('idle');
+    setMessage('');
+    setRegisterName('');
+    setCaptureProgress(0);
+  };
+
+  const handleDelete = (id: string) => {
+    const updatedFaces = faces.filter((f) => f.id !== id);
+    setFaces(updatedFaces);
+    saveFaces(updatedFaces);
   };
 
   // Auto-capture when face is stable and good quality
   useEffect(() => {
-    if (!registering || !cameraReady || !faceBox || quality < MIN_QUALITY || tooClose) {
+    if (!registering || !cameraReady || !faceDetected || quality < MIN_QUALITY || tooClose) {
       captureStartRef.current = null;
       setCaptureProgress(0);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
       return;
     }
-    if (captureStartRef.current === null) captureStartRef.current = Date.now();
 
-    const id = setInterval(() => {
+    if (captureStartRef.current === null) {
+      captureStartRef.current = Date.now();
+    }
+
+    progressIntervalRef.current = setInterval(() => {
       const elapsed = Date.now() - (captureStartRef.current || Date.now());
       const progress = Math.min(1, elapsed / AUTO_CAPTURE_MS);
       setCaptureProgress(progress);
@@ -396,18 +349,31 @@ export default function FaceIDSettings() {
       }
     }, 50);
 
-    return () => clearInterval(id);
-  }, [registering, cameraReady, faceBox, quality, tooClose]);
-
-  const handleDelete = (id: string) => {
-    const updatedFaces = faces.filter((f) => f.id !== id);
-    setFaces(updatedFaces);
-    saveFaces(updatedFaces);
-  };
+    return () => {
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    };
+  }, [registering, cameraReady, faceDetected, quality, tooClose, handleRegister]);
 
   useEffect(() => {
     return () => stopCamera();
   }, [stopCamera]);
+
+  const instruction = !cameraReady
+    ? 'Starting camera…'
+    : status === 'success'
+    ? 'Registered'
+    : status === 'error'
+    ? message || 'Failed'
+    : tooClose
+    ? 'Move back — face is too close'
+    : faceDetected && quality < MIN_QUALITY
+    ? 'Center your face in the oval'
+    : faceDetected
+    ? 'Hold steady…'
+    : 'Position your face inside the oval';
+
+  const statusColor =
+    status === 'success' ? 'text-emerald-500' : status === 'error' ? 'text-rose-500' : tooClose ? 'text-rose-500' : faceDetected && quality >= MIN_QUALITY ? 'text-emerald-500' : 'text-amber-500';
 
   return (
     <div className="space-y-4">
@@ -486,24 +452,67 @@ export default function FaceIDSettings() {
           </div>
         ) : (
           <div className="space-y-3">
-            <div
-              ref={containerRef}
-              className="relative rounded-xl overflow-hidden bg-black aspect-[4/3]"
-            >
-              {/* Live camera feed — visible, not hidden */}
+            <div className="relative rounded-xl overflow-hidden bg-black aspect-[4/3] max-w-md mx-auto max-h-[420px]">
+              {/* Live camera feed — object-contain so the whole frame is visible */}
               <video
                 ref={videoRef}
-                className="absolute inset-0 w-full h-full object-cover transform -scale-x-100"
+                className="absolute inset-0 w-full h-full object-contain transform -scale-x-100 bg-black"
                 playsInline
                 muted
                 autoPlay
                 onLoadedMetadata={() => setCameraReady(true)}
               />
-              {/* Overlay canvas for guide + face box */}
-              <canvas
-                ref={canvasRef}
+
+              {/* SVG overlay: dark mask with clear oval + guide + progress ring */}
+              <svg
                 className="absolute inset-0 w-full h-full pointer-events-none"
-              />
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <mask id="faceOvalMask">
+                    <rect width="100" height="100" fill="white" />
+                    <ellipse cx="50" cy="50" rx={GUIDE_RX} ry={GUIDE_RY} fill="black" />
+                  </mask>
+                </defs>
+
+                {/* Dark overlay with oval cutout */}
+                <rect width="100" height="100" fill="rgba(0,0,0,0.45)" mask="url(#faceOvalMask)" />
+
+                {/* Oval guide border */}
+                <ellipse
+                  cx="50"
+                  cy="50"
+                  rx={GUIDE_RX}
+                  ry={GUIDE_RY}
+                  fill="none"
+                  stroke={tooClose ? '#EF4444' : faceDetected && quality >= MIN_QUALITY ? '#10B981' : 'rgba(255,255,255,0.7)'}
+                  strokeWidth="1.2"
+                />
+
+                {/* Auto-capture progress ring */}
+                {captureProgress > 0 && (
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={RING_R}
+                    fill="none"
+                    stroke="#10B981"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeDasharray={`${RING_CIRCUMFERENCE * captureProgress} ${RING_CIRCUMFERENCE}`}
+                    transform="rotate(-90 50 50)"
+                  />
+                )}
+              </svg>
+
+              {/* Instruction pill */}
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold whitespace-nowrap">
+                <span className={statusColor}>{instruction}</span>
+                {cameraReady && faceDetected && (
+                  <span className="ml-2 opacity-90">{Math.round(quality * 100)}%</span>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
@@ -516,35 +525,34 @@ export default function FaceIDSettings() {
                   <span className="text-rose-600 font-semibold flex items-center gap-1">
                     <XCircle className="w-3.5 h-3.5" /> Failed
                   </span>
-                ) : faceBox ? (
-                  <span>
-                    Quality:{' '}
-                    <strong className={quality >= MIN_QUALITY && !tooClose ? 'text-emerald-600' : 'text-amber-500'}>
-                      {Math.round(quality * 100)}%
-                    </strong>
-                    {tooClose && <span className="text-rose-500 ml-2">Move back</span>}
-                  </span>
                 ) : (
-                  <span>Searching for face…</span>
+                  <span className="flex items-center gap-1">
+                    <span className={`w-2 h-2 rounded-full ${cameraReady ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                    {cameraReady ? 'Camera live' : 'Camera starting…'}
+                  </span>
                 )}
               </div>
-              <button
-                onClick={() => {
-                  stopCamera();
-                  setRegistering(false);
-                  setStatus('idle');
-                  setMessage('');
-                  setCaptureProgress(0);
-                }}
-                className="text-xs text-slate-500 hover:text-slate-700"
-              >
-                Cancel
-              </button>
+              <div className="flex items-center gap-2">
+                {status === 'error' && (
+                  <button
+                    onClick={handleRetryCamera}
+                    className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-semibold"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Retry
+                  </button>
+                )}
+                <button
+                  onClick={handleCancel}
+                  className="text-xs text-slate-500 hover:text-slate-700"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
 
             <button
               onClick={handleRegister}
-              disabled={!faceBox || quality < MIN_QUALITY || tooClose}
+              disabled={!faceDetected || quality < MIN_QUALITY || tooClose}
               className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
             >
               <Shield className="w-4 h-4" />
@@ -574,7 +582,7 @@ export default function FaceIDSettings() {
           <li>• Position your face inside the oval guide</li>
           <li>• Keep a neutral expression and look at the camera</li>
           <li>• Remove sunglasses / masks / hats</li>
-          <li>• Hold steady for 1–2 seconds after the box turns green</li>
+          <li>• Hold steady for 1–2 seconds after the ring turns green</li>
         </ul>
       </div>
     </div>

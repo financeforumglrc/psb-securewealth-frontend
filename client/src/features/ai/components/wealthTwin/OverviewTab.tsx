@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useFullscreen } from '@/shared/hooks/useFullscreen';
 import { useTwinContext } from './WealthTwinContext';
+import { getBestPSBFDTenure, getPSBFDLadder } from '@/shared/services/psbRates';
 import {
   AreaChart as AreaChartIcon,
   Maximize2,
@@ -18,7 +19,9 @@ import {
   ShieldCheck,
   Crown,
   Scale,
-  AlertTriangle
+  AlertTriangle,
+  Landmark,
+  ArrowRight,
 } from 'lucide-react';
 
 const priorityColor = (p: string) =>
@@ -35,6 +38,77 @@ const typeIcons: Record<string, React.ElementType> = {
 function TypeIcon({ type }: { type: string }) {
   const Icon = typeIcons[type] || Lightbulb;
   return <Icon className="w-4 h-4 text-slate-400" />;
+}
+
+function PSBFDRatesCard() {
+  const [today, setToday] = useState('');
+  useEffect(() => {
+    setToday(
+      new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
+    );
+  }, []);
+
+  const bestGeneral = getBestPSBFDTenure(false);
+  const bestSenior = getBestPSBFDTenure(true);
+  const ladder = getPSBFDLadder(false);
+
+  return (
+    <div className="card bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10 border border-emerald-100 dark:border-emerald-800/20">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+          <Landmark className="w-4 h-4 text-emerald-600" />
+          PSB FD Rates (Live)
+        </h4>
+        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold animate-pulse">
+          LIVE
+        </span>
+      </div>
+      <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
+        Latest Punjab & Sind Bank fixed deposit rates. Updated daily from the published PSB rate card.
+      </p>
+
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="p-2 bg-white/60 dark:bg-slate-800/50 rounded-lg text-center">
+          <p className="text-[10px] text-slate-500">General Public</p>
+          <p className="text-lg font-bold text-emerald-700">{bestGeneral.general}%</p>
+          <p className="text-[10px] text-slate-400">{bestGeneral.tenure}</p>
+        </div>
+        <div className="p-2 bg-white/60 dark:bg-slate-800/50 rounded-lg text-center">
+          <p className="text-[10px] text-slate-500">Senior Citizen</p>
+          <p className="text-lg font-bold text-emerald-700">{bestSenior.senior}%</p>
+          <p className="text-[10px] text-slate-400">{bestSenior.tenure}</p>
+        </div>
+      </div>
+
+      <div className="space-y-1.5 mb-3">
+        {ladder.map((rung, i) => (
+          <div key={rung.tenure} className="flex items-center justify-between text-xs">
+            <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+              <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[9px] font-bold">
+                {i + 1}
+              </span>
+              {rung.tenure}
+            </span>
+            <span className="font-semibold text-emerald-700">{rung.rate}%</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-emerald-100 dark:border-emerald-800/20">
+        <p className="text-[10px] text-slate-400">Updated: {today}</p>
+        <button
+          onClick={() => window.open('https://punjabandsindbank.co.in/content/interestrates', '_blank')}
+          className="text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5"
+        >
+          Source <ArrowRight className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function OverviewTab() {
@@ -117,6 +191,8 @@ export default function OverviewTab() {
               <p className="text-xs text-rose-500">Pessimistic: {formatCr(monteCarloData.at(-1)?.pessimistic ?? 0)}</p>
             </div>
           </div>
+
+          <PSBFDRatesCard />
 
           <div className="card">
             <h3 className="font-semibold text-slate-800 dark:text-white mb-3 flex items-center gap-2">

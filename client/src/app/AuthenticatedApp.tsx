@@ -1,6 +1,5 @@
 import { useEffect, useState, Suspense, useTransition } from 'react';
 import { motion } from 'framer-motion';
-import PitchMode from '@/features/pitch/components/PitchMode';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { isJudgeMode } from '@/shared/utils/demoMode';
 import { usePanicMode } from '@/shared/hooks/usePanicMode';
@@ -39,7 +38,6 @@ import OnboardingWizard from '@/features/onboarding/components/OnboardingWizard'
 const PaymentsPage = lazyWithRetry(() => import('@/features/payments/components/PaymentsPage'));
 const ProfileSettings = lazyWithRetry(() => import('@/features/profile/components/ProfileSettings'));
 
-// PitchMode is bundled statically to avoid a separate chunk fetch failing on some networks/edges.
 const DemoMode = lazyWithRetry(() => import('@/features/demo/components/DemoMode'));
 
 const SecurityBeastView = lazyWithRetry(() => import('@/features/security/components/SecurityBeastView'));
@@ -466,7 +464,6 @@ export default function AuthenticatedApp() {
       <ConsentModal />
 
       <Suspense fallback={null}>
-        <PitchMode />
       </Suspense>
       <SupportWidget />
       <ReportGeneratorModal

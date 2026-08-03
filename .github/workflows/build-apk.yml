@@ -67,10 +67,15 @@ jobs:
 
       - name: Create GitHub Release with APK
         if: github.ref == 'refs/heads/main'
-        uses: marvinpinto/action-automatic-releases@latest
+        uses: softprops/action-gh-release@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          automatic_release_tag: latest-apk
+          tag_name: latest-apk
+          name: PSB SecureWealth Twin - Latest APK
+          body: |
+            Latest debug APK built automatically from the main branch.
+            Download `app-debug.apk` below and install it on your Android device.
           prerelease: true
-          title: PSB SecureWealth Twin - Latest APK
           files: client/android/app/build/outputs/apk/debug/app-debug.apk
+          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
