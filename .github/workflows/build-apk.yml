@@ -77,12 +77,12 @@ jobs:
         if: steps.build-debug-apk.outcome == 'failure'
         run: |
           cd client/android
-          # Extract the relevant Gradle error block (from first FAILURE marker)
+          # Extract the relevant Gradle error block (from first FAILURE marker) or fall back to first+last 60 lines
           START=$(grep -n -E "FAILURE: Build failed|What went wrong:" gradle.log | head -1 | cut -d: -f1)
           if [ -n "$START" ]; then
             sed -n "${START},$(($START + 59))p" gradle.log > error_snippet.log
           else
-            tail -n 60 gradle.log > error_snippet.log
+            { head -n 60 gradle.log; echo "..."; tail -n 60 gradle.log; } > error_snippet.log
           fi
           echo "## Gradle failure snippet" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
