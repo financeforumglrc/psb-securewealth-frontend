@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, UserPlus, Award, Gift, Star } from 'lucide-react';
+import { Users, UserPlus, Award, Gift, Star, Brain, Sparkles, BarChart3, Globe, Calendar } from 'lucide-react';
 import { useWealthStore } from '@/shared/store/wealthStore';
 
 interface CustomerSegment {
@@ -224,6 +224,83 @@ export default function ETBNTBSegmentation() {
               <div className="p-2.5 bg-white/60 dark:bg-slate-800/60 rounded-lg">
                 <span className="font-bold text-blue-700 dark:text-blue-300 block mb-1">Goals → First SIP</span>
                 {goals.length > 0 ? `Goal "${goals[0].name}" → start SIP ₹${Math.round((user.monthlySavings || (user.monthlyIncome || 0) * 0.2) * 0.5).toLocaleString()}/mo` : 'No goals set yet — AI suggests starting an Emergency Fund SIP'}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* No-History AI Pipeline — detailed explanation */}
+        {selectedSegment === 'ntb' && (
+          <div className="mt-4 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 mb-3">
+              <Brain className="w-4 h-4 text-indigo-600" />
+              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">No-History AI — How Bhavishya Suggests Without Transactions</h4>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-slate-500">Cold-start confidence</span>
+                <span className="font-bold text-indigo-600">{user.monthlyIncome > 0 ? 72 : 58}%</span>
+              </div>
+              <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-500 rounded-full"
+                  style={{ width: `${user.monthlyIncome > 0 ? 72 : 58}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Confidence rises automatically as you add income, goals, and transactions.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-400">
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <UserPlus className="w-3.5 h-3.5 text-blue-500" /> Declared Profile
+                </span>
+                Age, income, city, dependents & risk appetite → life-stage cluster.
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-blue-500" /> External Benchmarks
+                </span>
+                RBI repo, inflation, FD rates, gold & market PE signals.
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-blue-500" /> Anonymised Cohort
+                </span>
+                Similar age/income peers (fully anonymised) provide saving & spending baselines.
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-500" /> Festival & Salary Calendar
+                </span>
+                Bharat-specific cashflow shocks (Diwali, school fees, harvest) are pre-loaded.
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-500" /> Goal → First SIP
+                </span>
+                Goal amount + deadline → monthly need. Defaults to emergency fund if no goals.
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <BarChart3 className="w-3.5 h-3.5 text-blue-500" /> Progressive Learning
+                </span>
+                Every new transaction updates the model; predictions sharpen within 30 days.
+              </div>
+            </div>
+
+            <div className="mt-4 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/20">
+              <h5 className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 mb-2 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" /> First 30-Day Trust Journey
+              </h5>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-slate-600 dark:text-slate-400">
+                <div className="p-2 bg-white/60 dark:bg-slate-800/60 rounded">Day 1: Income + risk baseline set</div>
+                <div className="p-2 bg-white/60 dark:bg-slate-800/60 rounded">Day 7: 50-30-20 budget active</div>
+                <div className="p-2 bg-white/60 dark:bg-slate-800/60 rounded">Day 14: First goal SIP suggested</div>
+                <div className="p-2 bg-white/60 dark:bg-slate-800/60 rounded">Day 30: Personalised predictions</div>
               </div>
             </div>
           </div>
