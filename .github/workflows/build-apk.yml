@@ -35,6 +35,11 @@ jobs:
           cd client
           npm run build
 
+      - name: Package mobile OTA bundle
+        run: |
+          cd client
+          node scripts/package-mobile-bundle.cjs
+
       - name: Sync Capacitor Android
         run: |
           cd client

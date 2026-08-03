@@ -93,7 +93,7 @@ async function setCurrentBasePath(basePath: string | null) {
 async function ensureBundleDir(version: string) {
   const dir = `${BUNDLE_DIR}/${version}`;
   try {
-    await Filesystem.mkdir({ path: dir, directory: Directory.Documents, recursive: true });
+    await Filesystem.mkdir({ path: dir, directory: Directory.Data, recursive: true });
   } catch {
     // may already exist
   }
@@ -102,7 +102,7 @@ async function ensureBundleDir(version: string) {
 
 async function fileExists(path: string): Promise<boolean> {
   try {
-    await Filesystem.stat({ path, directory: Directory.Documents });
+    await Filesystem.stat({ path, directory: Directory.Data });
     return true;
   } catch {
     return false;
@@ -133,7 +133,7 @@ async function downloadFile(remotePath: string, localPath: string): Promise<bool
 
     await Filesystem.writeFile({
       path: localPath,
-      directory: Directory.Documents,
+      directory: Directory.Data,
       data: base64,
       recursive: true,
     });
@@ -169,16 +169,24 @@ async function downloadUpdate(manifest: BundleManifest): Promise<{ success: bool
 
   const resolvedBasePath = await Filesystem.getUri({
     path: versionDir,
-    directory: Directory.Documents,
+    directory: Directory.Data,
   });
 
-  return { success: true, basePath: resolvedBasePath.uri };
+  // Strip file:// prefix so Capacitor's WebView receives an absolute native path
+  return { success: true, basePath: resolvedBasePath.uri.replace(/^file:\/\//, '') };
 }
 
 async function applyUpdate(basePath: string, version: string): Promise<boolean> {
   try {
-    // Capacitor WebView plugin exposes setServerBasePath on Android/iOS
-    await (WebView as any).setServerBasePath({ path: basePath });
+    const wv = WebView as any;
+    if (!wv?.setServerBasePath) {
+      log('WebView.setServerBasePath unavailable');
+      return false;
+    }
+    await wv.setServerBasePath({ path: basePath });
+    if (wv.persistServerBasePath) {
+      await wv.persistServerBasePath();
+    }
     await setCurrentBasePath(basePath);
     await setCurrentVersion(version);
     log('applied update', version, basePath);
