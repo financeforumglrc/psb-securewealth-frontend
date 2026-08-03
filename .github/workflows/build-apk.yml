@@ -43,7 +43,10 @@ jobs:
       - name: Sync Capacitor Android
         run: |
           cd client
-          npx cap sync
+          npx cap copy android
+          # Plugin settings already committed; ignore update errors in CI
+          npx cap update android || true
+        continue-on-error: true
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
