@@ -82,5 +82,6 @@ jobs:
           prerelease: true
           files: client/android/app/build/outputs/apk/debug/app-debug.apk
           make_latest: false
+          allowUpdates: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

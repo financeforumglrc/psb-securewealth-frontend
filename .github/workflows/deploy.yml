@@ -7,6 +7,7 @@ on:
 
 jobs:
   deploy:
+    if: secrets.SURGE_TOKEN != '' && secrets.SURGE_LOGIN != ''
     runs-on: ubuntu-latest
     defaults:
       run:
