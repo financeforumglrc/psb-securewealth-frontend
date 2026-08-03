@@ -11,7 +11,7 @@ import { App } from '@capacitor/app';
 import { Network } from '@capacitor/network';
 
 const BACKEND_BASE = import.meta.env.VITE_BACKEND_URL || 'https://psb-securewealth-backend.onrender.com/api/v1';
-const BUNDLE_BASE = `${BACKEND_BASE}/mobile/bundle`;
+const OTA_BASE = import.meta.env.VITE_OTA_URL || `${BACKEND_BASE}/mobile/bundle`;
 const BUNDLE_DIR = 'mobile-bundle';
 const CURRENT_VERSION_KEY = 'ota_current_version';
 const CURRENT_BASE_PATH_KEY = 'ota_current_base_path';
@@ -49,7 +49,7 @@ async function getRemoteVersion(): Promise<{ version: string; builtAt: string; f
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(`${BUNDLE_BASE}/version`, { signal: controller.signal });
+    const res = await fetch(`${OTA_BASE}/version.json`, { signal: controller.signal });
     clearTimeout(timeout);
     if (!res.ok) return null;
     const json = await res.json();
@@ -63,7 +63,7 @@ async function getRemoteManifest(): Promise<BundleManifest | null> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
-    const res = await fetch(`${BUNDLE_BASE}/manifest`, { signal: controller.signal });
+    const res = await fetch(`${OTA_BASE}/manifest.json`, { signal: controller.signal });
     clearTimeout(timeout);
     if (!res.ok) return null;
     const json = await res.json();
@@ -111,7 +111,7 @@ async function fileExists(path: string): Promise<boolean> {
 
 async function downloadFile(remotePath: string, localPath: string): Promise<boolean> {
   try {
-    const url = `${BUNDLE_BASE}/files/${remotePath}`;
+    const url = `${OTA_BASE}/${remotePath}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(url, { signal: controller.signal });

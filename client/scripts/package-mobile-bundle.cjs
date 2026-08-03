@@ -9,6 +9,7 @@ const { buildManifest } = require('../../backend/utils/mobile-manifest');
 
 const source = path.join(__dirname, '..', 'dist');
 const target = path.join(__dirname, '..', '..', 'backend', 'public', 'mobile-bundle');
+const distTarget = path.join(__dirname, '..', 'dist', 'mobile-bundle');
 
 function copyRecursive(src, dest) {
   if (!fs.existsSync(dest)) {
@@ -37,6 +38,10 @@ copyRecursive(source, target);
 
 // Generate manifest.json and version.json
 const manifest = buildManifest(target);
+
+// Also expose the bundle inside dist/ so the static frontend can serve it
+fs.rmSync(distTarget, { recursive: true, force: true });
+copyRecursive(target, distTarget);
 
 console.log(`✅ Mobile bundle packaged: v${manifest.version} • ${manifest.fileCount} files • ${target}`);
 console.log(`🌐 OTA endpoints:`);

@@ -32,15 +32,12 @@ jobs:
           cd client
           npm install --legacy-peer-deps
 
-      - name: Build web app
+      - name: Build web app (includes OTA bundle)
         run: |
           cd client
           npm run build
-
-      - name: Package mobile OTA bundle
-        run: |
-          cd client
-          node scripts/package-mobile-bundle.cjs
+        env:
+          VITE_OTA_URL: https://psb-securewealth-frontend.onrender.com/mobile-bundle
 
       - name: Sync Capacitor Android
         id: sync-capacitor

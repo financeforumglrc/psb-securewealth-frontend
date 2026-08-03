@@ -50,7 +50,9 @@ function buildManifest(bundleDir = BUNDLE_DIR) {
   const pkg = fs.existsSync(pkgPath) ? JSON.parse(fs.readFileSync(pkgPath, 'utf8')) : { version: '1.0.0' };
 
   const manifest = {
-    version: pkg.version,
+    // Timestamp suffix guarantees every build is a new version so the app
+    // always detects an OTA update after a push.
+    version: `${pkg.version}-${Date.now()}`,
     builtAt: new Date().toISOString(),
     fileCount: files.length,
     files: files.sort((a, b) => a.path.localeCompare(b.path)),
