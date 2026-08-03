@@ -41,11 +41,27 @@ jobs:
           node scripts/package-mobile-bundle.cjs
 
       - name: Sync Capacitor Android
+        id: sync-capacitor
         run: |
           cd client
-          npx cap copy android
-          # Plugin settings already committed; ignore update errors in CI
-          npx cap update android || true
+          set -o pipefail
+          (npx cap copy android 2>&1; npx cap update android || true) | tee sync-capacitor.log
+        shell: bash
+        continue-on-error: true
+
+      - name: Capture Capacitor sync failure
+        if: steps.sync-capacitor.outcome == 'failure'
+        run: |
+          cd client
+          echo "## Capacitor sync failure" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 80 sync-capacitor.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          TAIL=$(tail -n 40 sync-capacitor.log | sed 's/::/--/g')
+          ENCODED=$(printf '%s' "$TAIL" | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error::$ENCODED"
+          exit 1
+        shell: bash
 
       - name: Setup Java 21
         uses: actions/setup-java@v4
