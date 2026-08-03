@@ -5,9 +5,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+  SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
 jobs:
   deploy:
-    if: secrets.SURGE_TOKEN != '' && secrets.SURGE_LOGIN != ''
+    if: env.SURGE_LOGIN != '' && env.SURGE_TOKEN != ''
     runs-on: ubuntu-latest
     defaults:
       run:

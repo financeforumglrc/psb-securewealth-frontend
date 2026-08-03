@@ -46,8 +46,8 @@ function main() {
   copyDir(path.join(CLIENT_DIR, 'dist'), BUNDLE_DIR);
 
   console.log('Generating manifest...');
-  const { buildManifest } = require(path.join(__dirname, '..', 'routes', 'mobile-bundle'));
-  const manifest = buildManifest();
+  const { buildManifest } = require(path.join(__dirname, '..', 'utils', 'mobile-manifest'));
+  const manifest = buildManifest(BUNDLE_DIR);
 
   console.log('\n✓ Mobile bundle packaged:');
   console.log(`  Version:   ${manifest.version}`);
