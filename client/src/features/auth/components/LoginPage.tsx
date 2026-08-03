@@ -649,10 +649,13 @@ export default function LoginPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={async () => {
-                  const res = await backendApi.demoLogin({ email: corp.email, name: corp.name });
-                  if (!res.ok) {
-                    setError(res.data?.error || 'Corporate demo login failed');
-                    return;
+                  let backendOk = false;
+                  try {
+                    const res = await backendApi.demoLogin({ email: corp.email, name: corp.name });
+                    backendOk = res.ok;
+                    if (!backendOk) console.warn('Corporate demo login backend failed, falling back to local demo');
+                  } catch (e) {
+                    console.warn('Corporate demo login network error, falling back to local demo', e);
                   }
                   const store = useWealthStore.getState();
                   store.updateUser({

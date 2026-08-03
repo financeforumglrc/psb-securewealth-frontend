@@ -90,8 +90,6 @@ const RecurringPayments = lazyWithRetry(() => import('@/features/banking/compone
 const AccountStatement = lazyWithRetry(() => import('@/features/banking/components/AccountStatement'));
 const AuditLog = lazyWithRetry(() => import('@/features/banking/components/AuditLog'));
 const CrossDeviceApproval = lazyWithRetry(() => import('@/features/security/components/CrossDeviceApproval'));
-const QuantumKeyExchange = lazyWithRetry(() => import('@/features/security/components/QuantumKeyExchange'));
-const QuantumDocumentVault = lazyWithRetry(() => import('@/features/security/components/QuantumDocumentVault'));
 const VoicePanicTrigger = lazyWithRetry(() => import('@/features/security/components/VoicePanicTrigger'));
 const CoercionDetectionEngine = lazyWithRetry(() => import('@/features/security/components/CoercionDetectionEngine'));
 const ExplainableRiskScore = lazyWithRetry(() => import('@/features/security/components/ExplainableRiskScore'));
@@ -440,8 +438,6 @@ export default function AuthenticatedApp() {
               {currentView === 'account-statement' && <AccountStatement />}
               {currentView === 'audit-log' && <AuditLog />}
               {currentView === 'cross-device-approval' && <CrossDeviceApproval />}
-              {currentView === 'quantum-key' && <QuantumKeyExchange />}
-              {currentView === 'quantum-vault' && <QuantumDocumentVault />}
               {currentView === 'voice-panic' && <VoicePanicTrigger />}
               {currentView === 'coercion-detection' && <CoercionDetectionEngine />}
               {currentView === 'emotion-gate' && <EmotionAdaptiveGate />}
