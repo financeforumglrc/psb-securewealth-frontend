@@ -65,10 +65,26 @@ jobs:
         run: yes | sdkmanager --licenses || true
 
       - name: Build debug APK
+        id: build-debug-apk
         run: |
           cd client/android
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee gradle.log
+        shell: bash
+        continue-on-error: true
+
+      - name: Capture Gradle failure summary
+        if: steps.build-debug-apk.outcome == 'failure'
+        run: |
+          cd client/android
+          echo "## Gradle failure (last 80 lines)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 80 gradle.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "::error::Gradle build failed. See summary for full tail."
+          exit 1
+        shell: bash
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
