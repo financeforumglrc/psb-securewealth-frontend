@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Shield, Sparkles, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Shield, Sparkles, PiggyBank } from 'lucide-react';
 import { useWealthStore } from '@/shared/store/wealthStore';
 
 function formatCurrency(n: number) {
@@ -76,7 +76,6 @@ export default function DashboardHero() {
 
   const netWorth = assets.reduce((sum, a) => sum + a.value, 0);
   const activeGoals = goals.filter((g) => g.currentAmount < g.targetAmount).length;
-  const savingsRate = user.monthlyIncome > 0 ? (user.monthlySavings / user.monthlyIncome) * 100 : 0;
 
   const wealthTrend = useMemo(() => {
     const base = netWorth * 0.7;
@@ -145,25 +144,25 @@ export default function DashboardHero() {
             <p className="text-[10px] text-emerald-400 mt-1">+12.4% this year</p>
           </motion.div>
 
-          {/* Savings Rate Card */}
+          {/* Monthly Savings Card */}
           <motion.div
             style={{ transform: `perspective(1000px) rotateY(${mousePos.x}deg) rotateX(${-mousePos.y}deg)` }}
-            className="p-5 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-amber-400/30 transition-all"
+            className="p-5 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-emerald-400/30 transition-all"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] text-white/60 uppercase font-bold">Savings Rate</span>
-              <Zap className="w-4 h-4 text-amber-400" />
+              <span className="text-[10px] text-white/60 uppercase font-bold">Monthly Savings</span>
+              <PiggyBank className="w-4 h-4 text-emerald-400" />
             </div>
-            <p className="text-3xl font-black text-white mb-2">{savingsRate.toFixed(1)}%</p>
+            <p className="text-3xl font-black text-white mb-2">{formatCurrency(user.monthlySavings)}</p>
             <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
               <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
+                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
                 initial={{ width: 0 }}
-                animate={{ width: `${Math.min(savingsRate * 2, 100)}%` }}
+                animate={{ width: `${Math.min((user.monthlyIncome > 0 ? (user.monthlySavings / user.monthlyIncome) * 100 : 0) * 2, 100)}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
               />
             </div>
-            <p className="text-[10px] text-white/60 mt-1">{savingsRate >= 20 ? 'Excellent!' : savingsRate >= 10 ? 'Good' : 'Needs improvement'}</p>
+            <p className="text-[10px] text-white/60 mt-1">Saved this month</p>
           </motion.div>
 
           {/* Goals Card */}

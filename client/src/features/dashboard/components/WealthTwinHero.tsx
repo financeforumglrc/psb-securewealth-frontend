@@ -35,6 +35,8 @@ export default function WealthTwinHero() {
   const savingsRate = user.monthlyIncome > 0
     ? ((user.monthlySavings / user.monthlyIncome) * 100)
     : 0;
+  const spendPatternStatus = savingsRate < 10 ? 'danger' : savingsRate < 20 ? 'warn' : 'safe';
+  const spendPatternDetail = savingsRate < 10 ? 'Low savings cushion' : savingsRate < 20 ? 'Moderate cushion' : 'Healthy cushion';
 
   // Compute Wealth Protection Risk Score (0-100, higher = more risk)
   const riskScore = useMemo(() => {
@@ -111,12 +113,12 @@ export default function WealthTwinHero() {
       },
       {
         label: 'Behavior Pattern',
-        status: savingsRate < 15 ? 'warn' : 'safe',
+        status: spendPatternStatus,
         icon: 'fa-fingerprint',
-        detail: savingsRate < 15 ? `Savings rate low (${savingsRate.toFixed(1)}%)` : 'Spending pattern normal',
-        tooltip: savingsRate < 15
-          ? 'Your savings rate is below 15%. Increasing it improves long-term resilience.'
-          : 'Your spending and saving pattern is within a healthy range.',
+        detail: spendPatternDetail,
+        tooltip: spendPatternStatus === 'safe'
+          ? 'Your spending and saving pattern is within a healthy range.'
+          : 'Your monthly savings cushion looks tight. Reducing discretionary spend improves resilience.',
       },
       {
         label: 'Market Risk',
@@ -303,11 +305,11 @@ export default function WealthTwinHero() {
             <CosmosCard variant="stat" padding="sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Savings Rate</p>
-                  <p className="text-lg font-black text-slate-800 dark:text-white">{savingsRate.toFixed(1)}%</p>
+                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Risk Score</p>
+                  <p className="text-lg font-black text-slate-800 dark:text-white">{riskScore}/100</p>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                  <i className="fas fa-piggy-bank" />
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                  <i className="fas fa-shield-heart" />
                 </div>
               </div>
             </CosmosCard>
