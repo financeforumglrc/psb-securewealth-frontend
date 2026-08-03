@@ -82,7 +82,10 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           tail -n 80 gradle.log >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "::error::Gradle build failed. See summary for full tail."
+          # Emit last 40 lines as an annotation so it is visible without signing in
+          TAIL=$(tail -n 40 gradle.log | sed 's/::/--/g')
+          ENCODED=$(printf '%s' "$TAIL" | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error::$ENCODED"
           exit 1
         shell: bash
 
