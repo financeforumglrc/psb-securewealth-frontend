@@ -1,9 +1,11 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from '@/shared/context/AuthContext';
 import { SecurityProvider } from '@/shared/context/SecurityContext';
 import { lazyWithRetry } from '@/shared/utils/lazyWithRetry';
 import { backendApi } from '@/shared/lib/backendApi';
 import { collectFingerprint } from '@/shared/services/fingerprintService';
+import { otaService, type UpdateInfo } from '@/shared/services/mobileUpdateService';
 import DemoShowcase from '@/features/demo/components/DemoShowcase';
 
 const LoginPortal = lazyWithRetry(() => import('@/features/auth/components/LoginPortal'));
@@ -72,6 +74,27 @@ export default function App() {
 
   const { state: authState } = useAuth();
   const warmed = useRef(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updating, setUpdating] = useState(false);
+
+  // OTA live update check on native app start
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    otaService.startBackgroundUpdateCheck((info) => {
+      setUpdateInfo(info);
+    });
+  }, []);
+
+  const applyUpdate = async () => {
+    if (!updateInfo?.available) return;
+    setUpdating(true);
+    const result = await otaService.performUpdate();
+    setUpdating(false);
+    if (result.success) {
+      setUpdateInfo(null);
+      window.location.reload();
+    }
+  };
 
   // Initialize FingerprintJS visitor id early so X-Device-Id is available for auth calls
   useEffect(() => {
@@ -102,40 +125,70 @@ export default function App() {
     };
   }, [authState.loading, authState.isAuthenticated]);
 
+  const banner = updateInfo?.available ? (
+    <div className="fixed top-0 left-0 right-0 z-[300] bg-primary text-white px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-lg">
+      <span>Update available: v{updateInfo.remoteVersion}</span>
+      <button
+        onClick={applyUpdate}
+        disabled={updating}
+        className="px-3 py-1 bg-white text-primary rounded-full text-[10px] font-bold disabled:opacity-60"
+      >
+        {updating ? 'Updating...' : 'Update & Restart'}
+      </button>
+    </div>
+  ) : null;
+
   if (demoPath) {
-    return <DemoShowcase />;
+    return (
+      <>
+        {banner}
+        <DemoShowcase />
+      </>
+    );
   }
 
   // Standalone admin portal — no auth, no AA/onboarding, direct login
   if (adminPath) {
     return (
-      <Suspense fallback={<ViewLoader />}>
-        <SecurityProvider>
-          <AdminPortal />
-        </SecurityProvider>
-      </Suspense>
+      <>
+        {banner}
+        <Suspense fallback={<ViewLoader />}>
+          <SecurityProvider>
+            <AdminPortal />
+          </SecurityProvider>
+        </Suspense>
+      </>
     );
   }
 
   if (authState.loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-dark">
-        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-      </div>
+      <>
+        {banner}
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-dark">
+          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        </div>
+      </>
     );
   }
 
   if (!authState.isAuthenticated) {
     return (
-      <Suspense fallback={<ViewLoader />}>
-        <LoginPortal />
-      </Suspense>
+      <>
+        {banner}
+        <Suspense fallback={<ViewLoader />}>
+          <LoginPortal />
+        </Suspense>
+      </>
     );
   }
 
   return (
-    <Suspense fallback={<ViewLoader />}>
-      <AuthenticatedApp />
-    </Suspense>
+    <>
+      {banner}
+      <Suspense fallback={<ViewLoader />}>
+        <AuthenticatedApp />
+      </Suspense>
+    </>
   );
 }
