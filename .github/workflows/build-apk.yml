@@ -46,13 +46,12 @@ jobs:
           npx cap copy android
           # Plugin settings already committed; ignore update errors in CI
           npx cap update android || true
-        continue-on-error: true
 
-      - name: Setup Java 17
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -78,12 +77,19 @@ jobs:
         if: steps.build-debug-apk.outcome == 'failure'
         run: |
           cd client/android
-          echo "## Gradle failure (last 80 lines)" >> $GITHUB_STEP_SUMMARY
+          # Extract the relevant Gradle error block (from first FAILURE marker)
+          START=$(grep -n -E "FAILURE: Build failed|What went wrong:" gradle.log | head -1 | cut -d: -f1)
+          if [ -n "$START" ]; then
+            sed -n "${START},$(($START + 59))p" gradle.log > error_snippet.log
+          else
+            tail -n 60 gradle.log > error_snippet.log
+          fi
+          echo "## Gradle failure snippet" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -n 80 gradle.log >> $GITHUB_STEP_SUMMARY
+          cat error_snippet.log >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          # Emit last 40 lines as an annotation so it is visible without signing in
-          TAIL=$(tail -n 40 gradle.log | sed 's/::/--/g')
+          # Emit the snippet as an annotation (visible without sign-in)
+          TAIL=$(cat error_snippet.log | sed 's/::/--/g')
           ENCODED=$(printf '%s' "$TAIL" | sed ':a;N;$!ba;s/\n/%0A/g')
           echo "::error::$ENCODED"
           exit 1
