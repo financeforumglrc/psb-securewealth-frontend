@@ -59,7 +59,7 @@ export async function detectFace(video: HTMLVideoElement): Promise<FaceResult> {
   await initFaceAuthEngine();
   const faceapi = (window as any).faceapi;
   const detection = await faceapi
-    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 }))
+    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.5 }))
     .withFaceLandmarks()
     .withFaceDescriptor();
 

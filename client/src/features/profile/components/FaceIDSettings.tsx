@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, CheckCircle2, XCircle, Trash2, Plus, User, Shield, AlertCircle } from 'lucide-react';
+import { Camera, CheckCircle2, XCircle, Trash2, Plus, User, Shield, ScanFace } from 'lucide-react';
 import { detectFace, euclideanDistance } from '@/shared/lib/faceAuth';
 
 interface RegisteredFace {
@@ -13,8 +13,7 @@ interface RegisteredFace {
 
 const FACE_STORAGE_KEY = 'sw_registered_faces';
 const MIN_QUALITY = 0.72;
-const CANVAS_WIDTH = 640;
-const CANVAS_HEIGHT = 480;
+const AUTO_CAPTURE_MS = 1200;
 
 function loadFaces(): RegisteredFace[] {
   try {
@@ -33,19 +32,24 @@ function saveFaces(faces: RegisteredFace[]) {
   }
 }
 
-function calculateQuality(box: { x: number; y: number; width: number; height: number }, videoWidth: number, videoHeight: number, score = 0): number {
+function calculateQuality(
+  box: { x: number; y: number; width: number; height: number },
+  videoWidth: number,
+  videoHeight: number,
+  score = 0
+): number {
   const faceArea = box.width * box.height;
   const videoArea = videoWidth * videoHeight;
   const sizeRatio = faceArea / videoArea;
 
-  // Ideal face occupies 15-35% of frame
+  // Ideal face occupies 18–35% of the frame
   let sizeScore = 0;
-  if (sizeRatio >= 0.08 && sizeRatio <= 0.45) {
-    sizeScore = 1 - Math.abs(sizeRatio - 0.22) / 0.22;
-  } else if (sizeRatio < 0.08) {
-    sizeScore = Math.max(0, sizeRatio / 0.08);
+  if (sizeRatio >= 0.10 && sizeRatio <= 0.40) {
+    sizeScore = 1 - Math.abs(sizeRatio - 0.25) / 0.25;
+  } else if (sizeRatio < 0.10) {
+    sizeScore = Math.max(0, sizeRatio / 0.10);
   } else {
-    sizeScore = Math.max(0, 1 - (sizeRatio - 0.45) / 0.45);
+    sizeScore = Math.max(0, 1 - (sizeRatio - 0.40) / 0.40);
   }
 
   // Center position
@@ -61,6 +65,30 @@ function calculateQuality(box: { x: number; y: number; width: number; height: nu
   return Math.max(0, Math.min(1, sizeScore * 0.45 + centerScore * 0.35 + confidenceScore * 0.2));
 }
 
+/** Map an intrinsic video coordinate box to a CSS-mirrored display overlay. */
+function mapFaceBoxToOverlay(
+  box: { x: number; y: number; width: number; height: number },
+  videoWidth: number,
+  videoHeight: number,
+  overlayWidth: number,
+  overlayHeight: number
+) {
+  const scale = Math.max(overlayWidth / videoWidth, overlayHeight / videoHeight);
+  const drawW = videoWidth * scale;
+  const drawH = videoHeight * scale;
+  const offsetX = (overlayWidth - drawW) / 2;
+  const offsetY = (overlayHeight - drawH) / 2;
+
+  const x = box.x * scale + offsetX;
+  const y = box.y * scale + offsetY;
+  const w = box.width * scale;
+  const h = box.height * scale;
+
+  // Mirror because the video is flipped via CSS
+  const mirroredX = overlayWidth - (x + w);
+  return { x: mirroredX, y, w, h };
+}
+
 export default function FaceIDSettings() {
   const [faces, setFaces] = useState<RegisteredFace[]>(loadFaces());
   const [registering, setRegistering] = useState(false);
@@ -70,79 +98,92 @@ export default function FaceIDSettings() {
   const [faceBox, setFaceBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [quality, setQuality] = useState(0);
   const [cameraReady, setCameraReady] = useState(false);
+  const [tooClose, setTooClose] = useState(false);
+  const [captureProgress, setCaptureProgress] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const rafRef = useRef<number | null>(null);
+  const captureStartRef = useRef<number | null>(null);
 
-  const drawFrame = useCallback(() => {
+  const drawOverlay = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || video.readyState < 2) {
-      rafRef.current = requestAnimationFrame(drawFrame);
+    const container = containerRef.current;
+    if (!canvas || !container) {
+      rafRef.current = requestAnimationFrame(drawOverlay);
       return;
+    }
+
+    const rect = container.getBoundingClientRect();
+    const width = Math.round(rect.width);
+    const height = Math.round(rect.height);
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
     }
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctx.clearRect(0, 0, width, height);
 
-    // Keep internal resolution stable
-    if (canvas.width !== CANVAS_WIDTH || canvas.height !== CANVAS_HEIGHT) {
-      canvas.width = CANVAS_WIDTH;
-      canvas.height = CANVAS_HEIGHT;
-    }
+    const minDim = Math.min(width, height);
+    const ovalW = minDim * 0.55;
+    const ovalH = minDim * 0.70;
+    const cx = width / 2;
+    const cy = height / 2;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw mirrored video frame
+    // Draw a darkened mask with a clear oval cut-out for the guide
     ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    try {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    } catch {
-      // ignore draw errors
-    }
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, ovalW / 2, ovalH / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
 
-    // Draw guide oval
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = 2;
+    // Guide oval border
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.ellipse(canvas.width / 2, canvas.height / 2, 130, 160, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, ovalW / 2, ovalH / 2, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Draw face box overlay
-    if (faceBox && video.videoWidth && video.videoHeight) {
-      const scaleX = canvas.width / video.videoWidth;
-      const scaleY = canvas.height / video.videoHeight;
-      const x = faceBox.x * scaleX;
-      const y = faceBox.y * scaleY;
-      const w = faceBox.width * scaleX;
-      const h = faceBox.height * scaleY;
+    // Face box + status
+    if (faceBox && video && video.videoWidth && video.videoHeight) {
+      const { x, y, w, h } = mapFaceBoxToOverlay(faceBox, video.videoWidth, video.videoHeight, width, height);
+      const isGood = quality >= MIN_QUALITY && !tooClose;
+      ctx.strokeStyle = isGood ? '#10B981' : tooClose ? '#EF4444' : '#F59E0B';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x, y, w, h);
 
-      // Mirror x because we mirrored the video
-      const mirroredX = canvas.width - (x + w);
-
-      const isGood = quality >= MIN_QUALITY;
-      ctx.strokeStyle = isGood ? '#10B981' : '#F59E0B';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(mirroredX, y, w, h);
-
-      // Label background
-      const label = `${Math.round(quality * 100)}% ${isGood ? 'OK' : 'Adjust'}`;
-      ctx.font = 'bold 14px Inter, sans-serif';
+      // Label
+      const label = isGood ? 'HOLD STEADY' : tooClose ? 'MOVE BACK' : 'CENTER FACE';
+      ctx.font = 'bold 13px Inter, sans-serif';
       const textWidth = ctx.measureText(label).width;
-      ctx.fillStyle = isGood ? '#10B981' : '#F59E0B';
-      ctx.fillRect(mirroredX, y - 22, textWidth + 12, 22);
+      const pad = 8;
+      ctx.fillStyle = isGood ? '#10B981' : tooClose ? '#EF4444' : '#F59E0B';
+      ctx.fillRect(x, y - 28, textWidth + pad * 2, 26);
       ctx.fillStyle = '#000';
-      ctx.fillText(label, mirroredX + 6, y - 6);
+      ctx.fillText(label, x + pad, y - 9);
     }
 
-    rafRef.current = requestAnimationFrame(drawFrame);
-  }, [faceBox, quality]);
+    // Auto-capture progress ring around the oval
+    if (captureProgress > 0 && quality >= MIN_QUALITY) {
+      ctx.strokeStyle = '#10B981';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, ovalW / 2 + 8, ovalH / 2 + 8, 0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * captureProgress);
+      ctx.stroke();
+    }
+
+    rafRef.current = requestAnimationFrame(drawOverlay);
+  }, [faceBox, quality, tooClose, captureProgress]);
 
   const stopCamera = useCallback(() => {
     if (detectionIntervalRef.current) {
@@ -157,10 +198,15 @@ export default function FaceIDSettings() {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-    if (videoRef.current) videoRef.current.srcObject = null;
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     setFaceBox(null);
     setQuality(0);
     setCameraReady(false);
+    setTooClose(false);
+    setCaptureProgress(0);
+    captureStartRef.current = null;
   }, []);
 
   const startCamera = useCallback(async () => {
@@ -169,8 +215,8 @@ export default function FaceIDSettings() {
     const constraints: MediaStreamConstraints = {
       video: {
         facingMode: 'user',
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
         frameRate: { ideal: 30 },
       },
       audio: false,
@@ -182,17 +228,24 @@ export default function FaceIDSettings() {
     } catch {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
           audio: false,
         });
       } catch {
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        } catch (err) {
-          setStatus('error');
-          setMessage('Camera access denied. Allow camera permission and use HTTPS. If on laptop, close any app using the camera.');
-          setRegistering(false);
-          return false;
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: false,
+          });
+        } catch {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          } catch (err) {
+            setStatus('error');
+            setMessage('Camera access denied. Allow camera permission and use HTTPS. Close any other app using the camera.');
+            setRegistering(false);
+            return false;
+          }
         }
       }
     }
@@ -203,12 +256,13 @@ export default function FaceIDSettings() {
       videoRef.current.muted = true;
       videoRef.current.playsInline = true;
       videoRef.current.setAttribute('playsinline', 'true');
+      videoRef.current.setAttribute('webkit-playsinline', 'true');
 
       try {
         await videoRef.current.play();
       } catch {
         setStatus('error');
-        setMessage('Camera started but video playback failed.');
+        setMessage('Camera started but video playback failed. Please try again.');
         return false;
       }
     }
@@ -224,16 +278,26 @@ export default function FaceIDSettings() {
     try {
       const result = await detectFace(video);
       if (result.detected && result.box && result.descriptor) {
-        const q = calculateQuality(result.box, video.videoWidth || CANVAS_WIDTH, video.videoHeight || CANVAS_HEIGHT, result.score || 0);
+        const q = calculateQuality(
+          result.box,
+          video.videoWidth || 640,
+          video.videoHeight || 480,
+          result.score || 0
+        );
+        const faceArea = result.box.width * result.box.height;
+        const videoArea = (video.videoWidth || 640) * (video.videoHeight || 480);
+        setTooClose(faceArea / videoArea > 0.45);
         setFaceBox(result.box);
         setQuality(q);
       } else {
         setFaceBox(null);
         setQuality(0);
+        setTooClose(false);
       }
     } catch {
       setFaceBox(null);
       setQuality(0);
+      setTooClose(false);
     }
   }, []);
 
@@ -245,29 +309,29 @@ export default function FaceIDSettings() {
 
     setRegistering(true);
     setStatus('loading');
-    setMessage('Loading face recognition models...');
+    setMessage('Loading face recognition models…');
+    setCaptureProgress(0);
 
     const cameraStarted = await startCamera();
     if (!cameraStarted) return;
 
     setStatus('scanning');
-    setMessage('Position your face inside the oval. Hold steady...');
+    setMessage('Position your face inside the oval. Hold steady when the box turns green.');
 
-    // Start detection loop and rendering
     detectionIntervalRef.current = setInterval(detectLoop, 250);
-    rafRef.current = requestAnimationFrame(drawFrame);
+    rafRef.current = requestAnimationFrame(drawOverlay);
   };
 
   const handleRegister = async () => {
     const video = videoRef.current;
-    if (!video || !faceBox || quality < MIN_QUALITY) {
+    if (!video || !faceBox || quality < MIN_QUALITY || tooClose) {
       setStatus('error');
-      setMessage('No clear face detected. Adjust lighting and position.');
+      setMessage('No clear face detected. Move back, adjust lighting and position.');
       return;
     }
 
     setStatus('loading');
-    setMessage('Capturing face descriptor...');
+    setMessage('Capturing HD face descriptor…');
 
     try {
       const result = await detectFace(video);
@@ -278,7 +342,7 @@ export default function FaceIDSettings() {
       }
 
       const descriptor = Array.from(result.descriptor);
-      const existingFace = faces.find((f) => euclideanDistance(f.descriptor, descriptor) < 0.6);
+      const existingFace = faces.find((f) => euclideanDistance(f.descriptor, descriptor) < 0.55);
       if (existingFace) {
         setStatus('error');
         setMessage(`This face is already registered as "${existingFace.name}".`);
@@ -302,6 +366,7 @@ export default function FaceIDSettings() {
       setRegisterName('');
       stopCamera();
       setRegistering(false);
+      setCaptureProgress(0);
 
       setTimeout(() => {
         setStatus('idle');
@@ -313,14 +378,26 @@ export default function FaceIDSettings() {
     }
   };
 
-  // Auto-capture when quality is good for 1 second
+  // Auto-capture when face is stable and good quality
   useEffect(() => {
-    if (!registering || !cameraReady || !faceBox || quality < MIN_QUALITY) return;
-    const id = setTimeout(() => {
-      handleRegister();
-    }, 1000);
-    return () => clearTimeout(id);
-  }, [registering, cameraReady, faceBox, quality]);
+    if (!registering || !cameraReady || !faceBox || quality < MIN_QUALITY || tooClose) {
+      captureStartRef.current = null;
+      setCaptureProgress(0);
+      return;
+    }
+    if (captureStartRef.current === null) captureStartRef.current = Date.now();
+
+    const id = setInterval(() => {
+      const elapsed = Date.now() - (captureStartRef.current || Date.now());
+      const progress = Math.min(1, elapsed / AUTO_CAPTURE_MS);
+      setCaptureProgress(progress);
+      if (progress >= 1) {
+        handleRegister();
+      }
+    }, 50);
+
+    return () => clearInterval(id);
+  }, [registering, cameraReady, faceBox, quality, tooClose]);
 
   const handleDelete = (id: string) => {
     const updatedFaces = faces.filter((f) => f.id !== id);
@@ -337,9 +414,11 @@ export default function FaceIDSettings() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <User className="w-5 h-5 text-indigo-600" /> Face ID Management
+            <ScanFace className="w-5 h-5 text-indigo-600" /> Face ID Management
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">Register your face to enable Face ID login and fallback on failed transactions.</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Register your face to enable Face ID login and fallback on failed transactions.
+          </p>
         </div>
       </div>
 
@@ -384,7 +463,7 @@ export default function FaceIDSettings() {
       {/* Register New Face */}
       <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
         <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Register New Face
+          <Plus className="w-4 h-4" /> Register New Face (HD)
         </h4>
 
         {!registering ? (
@@ -407,66 +486,44 @@ export default function FaceIDSettings() {
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
-              {/* Hidden video stream */}
+            <div
+              ref={containerRef}
+              className="relative rounded-xl overflow-hidden bg-black aspect-[4/3]"
+            >
+              {/* Live camera feed — visible, not hidden */}
               <video
                 ref={videoRef}
-                className="hidden"
+                className="absolute inset-0 w-full h-full object-cover transform -scale-x-100"
                 playsInline
                 muted
                 autoPlay
-                onLoadedData={() => setCameraReady(true)}
+                onLoadedMetadata={() => setCameraReady(true)}
               />
-              {/* Visible canvas with mirrored video + face box */}
+              {/* Overlay canvas for guide + face box */}
               <canvas
                 ref={canvasRef}
-                className="w-full h-full object-contain bg-black"
-                width={CANVAS_WIDTH}
-                height={CANVAS_HEIGHT}
+                className="absolute inset-0 w-full h-full pointer-events-none"
               />
-
-              {/* Corner brackets */}
-              <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-indigo-500/60" />
-              <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-indigo-500/60" />
-              <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-indigo-500/60" />
-              <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-indigo-500/60" />
-
-              {/* Status badge */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 bg-black/60 text-white backdrop-blur">
-                {status === 'loading' ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                    Loading models…
-                  </>
-                ) : faceBox ? (
-                  quality >= MIN_QUALITY ? (
-                    <>
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                      Hold still — capturing
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="w-3 h-3 text-amber-400" />
-                      Move closer to oval
-                    </>
-                  )
-                ) : (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
-                    No face detected
-                  </>
-                )}
-              </div>
             </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 {status === 'success' ? (
-                  <span className="text-emerald-600 font-semibold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Registered</span>
+                  <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Registered
+                  </span>
                 ) : status === 'error' ? (
-                  <span className="text-rose-600 font-semibold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Failed</span>
+                  <span className="text-rose-600 font-semibold flex items-center gap-1">
+                    <XCircle className="w-3.5 h-3.5" /> Failed
+                  </span>
                 ) : faceBox ? (
-                  <span>Quality: <strong className={quality >= MIN_QUALITY ? 'text-emerald-600' : 'text-amber-500'}>{Math.round(quality * 100)}%</strong></span>
+                  <span>
+                    Quality:{' '}
+                    <strong className={quality >= MIN_QUALITY && !tooClose ? 'text-emerald-600' : 'text-amber-500'}>
+                      {Math.round(quality * 100)}%
+                    </strong>
+                    {tooClose && <span className="text-rose-500 ml-2">Move back</span>}
+                  </span>
                 ) : (
                   <span>Searching for face…</span>
                 )}
@@ -477,6 +534,7 @@ export default function FaceIDSettings() {
                   setRegistering(false);
                   setStatus('idle');
                   setMessage('');
+                  setCaptureProgress(0);
                 }}
                 className="text-xs text-slate-500 hover:text-slate-700"
               >
@@ -486,7 +544,7 @@ export default function FaceIDSettings() {
 
             <button
               onClick={handleRegister}
-              disabled={!faceBox || quality < MIN_QUALITY}
+              disabled={!faceBox || quality < MIN_QUALITY || tooClose}
               className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
             >
               <Shield className="w-4 h-4" />
@@ -516,7 +574,7 @@ export default function FaceIDSettings() {
           <li>• Position your face inside the oval guide</li>
           <li>• Keep a neutral expression and look at the camera</li>
           <li>• Remove sunglasses / masks / hats</li>
-          <li>• Hold steady for 1–2 seconds after quality turns green</li>
+          <li>• Hold steady for 1–2 seconds after the box turns green</li>
         </ul>
       </div>
     </div>
