@@ -105,6 +105,43 @@ img, video, canvas, svg {
   [class*="flex"][class*="overflow-x-auto"] {
     min-width: 0;
   }
+
+  /* Force wide grids to stack on small screens */
+  [class*="grid-cols-3"],
+  [class*="grid-cols-4"],
+  [class*="grid-cols-5"],
+  [class*="grid-cols-6"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  /* Flex rows wrap so items never overflow */
+  [class*="flex-row"] {
+    flex-wrap: wrap;
+  }
+
+  /* Buttons and links: comfortable tap targets */
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Charts, maps, tables: horizontal scroll instead of overflow */
+  [class*="chart"],
+  [class*="Chart"],
+  .recharts-wrapper,
+  .leaflet-container,
+  table {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Fixed elements never overflow the viewport */
+  [class*="fixed"] {
+    max-width: 100vw;
+  }
 }
 
 /* Very small screens */

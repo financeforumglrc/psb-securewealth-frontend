@@ -236,7 +236,7 @@ export default function DashboardView() {
               {greeting}, <span className="gradient-text">{user.name || t('welcome')}</span>
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center bg-white dark:bg-slate-900 border border-psb-border dark:border-slate-700 rounded-xl p-1" role="group" aria-label="Language">
               <button
                 onClick={() => setLanguage('en')}
@@ -296,7 +296,7 @@ export default function DashboardView() {
 
 function ModeToggle({ isSimple, onToggle }: { isSimple: boolean; onToggle: (mode: 'simple' | 'comprehensive') => void }) {
   return (
-    <div className="relative flex items-center bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl p-1">
+    <div className="relative flex items-center bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl p-1 w-full sm:w-auto">
       <motion.div
         layoutId="dashboard-mode-pill"
         className="absolute inset-y-1 rounded-lg bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-600"
@@ -310,14 +310,14 @@ function ModeToggle({ isSimple, onToggle }: { isSimple: boolean; onToggle: (mode
       <button
         onClick={() => onToggle('simple')}
         aria-pressed={isSimple}
-        className={`relative z-10 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 flex items-center gap-1.5 ${isSimple ? 'text-primary' : 'text-slate-500 dark:text-slate-400'}`}
+        className={`relative z-10 flex-1 px-2 py-1.5 text-[10px] sm:text-xs sm:px-3 font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap ${isSimple ? 'text-primary' : 'text-slate-500 dark:text-slate-400'}`}
       >
         <i className="fas fa-compress" /> Simple
       </button>
       <button
         onClick={() => onToggle('comprehensive')}
         aria-pressed={!isSimple}
-        className={`relative z-10 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 flex items-center gap-1.5 ${!isSimple ? 'text-primary' : 'text-slate-500 dark:text-slate-400'}`}
+        className={`relative z-10 flex-1 px-2 py-1.5 text-[10px] sm:text-xs sm:px-3 font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap ${!isSimple ? 'text-primary' : 'text-slate-500 dark:text-slate-400'}`}
       >
         <i className="fas fa-expand" /> Comprehensive
       </button>
@@ -673,7 +673,7 @@ function StatCardV2({
             <i className={`fas ${icon} text-sm ${text}`} />
           </div>
         </div>
-        <p className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">{value}</p>
+        <p className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white tracking-tight truncate">{value}</p>
         {trend && (
           <div className="flex items-center gap-1 mt-1.5">
             <i className={`fas ${iconClass} text-[9px] ${colorClass}`} />
