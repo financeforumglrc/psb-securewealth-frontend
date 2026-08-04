@@ -95,9 +95,15 @@ img, video, canvas, svg {
   }
 
   /* Prevent long unbreakable text from overflowing */
-  p, h1, h2, h3, h4, h5, h6, span, a, button, td, th {
+  p, td, th {
     overflow-wrap: break-word;
-    word-break: break-word;
+  }
+
+  /* Headings must never collapse into single-character columns */
+  h1, h2, h3, h4, h5, h6, span, a, button {
+    overflow-wrap: break-word;
+    word-break: normal;
+    min-width: 0;
   }
 
   /* Grids: allow horizontal scroll if too wide */

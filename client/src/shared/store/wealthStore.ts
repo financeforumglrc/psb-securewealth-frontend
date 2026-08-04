@@ -233,7 +233,7 @@ export const useWealthStore = create<WealthState>()(
       transactions: [],
       currentView: 'dashboard',
       isJudgeMode: false,
-      darkMode: true,
+      darkMode: false,
       isLoading: false,
       hasConsent: false,
       pitchModeActive: false,
