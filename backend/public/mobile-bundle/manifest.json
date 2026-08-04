@@ -1,6 +1,6 @@
 {
-  "version": "2.0.0-1785819767498",
-  "builtAt": "2026-08-04T05:02:47.498Z",
+  "version": "2.0.0-1785820875071",
+  "builtAt": "2026-08-04T05:21:15.071Z",
   "fileCount": 307,
   "files": [
     {
@@ -1535,7 +1535,7 @@
     },
     {
       "path": "sw.js",
-      "hash": "U/833OmYxUu9Y8LJkXKj19ZNc/SruEGUEV35p40/m6o=",
+      "hash": "I0zDHY300BLAhIWETNUY/dDUi4dxr/JrsPog079ubgI=",
       "size": 1500
     }
   ]
