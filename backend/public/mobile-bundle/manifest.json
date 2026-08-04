@@ -1,8 +1,13 @@
 {
-  "version": "2.0.0-1785820875071",
-  "builtAt": "2026-08-04T05:21:15.071Z",
-  "fileCount": 307,
+  "version": "2.0.0-1785821453065",
+  "builtAt": "2026-08-04T05:30:53.065Z",
+  "fileCount": 308,
   "files": [
+    {
+      "path": "_headers",
+      "hash": "rN1bHnb+30OgC5RrMPdB3ZNecRhXxqTv2Ebw9y33mhs=",
+      "size": 190
+    },
     {
       "path": "_redirects",
       "hash": "pl1nEIY2zt0lHEDB/mKorxS1oPQgZZgQ7GoKn2AbJ5Q=",
