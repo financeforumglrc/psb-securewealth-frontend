@@ -38,7 +38,7 @@ export default function ChartWidget({ type = 'area' }: { type?: 'area' | 'bar' |
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="card-psb"
+        className="card-psb min-h-[240px] flex flex-col"
       >
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -49,31 +49,33 @@ export default function ChartWidget({ type = 'area' }: { type?: 'area' | 'bar' |
             <i className="fas fa-arrow-trend-up mr-1" /> +16.4%
           </span>
         </div>
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={netWorthData}>
-            <defs>
-              <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#1B5E20" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#1B5E20" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9AAA9B' }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9AAA9B' }} />
-            <Tooltip
-              contentStyle={{ borderRadius: 8, border: '1px solid #E0E8E1', fontSize: 12 }}
-              formatter={(v) => [`₹${v}L`, 'Net Worth']}
-            />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="#1B5E20"
-              strokeWidth={2.5}
-              fill="url(#netWorthGrad)"
-              dot={{ r: 4, fill: '#1B5E20', stroke: 'white', strokeWidth: 2 }}
-              activeDot={{ r: 6, fill: '#1B5E20', stroke: 'white', strokeWidth: 3 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <div className="flex-1 w-full min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={netWorthData}>
+              <defs>
+                <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#1B5E20" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#1B5E20" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9AAA9B' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9AAA9B' }} />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, border: '1px solid #E0E8E1', fontSize: 12 }}
+                formatter={(v) => [`₹${v}L`, 'Net Worth']}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#1B5E20"
+                strokeWidth={2.5}
+                fill="url(#netWorthGrad)"
+                dot={{ r: 4, fill: '#1B5E20', stroke: 'white', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#1B5E20', stroke: 'white', strokeWidth: 3 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </motion.div>
     );
   }
@@ -84,7 +86,7 @@ export default function ChartWidget({ type = 'area' }: { type?: 'area' | 'bar' |
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15 }}
-        className="card-psb"
+        className="card-psb min-h-[240px] flex flex-col"
       >
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -92,21 +94,23 @@ export default function ChartWidget({ type = 'area' }: { type?: 'area' | 'bar' |
             <p className="text-[11px] text-gray-400 mt-0.5">Top 5 categories</p>
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={spendingData} layout="vertical">
-            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9AAA9B' }} />
-            <YAxis type="category" dataKey="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#5C6B5D' }} width={70} />
-            <Tooltip
-              contentStyle={{ borderRadius: 8, border: '1px solid #E0E8E1', fontSize: 12 }}
-              formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Amount']}
-            />
-            <Bar dataKey="amount" radius={[0, 4, 4, 0]} barSize={20}>
-              {spendingData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="flex-1 w-full min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={spendingData} layout="vertical">
+              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9AAA9B' }} />
+              <YAxis type="category" dataKey="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#5C6B5D' }} width={70} />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, border: '1px solid #E0E8E1', fontSize: 12 }}
+                formatter={(v) => [`₹${Number(v).toLocaleString()}`, 'Amount']}
+              />
+              <Bar dataKey="amount" radius={[0, 4, 4, 0]} barSize={20}>
+                {spendingData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </motion.div>
     );
   }
@@ -117,7 +121,7 @@ export default function ChartWidget({ type = 'area' }: { type?: 'area' | 'bar' |
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="card-psb"
+        className="card-psb min-h-[240px] flex flex-col"
       >
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -125,28 +129,30 @@ export default function ChartWidget({ type = 'area' }: { type?: 'area' | 'bar' |
             <p className="text-[11px] text-gray-400 mt-0.5">Portfolio breakdown</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <ResponsiveContainer width={140} height={140}>
-            <PieChart>
-              <Pie
-                data={assetData}
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={65}
-                paddingAngle={3}
-                dataKey="value"
-                onMouseEnter={(_, idx) => setHovered(assetData[idx].name)}
-                onMouseLeave={() => setHovered(null)}
-              >
-                {assetData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} opacity={hovered === null || hovered === entry.name ? 1 : 0.4} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #E0E8E1', fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex-1 space-y-2">
+        <div className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-4 min-h-0">
+          <div className="w-[150px] h-[150px] shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={assetData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={70}
+                  paddingAngle={3}
+                  dataKey="value"
+                  onMouseEnter={(_, idx) => setHovered(assetData[idx].name)}
+                  onMouseLeave={() => setHovered(null)}
+                >
+                  {assetData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} opacity={hovered === null || hovered === entry.name ? 1 : 0.4} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #E0E8E1', fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex-1 w-full sm:w-auto space-y-2">
             {assetData.map(item => (
               <div key={item.name} className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />

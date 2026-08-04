@@ -135,14 +135,17 @@ img, video, canvas, svg {
     padding-right: 0.75rem;
   }
 
-  /* Charts, maps, tables: horizontal scroll instead of overflow */
-  [class*="chart"],
-  [class*="Chart"],
-  .recharts-wrapper,
+  /* Charts, maps, tables: horizontal scroll instead of overflow.
+     Do NOT apply overflow to .recharts-wrapper — it clips Recharts SVGs. */
+  [class*="chart"]:not(.recharts-wrapper),
+  [class*="Chart"]:not(.recharts-wrapper),
   .leaflet-container,
   table {
     max-width: 100%;
     overflow-x: auto;
+  }
+  .recharts-wrapper {
+    max-width: 100%;
   }
 
   /* Fixed elements never overflow the viewport */

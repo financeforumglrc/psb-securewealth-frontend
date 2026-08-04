@@ -15,7 +15,7 @@ import WealthTwinHero from '@/features/dashboard/components/WealthTwinHero';
 import DashboardHero from '@/features/dashboard/components/DashboardHero';
 import FinancialPulse from '@/features/dashboard/components/FinancialPulse';
 import FinancialTwinAvatar from '@/features/ai/components/FinancialTwinAvatar';
-import QuickActions from '@/features/dashboard/components/QuickActions';
+
 import QuickPayCard from '@/features/psb/components/QuickPayCard';
 import RecentTransactionsTable from '@/features/psb/components/RecentTransactionsTable';
 import SecurityHealthWidget from '@/features/psb/components/SecurityHealthWidget';
@@ -201,8 +201,7 @@ export default function DashboardView() {
   const recentTxns = transactions.slice(0, 5);
 
   return (
-    <QuickActions>
-      <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
         {/* Coerced Mode Warning */}
         {coercedMode && (
           <motion.div
@@ -290,7 +289,6 @@ export default function DashboardView() {
           )}
         </AnimatePresence>
       </div>
-    </QuickActions>
   );
 }
 
