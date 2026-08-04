@@ -94,6 +94,7 @@ const ExplainableRiskScore = lazyWithRetry(() => import('@/features/security/com
 const EmotionAdaptiveGate = lazyWithRetry(() => import('@/features/security/components/EmotionAdaptiveGate'));
 const VoiceAuthenticatedCommands = lazyWithRetry(() => import('@/features/security/components/VoiceAuthenticatedCommands'));
 const SecureWealthGuardian = lazyWithRetry(() => import('@/features/security/components/SecureWealthGuardian'));
+const QuantumKeyExchange = lazyWithRetry(() => import('@/features/security/components/QuantumKeyExchange'));
 const LiveFraudSimulator = lazyWithRetry(() => import('@/features/fraud/components/LiveFraudSimulator'));
 const ScamCallSimulator = lazyWithRetry(() => import('@/features/fraud/components/ScamCallSimulator'));
 const GenerationalWealthOptimizer = lazyWithRetry(() => import('@/features/innovation/components/GenerationalWealthOptimizer'));
@@ -423,6 +424,7 @@ export default function AuthenticatedApp() {
               {currentView === 'fantasy-league' && <FantasyLeague />}
               {currentView === 'boosts' && <BoostsManager />}
               {currentView === 'security-beast' && <SecurityBeastView />}
+              {currentView === 'quantum-key-exchange' && <QuantumKeyExchange />}
               {currentView === 'bhavishya' && <BhavishyaEngine />}
               {currentView === 'innovation-lab' && <InnovationLabView />}
               {currentView === 'payments' && <PaymentsPage />}
