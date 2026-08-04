@@ -5,7 +5,8 @@
  */
 
 const FACE_API_CDN = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js';
-const FACE_API_WEIGHTS = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+// Tagged release weights are far more reliable than @master and avoid CORS/MIME surprises.
+const FACE_API_WEIGHTS = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
 
 let loaded = false;
 let loadingPromise: Promise<void> | null = null;
@@ -23,6 +24,10 @@ function loadScript(src: string): Promise<void> {
   });
 }
 
+export function isFaceAuthEngineLoaded(): boolean {
+  return loaded;
+}
+
 export async function initFaceAuthEngine(): Promise<void> {
   if (loaded) return;
   if (loadingPromise) return loadingPromise;
@@ -32,6 +37,9 @@ export async function initFaceAuthEngine(): Promise<void> {
       await loadScript(FACE_API_CDN);
     }
     const faceapi = (window as any).faceapi;
+    if (!faceapi || !faceapi.nets) {
+      throw new Error('Face-API library failed to initialize');
+    }
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(FACE_API_WEIGHTS),
       faceapi.nets.faceLandmark68Net.loadFromUri(FACE_API_WEIGHTS),
@@ -43,6 +51,7 @@ export async function initFaceAuthEngine(): Promise<void> {
   try {
     await loadingPromise;
   } catch (err) {
+    loaded = false;
     loadingPromise = null;
     throw err;
   }

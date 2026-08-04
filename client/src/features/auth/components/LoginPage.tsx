@@ -706,7 +706,8 @@ export default function LoginPage() {
       <FaceLoginModal
         isOpen={faceLoginOpen}
         onClose={() => setFaceLoginOpen(false)}
-        onSuccess={(user) => {
+        onSuccess={(user, token) => {
+          if (token) backendApi.setAuthToken(token);
           localStorage.setItem('sw-user', JSON.stringify(user));
           dispatch({ type: 'LOGIN', userId: user.id, userEmail: user.email });
           useWealthStore.getState().updateUser({ name: user.name || user.email?.split('@')[0] || 'User' });

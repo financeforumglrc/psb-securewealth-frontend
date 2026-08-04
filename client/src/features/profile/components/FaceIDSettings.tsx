@@ -2,10 +2,13 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, CheckCircle2, XCircle, Trash2, Plus, User, Shield, ScanFace, RotateCcw } from 'lucide-react';
 import { detectFace, euclideanDistance } from '@/shared/lib/faceAuth';
+import { backendApi } from '@/shared/lib/backendApi';
+import { useAuth } from '@/shared/context/AuthContext';
 
 interface RegisteredFace {
   id: string;
   name: string;
+  email?: string;
   descriptor: number[];
   createdAt: number;
   quality: number;
@@ -66,10 +69,23 @@ function calculateQuality(
   return Math.max(0, Math.min(1, sizeScore * 0.45 + centerScore * 0.35 + confidenceScore * 0.2));
 }
 
+function getCurrentUserEmail(): string | null {
+  try {
+    const raw = localStorage.getItem('sw-user');
+    if (raw) return JSON.parse(raw).email || null;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export default function FaceIDSettings() {
+  const { state: authState } = useAuth();
+  const currentEmail = authState.userEmail || getCurrentUserEmail() || '';
+
   const [faces, setFaces] = useState<RegisteredFace[]>(loadFaces());
   const [registering, setRegistering] = useState(false);
-  const [registerName, setRegisterName] = useState('');
+  const [registerName, setRegisterName] = useState(currentEmail ? currentEmail.split('@')[0] : '');
   const [status, setStatus] = useState<'idle' | 'loading' | 'scanning' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [quality, setQuality] = useState(0);
@@ -203,21 +219,31 @@ export default function FaceIDSettings() {
         return;
       }
 
+      // Sync to backend so Face Login can verify server-side.
+      let serverSynced = false;
+      if (currentEmail) {
+        const res = await backendApi.registerFace(descriptor);
+        serverSynced = res.ok;
+      }
+
       const newFace: RegisteredFace = {
         id: Math.random().toString(36).slice(2, 10),
-        name: registerName.trim(),
+        name: registerName.trim() || currentEmail.split('@')[0] || 'User',
+        email: currentEmail || undefined,
         descriptor,
         createdAt: Date.now(),
         quality: Math.round(quality * 100) / 100,
       };
 
-      const updatedFaces = [...faces, newFace];
+      const updatedFaces = [...faces.filter((f) => f.email !== newFace.email), newFace];
       setFaces(updatedFaces);
       saveFaces(updatedFaces);
 
       setStatus('success');
-      setMessage(`Face registered successfully as "${registerName}" with ${Math.round(quality * 100)}% quality.`);
-      setRegisterName('');
+      setMessage(
+        `Face registered as "${newFace.name}"${serverSynced ? ' & synced to secure vault' : ''}.`
+      );
+      setRegisterName(currentEmail ? currentEmail.split('@')[0] : '');
       stopCamera();
       setRegistering(false);
       setCaptureProgress(0);
@@ -230,7 +256,7 @@ export default function FaceIDSettings() {
       setStatus('error');
       setMessage('Registration failed. Please try again.');
     }
-  }, [faceDetected, quality, tooClose, faces, registerName, stopCamera]);
+  }, [faceDetected, quality, tooClose, faces, registerName, stopCamera, currentEmail]);
 
   const detectLoop = useCallback(async () => {
     const video = videoRef.current;
