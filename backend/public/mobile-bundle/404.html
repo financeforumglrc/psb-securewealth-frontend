@@ -56,12 +56,27 @@
         .safe-area-right { padding-right: env(safe-area-inset-right); }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-BteQDFX8.js"></script>
+
+    <!-- Theme: default light; only add .dark if user explicitly toggled it -->
+    <script>
+      (function () {
+        try {
+          var persisted = localStorage.getItem('sw-wealth-store');
+          if (persisted) {
+            var state = JSON.parse(persisted);
+            if (state && state.darkMode === true) {
+              document.documentElement.classList.add('dark');
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-C-YiXpqX.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-DAXXjFlN.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-charts-CZffX-OM.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-react-6IhIqRtN.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-framer-CJOVevZm.js">
-    <link rel="stylesheet" crossorigin href="/assets/css/index-CXY3N-Vs.css">
+    <link rel="stylesheet" crossorigin href="/assets/css/index-DTPT2fft.css">
   </head>
   <body>
     <div id="root"></div>

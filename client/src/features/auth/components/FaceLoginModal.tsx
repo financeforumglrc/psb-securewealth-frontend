@@ -22,10 +22,10 @@ interface StoredFace {
 }
 
 const FACE_STORAGE_KEY = 'sw_registered_faces';
-const LOCAL_MATCH_THRESHOLD = 0.55;
-const MIN_FACE_SCORE = 0.55;
+const LOCAL_MATCH_THRESHOLD = 0.58;
+const MIN_FACE_SCORE = 0.45;
 const IDEAL_FACE_RATIO_MIN = 0.08;
-const IDEAL_FACE_RATIO_MAX = 0.45;
+const IDEAL_FACE_RATIO_MAX = 0.38;
 
 function loadLocalFaces(): StoredFace[] {
   try {
@@ -403,12 +403,12 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
         setQualityPct(Math.round(quality * 100));
 
         if (tooClose) {
-          setSubMessage('Move back a little — face is too close');
+          setSubMessage('Move phone back — face is too close');
           busyRef.current = false;
           return;
         }
         if (tooFar) {
-          setSubMessage('Come closer — face is too small');
+          setSubMessage('Bring phone closer — face is too small');
           busyRef.current = false;
           return;
         }
@@ -563,18 +563,23 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
                 Camera Preview (shared)
                 ════════════════════════════════════════ */}
             {(step === 'loading' || step === 'scanning' || step === 'processing' || step === 'success' || step === 'error') && (
-              <div className="relative w-full max-w-[360px] mx-auto rounded-2xl border-2 border-slate-700 bg-black overflow-hidden mb-4" style={{ aspectRatio: '4 / 3' }}>
+              <div className="relative w-full max-w-[min(100%,360px)] mx-auto rounded-2xl border-2 border-slate-700 bg-black overflow-hidden mb-4 aspect-[3/4] shadow-2xl">
                 <video
                   ref={videoRef}
-                  className="absolute inset-0 w-full h-full object-contain transform -scale-x-100 bg-black"
+                  className="absolute inset-0 w-full h-full object-cover transform -scale-x-100 bg-black"
                   playsInline muted autoPlay
                 />
                 {step === 'scanning' && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className={`w-44 h-56 border-2 border-dashed rounded-[2rem] animate-pulse transition-colors duration-300 ${
-                      detectedCount > 0 ? 'border-emerald-400' : 'border-white/40'
-                    }`} />
-                  </div>
+                  <>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className={`w-48 h-60 border-2 border-dashed rounded-[2.5rem] animate-pulse transition-colors duration-300 ${
+                        detectedCount > 0 ? 'border-emerald-400' : 'border-white/40'
+                      }`} />
+                    </div>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 text-white text-[10px]">
+                      Hold phone at arm&apos;s length
+                    </div>
+                  </>
                 )}
                 {step === 'loading' && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-black/60">

@@ -35,7 +35,7 @@ export default function FraudIntelligenceCenter() {
   const [liveCases, setLiveCases] = useState<FraudCase[]>([]);
   const [liveLog, setLiveLog] = useState<LiveLogEntry[]>([]);
   const [simulating, setSimulating] = useState(false);
-  const { cases, loading, error, filters, setFilters, pagination, setPage, refresh, stats, statsLoading, isLocalMock, mutateLocalCase } = useFraudCases({ limit: 25 });
+  const { cases, loading, error, filters, setFilters, pagination, setPage, refresh, statsLoading, isLocalMock, mutateLocalCase } = useFraudCases({ limit: 25 });
   const liveIntervalRef = useRef<number | null>(null);
 
   const TIME_RANGES: { key: FraudTimeRange; label: string }[] = [
@@ -56,7 +56,9 @@ export default function FraudIntelligenceCenter() {
     const map = new Map<number, FraudCase>();
     liveCases.forEach(c => map.set(c.id, c));
     cases.forEach(c => { if (!map.has(c.id)) map.set(c.id, c); });
-    return Array.from(map.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return Array.from(map.values())
+      .filter(isIndiaOnlyCase)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [liveCases, cases]);
 
   const addLiveLog = useCallback((caseRef: string, message: string) => {
@@ -152,6 +154,17 @@ export default function FraudIntelligenceCenter() {
 
   const displayCases = allCases();
 
+  const indiaStats = useMemo(() => {
+    const totalCases = displayCases.length;
+    const highRiskCases = displayCases.filter(c => c.riskScore >= 80).length;
+    let totalInrAmount = 0;
+    displayCases.forEach(c => {
+      const origin = c.hops?.find(h => h.hopType === 'origin');
+      if (origin) totalInrAmount += origin.amount || 0;
+    });
+    return { totalCases, highRiskCases, totalInrAmount };
+  }, [displayCases]);
+
   const topFraudOrigin = useMemo(() => {
     const counts = new Map<string, number>();
     displayCases.forEach((c) => {
@@ -170,10 +183,10 @@ export default function FraudIntelligenceCenter() {
   }, [displayCases]);
 
   const statCards = [
-    { label: t('fraudIntelTotalCases'), value: stats?.totalCases ?? 0, sub: 'active investigations', icon: ScrollText, gradient: 'from-blue-500 to-indigo-600' },
-    { label: t('fraudIntelCriticalRisk'), value: stats?.highRiskCases ?? 0, sub: 'require immediate action', icon: AlertTriangle, gradient: 'from-rose-500 to-red-600' },
+    { label: t('fraudIntelTotalCases'), value: indiaStats.totalCases, sub: 'active investigations', icon: ScrollText, gradient: 'from-blue-500 to-indigo-600' },
+    { label: t('fraudIntelCriticalRisk'), value: indiaStats.highRiskCases, sub: 'require immediate action', icon: AlertTriangle, gradient: 'from-rose-500 to-red-600' },
     { label: 'Top Fraud Origin', value: topFraudOrigin?.city ?? '—', sub: topFraudOrigin ? `${topFraudOrigin.count} cases from this city` : 'no origin data', icon: MapPin, gradient: 'from-violet-500 to-purple-600' },
-    { label: t('fraudIntelTotalInrTraced'), value: `₹${((stats?.totalInrAmount ?? 0) / 100000).toFixed(1)}L`, sub: 'flowing across trails', icon: BarChart3, gradient: 'from-emerald-500 to-teal-600' },
+    { label: t('fraudIntelTotalInrTraced'), value: `₹${(indiaStats.totalInrAmount / 100000).toFixed(1)}L`, sub: 'flowing across trails', icon: BarChart3, gradient: 'from-emerald-500 to-teal-600' },
   ];
 
   const tickerItems = liveLog.slice(0, 12);

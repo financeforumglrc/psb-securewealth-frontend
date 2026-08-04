@@ -99,8 +99,9 @@ img, video, canvas, svg {
     overflow-wrap: break-word;
   }
 
-  /* Headings must never collapse into single-character columns */
-  h1, h2, h3, h4, h5, h6, span, a, button {
+  /* Headings and interactive text must never collapse into single-character columns.
+     Keep span default so short labels/currencies don't get force-wrapped. */
+  h1, h2, h3, h4, h5, h6, a, button {
     overflow-wrap: break-word;
     word-break: normal;
     min-width: 0;
@@ -112,11 +113,11 @@ img, video, canvas, svg {
     min-width: 0;
   }
 
-  /* Force wide grids to stack on small screens */
-  [class*="grid-cols-3"],
-  [class*="grid-cols-4"],
-  [class*="grid-cols-5"],
-  [class*="grid-cols-6"] {
+  /* Only force 2-column fallback for grids that have no explicit mobile stack class */
+  [class*="grid-cols-3"]:not([class*="grid-cols-1"]):not([class*="sm:grid-cols"]):not([class*="md:grid-cols-1"]),
+  [class*="grid-cols-4"]:not([class*="grid-cols-1"]):not([class*="sm:grid-cols"]):not([class*="md:grid-cols-1"]),
+  [class*="grid-cols-5"]:not([class*="grid-cols-1"]):not([class*="sm:grid-cols"]):not([class*="md:grid-cols-1"]),
+  [class*="grid-cols-6"]:not([class*="grid-cols-1"]):not([class*="sm:grid-cols"]):not([class*="md:grid-cols-1"]) {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 

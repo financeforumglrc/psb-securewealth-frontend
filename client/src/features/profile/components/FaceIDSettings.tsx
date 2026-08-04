@@ -15,8 +15,9 @@ interface RegisteredFace {
 }
 
 const FACE_STORAGE_KEY = 'sw_registered_faces';
-const MIN_QUALITY = 0.72;
+const MIN_QUALITY = 0.62;
 const AUTO_CAPTURE_MS = 1200;
+const TOO_CLOSE_RATIO = 0.38; // prompt user to move back earlier
 const GUIDE_RX = 25;
 const GUIDE_RY = 35;
 const RING_R = 38;
@@ -268,7 +269,7 @@ export default function FaceIDSettings() {
         const q = calculateQuality(result.box, video.videoWidth || 640, video.videoHeight || 480, result.score || 0);
         const faceArea = result.box.width * result.box.height;
         const videoArea = (video.videoWidth || 640) * (video.videoHeight || 480);
-        setTooClose(faceArea / videoArea > 0.45);
+        setTooClose(faceArea / videoArea > TOO_CLOSE_RATIO);
         setQuality(q);
         setFaceDetected(true);
       } else {
@@ -478,11 +479,12 @@ export default function FaceIDSettings() {
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="relative rounded-xl overflow-hidden bg-black aspect-[4/3] max-w-md mx-auto max-h-[420px]">
-              {/* Live camera feed — object-contain so the whole frame is visible */}
+            {/* Responsive preview: full width on mobile, capped on desktop, taller aspect for face framing */}
+            <div className="relative rounded-xl overflow-hidden bg-black aspect-[3/4] w-full max-w-[min(100%,380px)] mx-auto shadow-lg">
+              {/* Live camera feed — cover the frame, mirror for selfie UX */}
               <video
                 ref={videoRef}
-                className="absolute inset-0 w-full h-full object-contain transform -scale-x-100 bg-black"
+                className="absolute inset-0 w-full h-full object-cover transform -scale-x-100 bg-black"
                 playsInline
                 muted
                 autoPlay
@@ -498,46 +500,51 @@ export default function FaceIDSettings() {
                 <defs>
                   <mask id="faceOvalMask">
                     <rect width="100" height="100" fill="white" />
-                    <ellipse cx="50" cy="50" rx={GUIDE_RX} ry={GUIDE_RY} fill="black" />
+                    <ellipse cx="50" cy="44" rx={GUIDE_RX} ry={GUIDE_RY} fill="black" />
                   </mask>
                 </defs>
 
                 {/* Dark overlay with oval cutout */}
-                <rect width="100" height="100" fill="rgba(0,0,0,0.45)" mask="url(#faceOvalMask)" />
+                <rect width="100" height="100" fill="rgba(0,0,0,0.55)" mask="url(#faceOvalMask)" />
 
                 {/* Oval guide border */}
                 <ellipse
                   cx="50"
-                  cy="50"
+                  cy="44"
                   rx={GUIDE_RX}
                   ry={GUIDE_RY}
                   fill="none"
-                  stroke={tooClose ? '#EF4444' : faceDetected && quality >= MIN_QUALITY ? '#10B981' : 'rgba(255,255,255,0.7)'}
-                  strokeWidth="1.2"
+                  stroke={tooClose ? '#EF4444' : faceDetected && quality >= MIN_QUALITY ? '#10B981' : 'rgba(255,255,255,0.8)'}
+                  strokeWidth="1.4"
                 />
 
                 {/* Auto-capture progress ring */}
                 {captureProgress > 0 && (
                   <circle
                     cx="50"
-                    cy="50"
+                    cy="44"
                     r={RING_R}
                     fill="none"
                     stroke="#10B981"
-                    strokeWidth="2.5"
+                    strokeWidth="2.8"
                     strokeLinecap="round"
                     strokeDasharray={`${RING_CIRCUMFERENCE * captureProgress} ${RING_CIRCUMFERENCE}`}
-                    transform="rotate(-90 50 50)"
+                    transform="rotate(-90 50 44)"
                   />
                 )}
               </svg>
 
               {/* Instruction pill */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold whitespace-nowrap">
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white text-[11px] font-semibold whitespace-nowrap">
                 <span className={statusColor}>{instruction}</span>
                 {cameraReady && faceDetected && (
                   <span className="ml-2 opacity-90">{Math.round(quality * 100)}%</span>
                 )}
+              </div>
+
+              {/* Face-size hint */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 text-white text-[10px]">
+                Hold phone at arm&apos;s length
               </div>
             </div>
 
@@ -579,7 +586,7 @@ export default function FaceIDSettings() {
             <button
               onClick={handleRegister}
               disabled={!faceDetected || quality < MIN_QUALITY || tooClose}
-              className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
             >
               <Shield className="w-4 h-4" />
               Capture & Register ({Math.round(quality * 100)}%)
