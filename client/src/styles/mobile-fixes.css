@@ -70,6 +70,41 @@ img, video, canvas, svg {
     max-width: 220px;
     font-size: 11px;
   }
+
+  /* Keep fixed bottom bars from hiding content */
+  .app-shell,
+  main,
+  [class*="min-h-screen"] {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Fixed bottom elements respect safe areas */
+  [class*="fixed bottom-"] {
+    bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Modals: full width with comfortable margins */
+  [class*="fixed inset-0"] [class*="max-w-"],
+  [class*="modal"],
+  [class*="Modal"],
+  [class*="dialog"],
+  [class*="Dialog"] {
+    max-width: calc(100vw - 1.5rem) !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Prevent long unbreakable text from overflowing */
+  p, h1, h2, h3, h4, h5, h6, span, a, button, td, th {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* Grids: allow horizontal scroll if too wide */
+  [class*="grid"],
+  [class*="flex"][class*="overflow-x-auto"] {
+    min-width: 0;
+  }
 }
 
 /* Very small screens */

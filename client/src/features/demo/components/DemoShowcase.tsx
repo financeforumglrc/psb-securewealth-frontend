@@ -358,7 +358,7 @@ export default function DemoShowcase() {
   return (
     <>
       {!introDone && <CinematicIntro onComplete={() => setIntroDone(true)} />}
-      <div ref={mainRef} className={`min-h-screen bg-slate-950 text-slate-100 overflow-y-auto overflow-x-hidden scroll-smooth ${introDone ? '' : 'hidden'}`}>
+      <div ref={mainRef} className={`min-h-screen bg-slate-950 text-slate-100 overflow-y-auto overflow-x-hidden scroll-smooth pb-32 lg:pb-0 ${introDone ? '' : 'hidden'}`}>
         <CursorSpotlight />
         <ParticleBackground />
         <motion.div style={{ width: progressWidth }} className="fixed top-0 left-0 h-1 bg-gradient-to-r from-cyan-500 to-emerald-500 z-[60]" />
@@ -498,17 +498,17 @@ function ParticleBackground() {
 
 function QuickActions({ onPresent, onConsole }: { onPresent: () => void; onConsole: () => void }) {
   return (
-    <div className="fixed right-4 top-24 z-50 flex flex-col gap-2 pointer-events-none">
+    <div className="fixed right-4 top-auto bottom-32 z-50 flex flex-col gap-2 pointer-events-none lg:top-24 lg:bottom-auto">
       <button
         onClick={onPresent}
-        className="p-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:scale-105 transition-transform"
+        className="pointer-events-auto p-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:scale-105 transition-transform"
         title="Presentation Mode (P)"
       >
         <Play className="w-5 h-5" />
       </button>
       <button
         onClick={onConsole}
-        className="p-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:border-cyan-500/50 transition-colors"
+        className="pointer-events-auto p-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:border-cyan-500/50 transition-colors"
         title="Toggle API Console"
       >
         <Terminal className="w-5 h-5" />

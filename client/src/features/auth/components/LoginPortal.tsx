@@ -304,16 +304,6 @@ export default function LoginPortal() {
         <div className="absolute -bottom-40 -right-40 h-[32rem] w-[32rem] rounded-full bg-orange-500/5 blur-3xl" />
       </div>
 
-      {/* Demo mode shortcut */}
-      <a
-        href="/demo"
-        target="_blank"
-        rel="noreferrer"
-        className="absolute top-4 right-4 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400 text-primary-dark text-xs font-bold hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/20"
-      >
-        <Sparkles className="w-4 h-4" /> Demo Mode
-      </a>
-
       {/* LEFT: login form */}
       <section className="relative z-10 flex w-full items-center justify-center p-6 sm:p-10 lg:w-[42%]">
         <motion.div
@@ -323,17 +313,27 @@ export default function LoginPortal() {
           className="w-full max-w-md"
         >
           {/* Brand */}
-          <div className="mb-8 flex items-center gap-3">
-            <motion.div
-              whileHover={{ scale: 1.05, rotate: -2 }}
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg shadow-orange-500/20"
-            >
-              <Landmark className="h-6 w-6 text-white" />
-            </motion.div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white">PSB SecureWealth</h1>
-              <p className="text-xs font-medium text-slate-500">Twin · Public Sector Banking</p>
+          <div className="mb-8 flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <motion.div
+                whileHover={{ scale: 1.05, rotate: -2 }}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg shadow-orange-500/20"
+              >
+                <Landmark className="h-6 w-6 text-white" />
+              </motion.div>
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-bold tracking-tight text-white sm:text-xl">PSB SecureWealth</h1>
+                <p className="text-xs font-medium text-slate-500">Twin · Public Sector Banking</p>
+              </div>
             </div>
+            <a
+              href="/demo"
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400 text-primary-dark text-[11px] font-bold hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/20 sm:px-4 sm:py-2 sm:text-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Demo Mode
+            </a>
           </div>
 
           {/* Glass card */}
