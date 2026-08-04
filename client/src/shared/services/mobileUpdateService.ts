@@ -53,7 +53,7 @@ async function getRemoteVersion(): Promise<{ version: string; builtAt: string; f
     clearTimeout(timeout);
     if (!res.ok) return null;
     const json = await res.json();
-    return json?.data || null;
+    return json?.data || json || null;
   } catch {
     return null;
   }
@@ -67,7 +67,7 @@ async function getRemoteManifest(): Promise<BundleManifest | null> {
     clearTimeout(timeout);
     if (!res.ok) return null;
     const json = await res.json();
-    return json?.data || null;
+    return json?.data || json || null;
   } catch {
     return null;
   }
