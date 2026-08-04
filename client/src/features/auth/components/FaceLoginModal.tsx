@@ -177,6 +177,20 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
           });
         }
       }
+
+      // Pre-load models while the preview is visible so the first scan is instant.
+      setMessage('Loading face models…');
+      try {
+        const { initFaceAuthEngine } = await import('@/shared/lib/faceAuth');
+        await initFaceAuthEngine();
+      } catch (modelErr: any) {
+        console.error('[FaceLogin] Model load failed:', modelErr);
+        setStep('error');
+        setMessage('Could not load face models');
+        setSubMessage(modelErr.message || 'Check your connection and try again');
+        stopCamera();
+        return false;
+      }
       return true;
     } catch (err: any) {
       console.error('[FaceLogin] Camera error:', err);
