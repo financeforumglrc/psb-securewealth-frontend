@@ -49,7 +49,6 @@ export const VIEW_TITLES: Record<string, string> = {
   'loan-research': 'Research & Accountability',
   'loan-impact': 'MSME Impact Simulator',
   'social-collateral-loan': 'Social Collateral Loan',
-  'recurring-payments': 'Recurring Payments',
   'account-statement': 'Account Statement',
   'audit-log': 'Audit Log',
   'innovation-lab': 'Innovation Lab',
@@ -68,7 +67,6 @@ export const VIEW_TITLES: Record<string, string> = {
   profile: 'Profile',
   accessibility: 'Accessibility',
   admin: 'Admin Panel',
-  'pitch-deck': 'Pitch Deck',
 };
 
 export const VIEW_DESCRIPTIONS: Record<string, string> = {
@@ -95,7 +93,6 @@ export const VIEW_DESCRIPTIONS: Record<string, string> = {
   'loan-research': 'Published research on algorithmic accountability in AI credit scoring.',
   'loan-impact': 'Estimate real-economy impact of MSME credit disbursement.',
   'social-collateral-loan': 'Community-backed lending with trust circles.',
-  'recurring-payments': 'Autopay, subscriptions and standing instructions.',
   'account-statement': 'Download statements and reconcile accounts.',
   'audit-log': 'Immutable log of every security event.',
   family: 'Family wallets, allowances and shared goals.',
@@ -108,7 +105,6 @@ export const VIEW_DESCRIPTIONS: Record<string, string> = {
   'kids-mode': 'Safe money lessons for children.',
   'notification-demo': 'Simulate alerts and push notifications.',
   'innovation-lab': 'World-first prototypes and experiments.',
-  'pitch-deck': 'Judge-facing pitch strategies and closing script.',
 };
 
 // Quick flat links for compact top-bar scenarios
@@ -143,8 +139,6 @@ const wealthIntelligenceGroup: NavGroup = {
     { view: 'assets', label: 'Assets', icon: 'fa-gem', description: 'All physical and digital assets.' },
     { view: 'market', label: 'Market', icon: 'fa-globe', description: 'Live markets, news and movers.' },
     { view: 'forecast', label: 'Forecast', icon: 'fa-chart-line', description: 'Scenario and Monte Carlo forecasts.' },
-    { view: 'wealth-3d', label: '3D Wealth City', icon: 'fa-city', description: 'Net worth as an interactive metropolis.', badge: 'NEW' },
-    { view: 'wealth-ar', label: 'AR Wealth Preview', icon: 'fa-camera', description: 'Augmented reality wealth overlay.', badge: 'NEW' },
     { view: 'generational-wealth', label: 'Generational Wealth', icon: 'fa-people-roof', description: '3-generation wealth projection.', badge: 'NEW' },
   ],
 };
@@ -191,7 +185,6 @@ const financialToolsGroup: NavGroup = {
     { view: 'tax', label: 'Tax Planner', icon: 'fa-file-invoice-dollar', description: 'Deductions, IT returns and reports.' },
     { view: 'calculators', label: 'Calculators', icon: 'fa-calculator', description: 'EMI, SIP, FD and retirement.' },
     { view: 'bills', label: 'Bill Calendar', icon: 'fa-calendar-check', description: 'Due dates and autopay.' },
-    { view: 'recurring-payments', label: 'Recurring', icon: 'fa-rotate', description: 'Standing instructions and e-mandates.' },
     { view: 'account-statement', label: 'Statement', icon: 'fa-file-invoice', description: 'Download and reconcile.' },
   ],
 };
@@ -245,7 +238,6 @@ const innovationGroup: NavGroup = {
     { view: 'boosts', label: 'Boosts', icon: 'fa-rocket', description: 'Rewards and goal accelerators.' },
     { view: 'values-alignment', label: 'Values Alignment', icon: 'fa-heart', description: 'Invest with your values.' },
     { view: 'cross-device-approval', label: 'Cross-Device Approval', icon: 'fa-mobile-screen-button', description: 'Initiate on one device, approve on another.', badge: 'LIVE DEMO' },
-    { view: 'pitch-deck', label: 'Pitch Deck', icon: 'fa-trophy', description: 'Winning strategies & closing script.', badge: 'JUDGES' },
   ],
 };
 

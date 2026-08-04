@@ -105,9 +105,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Stop auto-restoring demo sessions so the login/portal page is always shown first.
-      // Existing stored demo credentials are cleared for a clean slate.
+      // Existing stored demo credentials and stale tokens are cleared for a clean slate.
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem('sw-demo-user');
+        localStorage.removeItem('sw-auth-token');
+        localStorage.removeItem('sw_auth_state');
       }
 
       dispatch({

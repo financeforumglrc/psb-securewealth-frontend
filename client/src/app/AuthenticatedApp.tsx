@@ -1,7 +1,6 @@
 import { useEffect, useState, Suspense, useTransition } from 'react';
 import { motion } from 'framer-motion';
 import PitchMode from '@/features/pitch/components/PitchMode';
-import PitchDeckView from '@/features/pitch/components/PitchDeckView';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { isJudgeMode } from '@/shared/utils/demoMode';
 import { usePanicMode } from '@/shared/hooks/usePanicMode';
@@ -39,6 +38,8 @@ import OnboardingWizard from '@/features/onboarding/components/OnboardingWizard'
 
 const PaymentsPage = lazyWithRetry(() => import('@/features/payments/components/PaymentsPage'));
 const ProfileSettings = lazyWithRetry(() => import('@/features/profile/components/ProfileSettings'));
+const PitchDeckView = lazyWithRetry(() => import('@/features/pitch/components/PitchDeckView'));
+const RecurringPayments = lazyWithRetry(() => import('@/features/banking/components/RecurringPayments'));
 
 // PitchMode is bundled statically to avoid a separate chunk fetch failing on some networks/edges.
 const DemoMode = lazyWithRetry(() => import('@/features/demo/components/DemoMode'));
@@ -87,7 +88,6 @@ const LoansHub = lazyWithRetry(() => import('@/features/loans/components/LoansHu
 const LoanResearchShowcase = lazyWithRetry(() => import('@/features/loans/components/LoanResearchShowcase'));
 const LoanImpactSimulator = lazyWithRetry(() => import('@/features/loans/components/LoanImpactSimulator'));
 const SocialCollateralLoan = lazyWithRetry(() => import('@/features/loans/components/SocialCollateralLoan'));
-const RecurringPayments = lazyWithRetry(() => import('@/features/banking/components/RecurringPayments'));
 const AccountStatement = lazyWithRetry(() => import('@/features/banking/components/AccountStatement'));
 const AuditLog = lazyWithRetry(() => import('@/features/banking/components/AuditLog'));
 const CrossDeviceApproval = lazyWithRetry(() => import('@/features/security/components/CrossDeviceApproval'));
