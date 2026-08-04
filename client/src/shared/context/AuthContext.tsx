@@ -2,6 +2,21 @@ import { createContext, useContext, useReducer, useEffect, type ReactNode } from
 import { supabase } from '@/shared/lib/supabase';
 import { hasRegisteredPasskey, getPasskeyUser } from '@/shared/services/passkeyService';
 
+function getDemoSession(): { id: string; email: string; name: string } | null {
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    const raw = localStorage.getItem('sw-demo-user');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.id && parsed?.email) {
+      return { id: parsed.id, email: parsed.email, name: parsed.name || parsed.email };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 interface AuthStateCtx {
   isAuthenticated: boolean;
   userId: string | null;
@@ -82,7 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Check initial session (Supabase only; demo sessions are no longer auto-restored)
+    // Check initial session (Supabase first; then restore a valid demo session so
+    // judges can refresh the deployed app without being kicked back to the portal.)
     supabase.auth.getSession().then(({ data: { session } }) => {
       const passkeyRegistered = hasRegisteredPasskey();
       const passkeyUserId = getPasskeyUser();
@@ -104,10 +120,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Stop auto-restoring demo sessions so the login/portal page is always shown first.
-      // Existing stored demo credentials are cleared for a clean slate.
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem('sw-demo-user');
+      const demo = getDemoSession();
+      if (demo) {
+        dispatch({
+          type: 'INIT',
+          state: {
+            isAuthenticated: true,
+            userId: demo.id,
+            userEmail: demo.email,
+            lockoutUntil: null,
+            failedAttempts: 0,
+            loading: false,
+            deviceFingerprint: null,
+            passkeyRegistered,
+            passkeyUserId,
+          },
+        });
+        return;
       }
 
       dispatch({
@@ -126,7 +155,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     }).catch((err) => {
       console.error('Auth session init failed:', err);
-      dispatch({ type: 'SET_LOADING', payload: false });
+      // Even if Supabase fails, try demo fallback so the deployed app stays usable.
+      const demo = getDemoSession();
+      if (demo) {
+        dispatch({
+          type: 'INIT',
+          state: {
+            isAuthenticated: true,
+            userId: demo.id,
+            userEmail: demo.email,
+            lockoutUntil: null,
+            failedAttempts: 0,
+            loading: false,
+            deviceFingerprint: null,
+            passkeyRegistered: hasRegisteredPasskey(),
+            passkeyUserId: getPasskeyUser(),
+          },
+        });
+      } else {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
     });
 
     return () => subscription.unsubscribe();

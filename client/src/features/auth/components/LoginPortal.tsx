@@ -259,6 +259,9 @@ export default function LoginPortal() {
     // Fallback: local data instantly so the UI never hangs on a cold backend.
     backendApi.clearAuthToken();
     applyDemoAccount(account);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('sw-demo-user', JSON.stringify({ id: account.id, email: account.email, name: account.profile.name }));
+    }
     const store = useWealthStore.getState();
     store.setOnboardingComplete(true);
     store.setAAFetchComplete(false);
