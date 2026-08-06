@@ -37,7 +37,6 @@ import OnboardingWizard from '@/features/onboarding/components/OnboardingWizard'
 
 const PaymentsPage = lazyWithRetry(() => import('@/features/payments/components/PaymentsPage'));
 const ProfileSettings = lazyWithRetry(() => import('@/features/profile/components/ProfileSettings'));
-const PitchDeckView = lazyWithRetry(() => import('@/features/pitch/components/PitchDeckView'));
 const RecurringPayments = lazyWithRetry(() => import('@/features/banking/components/RecurringPayments'));
 
 const DemoMode = lazyWithRetry(() => import('@/features/demo/components/DemoMode'));
