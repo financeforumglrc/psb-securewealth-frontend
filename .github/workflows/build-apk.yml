@@ -1,0 +1,134 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'client/**'
+      - 'backend/**'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies
+        run: |
+          cd client
+          npm install --legacy-peer-deps
+
+      - name: Build web app (includes OTA bundle)
+        run: |
+          cd client
+          npm run build
+        env:
+          VITE_OTA_URL: https://psb-securewealth-frontend.onrender.com/mobile-bundle
+
+      - name: Sync Capacitor Android
+        id: sync-capacitor
+        run: |
+          cd client
+          set -o pipefail
+          (npx cap copy android 2>&1; npx cap update android || true) | tee sync-capacitor.log
+        shell: bash
+        continue-on-error: true
+
+      - name: Capture Capacitor sync failure
+        if: steps.sync-capacitor.outcome == 'failure'
+        run: |
+          cd client
+          echo "## Capacitor sync failure" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 80 sync-capacitor.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          TAIL=$(tail -n 40 sync-capacitor.log | sed 's/::/--/g')
+          ENCODED=$(printf '%s' "$TAIL" | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error::$ENCODED"
+          exit 1
+        shell: bash
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required Android SDK components
+        run: |
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Build debug APK
+        id: build-debug-apk
+        run: |
+          cd client/android
+          chmod +x ./gradlew
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee gradle.log
+        shell: bash
+        continue-on-error: true
+
+      - name: Capture Gradle failure summary
+        if: steps.build-debug-apk.outcome == 'failure'
+        run: |
+          cd client/android
+          # Extract the relevant Gradle error block (from first FAILURE marker) or fall back to first+last 60 lines
+          START=$(grep -n -E "FAILURE: Build failed|What went wrong:" gradle.log | head -1 | cut -d: -f1)
+          if [ -n "$START" ]; then
+            sed -n "${START},$(($START + 59))p" gradle.log > error_snippet.log
+          else
+            { head -n 60 gradle.log; echo "..."; tail -n 60 gradle.log; } > error_snippet.log
+          fi
+          echo "## Gradle failure snippet" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat error_snippet.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          # Emit the snippet as an annotation (visible without sign-in)
+          TAIL=$(cat error_snippet.log | sed 's/::/--/g')
+          ENCODED=$(printf '%s' "$TAIL" | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error::$ENCODED"
+          exit 1
+        shell: bash
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psb-securewealth-debug-apk
+          path: client/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: Create GitHub Release with APK
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: PSB SecureWealth Twin - Latest APK
+          body: |
+            Latest debug APK built automatically from the main branch.
+            Download `app-debug.apk` below and install it on your Android device.
+          prerelease: true
+          files: client/android/app/build/outputs/apk/debug/app-debug.apk
+          make_latest: false
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

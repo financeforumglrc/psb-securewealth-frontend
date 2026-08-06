@@ -97,11 +97,11 @@ export default function GoalConflictIntelligence({ totalMonthlyNeed, monthlySavi
       </div>
 
       {/* Bar Chart Comparison */}
-      <div className="card">
+      <div className="card min-h-[320px] flex flex-col">
         <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-3">
           <i className="fas fa-chart-column text-primary mr-2" />Strategy Comparison
         </h4>
-        <div className="h-48">
+        <div className="flex-1 w-full min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />

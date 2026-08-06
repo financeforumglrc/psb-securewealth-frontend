@@ -38,6 +38,7 @@ export const VIEW_TITLES: Record<string, string> = {
   transactions: 'Transactions',
   protection: 'Protection',
   'security-beast': 'Security Beast',
+  'quantum-key-exchange': 'Quantum Security',
   privacy: 'Privacy',
   tax: 'Tax Planner',
   calculators: 'Calculators',
@@ -60,7 +61,6 @@ export const VIEW_TITLES: Record<string, string> = {
   'nri-mode': 'NRI Center',
   'business-mode': 'Khata',
   'cross-device-approval': 'Cross-Device Approval',
-  'quantum-key': 'Quantum Key Exchange',
   'msme-creditbridge': 'MSME CreditBridge AI',
   'kids-mode': 'Kids Mode',
   'notification-demo': 'Notifications',
@@ -82,6 +82,7 @@ export const VIEW_DESCRIPTIONS: Record<string, string> = {
   transactions: 'Categorized history with AI insights.',
   protection: 'Fraud shields, cooling vault and insurance.',
   'security-beast': 'Threat radar, biometric guard and audit.',
+  'quantum-key-exchange': 'ML-KEM-768 post-quantum key exchange across devices.',
   privacy: 'Consent, data controls and GDPR-style settings.',
   tax: 'Tax planner, deductions and report downloads.',
   calculators: 'EMI, SIP, FD and goal calculators.',
@@ -113,10 +114,20 @@ export const TOP_NAV_LINKS: { view: string; label: string }[] = [
   { view: 'payments', label: 'Payments' },
   { view: 'goals', label: 'Goals' },
   { view: 'portfolio', label: 'Portfolio' },
-  { view: 'subscriptions', label: 'Subscriptions' },
-  { view: 'security-beast', label: 'Security' },
+  { view: 'guardian', label: 'Protection' },
   { view: 'innovation-lab', label: 'Innovation Lab' },
 ];
+
+const overviewGroup: NavGroup = {
+  id: 'overview',
+  title: 'Home',
+  subtitle: 'Your overview',
+  colorClass: 'text-primary',
+  bgClass: 'bg-primary/5',
+  items: [
+    { view: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie', description: 'Net worth, cashflow and quick actions.' },
+  ],
+};
 
 const wealthIntelligenceGroup: NavGroup = {
   id: 'wealth-intelligence',
@@ -125,60 +136,44 @@ const wealthIntelligenceGroup: NavGroup = {
   colorClass: 'text-primary',
   bgClass: 'bg-primary/5',
   items: [
-    { view: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie', description: 'Net worth, cashflow and quick actions.' },
-    { view: 'wealth-twin-gpt', label: 'Wealth Twin GPT', icon: 'fa-brain', description: 'Comprehensive AI financial advisor.', badge: 'FLAGSHIP' },
-    { view: 'customer-value', label: 'Value Tiering', icon: 'fa-crown', description: 'Features based on customer value.', badge: 'NEW' },
-    { view: 'zero-balance', label: 'Zero-Balance Offers', icon: 'fa-gift', description: 'Retention offers for low balance.', badge: 'NEW' },
-    { view: 'receiving-money', label: 'Receiving Money', icon: 'fa-arrow-trend-down', description: 'Focus on income growth.', badge: 'NEW' },
-    { view: 'etb-ntb', label: 'Customer Segments', icon: 'fa-users', description: 'ETB/NTB personalized experience.', badge: 'NEW' },
-    { view: 'age-group', label: 'Age-Based Experience', icon: 'fa-user', description: 'Personalized UX by life stage.', badge: 'NEW' },
+    { view: 'wealth-twin', label: 'Wealth Twin', icon: 'fa-brain', description: 'Your financial DNA and simulations.', badge: 'FLAGSHIP' },
     { view: 'bhavishya', label: 'BHAVISHYA AI', icon: 'fa-infinity', description: 'Predictive life-cycle AI engine.', badge: 'FLAGSHIP', alert: true },
-    { view: 'wealth-twin', label: 'Wealth Twin', icon: 'fa-brain', description: 'Your financial DNA and simulations.' },
     { view: 'goals', label: 'Goals', icon: 'fa-bullseye', description: 'Track goals with AI coaching.' },
     { view: 'portfolio', label: 'Portfolio', icon: 'fa-layer-group', description: 'Holdings, allocation and rebalancing.' },
     { view: 'assets', label: 'Assets', icon: 'fa-gem', description: 'All physical and digital assets.' },
     { view: 'market', label: 'Market', icon: 'fa-globe', description: 'Live markets, news and movers.' },
     { view: 'forecast', label: 'Forecast', icon: 'fa-chart-line', description: 'Scenario and Monte Carlo forecasts.' },
-    { view: 'generational-wealth', label: 'Generational Wealth', icon: 'fa-people-roof', description: '3-generation wealth projection.', badge: 'NEW' },
   ],
 };
 
 const fraudProtectionGroup: NavGroup = {
   id: 'fraud-protection',
-  title: 'Fraud Protection',
+  title: 'Pay & Protect',
   subtitle: 'Mandatory Wealth Protection Layer',
   colorClass: 'text-rose-600',
   bgClass: 'bg-rose-50',
   items: [
+    { view: 'guardian', label: 'Protection Center', icon: 'fa-shield-halved', description: 'Unified fraud protection, risk score, shields and transaction guard.', badge: 'FLAGSHIP' },
+    { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon', description: '9-layer threat radar, biometric guard and immutable audit.', badge: 'NEW' },
+    { view: 'quantum-key-exchange', label: 'Quantum Security', icon: 'fa-atom', description: 'ML-KEM-768 post-quantum key exchange demo across devices.', badge: 'NEW' },
     { view: 'payments', label: 'Payments', icon: 'fa-bolt', description: 'UPI, NEFT, cards and QR payments.' },
-    { view: 'transactions', label: 'Transactions', icon: 'fa-list', description: 'AI-categorized history.' },
-    { view: 'protection', label: 'Protection', icon: 'fa-shield-halved', description: 'Fraud shields and insurance.' },
-    { view: 'guardian', label: 'SecureWealth Guardian', icon: 'fa-shield-halved', description: 'Unified fraud protection dashboard.', badge: 'FLAGSHIP' },
-    { view: 'security-beast', label: 'Security Beast', icon: 'fa-dragon', description: 'Threat radar and biometrics.' },
-    { view: 'coercion-detection', label: 'Coercion Detection', icon: 'fa-fingerprint', description: 'Multi-modal forced transaction detection.', badge: 'NEW' },
-    { view: 'simplified-security', label: 'Simplified Security', icon: 'fa-shield-halved', description: 'Security tailored to customer tier.', badge: 'NEW' },
-    { view: 'transaction-failure-faceid', label: 'Transaction Failure FaceID', icon: 'fa-face-id', description: 'Face ID on failed transactions.', badge: 'NEW' },
-    { view: 'app-lock', label: 'App Lock', icon: 'fa-lock', description: 'Authentication gate for app access.', badge: 'NEW' },
-    { view: 'panic-process', label: 'Panic 5-Step Process', icon: 'fa-heart-pulse', description: 'De-escalation for financial panic.', badge: 'NEW' },
-    { view: 'emotion-gate', label: 'Emotion-Adaptive Gate', icon: 'fa-heart', description: 'Transaction limits adapt to emotional state.', badge: 'NEW' },
-    { view: 'voice-commands', label: 'Voice Commands', icon: 'fa-microphone-lines', description: 'Execute transactions with voice biometrics.', badge: 'NEW' },
-    { view: 'risk-score', label: 'Risk Score Explainer', icon: 'fa-gauge-high', description: 'Transparent AI risk factor breakdown.', badge: 'NEW' },
-    { view: 'fri-mri', label: 'FRI/MRI Classifications', icon: 'fa-shield-halved', description: 'Government fraud classifications.', badge: 'NEW' },
-    { view: 'live-fraud-simulator', label: 'Live Fraud Simulator', icon: 'fa-bug', description: 'Watch AI block real-time attacks.', badge: 'LIVE DEMO' },
+    { view: 'transactions', label: 'Transactions', icon: 'fa-list', description: 'AI-categorized payment history.' },
+    { view: 'audit-log', label: 'Audit Log', icon: 'fa-clipboard-check', description: 'Immutable ledger of every protected action.' },
+    { view: 'coercion-detection', label: 'Coercion & Emotion Guard', icon: 'fa-fingerprint', description: 'Detect forced transactions and emotion-driven risky actions.', badge: 'NEW' },
+    { view: 'transaction-failure-faceid', label: 'Biometric Safety Net', icon: 'fa-face-id', description: 'Face ID, app lock and voice panic fallback for failed or risky actions.', badge: 'NEW' },
+    { view: 'live-fraud-simulator', label: 'Live Fraud Simulator', icon: 'fa-bug', description: 'Trigger and watch AI block real-time fraud attacks.', badge: 'LIVE DEMO' },
+    { view: 'fri-mri', label: 'Fraud Intelligence', icon: 'fa-shield-halved', description: 'FRI/MRI classifications, I4C integration and hotspot tracking.', badge: 'NEW' },
     { view: 'scam-call', label: 'Scam Call Detection', icon: 'fa-phone-slash', description: 'AI detects scam calls in real-time.', badge: 'LIVE DEMO' },
-    { view: 'hotspot-fraud', label: 'Hotspot Fraud Areas', icon: 'fa-map-location-dot', description: 'Geographic fraud detection.', badge: 'NEW' },
-    { view: 'i4c-integration', label: 'I4C Integration', icon: 'fa-globe', description: 'Indian Cyber Crime Centre integration.', badge: 'NEW' },
-    { view: 'foreign-transactions', label: 'Foreign Transactions', icon: 'fa-dollar-sign', description: 'International money transfer.', badge: 'NEW' },
-    { view: 'voice-panic', label: 'Voice Panic Trigger', icon: 'fa-microphone', description: 'Say a secret word to activate duress mode.', badge: 'LIVE DEMO' },
-    { view: 'privacy', label: 'Privacy', icon: 'fa-lock', description: 'Consent and data controls.' },
-    { view: 'audit-log', label: 'Audit Log', icon: 'fa-clipboard-check', description: 'Immutable security ledger.' },
+    { view: 'foreign-transactions', label: 'Foreign Transactions', icon: 'fa-dollar-sign', description: 'International money transfer with extra checks.', badge: 'NEW' },
+    { view: 'voice-commands', label: 'Voice Commands', icon: 'fa-microphone-lines', description: 'Execute transactions with voice biometrics.', badge: 'NEW' },
+    { view: 'privacy', label: 'Privacy & Consent', icon: 'fa-lock', description: 'Consent, data controls and privacy settings.' },
   ],
 };
 
 const financialToolsGroup: NavGroup = {
   id: 'financial-tools',
-  title: 'Financial Tools',
-  subtitle: 'Plan, calculate and optimise',
+  title: 'Plan & Tools',
+  subtitle: 'Tax, calculators and money management',
   colorClass: 'text-blue-600',
   bgClass: 'bg-blue-50',
   items: [
@@ -192,18 +187,13 @@ const financialToolsGroup: NavGroup = {
 const loanHubGroup: NavGroup = {
   id: 'loans-hub',
   title: 'Loans & Credit',
-  subtitle: 'Borrow, score and monitor credit',
+  subtitle: 'Credit scoring and borrowing',
   colorClass: 'text-emerald-600',
   bgClass: 'bg-emerald-50',
   items: [
-    { view: 'loans-hub', label: 'Loans Hub', icon: 'fa-hand-holding-dollar', description: 'All loan and credit products in one place.', badge: 'NEW' },
     { view: 'creditbridge-ai', label: 'CreditBridge AI', icon: 'fa-bridge', description: 'Explainable retail & MSME credit scoring with XAI.', badge: 'FLAGSHIP' },
     { view: 'msme-creditbridge', label: 'MSME CreditBridge AI', icon: 'fa-building-columns', description: 'Collateral-free MSME loans via alternative data & XAI.', badge: 'FLAGSHIP' },
-    { view: 'loan-research', label: 'Research & Accountability', icon: 'fa-book-open', description: 'Our INFINITY 2025 published research.', badge: 'PUBLISHED' },
-    { view: 'loan-impact', label: 'Impact Simulator', icon: 'fa-chart-pie', description: 'Estimate MSME credit impact on jobs & GDP.' },
-    { view: 'loan-center', label: 'Loan Center', icon: 'fa-file-contract', description: 'Apply and track loans.' },
-    { view: 'credit-health', label: 'Credit Health', icon: 'fa-file-invoice', description: 'Score, factors and tips.' },
-    { view: 'social-collateral-loan', label: 'Social Collateral', icon: 'fa-people-group', description: 'Community-backed trust-circle lending.' },
+    { view: 'loans-hub', label: 'Loans Hub', icon: 'fa-hand-holding-dollar', description: 'All loan and credit products in one place.', badge: 'NEW' },
   ],
 };
 
@@ -242,6 +232,7 @@ const innovationGroup: NavGroup = {
 };
 
 export const SIDEBAR_GROUPS: NavGroup[] = [
+  overviewGroup,
   wealthIntelligenceGroup,
   fraudProtectionGroup,
   financialToolsGroup,
@@ -252,11 +243,19 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
 
 export const MEGA_MENU: TopNavCategory[] = [
   {
+    id: 'home',
+    label: 'Home',
+    icon: 'fa-house',
+    colorClass: 'text-primary',
+    description: 'Dashboard and overview.',
+    groups: [overviewGroup],
+  },
+  {
     id: 'wealth',
     label: 'Wealth Intelligence',
     icon: 'fa-chart-line',
     colorClass: 'text-primary',
-    description: 'Dashboards, AI, goals, portfolio and forecasts.',
+    description: 'AI, goals, portfolio, assets, market and forecasts.',
     groups: [wealthIntelligenceGroup],
   },
   {

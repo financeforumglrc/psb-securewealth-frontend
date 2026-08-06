@@ -37,8 +37,8 @@ export interface RiskSignals {
 }
 
 export interface ProtectionDecision {
-  level: 'LOW' | 'MEDIUM' | 'HIGH';
-  action: 'ALLOW' | 'WARN' | 'BLOCK';
+  level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  action: 'ALLOW' | 'WARN' | 'HOLD' | 'BLOCK';
   cooldown?: number;
   delay?: number;
   message: string;
@@ -113,7 +113,7 @@ export interface Transaction {
   category: string;
   type: 'credit' | 'debit';
   status: 'ALLOWED' | 'BLOCKED' | 'DELAYED';
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   signals?: RiskSignals;
   score?: number;
   decision?: ProtectionDecision;
@@ -386,28 +386,22 @@ export type ViewType =
   | 'msme-creditbridge'
   | 'creditbridge-ai'
   | 'loans-hub' | 'loan-research' | 'loan-impact' | 'social-collateral-loan'
-  | 'pitch-deck'
   | 'cross-device-approval'
   | 'quantum-key'
+  | 'quantum-key-exchange'
   | 'quantum-vault'
   | 'live-fraud-simulator'
   | 'scam-call'
   | 'voice-panic'
-  | 'wealth-3d'
-  | 'wealth-ar'
   | 'coercion-detection'
   | 'emotion-gate'
   | 'risk-score'
   | 'generational-wealth'
   | 'voice-commands'
   | 'guardian'
-  | 'wealth-twin-gpt'
   | 'age-group'
   | 'simplified-security'
   | 'etb-ntb'
-  | 'customer-value'
-  | 'zero-balance'
-  | 'receiving-money'
   | 'transaction-failure-faceid'
   | 'app-lock'
   | 'panic-process'

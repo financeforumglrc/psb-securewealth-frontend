@@ -3,6 +3,12 @@ import { fraudService } from '@/features/admin/services/fraudService';
 import { generateMockCases } from '@/features/admin/lib/fraudDataGenerator';
 import type { FraudCase, FraudCaseFilters, FraudStats } from '@/features/admin/lib/fraudTypes';
 
+export function isIndiaOnlyCase(c: FraudCase): boolean {
+  const hops = c.hops || [];
+  if (hops.length === 0) return false;
+  return hops.every(h => h.country === 'India');
+}
+
 interface UseFraudCasesReturn {
   cases: FraudCase[];
   loading: boolean;
@@ -188,7 +194,7 @@ export function useFraudCases(initial: FraudCaseFilters = {}): UseFraudCasesRetu
     setError(null);
     try {
       const res = await fraudService.getCases(filters);
-      setBackendCases(res.cases);
+      setBackendCases(res.cases.filter(isIndiaOnlyCase));
       setBackendPagination({ page: res.page, limit: res.limit, total: res.total, pages: res.pages });
       setMode('backend');
     } catch (err: any) {

@@ -90,18 +90,19 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
     return Math.min(score, 100);
   }, [signals]);
 
-  const fallbackLevel: 'LOW' | 'MEDIUM' | 'HIGH' = fallbackScore < 40 ? 'LOW' : fallbackScore < 70 ? 'MEDIUM' : 'HIGH';
+  const fallbackLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = fallbackScore < 60 ? 'LOW' : fallbackScore < 75 ? 'MEDIUM' : fallbackScore < 85 ? 'HIGH' : 'CRITICAL';
   const fallbackDecision: ProtectionDecision = useMemo(() => {
     const refId = 'PSB-' + Date.now().toString(36).toUpperCase();
     if (fallbackLevel === 'LOW') return { level: 'LOW', action: 'ALLOW', message: 'Transaction passed all security checks.', referenceId: refId };
     if (fallbackLevel === 'MEDIUM') return { level: 'MEDIUM', action: 'WARN', cooldown: 30, message: 'Medium risk detected. Cooling vault activated for your safety.', referenceId: refId };
-    return { level: 'HIGH', action: 'BLOCK', message: 'High risk detected. Transaction blocked to protect your wealth.', referenceId: refId };
+    if (fallbackLevel === 'HIGH') return { level: 'HIGH', action: 'HOLD', delay: 1800, message: 'High risk detected. Transaction held for human review (up to 30 min).', referenceId: refId };
+    return { level: 'CRITICAL', action: 'BLOCK', delay: 300, message: 'Critical risk detected. Transaction blocked to protect your wealth.', referenceId: refId };
   }, [fallbackLevel]);
 
   const decision = apiResult || {
     risk_score: fallbackScore,
     risk_level: fallbackLevel,
-    action: fallbackDecision.action as 'ALLOW' | 'WARN_COOL_OFF' | 'BLOCK',
+    action: fallbackDecision.action as 'ALLOW' | 'WARN' | 'WARN_COOL_OFF' | 'HOLD' | 'BLOCK',
     explainable_factors: fallbackDecision.message ? [fallbackDecision.message] : [],
     user_message: fallbackDecision.message,
     reference_id: fallbackDecision.referenceId,
@@ -247,8 +248,9 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
       signals,
       decision: {
         level: riskLevel,
-        action: action === 'WARN_COOL_OFF' ? 'WARN' : action,
-        cooldown: action === 'WARN_COOL_OFF' ? 15 : undefined,
+        action: action === 'WARN_COOL_OFF' ? 'WARN' : action as 'ALLOW' | 'WARN' | 'HOLD' | 'BLOCK',
+        cooldown: (action === 'WARN' || action === 'WARN_COOL_OFF') ? 30 : undefined,
+        delay: action === 'HOLD' ? 1800 : action === 'BLOCK' ? 300 : undefined,
         message: guardianMessage || decision.user_message,
         referenceId: decision.reference_id,
       } as ProtectionDecision,
@@ -262,10 +264,10 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
 
   if (!show) return null;
 
-  const riskText = riskLevel === 'LOW' ? 'text-emerald-600' : riskLevel === 'MEDIUM' ? 'text-amber-600' : 'text-rose-600';
-  const riskBg = riskLevel === 'LOW' ? 'bg-emerald-500' : riskLevel === 'MEDIUM' ? 'bg-amber-500' : 'bg-rose-500';
-  const riskBorder = riskLevel === 'LOW' ? 'border-emerald-200 dark:border-emerald-800' : riskLevel === 'MEDIUM' ? 'border-amber-200 dark:border-amber-800' : 'border-rose-200 dark:border-rose-800';
-  const riskSubtleBg = riskLevel === 'LOW' ? 'bg-emerald-50 dark:bg-emerald-900/10' : riskLevel === 'MEDIUM' ? 'bg-amber-50 dark:bg-amber-900/10' : 'bg-rose-50 dark:bg-rose-900/10';
+  const riskText = riskLevel === 'LOW' ? 'text-emerald-600' : riskLevel === 'MEDIUM' ? 'text-amber-600' : riskLevel === 'HIGH' ? 'text-rose-600' : 'text-red-700';
+  const riskBg = riskLevel === 'LOW' ? 'bg-emerald-500' : riskLevel === 'MEDIUM' ? 'bg-amber-500' : riskLevel === 'HIGH' ? 'bg-rose-500' : 'bg-red-700';
+  const riskBorder = riskLevel === 'LOW' ? 'border-emerald-200 dark:border-emerald-800' : riskLevel === 'MEDIUM' ? 'border-amber-200 dark:border-amber-800' : riskLevel === 'HIGH' ? 'border-rose-200 dark:border-rose-800' : 'border-red-300 dark:border-red-900';
+  const riskSubtleBg = riskLevel === 'LOW' ? 'bg-emerald-50 dark:bg-emerald-900/10' : riskLevel === 'MEDIUM' ? 'bg-amber-50 dark:bg-amber-900/10' : riskLevel === 'HIGH' ? 'bg-rose-50 dark:bg-rose-900/10' : 'bg-red-50 dark:bg-red-900/10';
 
   return (
     <AnimatePresence>
@@ -388,7 +390,7 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
                   animate={{ scale: 1, opacity: 1 }}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${riskBg} text-white`}
                 >
-                  <i className={`fas fa-${riskLevel === 'LOW' ? 'check-circle' : riskLevel === 'MEDIUM' ? 'clock' : 'ban'} text-lg`} />
+                  <i className={`fas fa-${riskLevel === 'LOW' ? 'check-circle' : riskLevel === 'MEDIUM' ? 'clock' : riskLevel === 'HIGH' ? 'hand' : 'ban'} text-lg`} />
                   <div className="text-left">
                     <p className="text-xs font-extrabold">{riskLevel} RISK — {action}</p>
                     <p className="text-[9px] opacity-90">Ref: {decision.reference_id}</p>
@@ -415,7 +417,7 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
-                {riskLevel === 'LOW' && (
+                {action === 'ALLOW' && (
                   <button
                     onClick={handleAllow}
                     className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
@@ -423,7 +425,7 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
                     <i className="fas fa-check" /> {amount >= 200000 ? 'Request Family Approval' : 'Allow Transaction'}
                   </button>
                 )}
-                {riskLevel === 'MEDIUM' && (
+                {(action === 'WARN_COOL_OFF' || action === 'WARN') && (
                   <>
                     <button
                       onClick={() => handleDecision('delay')}
@@ -439,10 +441,26 @@ export default function TransactionGuardModal({ show, payee, amount, onAllow, on
                     </button>
                   </>
                 )}
-                {riskLevel === 'HIGH' && (
+                {action === 'HOLD' && (
+                  <>
+                    <button
+                      onClick={() => handleDecision('delay')}
+                      className="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <i className="fas fa-hand" /> Hold for Human Review
+                    </button>
+                    <button
+                      onClick={onClose}
+                      className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+                {(action === 'BLOCK' || riskLevel === 'CRITICAL') && (
                   <button
                     onClick={() => handleDecision('block')}
-                    className="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-3 bg-red-700 hover:bg-red-800 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
                   >
                     <i className="fas fa-shield-halved" /> Block for Safety
                   </button>

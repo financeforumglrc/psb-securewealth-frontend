@@ -22,6 +22,7 @@ export default function RecentTransactionsTable() {
       case 'LOW': return <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-sm text-[9px] font-bold border border-emerald-200"><i className="fas fa-check" /> LOW</span>;
       case 'MEDIUM': return <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded-sm text-[9px] font-bold border border-amber-200"><i className="fas fa-clock" /> MED</span>;
       case 'HIGH': return <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded-sm text-[9px] font-bold border border-rose-200"><i className="fas fa-triangle-exclamation" /> HIGH</span>;
+      case 'CRITICAL': return <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-50 text-red-700 rounded-sm text-[9px] font-bold border border-red-200"><i className="fas fa-ban" /> CRIT</span>;
       default: return null;
     }
   };

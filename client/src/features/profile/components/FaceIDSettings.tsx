@@ -1,19 +1,27 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, CheckCircle2, XCircle, Trash2, Plus, User, Zap, Shield } from 'lucide-react';
+import { Camera, CheckCircle2, XCircle, Trash2, Plus, User, Shield, ScanFace, RotateCcw } from 'lucide-react';
 import { detectFace, euclideanDistance } from '@/shared/lib/faceAuth';
+import { backendApi } from '@/shared/lib/backendApi';
+import { useAuth } from '@/shared/context/AuthContext';
 
 interface RegisteredFace {
   id: string;
   name: string;
+  email?: string;
   descriptor: number[];
   createdAt: number;
   quality: number;
 }
 
 const FACE_STORAGE_KEY = 'sw_registered_faces';
-const MAX_ATTEMPTS = 5;
-const MIN_QUALITY = 0.7;
+const MIN_QUALITY = 0.62;
+const AUTO_CAPTURE_MS = 1200;
+const TOO_CLOSE_RATIO = 0.38; // prompt user to move back earlier
+const GUIDE_RX = 25;
+const GUIDE_RY = 35;
+const RING_R = 38;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R;
 
 function loadFaces(): RegisteredFace[] {
   try {
@@ -32,250 +40,309 @@ function saveFaces(faces: RegisteredFace[]) {
   }
 }
 
-function calculateQuality(box: { x: number; y: number; width: number; height: number }, videoWidth: number, videoHeight: number): number {
-  // Face size relative to video
+function calculateQuality(
+  box: { x: number; y: number; width: number; height: number },
+  videoWidth: number,
+  videoHeight: number,
+  score = 0
+): number {
   const faceArea = box.width * box.height;
   const videoArea = videoWidth * videoHeight;
   const sizeRatio = faceArea / videoArea;
-  
-  // Ideal size is 10-30% of video (smaller is better)
-  const minSize = 0.1;
-  const maxSize = 0.3;
-  const idealSize = 0.2;
-  
+
+  // Ideal face occupies 15–30% of the frame
   let sizeScore = 0;
-  if (sizeRatio >= minSize && sizeRatio <= maxSize) {
-    sizeScore = 1 - Math.abs(sizeRatio - idealSize) / idealSize;
-  } else if (sizeRatio > maxSize) {
-    // Face too large - penalize heavily
-    sizeScore = Math.max(0, 1 - (sizeRatio - maxSize) / maxSize);
+  if (sizeRatio >= 0.10 && sizeRatio <= 0.40) {
+    sizeScore = 1 - Math.abs(sizeRatio - 0.20) / 0.20;
+  } else if (sizeRatio < 0.10) {
+    sizeScore = Math.max(0, sizeRatio / 0.10);
+  } else {
+    sizeScore = Math.max(0, 1 - (sizeRatio - 0.40) / 0.40);
   }
-  
-  // Center position
+
   const centerX = box.x + box.width / 2;
   const centerY = box.y + box.height / 2;
-  const centerScoreX = 1 - Math.abs(centerX - videoWidth / 2) / (videoWidth / 2);
-  const centerScoreY = 1 - Math.abs(centerY - videoHeight / 2) / (videoHeight / 2);
+  const centerScoreX = 1 - Math.min(1, Math.abs(centerX - videoWidth / 2) / (videoWidth / 3));
+  const centerScoreY = 1 - Math.min(1, Math.abs(centerY - videoHeight / 2) / (videoHeight / 3));
   const centerScore = (centerScoreX + centerScoreY) / 2;
-  
-  return Math.max(0, Math.min(1, (sizeScore * 0.7 + centerScore * 0.3)));
+  const confidenceScore = Math.max(0, Math.min(1, score));
+
+  return Math.max(0, Math.min(1, sizeScore * 0.45 + centerScore * 0.35 + confidenceScore * 0.2));
+}
+
+function getCurrentUserEmail(): string | null {
+  try {
+    const raw = localStorage.getItem('sw-user');
+    if (raw) return JSON.parse(raw).email || null;
+  } catch {
+    // ignore
+  }
+  return null;
 }
 
 export default function FaceIDSettings() {
+  const { state: authState } = useAuth();
+  const currentEmail = authState.userEmail || getCurrentUserEmail() || '';
+
   const [faces, setFaces] = useState<RegisteredFace[]>(loadFaces());
   const [registering, setRegistering] = useState(false);
-  const [registerName, setRegisterName] = useState('');
-  const [status, setStatus] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle');
+  const [registerName, setRegisterName] = useState(currentEmail ? currentEmail.split('@')[0] : '');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'scanning' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  const [attempts, setAttempts] = useState(0);
-  const [faceBox, setFaceBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [quality, setQuality] = useState(0);
-  const [hdMode, setHdMode] = useState(true);
+  const [tooClose, setTooClose] = useState(false);
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [captureProgress, setCaptureProgress] = useState(0);
+  const [cameraReady, setCameraReady] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const startCamera = useCallback(async () => {
-    try {
-      // Stop any existing stream first
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
-      }
-
-      const constraints = {
-        video: {
-          facingMode: 'user',
-          width: hdMode ? { ideal: 1280, min: 640 } : { ideal: 640 },
-          height: hdMode ? { ideal: 720, min: 480 } : { ideal: 480 },
-          frameRate: { ideal: 30 },
-        },
-        audio: false,
-      };
-      
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      streamRef.current = stream;
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        videoRef.current.playsInline = true;
-        
-        // Wait for video to be ready
-        await new Promise<void>((resolve, reject) => {
-          if (!videoRef.current) {
-            reject(new Error('Video element not found'));
-            return;
-          }
-          
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play()
-              .then(() => resolve())
-              .catch((e) => reject(e));
-          };
-          
-          videoRef.current.onerror = () => {
-            reject(new Error('Video failed to load'));
-          };
-          
-          // Timeout after 5 seconds
-          setTimeout(() => reject(new Error('Video load timeout')), 5000);
-        });
-      }
-      return true;
-    } catch (_err) {
-      setStatus('error');
-      setMessage('Unable to start camera. Please check permissions and ensure no other app is using the camera.');
-      return false;
-    }
-  }, [hdMode]);
+  const captureStartRef = useRef<number | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopCamera = useCallback(() => {
     if (detectionIntervalRef.current) {
       clearInterval(detectionIntervalRef.current);
       detectionIntervalRef.current = null;
     }
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-    if (videoRef.current) videoRef.current.srcObject = null;
-    setFaceBox(null);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setQuality(0);
+    setTooClose(false);
+    setFaceDetected(false);
+    setCaptureProgress(0);
+    setCameraReady(false);
+    captureStartRef.current = null;
   }, []);
 
-  const detectFaceInFrame = useCallback(async () => {
-    if (!videoRef.current) return;
-    
+  const startCamera = useCallback(async () => {
+    stopCamera();
+
+    const tryGetMedia = async (constraints: MediaStreamConstraints): Promise<MediaStream> => {
+      return navigator.mediaDevices.getUserMedia(constraints);
+    };
+
+    let stream: MediaStream;
     try {
-      const result = await detectFace(videoRef.current);
-      if (result.detected && result.descriptor && result.box) {
-        // Limit face box size to reasonable bounds
-        const videoWidth = videoRef.current.videoWidth;
-        const videoHeight = videoRef.current.videoHeight;
-        const maxWidth = videoWidth * 0.6;
-        const maxHeight = videoHeight * 0.6;
-        
-        const box = {
-          x: Math.max(0, result.box.x),
-          y: Math.max(0, result.box.y),
-          width: Math.min(result.box.width, maxWidth),
-          height: Math.min(result.box.height, maxHeight),
-        };
-        
-        setFaceBox(box);
-        const q = calculateQuality(box, videoWidth, videoHeight);
-        setQuality(q);
-      } else {
-        setFaceBox(null);
-        setQuality(0);
-      }
+      stream = await tryGetMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+        audio: false,
+      });
     } catch {
-      setFaceBox(null);
-      setQuality(0);
-    }
-  }, []);
-
-  const startDetection = useCallback(() => {
-    if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current);
-    detectionIntervalRef.current = setInterval(detectFaceInFrame, 200);
-  }, [detectFaceInFrame]);
-
-  const handleStartRegistration = async () => {
-    setRegistering(true);
-    setStatus('scanning');
-    setMessage('Loading HD face recognition...');
-    setAttempts(0);
-
-    const cameraStarted = await startCamera();
-    if (!cameraStarted) {
-      setRegistering(false);
-      return;
-    }
-
-    setMessage('Position your face in the center of the camera...');
-    startDetection();
-  };
-
-  const handleRegister = async () => {
-    if (!registerName.trim()) {
-      setMessage('Please enter a name for this face.');
-      return;
-    }
-
-    // Wait for face detection with quality check
-    let attempts = 0;
-    const maxAttempts = MAX_ATTEMPTS;
-    
-    while (attempts < maxAttempts) {
-      await new Promise((r) => setTimeout(r, 800));
-      
-      if (faceBox && quality >= MIN_QUALITY) {
-        break;
+      try {
+        stream = await tryGetMedia({
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
+          audio: false,
+        });
+      } catch {
+        try {
+          stream = await tryGetMedia({ video: { facingMode: 'user' }, audio: false });
+        } catch {
+          try {
+            stream = await tryGetMedia({ video: true, audio: false });
+          } catch (err) {
+            throw err;
+          }
+        }
       }
-      
-      attempts++;
-      setAttempts(attempts);
-      setMessage(`Detecting face... Attempt ${attempts}/${maxAttempts}. ${faceBox ? `Quality: ${Math.round(quality * 100)}%` : 'No face detected'}`);
     }
+
+    streamRef.current = stream;
+    const video = videoRef.current;
+    if (!video) return false;
+
+    video.srcObject = stream;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
+    video.autoplay = true;
 
     try {
-      const result = await detectFace(videoRef.current!);
+      await video.play();
+    } catch (playErr) {
+      // Some browsers block play until the user gesture is fully resolved.
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const onPlaying = () => {
+            video.removeEventListener('playing', onPlaying);
+            resolve();
+          };
+          video.addEventListener('playing', onPlaying);
+          video.play().catch(reject);
+          setTimeout(() => reject(new Error('play timeout')), 2500);
+        });
+      } catch {
+        throw playErr;
+      }
+    }
+
+    setCameraReady(true);
+    return true;
+  }, [stopCamera]);
+
+  const handleRegister = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video || !faceDetected || quality < MIN_QUALITY || tooClose) {
+      setStatus('error');
+      setMessage('Face not clear. Move back, adjust lighting and center your face.');
+      return;
+    }
+
+    setStatus('loading');
+    setMessage('Capturing HD face descriptor…');
+    setCaptureProgress(0);
+    captureStartRef.current = null;
+
+    try {
+      const result = await detectFace(video);
       if (!result.detected || !result.descriptor) {
         setStatus('error');
-        setMessage('No face detected after multiple attempts. Please ensure good lighting and try again.');
-        stopCamera();
-        setRegistering(false);
-        return;
-      }
-
-      if (quality < MIN_QUALITY) {
-        setStatus('error');
-        setMessage(`Face quality too low (${Math.round(quality * 100)}%). Please ensure your face is clearly visible and well-lit.`);
-        stopCamera();
-        setRegistering(false);
+        setMessage('Face capture failed. Try again.');
         return;
       }
 
       const descriptor = Array.from(result.descriptor);
+      const existingFace = faces.find((f) => euclideanDistance(f.descriptor, descriptor) < 0.55);
+      if (existingFace) {
+        setStatus('error');
+        setMessage(`This face is already registered as "${existingFace.name}".`);
+        return;
+      }
+
+      // Sync to backend so Face Login can verify server-side.
+      let serverSynced = false;
+      if (currentEmail) {
+        const res = await backendApi.registerFace(descriptor);
+        serverSynced = res.ok;
+      }
+
       const newFace: RegisteredFace = {
         id: Math.random().toString(36).slice(2, 10),
-        name: registerName.trim(),
+        name: registerName.trim() || currentEmail.split('@')[0] || 'User',
+        email: currentEmail || undefined,
         descriptor,
         createdAt: Date.now(),
         quality: Math.round(quality * 100) / 100,
       };
 
-      // Check if face already exists
-      const existingFace = faces.find((f) => euclideanDistance(f.descriptor, descriptor) < 0.6);
-      if (existingFace) {
-        setStatus('error');
-        setMessage(`This face is already registered as "${existingFace.name}".`);
-        stopCamera();
-        setRegistering(false);
-        return;
-      }
-
-      const updatedFaces = [...faces, newFace];
+      const updatedFaces = [...faces.filter((f) => f.email !== newFace.email), newFace];
       setFaces(updatedFaces);
       saveFaces(updatedFaces);
 
       setStatus('success');
-      setMessage(`Face registered successfully as "${registerName}" with ${Math.round(quality * 100)}% accuracy!`);
-      setRegisterName('');
+      setMessage(
+        `Face registered as "${newFace.name}"${serverSynced ? ' & synced to secure vault' : ''}.`
+      );
+      setRegisterName(currentEmail ? currentEmail.split('@')[0] : '');
       stopCamera();
       setRegistering(false);
+      setCaptureProgress(0);
 
       setTimeout(() => {
         setStatus('idle');
         setMessage('');
       }, 3000);
-    } catch (_err) {
+    } catch {
       setStatus('error');
-      setMessage('Face registration failed. Please try again.');
-      stopCamera();
-      setRegistering(false);
+      setMessage('Registration failed. Please try again.');
     }
+  }, [faceDetected, quality, tooClose, faces, registerName, stopCamera, currentEmail]);
+
+  const detectLoop = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2 || video.paused) return;
+
+    try {
+      const result = await detectFace(video);
+      if (result.detected && result.box && result.descriptor) {
+        const q = calculateQuality(result.box, video.videoWidth || 640, video.videoHeight || 480, result.score || 0);
+        const faceArea = result.box.width * result.box.height;
+        const videoArea = (video.videoWidth || 640) * (video.videoHeight || 480);
+        setTooClose(faceArea / videoArea > TOO_CLOSE_RATIO);
+        setQuality(q);
+        setFaceDetected(true);
+      } else {
+        setFaceDetected(false);
+        setQuality(0);
+        setTooClose(false);
+      }
+    } catch {
+      setFaceDetected(false);
+      setQuality(0);
+      setTooClose(false);
+    }
+  }, []);
+
+  const handleStartRegistration = async () => {
+    if (!registerName.trim()) {
+      setMessage('Please enter a name for this face.');
+      return;
+    }
+
+    setRegistering(true);
+    setStatus('loading');
+    setMessage('Loading face recognition models…');
+    setCaptureProgress(0);
+
+    try {
+      const cameraStarted = await startCamera();
+      if (!cameraStarted) {
+        setStatus('error');
+        setMessage('Camera could not start. Make sure you have granted camera permission and are on HTTPS.');
+        return;
+      }
+      setStatus('scanning');
+      setMessage('Position your face inside the oval. Hold steady when the ring completes.');
+      detectionIntervalRef.current = setInterval(detectLoop, 200);
+    } catch (err) {
+      setStatus('error');
+      setMessage('Camera access denied or unavailable. Close any other app using the camera and allow permission.');
+      setRegistering(false);
+      stopCamera();
+    }
+  };
+
+  const handleRetryCamera = async () => {
+    if (!registerName.trim()) {
+      setMessage('Please enter a name first.');
+      return;
+    }
+    setStatus('loading');
+    setMessage('Retrying camera…');
+    try {
+      const started = await startCamera();
+      if (!started) {
+        setStatus('error');
+        setMessage('Camera still unavailable.');
+        return;
+      }
+      setStatus('scanning');
+      setMessage('Camera ready. Position your face inside the oval.');
+      detectionIntervalRef.current = setInterval(detectLoop, 200);
+    } catch {
+      setStatus('error');
+      setMessage('Camera retry failed.');
+    }
+  };
+
+  const handleCancel = () => {
+    stopCamera();
+    setRegistering(false);
+    setStatus('idle');
+    setMessage('');
+    setRegisterName('');
+    setCaptureProgress(0);
   };
 
   const handleDelete = (id: string) => {
@@ -284,28 +351,68 @@ export default function FaceIDSettings() {
     saveFaces(updatedFaces);
   };
 
-  // Cleanup on unmount
+  // Auto-capture when face is stable and good quality
   useEffect(() => {
+    if (!registering || !cameraReady || !faceDetected || quality < MIN_QUALITY || tooClose) {
+      captureStartRef.current = null;
+      setCaptureProgress(0);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      return;
+    }
+
+    if (captureStartRef.current === null) {
+      captureStartRef.current = Date.now();
+    }
+
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - (captureStartRef.current || Date.now());
+      const progress = Math.min(1, elapsed / AUTO_CAPTURE_MS);
+      setCaptureProgress(progress);
+      if (progress >= 1) {
+        handleRegister();
+      }
+    }, 50);
+
     return () => {
-      stopCamera();
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
+  }, [registering, cameraReady, faceDetected, quality, tooClose, handleRegister]);
+
+  useEffect(() => {
+    return () => stopCamera();
   }, [stopCamera]);
+
+  const instruction = !cameraReady
+    ? 'Starting camera…'
+    : status === 'success'
+    ? 'Registered'
+    : status === 'error'
+    ? message || 'Failed'
+    : tooClose
+    ? 'Move back — face is too close'
+    : faceDetected && quality < MIN_QUALITY
+    ? 'Center your face in the oval'
+    : faceDetected
+    ? 'Hold steady…'
+    : 'Position your face inside the oval';
+
+  const statusColor =
+    status === 'success' ? 'text-emerald-500' : status === 'error' ? 'text-rose-500' : tooClose ? 'text-rose-500' : faceDetected && quality >= MIN_QUALITY ? 'text-emerald-500' : 'text-amber-500';
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <User className="w-5 h-5 text-indigo-600" /> Face ID Management
+            <ScanFace className="w-5 h-5 text-indigo-600" /> Face ID Management
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">Register and manage your face for biometric authentication with HD accuracy.</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Register your face to enable Face ID login and fallback on failed transactions.
+          </p>
         </div>
-        <button
-          onClick={() => setHdMode(!hdMode)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold ${hdMode ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}
-        >
-          {hdMode ? 'HD Mode' : 'SD Mode'}
-        </button>
       </div>
 
       {/* Registered Faces */}
@@ -314,7 +421,7 @@ export default function FaceIDSettings() {
           <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
             <User className="w-12 h-12 mx-auto text-slate-400 mb-2" />
             <p className="text-sm text-slate-500">No faces registered yet.</p>
-            <p className="text-xs text-slate-400 mt-1">Register your face to enable Face ID login with HD accuracy.</p>
+            <p className="text-xs text-slate-400 mt-1">Register once to unlock Face ID login.</p>
           </div>
         ) : (
           faces.map((face) => (
@@ -331,7 +438,7 @@ export default function FaceIDSettings() {
                 <div>
                   <p className="text-sm font-bold text-slate-800 dark:text-white">{face.name}</p>
                   <p className="text-[10px] text-slate-400">
-                    Registered {new Date(face.createdAt).toLocaleDateString('en-IN')} • {Math.round(face.quality * 100)}% accuracy
+                    Registered {new Date(face.createdAt).toLocaleDateString('en-IN')} • {Math.round(face.quality * 100)}% quality
                   </p>
                 </div>
               </div>
@@ -358,7 +465,7 @@ export default function FaceIDSettings() {
               type="text"
               value={registerName}
               onChange={(e) => setRegisterName(e.target.value)}
-              placeholder="Enter name for this face (e.g., Deepanshu)"
+              placeholder="Enter name (e.g., Deepanshu)"
               className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-400/30"
             />
             <button
@@ -367,97 +474,122 @@ export default function FaceIDSettings() {
               className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
             >
               <Camera className="w-4 h-4" />
-              Start HD Face Registration
+              Start Face Registration
             </button>
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
+            {/* Responsive preview: full width on mobile, capped on desktop, taller aspect for face framing */}
+            <div className="relative rounded-xl overflow-hidden bg-black aspect-[3/4] w-full max-w-[min(100%,380px)] mx-auto shadow-lg">
+              {/* Live camera feed — cover the frame, mirror for selfie UX */}
               <video
                 ref={videoRef}
-                autoPlay
+                className="absolute inset-0 w-full h-full object-cover transform -scale-x-100 bg-black"
                 playsInline
                 muted
-                className="w-full h-full object-cover"
+                autoPlay
+                onLoadedMetadata={() => setCameraReady(true)}
               />
-              <canvas ref={canvasRef} className="hidden" />
-              
-              {/* Face Box Overlay */}
-              {faceBox && (
-                <div
-                  className="absolute border-2 border-emerald-500 rounded-lg pointer-events-none"
-                  style={{
-                    left: `${(faceBox.x / (videoRef.current?.videoWidth || 1)) * 100}%`,
-                    top: `${(faceBox.y / (videoRef.current?.videoHeight || 1)) * 100}%`,
-                    width: `${(faceBox.width / (videoRef.current?.videoWidth || 1)) * 100}%`,
-                    height: `${(faceBox.height / (videoRef.current?.videoHeight || 1)) * 100}%`,
-                  }}
-                >
-                  <div className="absolute -top-6 left-0 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded">
-                    {Math.round(quality * 100)}%
-                  </div>
-                </div>
-              )}
 
-              {/* Center Guide */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-48 h-48 border-2 border-white/30 rounded-full" />
+              {/* SVG overlay: dark mask with clear oval + guide + progress ring */}
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <mask id="faceOvalMask">
+                    <rect width="100" height="100" fill="white" />
+                    <ellipse cx="50" cy="44" rx={GUIDE_RX} ry={GUIDE_RY} fill="black" />
+                  </mask>
+                </defs>
+
+                {/* Dark overlay with oval cutout */}
+                <rect width="100" height="100" fill="rgba(0,0,0,0.55)" mask="url(#faceOvalMask)" />
+
+                {/* Oval guide border */}
+                <ellipse
+                  cx="50"
+                  cy="44"
+                  rx={GUIDE_RX}
+                  ry={GUIDE_RY}
+                  fill="none"
+                  stroke={tooClose ? '#EF4444' : faceDetected && quality >= MIN_QUALITY ? '#10B981' : 'rgba(255,255,255,0.8)'}
+                  strokeWidth="1.4"
+                />
+
+                {/* Auto-capture progress ring */}
+                {captureProgress > 0 && (
+                  <circle
+                    cx="50"
+                    cy="44"
+                    r={RING_R}
+                    fill="none"
+                    stroke="#10B981"
+                    strokeWidth="2.8"
+                    strokeLinecap="round"
+                    strokeDasharray={`${RING_CIRCUMFERENCE * captureProgress} ${RING_CIRCUMFERENCE}`}
+                    transform="rotate(-90 50 44)"
+                  />
+                )}
+              </svg>
+
+              {/* Instruction pill */}
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white text-[11px] font-semibold whitespace-nowrap">
+                <span className={statusColor}>{instruction}</span>
+                {cameraReady && faceDetected && (
+                  <span className="ml-2 opacity-90">{Math.round(quality * 100)}%</span>
+                )}
+              </div>
+
+              {/* Face-size hint */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 text-white text-[10px]">
+                Hold phone at arm&apos;s length
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {status === 'scanning' && (
-                  <>
-                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                    <span className="text-xs text-slate-500">
-                      {faceBox ? `Face detected: ${Math.round(quality * 100)}%` : 'Scanning...'}
-                    </span>
-                  </>
-                )}
-                {status === 'success' && (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="text-xs text-emerald-600">Success!</span>
-                  </>
-                )}
-                {status === 'error' && (
-                  <>
-                    <XCircle className="w-4 h-4 text-rose-500" />
-                    <span className="text-xs text-rose-600">Error</span>
-                  </>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                {status === 'success' ? (
+                  <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Registered
+                  </span>
+                ) : status === 'error' ? (
+                  <span className="text-rose-600 font-semibold flex items-center gap-1">
+                    <XCircle className="w-3.5 h-3.5" /> Failed
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <span className={`w-2 h-2 rounded-full ${cameraReady ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                    {cameraReady ? 'Camera live' : 'Camera starting…'}
+                  </span>
                 )}
               </div>
-              <button
-                onClick={() => {
-                  stopCamera();
-                  setRegistering(false);
-                  setStatus('idle');
-                  setMessage('');
-                  setAttempts(0);
-                }}
-                className="text-xs text-slate-500 hover:text-slate-700"
-              >
-                Cancel
-              </button>
+              <div className="flex items-center gap-2">
+                {status === 'error' && (
+                  <button
+                    onClick={handleRetryCamera}
+                    className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-semibold"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Retry
+                  </button>
+                )}
+                <button
+                  onClick={handleCancel}
+                  className="text-xs text-slate-500 hover:text-slate-700"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
 
             <button
               onClick={handleRegister}
-              disabled={status === 'scanning' || !faceBox || quality < MIN_QUALITY}
-              className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
+              disabled={!faceDetected || quality < MIN_QUALITY || tooClose}
+              className="w-full py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2"
             >
-              {status === 'scanning' ? (
-                <>
-                  <Zap className="w-4 h-4 animate-pulse" />
-                  Detecting... {attempts}/{MAX_ATTEMPTS}
-                </>
-              ) : (
-                <>
-                  <Shield className="w-4 h-4" />
-                  Capture & Register ({Math.round(quality * 100)}%)
-                </>
-              )}
+              <Shield className="w-4 h-4" />
+              Capture & Register ({Math.round(quality * 100)}%)
             </button>
           </div>
         )}
@@ -479,11 +611,11 @@ export default function FaceIDSettings() {
       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
         <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">Tips for Best Results:</p>
         <ul className="text-[10px] text-slate-500 space-y-0.5">
-          <li>• Ensure good lighting on your face</li>
-          <li>• Position your face in the center circle</li>
-          <li>• Keep a neutral expression</li>
-          <li>• Avoid wearing glasses or hats</li>
-          <li>• Hold steady for 2-3 seconds</li>
+          <li>• Ensure good front lighting on your face</li>
+          <li>• Position your face inside the oval guide</li>
+          <li>• Keep a neutral expression and look at the camera</li>
+          <li>• Remove sunglasses / masks / hats</li>
+          <li>• Hold steady for 1–2 seconds after the ring turns green</li>
         </ul>
       </div>
     </div>

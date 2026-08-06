@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { detectFace } from '@/shared/lib/faceAuth';
+import { detectFace, euclideanDistance } from '@/shared/lib/faceAuth';
 import { backendApi } from '@/shared/lib/backendApi';
 
 interface FaceLoginModalProps {
@@ -12,12 +12,71 @@ interface FaceLoginModalProps {
 type AppMode = 'verify' | 'register';
 type Step = 'idle' | 'form' | 'loading' | 'scanning' | 'processing' | 'success' | 'error';
 
+interface StoredFace {
+  id: string;
+  name: string;
+  email?: string;
+  descriptor: number[];
+  createdAt: number;
+  quality: number;
+}
+
+const FACE_STORAGE_KEY = 'sw_registered_faces';
+const LOCAL_MATCH_THRESHOLD = 0.58;
+const MIN_FACE_SCORE = 0.45;
+const IDEAL_FACE_RATIO_MIN = 0.08;
+const IDEAL_FACE_RATIO_MAX = 0.38;
+
+function loadLocalFaces(): StoredFace[] {
+  try {
+    const raw = localStorage.getItem(FACE_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function faceQuality(
+  box: { x: number; y: number; width: number; height: number },
+  videoWidth: number,
+  videoHeight: number,
+  score: number
+): { quality: number; tooClose: boolean; tooFar: boolean } {
+  const faceArea = box.width * box.height;
+  const videoArea = videoWidth * videoHeight || 1;
+  const ratio = faceArea / videoArea;
+
+  let sizeScore = 0;
+  if (ratio >= IDEAL_FACE_RATIO_MIN && ratio <= IDEAL_FACE_RATIO_MAX) {
+    sizeScore = 1 - Math.abs(ratio - 0.22) / 0.22;
+  } else if (ratio < IDEAL_FACE_RATIO_MIN) {
+    sizeScore = Math.max(0, ratio / IDEAL_FACE_RATIO_MIN);
+  } else {
+    sizeScore = Math.max(0, 1 - (ratio - IDEAL_FACE_RATIO_MAX) / IDEAL_FACE_RATIO_MAX);
+  }
+
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+  const centerScoreX = 1 - Math.min(1, Math.abs(centerX - videoWidth / 2) / (videoWidth / 3));
+  const centerScoreY = 1 - Math.min(1, Math.abs(centerY - videoHeight / 2) / (videoHeight / 3));
+  const centerScore = (centerScoreX + centerScoreY) / 2;
+  const confidenceScore = Math.max(0, Math.min(1, score));
+
+  const quality = Math.max(0, Math.min(1, sizeScore * 0.45 + centerScore * 0.35 + confidenceScore * 0.2));
+  return {
+    quality,
+    tooClose: ratio > IDEAL_FACE_RATIO_MAX,
+    tooFar: ratio < IDEAL_FACE_RATIO_MIN,
+  };
+}
+
 export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLoginModalProps) {
   const [mode, setMode] = useState<AppMode>('verify');
   const [step, setStep] = useState<Step>('idle');
   const [message, setMessage] = useState('');
   const [subMessage, setSubMessage] = useState('');
   const [detectedCount, setDetectedCount] = useState(0);
+  const [qualityPct, setQualityPct] = useState(0);
 
   // Registration form fields
   const [regName, setRegName] = useState('');
@@ -29,6 +88,8 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   const [regFormError, setRegFormError] = useState('');
 
   const [loginEmail, setLoginEmail] = useState('');
+  const [registeredUser, setRegisteredUser] = useState<{ id: string; email: string; name: string; role: string; tier: string } | null>(null);
+  const [registeredToken, setRegisteredToken] = useState('');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -51,6 +112,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     setMessage('');
     setSubMessage('');
     setDetectedCount(0);
+    setQualityPct(0);
     setRegFormError('');
     countRef.current = 0;
   }, [stopCamera]);
@@ -62,14 +124,34 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   const startCamera = useCallback(async () => {
     try {
       setStep('loading');
-      setMessage('Loading face recognition models...');
-      const { initFaceAuthEngine } = await import('@/shared/lib/faceAuth');
-      await initFaceAuthEngine();
+      setMessage('Starting camera…');
+      setSubMessage('Please allow camera access when prompted');
 
-      setMessage('Starting camera...');
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-      });
+      const tryGetMedia = async (constraints: MediaStreamConstraints): Promise<MediaStream> => {
+        return navigator.mediaDevices.getUserMedia(constraints);
+      };
+
+      let stream: MediaStream;
+      try {
+        stream = await tryGetMedia({
+          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+          audio: false,
+        });
+      } catch {
+        try {
+          stream = await tryGetMedia({
+            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
+            audio: false,
+          });
+        } catch {
+          try {
+            stream = await tryGetMedia({ video: { facingMode: 'user' }, audio: false });
+          } catch {
+            stream = await tryGetMedia({ video: true, audio: false });
+          }
+        }
+      }
+
       if (!isOpenRef.current) {
         stream.getTracks().forEach((t) => t.stop());
         return false;
@@ -77,14 +159,44 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        videoRef.current.setAttribute('playsinline', 'true');
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          await new Promise<void>((resolve, reject) => {
+            const video = videoRef.current!;
+            const onPlaying = () => {
+              video.removeEventListener('playing', onPlaying);
+              resolve();
+            };
+            video.addEventListener('playing', onPlaying);
+            video.play().catch(reject);
+            setTimeout(() => reject(new Error('Camera playback timed out')), 3000);
+          });
+        }
+      }
+
+      // Pre-load models while the preview is visible so the first scan is instant.
+      setMessage('Loading face models…');
+      try {
+        const { initFaceAuthEngine } = await import('@/shared/lib/faceAuth');
+        await initFaceAuthEngine();
+      } catch (modelErr: any) {
+        console.error('[FaceLogin] Model load failed:', modelErr);
+        setStep('error');
+        setMessage('Could not load face models');
+        setSubMessage(modelErr.message || 'Check your connection and try again');
+        stopCamera();
+        return false;
       }
       return true;
     } catch (err: any) {
       console.error('[FaceLogin] Camera error:', err);
       setStep('error');
       setMessage('Unable to start camera');
-      setSubMessage(err.message || 'Please check permissions');
+      setSubMessage(err.message || 'Please allow camera permission and use HTTPS');
       return false;
     }
   }, []);
@@ -107,7 +219,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     }
 
     setStep('loading');
-    setMessage('Creating your account...');
+    setMessage('Creating your account…');
     setSubMessage('This may take a moment');
 
     try {
@@ -121,24 +233,27 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       });
 
       if (res.ok && res.data?.data?.user) {
-        // The backend sets the httpOnly session cookie; we only keep non-sensitive user info
-        localStorage.setItem('sw-user', JSON.stringify(res.data.data.user));
+        const user = res.data.data.user;
+        const token = res.data?.data?.tokens?.accessToken || '';
+        localStorage.setItem('sw-user', JSON.stringify(user));
+        backendApi.setAuthToken(token);
+        setRegisteredUser(user);
+        setRegisteredToken(token);
 
-        // Auto-start face scan
         const ok = await startCamera();
         if (!ok) return;
         setStep('scanning');
         setMessage('Look at the camera');
-        setSubMessage('We will scan your face to secure your account');
+        setSubMessage('Center your face in the oval and hold steady');
         setDetectedCount(0);
         countRef.current = 0;
         startDetectionLoop('register');
       } else {
-        setStep('form');
+        setStep('idle');
         setRegFormError(res.data?.error || 'Account creation failed');
       }
     } catch (err: any) {
-      setStep('form');
+      setStep('idle');
       setRegFormError(err.message || 'Network error — please try again');
     }
   }, [regName, regEmail, regPassword, regPhone, regPan, regAadhar, startCamera]);
@@ -150,7 +265,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
     if (!ok) return;
     setStep('scanning');
     setMessage('Look at the camera');
-    setSubMessage('Hold still — scanning will start automatically');
+    setSubMessage('Center your face in the oval and hold steady');
     setDetectedCount(0);
     countRef.current = 0;
     startDetectionLoop('verify');
@@ -159,17 +274,36 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   // ─── REGISTER: Step 2 — Link Face ───
   const handleRegisterFace = useCallback(async (descriptor: Float32Array) => {
     setStep('processing');
-    setMessage('Linking your face...');
+    setMessage('Linking your face…');
     setSubMessage('Encrypting biometric data');
     try {
       const arr = Array.from(descriptor);
       const res = await backendApi.registerFace(arr);
       if (res.ok) {
+        // Also keep a local copy so Face ID works even if the browser clears cookies
+        try {
+          const existing = loadLocalFaces();
+          if (registeredUser) {
+            const newFace: StoredFace = {
+              id: registeredUser.id,
+              name: registeredUser.name,
+              email: registeredUser.email,
+              descriptor: arr,
+              createdAt: Date.now(),
+              quality: 0.9,
+            };
+            localStorage.setItem(FACE_STORAGE_KEY, JSON.stringify([...existing.filter((f) => f.email !== newFace.email), newFace]));
+          }
+        } catch {
+          // ignore local backup errors
+        }
+
         setStep('success');
         setMessage('Account created & face secured!');
         setSubMessage('You can now log in with your face');
-        const user = JSON.parse(localStorage.getItem('sw-user') || '{}');
-        setTimeout(() => onSuccess(user, ''), 1500);
+        setTimeout(() => {
+          if (registeredUser) onSuccess(registeredUser, registeredToken);
+        }, 1500);
       } else {
         setStep('error');
         setMessage('Face linking failed');
@@ -180,12 +314,12 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       setMessage('Face linking failed');
       setSubMessage(err.message || 'Network error');
     }
-  }, [regEmail, onSuccess]);
+  }, [registeredUser, registeredToken, onSuccess]);
 
   // ─── VERIFY: Face Login ───
   const handleVerifyFace = useCallback(async (descriptor: Float32Array) => {
     setStep('processing');
-    setMessage('Verifying...');
+    setMessage('Verifying…');
     setSubMessage('Checking backend');
     try {
       const arr = Array.from(descriptor);
@@ -194,19 +328,40 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
       const res = await backendApi.verifyFace(arr, userEmail || undefined);
       const user = res.data?.data?.user;
       const confidence = res.data?.data?.confidence ?? 0;
+      const token = res.data?.data?.tokens?.accessToken;
 
-      if (res.ok && user) {
+      if (res.ok && user && token) {
+        backendApi.setAuthToken(token);
         localStorage.setItem('sw-user', JSON.stringify(user));
         setStep('success');
         setMessage(`Welcome back, ${user.name || 'User'}!`);
-        setSubMessage(`Confidence: ${confidence.toFixed(3)}`);
-        setTimeout(() => onSuccess(user, ''), 1200);
+        setSubMessage(`Confidence: ${(confidence).toFixed(3)}`);
+        setTimeout(() => onSuccess(user, token), 1200);
         return;
+      }
+
+      // Local fallback for demo continuity: if the server has no face record but the
+      // browser has a locally registered face, match against it and perform a demo login.
+      const localFaces = loadLocalFaces();
+      const localMatch = localFaces.find((f) => euclideanDistance(f.descriptor, arr) < LOCAL_MATCH_THRESHOLD);
+      if (localMatch?.email) {
+        const demoRes = await backendApi.demoLogin({ email: localMatch.email, name: localMatch.name });
+        if (demoRes.ok && demoRes.data?.data?.user && demoRes.data?.data?.tokens?.accessToken) {
+          const demoUser = demoRes.data.data.user;
+          const demoToken = demoRes.data.data.tokens.accessToken;
+          backendApi.setAuthToken(demoToken);
+          localStorage.setItem('sw-user', JSON.stringify(demoUser));
+          setStep('success');
+          setMessage(`Welcome back, ${demoUser.name || 'User'}!`);
+          setSubMessage('Local face matched');
+          setTimeout(() => onSuccess(demoUser, demoToken), 1000);
+          return;
+        }
       }
 
       setStep('error');
       setMessage(res.data?.error || 'Face not recognized');
-      setSubMessage('Try registering first, or use PIN login');
+      setSubMessage('Try registering first, or use password login');
     } catch (err: any) {
       setStep('error');
       setMessage('Verification failed');
@@ -218,20 +373,51 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
   const startDetectionLoop = useCallback((currentMode: AppMode) => {
     intervalRef.current = setInterval(async () => {
       if (!videoRef.current || busyRef.current) return;
+      const video = videoRef.current;
+      if (video.readyState < 2 || video.paused || video.ended) return;
+
       busyRef.current = true;
       try {
-        const result = await detectFace(videoRef.current);
-        if (!result.detected) {
+        const result = await detectFace(video);
+        if (!result.detected || !result.box || !result.descriptor) {
           countRef.current = 0;
           setDetectedCount(0);
+          setQualityPct(0);
           setSubMessage('No face detected — center your face in the guide');
+          busyRef.current = false;
           return;
         }
+
+        if ((result.score ?? 0) < MIN_FACE_SCORE) {
+          setSubMessage('Face too unclear — move to better light');
+          busyRef.current = false;
+          return;
+        }
+
+        const { quality, tooClose, tooFar } = faceQuality(
+          result.box,
+          video.videoWidth || 640,
+          video.videoHeight || 480,
+          result.score || 0
+        );
+        setQualityPct(Math.round(quality * 100));
+
+        if (tooClose) {
+          setSubMessage('Move phone back — face is too close');
+          busyRef.current = false;
+          return;
+        }
+        if (tooFar) {
+          setSubMessage('Bring phone closer — face is too small');
+          busyRef.current = false;
+          return;
+        }
+
         countRef.current += 1;
         setDetectedCount(countRef.current);
-        setSubMessage(`Face detected (${countRef.current}/3)`);
+        setSubMessage(`Face detected (${countRef.current}/3) — hold steady`);
 
-        if (result.descriptor && countRef.current >= 3) {
+        if (countRef.current >= 3) {
           if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
           stopCamera();
           if (currentMode === 'register') {
@@ -240,12 +426,13 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
             await handleVerifyFace(result.descriptor);
           }
         }
-      } catch (e) {
+      } catch (e: any) {
         console.warn('[FaceLogin] Detection error:', e);
+        setSubMessage(e.message || 'Detection error — try again');
       } finally {
         busyRef.current = false;
       }
-    }, 1000);
+    }, 800);
   }, [stopCamera, handleRegisterFace, handleVerifyFace]);
 
   useEffect(() => {
@@ -265,7 +452,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-3xl p-6 shadow-2xl max-h-[92vh] overflow-y-auto"
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
@@ -376,23 +563,28 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
                 Camera Preview (shared)
                 ════════════════════════════════════════ */}
             {(step === 'loading' || step === 'scanning' || step === 'processing' || step === 'success' || step === 'error') && (
-              <div className="relative w-full aspect-[4/3] rounded-2xl border-2 border-slate-700 bg-black overflow-hidden mb-4">
+              <div className="relative w-full max-w-[min(100%,360px)] mx-auto rounded-2xl border-2 border-slate-700 bg-black overflow-hidden mb-4 aspect-[3/4] shadow-2xl">
                 <video
                   ref={videoRef}
-                  className="absolute inset-0 w-full h-full object-cover transform -scale-x-100"
+                  className="absolute inset-0 w-full h-full object-cover transform -scale-x-100 bg-black"
                   playsInline muted autoPlay
                 />
                 {step === 'scanning' && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className={`w-44 h-56 border-2 border-dashed rounded-[2rem] animate-pulse transition-colors duration-300 ${
-                      detectedCount > 0 ? 'border-emerald-400' : 'border-white/40'
-                    }`} />
-                  </div>
+                  <>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className={`w-48 h-60 border-2 border-dashed rounded-[2.5rem] animate-pulse transition-colors duration-300 ${
+                        detectedCount > 0 ? 'border-emerald-400' : 'border-white/40'
+                      }`} />
+                    </div>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 text-white text-[10px]">
+                      Hold phone at arm&apos;s length
+                    </div>
+                  </>
                 )}
                 {step === 'loading' && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-black/60">
                     <i className="fas fa-circle-notch animate-spin text-4xl mb-2" />
-                    <span className="text-xs">Loading models...</span>
+                    <span className="text-xs">Loading models…</span>
                   </div>
                 )}
                 {step === 'success' && (
@@ -421,6 +613,9 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
                   'text-white'
                 }`}>{message}</p>
                 <p className="text-xs text-slate-400 mt-1">{subMessage}</p>
+                {step === 'scanning' && qualityPct > 0 && (
+                  <p className="text-[11px] text-slate-500 mt-1">Quality: {qualityPct}%</p>
+                )}
               </div>
             )}
 
@@ -429,7 +624,7 @@ export default function FaceLoginModal({ isOpen, onClose, onSuccess }: FaceLogin
               <button disabled className="w-full py-3 rounded-xl font-semibold text-white bg-slate-700 opacity-70">
                 <span className="flex items-center justify-center gap-2">
                   <i className="fas fa-circle-notch animate-spin" />
-                  {step === 'processing' ? 'Processing...' : step === 'scanning' ? 'Detecting...' : 'Loading...'}
+                  {step === 'processing' ? 'Processing…' : step === 'scanning' ? 'Detecting…' : 'Loading…'}
                 </span>
               </button>
             )}

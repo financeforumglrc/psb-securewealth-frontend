@@ -1,9 +1,11 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from '@/shared/context/AuthContext';
 import { SecurityProvider } from '@/shared/context/SecurityContext';
 import { lazyWithRetry } from '@/shared/utils/lazyWithRetry';
 import { backendApi } from '@/shared/lib/backendApi';
 import { collectFingerprint } from '@/shared/services/fingerprintService';
+import { otaService } from '@/shared/services/mobileUpdateService';
 import DemoShowcase from '@/features/demo/components/DemoShowcase';
 
 const LoginPortal = lazyWithRetry(() => import('@/features/auth/components/LoginPortal'));
@@ -72,6 +74,23 @@ export default function App() {
 
   const { state: authState } = useAuth();
   const warmed = useRef(false);
+  const updateInFlight = useRef(false);
+
+  // OTA live update check on native app start/resume. Auto-apply updates so
+  // every push lands on the device without a manual install.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    otaService.startBackgroundUpdateCheck(async (info) => {
+      if (!info.available || updateInFlight.current) return;
+      updateInFlight.current = true;
+      const result = await otaService.performUpdate();
+      if (result.success) {
+        window.location.reload();
+      } else {
+        updateInFlight.current = false;
+      }
+    });
+  }, []);
 
   // Initialize FingerprintJS visitor id early so X-Device-Id is available for auth calls
   useEffect(() => {
@@ -103,39 +122,55 @@ export default function App() {
   }, [authState.loading, authState.isAuthenticated]);
 
   if (demoPath) {
-    return <DemoShowcase />;
+    return (
+      <>
+        
+        <DemoShowcase />
+      </>
+    );
   }
 
   // Standalone admin portal — no auth, no AA/onboarding, direct login
   if (adminPath) {
     return (
-      <Suspense fallback={<ViewLoader />}>
-        <SecurityProvider>
-          <AdminPortal />
-        </SecurityProvider>
-      </Suspense>
+      <>
+        
+        <Suspense fallback={<ViewLoader />}>
+          <SecurityProvider>
+            <AdminPortal />
+          </SecurityProvider>
+        </Suspense>
+      </>
     );
   }
 
   if (authState.loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-dark">
-        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-      </div>
+      <>
+        
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-dark">
+          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        </div>
+      </>
     );
   }
 
   if (!authState.isAuthenticated) {
     return (
-      <Suspense fallback={<ViewLoader />}>
-        <LoginPortal />
-      </Suspense>
+      <>
+        
+        <Suspense fallback={<ViewLoader />}>
+          <LoginPortal />
+        </Suspense>
+      </>
     );
   }
 
   return (
-    <Suspense fallback={<ViewLoader />}>
-      <AuthenticatedApp />
-    </Suspense>
+    <>
+      <Suspense fallback={<ViewLoader />}>
+        <AuthenticatedApp />
+      </Suspense>
+    </>
   );
 }

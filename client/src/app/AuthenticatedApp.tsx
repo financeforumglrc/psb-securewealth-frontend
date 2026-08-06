@@ -1,6 +1,5 @@
 import { useEffect, useState, Suspense, useTransition } from 'react';
 import { motion } from 'framer-motion';
-import PitchMode from '@/features/pitch/components/PitchMode';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { isJudgeMode } from '@/shared/utils/demoMode';
 import { usePanicMode } from '@/shared/hooks/usePanicMode';
@@ -41,7 +40,6 @@ const ProfileSettings = lazyWithRetry(() => import('@/features/profile/component
 const PitchDeckView = lazyWithRetry(() => import('@/features/pitch/components/PitchDeckView'));
 const RecurringPayments = lazyWithRetry(() => import('@/features/banking/components/RecurringPayments'));
 
-// PitchMode is bundled statically to avoid a separate chunk fetch failing on some networks/edges.
 const DemoMode = lazyWithRetry(() => import('@/features/demo/components/DemoMode'));
 
 const SecurityBeastView = lazyWithRetry(() => import('@/features/security/components/SecurityBeastView'));
@@ -91,26 +89,19 @@ const SocialCollateralLoan = lazyWithRetry(() => import('@/features/loans/compon
 const AccountStatement = lazyWithRetry(() => import('@/features/banking/components/AccountStatement'));
 const AuditLog = lazyWithRetry(() => import('@/features/banking/components/AuditLog'));
 const CrossDeviceApproval = lazyWithRetry(() => import('@/features/security/components/CrossDeviceApproval'));
-const QuantumKeyExchange = lazyWithRetry(() => import('@/features/security/components/QuantumKeyExchange'));
-const QuantumDocumentVault = lazyWithRetry(() => import('@/features/security/components/QuantumDocumentVault'));
 const VoicePanicTrigger = lazyWithRetry(() => import('@/features/security/components/VoicePanicTrigger'));
 const CoercionDetectionEngine = lazyWithRetry(() => import('@/features/security/components/CoercionDetectionEngine'));
 const ExplainableRiskScore = lazyWithRetry(() => import('@/features/security/components/ExplainableRiskScore'));
 const EmotionAdaptiveGate = lazyWithRetry(() => import('@/features/security/components/EmotionAdaptiveGate'));
 const VoiceAuthenticatedCommands = lazyWithRetry(() => import('@/features/security/components/VoiceAuthenticatedCommands'));
 const SecureWealthGuardian = lazyWithRetry(() => import('@/features/security/components/SecureWealthGuardian'));
+const QuantumKeyExchange = lazyWithRetry(() => import('@/features/security/components/QuantumKeyExchange'));
 const LiveFraudSimulator = lazyWithRetry(() => import('@/features/fraud/components/LiveFraudSimulator'));
 const ScamCallSimulator = lazyWithRetry(() => import('@/features/fraud/components/ScamCallSimulator'));
-const Wealth3DVisualization = lazyWithRetry(() => import('@/features/dashboard/components/Wealth3DVisualization'));
-const WealthARPreview = lazyWithRetry(() => import('@/features/dashboard/components/WealthARPreview'));
 const GenerationalWealthOptimizer = lazyWithRetry(() => import('@/features/innovation/components/GenerationalWealthOptimizer'));
-const WealthTwinGPT = lazyWithRetry(() => import('@/features/ai/components/WealthTwinGPT'));
 const AgeGroupView = lazyWithRetry(() => import('@/features/dashboard/components/AgeGroupView'));
 const SimplifiedSecurityView = lazyWithRetry(() => import('@/features/security/components/SimplifiedSecurityView'));
 const ETBNTBSegmentation = lazyWithRetry(() => import('@/features/innovation/components/ETBNTBSegmentation'));
-const CustomerValueTiering = lazyWithRetry(() => import('@/features/innovation/components/CustomerValueTiering'));
-const ZeroBalanceRetention = lazyWithRetry(() => import('@/features/innovation/components/ZeroBalanceRetention'));
-const ReceivingMoneyFocus = lazyWithRetry(() => import('@/features/innovation/components/ReceivingMoneyFocus'));
 const TransactionFailureFaceID = lazyWithRetry(() => import('@/features/security/components/TransactionFailureFaceID'));
 const AppLockWithoutAuth = lazyWithRetry(() => import('@/features/security/components/AppLockWithoutAuth'));
 const PanicSituationProcess = lazyWithRetry(() => import('@/features/security/components/PanicSituationProcess'));
@@ -434,9 +425,9 @@ export default function AuthenticatedApp() {
               {currentView === 'fantasy-league' && <FantasyLeague />}
               {currentView === 'boosts' && <BoostsManager />}
               {currentView === 'security-beast' && <SecurityBeastView />}
+              {currentView === 'quantum-key-exchange' && <QuantumKeyExchange />}
               {currentView === 'bhavishya' && <BhavishyaEngine />}
               {currentView === 'innovation-lab' && <InnovationLabView />}
-              {currentView === 'pitch-deck' && <PitchDeckView />}
               {currentView === 'payments' && <PaymentsPage />}
               {currentView === 'loan-center' && <LoanCenter />}
               {currentView === 'msme-creditbridge' && <MSMEcreditbridgeView />}
@@ -448,8 +439,6 @@ export default function AuthenticatedApp() {
               {currentView === 'account-statement' && <AccountStatement />}
               {currentView === 'audit-log' && <AuditLog />}
               {currentView === 'cross-device-approval' && <CrossDeviceApproval />}
-              {currentView === 'quantum-key' && <QuantumKeyExchange />}
-              {currentView === 'quantum-vault' && <QuantumDocumentVault />}
               {currentView === 'voice-panic' && <VoicePanicTrigger />}
               {currentView === 'coercion-detection' && <CoercionDetectionEngine />}
               {currentView === 'emotion-gate' && <EmotionAdaptiveGate />}
@@ -458,16 +447,10 @@ export default function AuthenticatedApp() {
               {currentView === 'guardian' && <SecureWealthGuardian />}
               {currentView === 'live-fraud-simulator' && <LiveFraudSimulator />}
               {currentView === 'scam-call' && <ScamCallSimulator />}
-              {currentView === 'wealth-3d' && <Wealth3DVisualization />}
-              {currentView === 'wealth-ar' && <WealthARPreview />}
               {currentView === 'generational-wealth' && <GenerationalWealthOptimizer />}
-              {currentView === 'wealth-twin-gpt' && <WealthTwinGPT />}
               {currentView === 'age-group' && <AgeGroupView />}
               {currentView === 'simplified-security' && <SimplifiedSecurityView />}
               {currentView === 'etb-ntb' && <ETBNTBSegmentation />}
-              {currentView === 'customer-value' && <CustomerValueTiering />}
-              {currentView === 'zero-balance' && <ZeroBalanceRetention />}
-              {currentView === 'receiving-money' && <ReceivingMoneyFocus />}
               {currentView === 'transaction-failure-faceid' && <TransactionFailureFaceID />}
               {currentView === 'app-lock' && <AppLockWithoutAuth />}
               {currentView === 'panic-process' && <PanicSituationProcess />}
@@ -484,7 +467,6 @@ export default function AuthenticatedApp() {
       <ConsentModal />
 
       <Suspense fallback={null}>
-        <PitchMode />
       </Suspense>
       <SupportWidget />
       <ReportGeneratorModal

@@ -868,7 +868,7 @@ ${Math.abs(actualEquity - ideal.equity) > 10 ? `Rebalancing needed: Shift ₹${M
        7. FRAUD & SECURITY (Deep)
        ═══════════════════════════════════════════════════════ */
     if (lower.includes('fraud') || lower.includes('safe') || lower.includes('protect') || lower.includes('risk') || lower.includes('scam') || lower.includes('security')) {
-      const highRisk = transactions.filter((t) => t.riskLevel === 'HIGH').length;
+      const highRisk = transactions.filter((t) => t.riskLevel === 'HIGH' || t.riskLevel === 'CRITICAL').length;
       const blocked = transactions.filter((t) => t.status === 'BLOCKED').length;
       const delayed = transactions.filter((t) => t.status === 'DELAYED').length;
       const avgRiskScore = transactions.length > 0

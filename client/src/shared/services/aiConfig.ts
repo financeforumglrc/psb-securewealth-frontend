@@ -222,9 +222,7 @@ export function setRoutingMode(mode: RoutingMode) {
 }
 
 export function getRoutingMode(): RoutingMode {
-  const mode = getAIStore().mode;
-  if ((mode as string) === 'cost-aware') return 'fallback';
-  return mode;
+  return getAIStore().mode || 'fallback';
 }
 
 export function setEnsembleCount(count: number) {

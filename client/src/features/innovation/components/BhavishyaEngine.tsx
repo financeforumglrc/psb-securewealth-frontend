@@ -13,6 +13,7 @@ import EmotionalResonance from '@/features/innovation/components/EmotionalResona
 import GenerationalWealth from '@/features/innovation/components/GenerationalWealth';
 import DigitalInheritance from '@/features/innovation/components/DigitalInheritance';
 import CommunityDNA from '@/features/innovation/components/CommunityDNA';
+import ETBNTBSegmentation from '@/features/innovation/components/ETBNTBSegmentation';
 import AIFutureTwin from '@/features/innovation/components/AIFutureTwin';
 import AIInsightsAggregator from '@/features/innovation/components/AIInsightsAggregator';
 import ParticleConstellation from '@/features/innovation/components/ParticleConstellation';
@@ -27,7 +28,7 @@ import EmotionalHeatmap from '@/features/innovation/components/EmotionalHeatmap'
 import TemporalWealth from '@/features/innovation/components/TemporalWealth';
 import ProsperityScore from '@/features/innovation/components/ProsperityScore';
 
-type TabId = 'overview' | 'dna' | 'predict' | 'future' | 'ready' | 'auto' | 'crisis' | 'lifeShock' | 'market' | 'emotion' | 'generational' | 'inheritance' | 'community' | 'twin' | 'chakra' | 'festival' | 'weather' | 'neural' | 'timemachine' | 'quantum' | 'dreams' | 'heatmap' | 'temporal' | 'prosperity';
+type TabId = 'overview' | 'dna' | 'predict' | 'future' | 'ready' | 'auto' | 'crisis' | 'lifeShock' | 'market' | 'emotion' | 'generational' | 'inheritance' | 'community' | 'segment' | 'twin' | 'chakra' | 'festival' | 'weather' | 'neural' | 'timemachine' | 'quantum' | 'dreams' | 'heatmap' | 'temporal' | 'prosperity';
 
 const TAB_LABEL_KEYS: Record<TabId, string> = {
   overview: 'tabCommandCenter',
@@ -43,6 +44,7 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
   generational: 'tabGenerations',
   inheritance: 'tabInheritance',
   community: 'tabCommunity',
+  segment: 'tabSegment',
   twin: 'tabFutureTwin',
   chakra: 'tabChakraBalance',
   festival: 'tabFestivalAI',
@@ -70,6 +72,7 @@ const TABS: { id: TabId; icon: string; desc: string; badge?: string; alert?: boo
   { id: 'generational', icon: 'fa-people-roof', desc: '3-gen wealth projection' },
   { id: 'inheritance', icon: 'fa-vault', desc: 'Digital legacy vault' },
   { id: 'community', icon: 'fa-users', desc: '2.4M peer intelligence' },
+  { id: 'segment', icon: 'fa-user-tag', desc: 'ETB vs NTB segmentation', badge: 'NEW' },
   { id: 'twin', icon: 'fa-comments', desc: 'Chat with your future' },
   { id: 'chakra', icon: 'fa-om', desc: 'Sapta-chakra finance', badge: 'India First' },
   { id: 'festival', icon: 'fa-om', desc: 'Festival-aware planning', badge: 'Bharat' },
@@ -83,7 +86,7 @@ const TABS: { id: TabId; icon: string; desc: string; badge?: string; alert?: boo
   { id: 'prosperity', icon: 'fa-gem', desc: 'Holistic wellness score', badge: 'NEW' },
 ];
 
-const PRIMARY_TAB_IDS: TabId[] = ['overview', 'dna', 'predict', 'future', 'ready', 'auto', 'crisis', 'lifeShock', 'market', 'emotion', 'generational'];
+const PRIMARY_TAB_IDS: TabId[] = ['overview', 'dna', 'predict', 'future', 'ready', 'auto', 'crisis', 'lifeShock', 'market', 'emotion', 'generational', 'segment'];
 
 function OverviewTab({ onTabChange }: { onTabChange: (tab: TabId) => void }) {
   const { t } = useTranslation();
@@ -129,6 +132,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (tab: TabId) => void }) {
           { titleKey: 'overviewCardCrisisShieldTitle', descKey: 'overviewCardCrisisShieldDesc', icon: 'fa-tower-broadcast', color: 'from-rose-50 to-orange-50', tab: 'crisis' as TabId, alert: true },
           { titleKey: 'overviewCardLifeShockTitle', descKey: 'overviewCardLifeShockDesc', icon: 'fa-bolt', color: 'from-amber-50 to-yellow-50', tab: 'lifeShock' as TabId, badge: 'NEW' },
           { titleKey: 'overviewCardFutureTwinTitle', descKey: 'overviewCardFutureTwinDesc', icon: 'fa-comments', color: 'from-violet-50 to-purple-50', tab: 'twin' as TabId },
+          { titleKey: 'overviewCardSegmentTitle', descKey: 'overviewCardSegmentDesc', icon: 'fa-user-tag', color: 'from-sky-50 to-blue-50', tab: 'segment' as TabId, badge: 'NEW' },
           { titleKey: 'overviewCardMarketAiTitle', descKey: 'overviewCardMarketAiDesc', icon: 'fa-chart-line', color: 'from-blue-50 to-cyan-50', tab: 'market' as TabId, alert: true },
           { titleKey: 'overviewCardEmotionEngineTitle', descKey: 'overviewCardEmotionEngineDesc', icon: 'fa-brain', color: 'from-pink-50 to-rose-50', tab: 'emotion' as TabId },
           { titleKey: 'overviewCardGenerationalWealthTitle', descKey: 'overviewCardGenerationalWealthDesc', icon: 'fa-people-roof', color: 'from-amber-50 to-yellow-50', tab: 'generational' as TabId },
@@ -385,6 +389,7 @@ export default function BhavishyaEngine() {
         {activeTab === 'generational' && <GenerationalWealth />}
         {activeTab === 'inheritance' && <DigitalInheritance />}
         {activeTab === 'community' && <CommunityDNA />}
+        {activeTab === 'segment' && <ETBNTBSegmentation />}
         {activeTab === 'twin' && <AIFutureTwin />}
         {activeTab === 'chakra' && <ChakraBalance />}
         {activeTab === 'festival' && <FestivalAwareEngine />}

@@ -35,6 +35,8 @@ export default function WealthTwinHero() {
   const savingsRate = user.monthlyIncome > 0
     ? ((user.monthlySavings / user.monthlyIncome) * 100)
     : 0;
+  const spendPatternStatus = savingsRate < 10 ? 'danger' : savingsRate < 20 ? 'warn' : 'safe';
+  const spendPatternDetail = savingsRate < 10 ? 'Low savings cushion' : savingsRate < 20 ? 'Moderate cushion' : 'Healthy cushion';
 
   // Compute Wealth Protection Risk Score (0-100, higher = more risk)
   const riskScore = useMemo(() => {
@@ -63,16 +65,17 @@ export default function WealthTwinHero() {
     return Math.min(Math.round(score), 100);
   }, [transactions, savingsRate, marketData, assets]);
 
-  const riskLevel = riskScore < 40 ? 'LOW' : riskScore < 70 ? 'MEDIUM' : 'HIGH';
-  const riskColor = riskScore < 40 ? 'emerald' : riskScore < 70 ? 'amber' : 'rose';
-  const riskText = riskScore < 40 ? 'text-emerald-600' : riskScore < 70 ? 'text-amber-600' : 'text-rose-600';
-  const riskBg = riskScore < 40 ? 'bg-emerald-500' : riskScore < 70 ? 'bg-amber-500' : 'bg-rose-500';
-  const riskRing = riskScore < 40 ? 'ring-emerald-400' : riskScore < 70 ? 'ring-amber-400' : 'ring-rose-400';
-  const riskGlow = riskScore < 40 ? 'shadow-emerald-500/30' : riskScore < 70 ? 'shadow-amber-500/30' : 'shadow-rose-500/30';
+  const riskLevel = riskScore < 40 ? 'LOW' : riskScore < 70 ? 'MEDIUM' : riskScore < 85 ? 'HIGH' : 'CRITICAL';
+  const riskColor = riskScore < 40 ? 'emerald' : riskScore < 70 ? 'amber' : riskScore < 85 ? 'rose' : 'red';
+  const riskText = riskScore < 40 ? 'text-emerald-600' : riskScore < 70 ? 'text-amber-600' : riskScore < 85 ? 'text-rose-600' : 'text-red-700';
+  const riskBg = riskScore < 40 ? 'bg-emerald-500' : riskScore < 70 ? 'bg-amber-500' : riskScore < 85 ? 'bg-rose-500' : 'bg-red-700';
+  const riskRing = riskScore < 40 ? 'ring-emerald-400' : riskScore < 70 ? 'ring-amber-400' : riskScore < 85 ? 'ring-rose-400' : 'ring-red-600';
+  const riskGlow = riskScore < 40 ? 'shadow-emerald-500/30' : riskScore < 70 ? 'shadow-amber-500/30' : riskScore < 85 ? 'shadow-rose-500/30' : 'shadow-red-600/30';
   const riskStyles: Record<string, { gradient: string; icon: string }> = {
     emerald: { gradient: 'from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-900/10', icon: 'text-emerald-500' },
     amber:   { gradient: 'from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-900/10', icon: 'text-amber-500' },
     rose:    { gradient: 'from-rose-100 to-rose-50 dark:from-rose-900/30 dark:to-rose-900/10', icon: 'text-rose-500' },
+    red:    { gradient: 'from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-900/10', icon: 'text-red-600' },
   };
   const rs = riskStyles[riskColor];
 
@@ -110,12 +113,12 @@ export default function WealthTwinHero() {
       },
       {
         label: 'Behavior Pattern',
-        status: savingsRate < 15 ? 'warn' : 'safe',
+        status: spendPatternStatus,
         icon: 'fa-fingerprint',
-        detail: savingsRate < 15 ? `Savings rate low (${savingsRate.toFixed(1)}%)` : 'Spending pattern normal',
-        tooltip: savingsRate < 15
-          ? 'Your savings rate is below 15%. Increasing it improves long-term resilience.'
-          : 'Your spending and saving pattern is within a healthy range.',
+        detail: spendPatternDetail,
+        tooltip: spendPatternStatus === 'safe'
+          ? 'Your spending and saving pattern is within a healthy range.'
+          : 'Your monthly savings cushion looks tight. Reducing discretionary spend improves resilience.',
       },
       {
         label: 'Market Risk',
@@ -152,7 +155,7 @@ export default function WealthTwinHero() {
         className="relative overflow-hidden"
         padding="lg"
         glow
-        glowColor={riskScore < 40 ? '#10b981' : riskScore < 70 ? '#f59e0b' : '#f43f5e'}
+        glowColor={riskScore < 40 ? '#10b981' : riskScore < 70 ? '#f59e0b' : riskScore < 85 ? '#f43f5e' : '#b91c1c'}
       >
         {/* Animated background orbs */}
         <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl pointer-events-none" />
@@ -302,11 +305,11 @@ export default function WealthTwinHero() {
             <CosmosCard variant="stat" padding="sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Savings Rate</p>
-                  <p className="text-lg font-black text-slate-800 dark:text-white">{savingsRate.toFixed(1)}%</p>
+                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Risk Score</p>
+                  <p className="text-lg font-black text-slate-800 dark:text-white">{riskScore}/100</p>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                  <i className="fas fa-piggy-bank" />
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                  <i className="fas fa-shield-heart" />
                 </div>
               </div>
             </CosmosCard>

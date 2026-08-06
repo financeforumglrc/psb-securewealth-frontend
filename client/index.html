@@ -56,6 +56,21 @@
         .safe-area-right { padding-right: env(safe-area-inset-right); }
       }
     </style>
+
+    <!-- Theme: default light; only add .dark if user explicitly toggled it -->
+    <script>
+      (function () {
+        try {
+          var persisted = localStorage.getItem('sw-wealth-store');
+          if (persisted) {
+            var state = JSON.parse(persisted);
+            if (state && state.darkMode === true) {
+              document.documentElement.classList.add('dark');
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

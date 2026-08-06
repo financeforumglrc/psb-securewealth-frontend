@@ -41,8 +41,11 @@ export async function getGuardianMessage(payload: GuardianMessageRequest): Promi
   if (payload.action === 'ALLOW') {
     return `Your ${amountStr} request to ${payeeStr} looks safe. It matches your usual patterns and trusted device.`;
   }
-  if (payload.action === 'WARN_COOL_OFF') {
+  if (payload.action === 'WARN' || payload.action === 'WARN_COOL_OFF') {
     return `🛡️ Security Pause: I noticed you're moving ${amountStr} to ${payeeStr} in a way that doesn't match your normal habits. To protect your wealth, I've placed this on a short cooling-off period. Please verify the OTP I just sent to your registered mobile.`;
   }
-  return `🛑 I can't let this ${amountStr} transfer to ${payeeStr} proceed right now. Multiple risk signals are active. Please review your recent notifications or contact support — your money stays safe.`;
+  if (payload.action === 'HOLD') {
+    return `⏳ Hold for review: Your ${amountStr} transfer to ${payeeStr} is flagged as high-risk. It has been placed on a 30-minute human-review hold. A PSB risk officer will verify the transaction before it proceeds.`;
+  }
+  return `🛑 I can't let this ${amountStr} transfer to ${payeeStr} proceed right now. Multiple critical risk signals are active. Please review your recent notifications or contact support — your money stays safe.`;
 }

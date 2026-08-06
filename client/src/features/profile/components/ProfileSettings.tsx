@@ -253,8 +253,8 @@ export default function ProfileSettings() {
         <div className="space-y-3">
           <label className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 cursor-pointer">
             <div>
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Behavioral Biometrics</span>
-              <p className="text-[10px] text-slate-500 mt-0.5">Track typing & mouse speed for anomaly detection</p>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Speed Behavioural Pattern</span>
+              <p className="text-[10px] text-slate-500 mt-0.5">Track typing & transaction speed for anomaly detection (optional)</p>
             </div>
             <input
               type="checkbox"

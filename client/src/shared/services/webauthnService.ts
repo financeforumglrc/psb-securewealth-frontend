@@ -26,10 +26,16 @@ function base64urlToBuffer(base64url: string): ArrayBuffer {
 }
 
 export function isWebAuthnAvailable(): boolean {
-  return typeof window !== 'undefined' &&
-    typeof navigator !== 'undefined' &&
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const secure =
+    location.protocol === 'https:' ||
+    location.hostname === 'localhost' ||
+    location.hostname === '127.0.0.1';
+  return (
+    secure &&
     'credentials' in navigator &&
-    typeof (navigator as any).credentials.create === 'function';
+    typeof (navigator as any).credentials.create === 'function'
+  );
 }
 
 export async function registerPasskey(username: string): Promise<PublicKeyCredential> {
@@ -55,7 +61,8 @@ export async function registerPasskey(username: string): Promise<PublicKeyCreden
     authenticatorSelection: {
       authenticatorAttachment: 'platform',
       userVerification: 'required',
-      residentKey: 'required',
+      residentKey: 'preferred',
+      requireResidentKey: false,
     },
     attestation: 'none',
     timeout: 120000,

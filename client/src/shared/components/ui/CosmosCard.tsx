@@ -176,12 +176,12 @@ export default function CosmosCard({
                 <i className={`fas ${header.icon}`} />
               </div>
             )}
-            <div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white leading-tight">
+            <div className="min-w-0">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white leading-tight break-words">
                 {header.title}
               </h3>
               {header.subtitle && (
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 break-words">
                   {header.subtitle}
                 </p>
               )}

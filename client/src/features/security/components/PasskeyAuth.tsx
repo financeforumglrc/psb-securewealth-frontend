@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useSecurityActions } from '@/shared/context/SecurityContext';
+import { useAuth } from '@/shared/context/AuthContext';
 import {
   isWebAuthnAvailable,
   registerPasskey,
@@ -13,7 +14,18 @@ function truncateCredentialId(id: string | null): string {
   return `${id.slice(0, 8)}...${id.slice(-8)}`;
 }
 
+function getCurrentUserEmail(): string {
+  try {
+    const raw = localStorage.getItem('sw-user');
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed?.email || 'user@securewealth.in';
+  } catch {
+    return 'user@securewealth.in';
+  }
+}
+
 export default function PasskeyAuth() {
+  const { state: authState } = useAuth();
   const { state, registerPasskey: registerInState, authenticatePasskey: authInState } = useSecurityActions();
   const [registering, setRegistering] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
@@ -27,14 +39,15 @@ export default function PasskeyAuth() {
     setRegistering(true);
     setError(null);
     try {
-      const credential = await registerPasskey('user@securewealth.in');
+      const username = authState.userEmail || getCurrentUserEmail();
+      const credential = await registerPasskey(username);
       registerInState(getCredentialIdBase64(credential));
     } catch (e: any) {
       setError(e?.message || 'Passkey registration failed');
     } finally {
       setRegistering(false);
     }
-  }, [registerInState]);
+  }, [registerInState, authState.userEmail]);
 
   const handleAuthenticate = useCallback(async () => {
     setAuthenticating(true);

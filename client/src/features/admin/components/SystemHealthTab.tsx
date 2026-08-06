@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import {
   HeartPulse, Activity, RefreshCw, Server, Database, Wifi, WifiOff,
@@ -31,9 +32,9 @@ interface HealthState {
 
 interface StatusCardProps {
   title: string;
-  value: React.ReactNode;
-  subtitle: React.ReactNode;
-  icon: React.ComponentType<{ className?: string }>;
+  value: ReactNode;
+  subtitle: ReactNode;
+  icon: ComponentType<{ className?: string }>;
   variant?: 'success' | 'warning' | 'danger' | 'neutral';
 }
 

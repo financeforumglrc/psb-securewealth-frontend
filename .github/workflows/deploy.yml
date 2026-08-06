@@ -6,7 +6,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+    outputs:
+      has_surge: ${{ steps.check.outputs.has_surge }}
+    steps:
+      - name: Check Surge secrets
+        id: check
+        run: |
+          if [ -n "${{ secrets.SURGE_LOGIN }}" ] && [ -n "${{ secrets.SURGE_TOKEN }}" ]; then
+            echo "has_surge=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_surge=false" >> $GITHUB_OUTPUT
+          fi
+
   deploy:
+    needs: check-secrets
+    if: needs.check-secrets.outputs.has_surge == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:

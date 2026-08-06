@@ -52,16 +52,16 @@ export default function FinancialPulse() {
   }, []);
 
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary via-[#134e1a] to-primary border border-primary/30 shadow-lg shadow-primary/10">
+    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
       {/* Subtle gold accent shimmer */}
-      <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
+      <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-transparent via-amber-300/40 to-transparent" />
 
       {/* Animated background dots */}
-      <div className="absolute inset-0 opacity-15">
+      <div className="absolute inset-0 opacity-20">
         {[...Array(20)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-1 h-1 bg-secondary rounded-full animate-pulse"
+            className="absolute w-1 h-1 bg-indigo-300 rounded-full animate-pulse"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -75,7 +75,7 @@ export default function FinancialPulse() {
       <div className="relative z-10 px-4 py-3">
         <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide">
           <div className="flex items-center gap-2 flex-shrink-0 pr-4 border-r border-white/20">
-            <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
+            <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
             <span className="text-[10px] font-bold text-white/90 uppercase tracking-wider whitespace-nowrap">Live Pulse</span>
           </div>
 

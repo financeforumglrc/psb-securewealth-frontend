@@ -67,7 +67,7 @@ export default function DemoAssistant({ message, speaking, onToggleSpeak, onStar
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            className="mb-3 w-80 p-4 rounded-2xl bg-slate-900/90 border border-slate-700 backdrop-blur-xl shadow-2xl pointer-events-auto"
+            className="mb-3 w-[calc(100vw-2rem)] max-w-sm p-4 rounded-2xl bg-slate-900/90 border border-slate-700 backdrop-blur-xl shadow-2xl pointer-events-auto"
           >
             <div className="flex items-start gap-3 mb-2">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">

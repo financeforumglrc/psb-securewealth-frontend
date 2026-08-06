@@ -24,10 +24,13 @@ export function getProtectionDecision(score: number): ProtectionDecision {
   if (score < 60) {
     return { level: 'LOW', action: 'ALLOW', message: 'Action approved. Safe to proceed.', referenceId: refId };
   }
-  if (score < 80) {
+  if (score < 75) {
     return { level: 'MEDIUM', action: 'WARN', cooldown: 30, message: 'Unusual pattern detected. Please review before proceeding.', referenceId: refId };
   }
-  return { level: 'HIGH', action: 'BLOCK', delay: 300, message: 'High cyber-risk detected. Action paused for security review.', referenceId: refId };
+  if (score < 85) {
+    return { level: 'HIGH', action: 'HOLD', delay: 1800, message: 'High risk detected. Transaction held for human review (up to 30 min).', referenceId: refId };
+  }
+  return { level: 'CRITICAL', action: 'BLOCK', delay: 300, message: 'Critical cyber-risk detected. Action blocked for security review.', referenceId: refId };
 }
 
 export function useProtectionEngine() {

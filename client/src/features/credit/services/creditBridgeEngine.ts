@@ -579,6 +579,6 @@ export function estimateCoverageGain(retailInputs: RetailInputs): number {
     retailInputs.savingsRate > 0;
 
   if (bureauScore > 0) return 0; // already covered by bureau
-  if (hasAlternateData) return 82; // aligns with pitch-deck claim
+  if (hasAlternateData) return 82; // aligns with product claim
   return 35;
 }

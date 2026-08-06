@@ -90,8 +90,8 @@ export default function ExplainableRiskScore() {
   ]);
 
   const totalScore = Math.round(factors.reduce((sum, f) => sum + f.value * f.weight, 0) * 100);
-  const riskLevel = totalScore >= 70 ? 'HIGH' : totalScore >= 40 ? 'MEDIUM' : 'LOW';
-  const action = totalScore >= 70 ? 'BLOCK' : totalScore >= 40 ? 'DELAY' : 'ALLOW';
+  const riskLevel = totalScore >= 85 ? 'CRITICAL' : totalScore >= 70 ? 'HIGH' : totalScore >= 40 ? 'MEDIUM' : 'LOW';
+  const action = totalScore >= 85 ? 'BLOCK' : totalScore >= 70 ? 'BLOCK' : totalScore >= 40 ? 'DELAY' : 'ALLOW';
 
   const updateFactor = (id: string, value: number) => {
     setFactors((prev) =>
@@ -117,7 +117,8 @@ export default function ExplainableRiskScore() {
             <p className="text-xs text-white/70 mt-1">
               {riskLevel === 'LOW' && 'Low risk. Transaction can proceed safely.'}
               {riskLevel === 'MEDIUM' && 'Medium risk. Review carefully before proceeding.'}
-              {riskLevel === 'HIGH' && 'High risk. Transaction blocked for your protection.'}
+              {riskLevel === 'HIGH' && 'High risk. Transaction blocked or delayed for your protection.'}
+              {riskLevel === 'CRITICAL' && 'Critical risk. Transaction blocked immediately for your safety.'}
             </p>
           </div>
           <div className="text-right">

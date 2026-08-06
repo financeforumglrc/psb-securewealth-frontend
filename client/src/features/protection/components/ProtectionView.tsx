@@ -74,6 +74,14 @@ function DecisionCard({ decision, score }: { decision: ProtectionDecision; score
           text: 'text-amber-700 dark:text-amber-300',
           icon: 'fa-triangle-exclamation',
         }
+      : decision.action === 'HOLD'
+      ? {
+          gradient: 'from-violet-500 to-purple-600',
+          bg: 'bg-violet-50 dark:bg-violet-900/10',
+          border: 'border-violet-200 dark:border-violet-800',
+          text: 'text-violet-700 dark:text-violet-300',
+          icon: 'fa-user-clock',
+        }
       : {
           gradient: 'from-rose-500 to-red-600',
           bg: 'bg-rose-50 dark:bg-rose-900/10',
@@ -136,11 +144,14 @@ export default function ProtectionView() {
     if (score === 0) return 0;
     if (decision.action === 'ALLOW') return 3;
     if (decision.action === 'WARN') return 2;
-    return 2;
+    return 3; // HOLD / BLOCK have a final action determined
   }, [score, decision.action]);
 
   const actionColor =
-    decision.action === 'ALLOW' ? 'text-emerald-600' : decision.action === 'WARN' ? 'text-amber-600' : 'text-rose-600';
+    decision.action === 'ALLOW' ? 'text-emerald-600'
+    : decision.action === 'WARN' ? 'text-amber-600'
+    : decision.action === 'HOLD' ? 'text-violet-600'
+    : 'text-rose-600';
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">

@@ -97,7 +97,7 @@ export default function TransactionDetailModal({ tx, onClose }: Props) {
               </p>
               <p className="text-xs text-slate-400 mt-0.5 capitalize">{tx.type} · {tx.category}</p>
             </div>
-            <RiskGauge score={tx.score ?? (tx.riskLevel === 'HIGH' ? 85 : tx.riskLevel === 'MEDIUM' ? 55 : 15)} />
+            <RiskGauge score={tx.score ?? (tx.riskLevel === 'CRITICAL' ? 92 : tx.riskLevel === 'HIGH' ? 85 : tx.riskLevel === 'MEDIUM' ? 55 : 15)} />
           </div>
 
           {/* Signals — Explainable AI factors */}
@@ -130,7 +130,7 @@ export default function TransactionDetailModal({ tx, onClose }: Props) {
 
           {/* Counterfactual Explainable AI */}
           <CounterfactualPanel
-            riskScore={tx.score ?? (tx.riskLevel === 'HIGH' ? 85 : tx.riskLevel === 'MEDIUM' ? 55 : 15)}
+            riskScore={tx.score ?? (tx.riskLevel === 'CRITICAL' ? 92 : tx.riskLevel === 'HIGH' ? 85 : tx.riskLevel === 'MEDIUM' ? 55 : 15)}
             signals={tx.signals || {}}
           />
 
@@ -147,7 +147,7 @@ export default function TransactionDetailModal({ tx, onClose }: Props) {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500">Decision Level</span>
-                  <span className={`font-bold ${tx.decision.level === 'HIGH' ? 'text-rose-600' : tx.decision.level === 'MEDIUM' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                  <span className={`font-bold ${tx.decision.level === 'CRITICAL' || tx.decision.level === 'HIGH' ? 'text-rose-600' : tx.decision.level === 'MEDIUM' ? 'text-amber-600' : 'text-emerald-600'}`}>
                     {tx.decision.level}
                   </span>
                 </div>

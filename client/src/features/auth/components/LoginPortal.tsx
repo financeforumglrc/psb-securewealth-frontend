@@ -5,6 +5,7 @@ import {
   Check,
   ChevronRight,
   Cpu,
+  Download,
   Eye,
   EyeOff,
   Fingerprint,
@@ -134,7 +135,13 @@ export default function LoginPortal() {
     typeof window !== 'undefined' ? isWebAuthnSupported() : false
   );
 
+  // PWA install prompt
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installing, setInstalling] = useState(false);
+  const [directorScanning, setDirectorScanning] = useState(false);
+
   const passkeyRegistered = hasRegisteredPasskey();
+  const directorAccount = DEMO_ACCOUNTS.find((a) => a.id === 'deepanshu-sharma-director');
   const passkeyUser = getPasskeyUser();
   const passkeyUserMismatch = passkeyRegistered && !!email.trim() && passkeyUser !== email.trim();
 
@@ -252,6 +259,9 @@ export default function LoginPortal() {
     // Fallback: local data instantly so the UI never hangs on a cold backend.
     backendApi.clearAuthToken();
     applyDemoAccount(account);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('sw-demo-user', JSON.stringify({ id: account.id, email: account.email, name: account.profile.name }));
+    }
     const store = useWealthStore.getState();
     store.setOnboardingComplete(true);
     store.setAAFetchComplete(false);
@@ -293,6 +303,51 @@ export default function LoginPortal() {
     }
   };
 
+  // PWA install prompt capture
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!installPrompt) {
+      // iOS / Safari: show a simple alert with instructions
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      alert(
+        isIOS
+          ? 'Tap the Share button in Safari, then tap "Add to Home Screen" to install the web app.'
+          : 'Open browser menu (⋮) and choose "Install app" or "Add to Home Screen".'
+      );
+      return;
+    }
+    setInstalling(true);
+    try {
+      await installPrompt.prompt();
+      await installPrompt.userChoice;
+    } finally {
+      setInstalling(false);
+      setInstallPrompt(null);
+    }
+  };
+
+  const handleDirectorFingerprintLogin = async () => {
+    if (!directorAccount) return;
+    setError(null);
+    setDirectorScanning(true);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([30, 60, 30]);
+    }
+    // Simulate fingerprint scan animation, then perform backend demo login.
+    setTimeout(async () => {
+      await handleDemoLogin(directorAccount);
+      setDirectorScanning(false);
+    }, 1400);
+  };
+
   const isLocked = lockoutRemaining > 0;
   const canSubmit = consent && email.trim() && password && !isLocked && !state.loading;
 
@@ -304,16 +359,6 @@ export default function LoginPortal() {
         <div className="absolute -bottom-40 -right-40 h-[32rem] w-[32rem] rounded-full bg-orange-500/5 blur-3xl" />
       </div>
 
-      {/* Demo mode shortcut */}
-      <a
-        href="/demo"
-        target="_blank"
-        rel="noreferrer"
-        className="absolute top-4 right-4 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400 text-primary-dark text-xs font-bold hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/20"
-      >
-        <Sparkles className="w-4 h-4" /> Demo Mode
-      </a>
-
       {/* LEFT: login form */}
       <section className="relative z-10 flex w-full items-center justify-center p-6 sm:p-10 lg:w-[42%]">
         <motion.div
@@ -323,16 +368,44 @@ export default function LoginPortal() {
           className="w-full max-w-md"
         >
           {/* Brand */}
-          <div className="mb-8 flex items-center gap-3">
-            <motion.div
-              whileHover={{ scale: 1.05, rotate: -2 }}
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg shadow-orange-500/20"
+          <div className="mb-8 flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <motion.div
+                whileHover={{ scale: 1.05, rotate: -2 }}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg shadow-orange-500/20"
+              >
+                <Landmark className="h-6 w-6 text-white" />
+              </motion.div>
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-bold tracking-tight text-white sm:text-xl">PSB SecureWealth</h1>
+                <p className="text-xs font-medium text-slate-500">Twin · Public Sector Banking</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleInstallApp}
+                disabled={installing}
+                className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-semibold hover:bg-slate-700 transition-colors disabled:opacity-50"
+              >
+                {installing ? (
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-500 border-t-white" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden sm:inline">Install App</span>
+                <span className="sm:hidden">App</span>
+              </motion.button>
+              <a
+                href="/demo"
+                target="_blank"
+                rel="noreferrer"
+              className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400 text-primary-dark text-[11px] font-bold hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/20 sm:px-4 sm:py-2 sm:text-xs"
             >
-              <Landmark className="h-6 w-6 text-white" />
-            </motion.div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white">PSB SecureWealth</h1>
-              <p className="text-xs font-medium text-slate-500">Twin · Public Sector Banking</p>
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Demo Mode
+            </a>
             </div>
           </div>
 
@@ -515,6 +588,41 @@ export default function LoginPortal() {
               </span>
             </div>
 
+            {/* Director biometric demo login */}
+            {directorAccount && (
+              <div className="mt-5 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-900/20 to-slate-900/40 p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-300 mb-2">Director Biometric Login</p>
+                <motion.button
+                  type="button"
+                  onClick={handleDirectorFingerprintLogin}
+                  disabled={directorScanning || state.loading}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="group flex w-full items-center gap-3 rounded-xl border border-violet-500/30 bg-slate-950/40 p-3 text-left transition-colors hover:border-violet-500/50 hover:bg-violet-500/10 disabled:opacity-60"
+                >
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${avatarGradient(directorAccount.id)}`}>
+                    <span className="text-xs font-bold text-white">{directorAccount.avatar}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-100 truncate">{directorAccount.profile.name}</p>
+                    <p className="truncate text-[11px] text-slate-400">{directorAccount.tagline}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-full border border-violet-500/30 ${directorScanning ? 'bg-violet-500/20' : 'bg-slate-900'}`}>
+                      {directorScanning ? (
+                        <Fingerprint className="h-5 w-5 animate-pulse text-violet-300" />
+                      ) : (
+                        <Fingerprint className="h-5 w-5 text-violet-400 group-hover:text-violet-300" />
+                      )}
+                    </div>
+                    <span className="text-[9px] font-medium text-violet-300">
+                      {directorScanning ? 'Scanning…' : 'Touch ID'}
+                    </span>
+                  </div>
+                </motion.button>
+              </div>
+            )}
+
             {/* Biometric quick access */}
             <div className="mt-5 space-y-3">
               <div className="flex items-center gap-3">
@@ -671,7 +779,8 @@ export default function LoginPortal() {
             <FaceLoginModal
               isOpen={faceLoginOpen}
               onClose={() => setFaceLoginOpen(false)}
-              onSuccess={(user) => {
+              onSuccess={(user, token) => {
+                if (token) backendApi.setAuthToken(token);
                 localStorage.setItem('sw-user', JSON.stringify(user));
                 dispatch({ type: 'LOGIN', userId: user.id, userEmail: user.email });
                 useWealthStore.getState().updateUser({ name: user.name || user.email?.split('@')[0] || 'User' });

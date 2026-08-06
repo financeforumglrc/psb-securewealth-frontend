@@ -70,6 +70,100 @@ img, video, canvas, svg {
     max-width: 220px;
     font-size: 11px;
   }
+
+  /* Keep fixed bottom bars from hiding content */
+  .app-shell,
+  main,
+  [class*="min-h-screen"] {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Fixed bottom elements respect safe areas */
+  [class*="fixed bottom-"] {
+    bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Modals: full width with comfortable margins */
+  [class*="fixed inset-0"] [class*="max-w-"],
+  [class*="modal"],
+  [class*="Modal"],
+  [class*="dialog"],
+  [class*="Dialog"] {
+    max-width: calc(100vw - 1.5rem) !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Prevent long unbreakable text from overflowing */
+  p, td, th {
+    overflow-wrap: break-word;
+  }
+
+  /* Headings and interactive text must never collapse into single-character columns.
+     Keep span default so short labels/currencies don't get force-wrapped. */
+  h1, h2, h3, h4, h5, h6, a, button {
+    overflow-wrap: break-word;
+    word-break: normal;
+    min-width: 0;
+  }
+
+  /* Grids: allow horizontal scroll if too wide */
+  [class*="grid"],
+  [class*="flex"][class*="overflow-x-auto"] {
+    min-width: 0;
+  }
+
+  /* Only force 2-column fallback for grids that have no explicit mobile stack class */
+  [class*="grid-cols-3"]:not([class*="grid-cols-1"]):not([class*="sm:grid-cols"]):not([class*="md:grid-cols-1"]),
+  [class*="grid-cols-4"]:not([class*="grid-cols-1"]):not([class*="sm:grid-cols"]):not([class*="md:grid-cols-1"]),
+  [class*="grid-cols-5"]:not([class*="grid-cols-1"]):not([class*="sm:grid-cols"]):not([class*="md:grid-cols-1"]),
+  [class*="grid-cols-6"]:not([class*="grid-cols-1"]):not([class*="sm:grid-cols"]):not([class*="md:grid-cols-1"]) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  /* Flex rows wrap so items never overflow */
+  [class*="flex-row"] {
+    flex-wrap: wrap;
+  }
+
+  /* Buttons and links: comfortable tap targets */
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Charts, maps, tables: horizontal scroll instead of overflow.
+     Do NOT apply overflow to .recharts-wrapper — it clips Recharts SVGs. */
+  [class*="chart"]:not(.recharts-wrapper),
+  [class*="Chart"]:not(.recharts-wrapper),
+  .leaflet-container,
+  table {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .recharts-wrapper {
+    max-width: 100%;
+  }
+
+  /* Fixed elements never overflow the viewport */
+  [class*="fixed"] {
+    max-width: 100vw;
+  }
+
+  /* Sidebar / nav items: no overflow, readable labels */
+  [class*="sidebar"] button,
+  [class*="sidebar"] a,
+  [class*="nav"] button,
+  [class*="nav"] a,
+  [class*="menu"] button,
+  [class*="menu"] a {
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* Very small screens */

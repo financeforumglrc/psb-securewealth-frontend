@@ -1,5 +1,5 @@
 /**
- * Client-side synthetic fraud case generator.
+ * Client-side synthetic fraud case generator (India-only).
  * Used as a fallback when the backend Fraud API is unavailable.
  * WARNING: All data is fictional.
  */
@@ -19,71 +19,38 @@ const INDIAN_BANKS = [
   { name: 'IndusInd Bank', code: 'INDB' },
 ];
 
-const FOREIGN_BANKS = [
-  { name: 'JPMorgan Chase', country: 'USA', swift: 'CHASUS33' },
-  { name: 'HSBC', country: 'UK', swift: 'HBUKGB4B' },
-  { name: 'Deutsche Bank', country: 'Germany', swift: 'DEUTDEFF' },
-  { name: 'Credit Suisse', country: 'Switzerland', swift: 'CRESCHZZ' },
-  { name: 'DBS Bank', country: 'Singapore', swift: 'DBSSSGSG' },
-  { name: 'Emirates NBD', country: 'UAE', swift: 'EBILAEAD' },
-  { name: 'Standard Chartered', country: 'Hong Kong', swift: 'SCBLHKHH' },
-  { name: 'Bank of China', country: 'China', swift: 'BKCHCNBJ' },
-  { name: 'Cayman National Bank', country: 'Cayman Islands', swift: 'CAYNKYKY' },
-  { name: 'Sberbank', country: 'Russia', swift: 'SABRRUMM' },
-  { name: 'ING Bank', country: 'Netherlands', swift: 'INGBNL2A' },
-  { name: 'RBC Royal Bank', country: 'Canada', swift: 'ROYCCAT2' },
-];
-
-const CRYPTO_EXCHANGES = [
-  { name: 'Binance', country: 'Malta' },
-  { name: 'KuCoin', country: 'Seychelles' },
-  { name: 'Bybit', country: 'UAE' },
-];
-
 const INDIAN_CITIES = [
-  { city: 'Mumbai', lat: 19.0760, lon: 72.8777 },
-  { city: 'Delhi', lat: 28.7041, lon: 77.1025 },
-  { city: 'Bangalore', lat: 12.9716, lon: 77.5946 },
-  { city: 'Hyderabad', lat: 17.3850, lon: 78.4867 },
-  { city: 'Chennai', lat: 13.0827, lon: 80.2707 },
-  { city: 'Kolkata', lat: 22.5726, lon: 88.3639 },
-  { city: 'Pune', lat: 18.5204, lon: 73.8567 },
-  { city: 'Ahmedabad', lat: 23.0225, lon: 72.5714 },
-  { city: 'Jaipur', lat: 26.9124, lon: 75.7873 },
-  { city: 'Lucknow', lat: 26.8467, lon: 80.9462 },
-  { city: 'Surat', lat: 21.1702, lon: 72.8311 },
-  { city: 'Patna', lat: 25.5941, lon: 85.1376 },
-];
-
-const FIRST_HOP_DESTINATIONS = [
-  { country: 'UAE', city: 'Dubai', lat: 25.2048, lon: 55.2708, sanctioned: false },
-  { country: 'Singapore', city: 'Singapore', lat: 1.3521, lon: 103.8198, sanctioned: false },
-  { country: 'Hong Kong', city: 'Hong Kong', lat: 22.3193, lon: 114.1694, sanctioned: false },
-  { country: 'UK', city: 'London', lat: 51.5074, lon: -0.1278, sanctioned: false },
-];
-
-const INTERMEDIATE_NODES = [
-  { country: 'Switzerland', city: 'Zurich', lat: 47.3769, lon: 8.5417, type: 'shell', sanctioned: false },
-  { country: 'Cayman Islands', city: 'George Town', lat: 19.3138, lon: -81.2546, type: 'shell', sanctioned: false },
-  { country: 'Belize', city: 'Belize City', lat: 17.5046, lon: -88.1962, type: 'shell', sanctioned: true },
-  { country: 'Panama', city: 'Panama City', lat: 8.9833, lon: -79.5167, type: 'shell', sanctioned: true },
-];
-
-const FINAL_DESTINATIONS = [
-  { country: 'USA', city: 'New York', lat: 40.7128, lon: -74.0060 },
-  { country: 'China', city: 'Shanghai', lat: 31.2304, lon: 121.4737 },
-  { country: 'Russia', city: 'Moscow', lat: 55.7558, lon: 37.6173 },
-  { country: 'Netherlands', city: 'Amsterdam', lat: 52.3676, lon: 4.9041 },
-  { country: 'Canada', city: 'Toronto', lat: 43.6510, lon: -79.3470 },
+  { city: 'Mumbai', state: 'Maharashtra', lat: 19.0760, lon: 72.8777 },
+  { city: 'Delhi', state: 'Delhi', lat: 28.7041, lon: 77.1025 },
+  { city: 'Bangalore', state: 'Karnataka', lat: 12.9716, lon: 77.5946 },
+  { city: 'Hyderabad', state: 'Telangana', lat: 17.3850, lon: 78.4867 },
+  { city: 'Chennai', state: 'Tamil Nadu', lat: 13.0827, lon: 80.2707 },
+  { city: 'Kolkata', state: 'West Bengal', lat: 22.5726, lon: 88.3639 },
+  { city: 'Pune', state: 'Maharashtra', lat: 18.5204, lon: 73.8567 },
+  { city: 'Ahmedabad', state: 'Gujarat', lat: 23.0225, lon: 72.5714 },
+  { city: 'Jaipur', state: 'Rajasthan', lat: 26.9124, lon: 75.7873 },
+  { city: 'Lucknow', state: 'Uttar Pradesh', lat: 26.8467, lon: 80.9462 },
+  { city: 'Surat', state: 'Gujarat', lat: 21.1702, lon: 72.8311 },
+  { city: 'Patna', state: 'Bihar', lat: 25.5941, lon: 85.1376 },
+  { city: 'Chandigarh', state: 'Chandigarh', lat: 30.7333, lon: 76.7794 },
+  { city: 'Bhopal', state: 'Madhya Pradesh', lat: 23.2599, lon: 77.4126 },
+  { city: 'Bhubaneswar', state: 'Odisha', lat: 20.2961, lon: 85.8245 },
+  { city: 'Indore', state: 'Madhya Pradesh', lat: 22.7196, lon: 75.8577 },
+  { city: 'Kanpur', state: 'Uttar Pradesh', lat: 26.4499, lon: 80.3319 },
+  { city: 'Nagpur', state: 'Maharashtra', lat: 21.1458, lon: 79.0882 },
+  { city: 'Vadodara', state: 'Gujarat', lat: 22.3072, lon: 73.1812 },
+  { city: 'Coimbatore', state: 'Tamil Nadu', lat: 11.0168, lon: 76.9558 },
 ];
 
 const CATEGORIES = ['account_takeover', 'mule_transfer', 'card_fraud', 'phishing', 'insider', 'identity_theft', 'velocity'];
+
 const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Arnav', 'Ayaan', 'Krishna', 'Ishaan', 'Dhruv', 'Reyansh', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Navya', 'Myra', 'Pari', 'Kavya', 'Rohit', 'Karan', 'Priya', 'Neha', 'Rahul', 'Suresh', 'Vikram', 'Pooja', 'Ritu', 'Amit'];
 const LAST_NAMES = ['Sharma', 'Kumar', 'Singh', 'Patel', 'Gupta', 'Reddy', 'Nair', 'Iyer', 'Verma', 'Yadav', 'Mehta', 'Joshi', 'Desai', 'Shah', 'Bhat', 'Rao', 'Kapoor', 'Malhotra', 'Choudhary', 'Menon'];
+
 const RISK_FACTORS_POOL = [
-  'velocity_spike', 'new_beneficiary', 'high_value_transaction', 'cross_border_transfer',
-  'sanctioned_country', 'mule_account_pattern', 'device_fingerprint_mismatch', 'impossible_travel',
-  'login_from_tor', 'weekend_activity_spike', 'rapid_multiple_hops', 'shell_company_involved', 'crypto_exchange_link'
+  'velocity_spike', 'new_beneficiary', 'high_value_transaction', 'mule_account_pattern',
+  'device_fingerprint_mismatch', 'impossible_travel', 'login_from_tor', 'weekend_activity_spike',
+  'rapid_multiple_hops', 'unusual_login_time', 'geolocation_anomaly', 'account_age_low',
 ];
 
 function rand<T>(arr: T[]): T {
@@ -107,12 +74,7 @@ function generateName(): string {
   return `${rand(FIRST_NAMES)} ${rand(LAST_NAMES)}`;
 }
 
-function bankForCountry(country: string) {
-  const matches = FOREIGN_BANKS.filter(b => b.country === country);
-  return matches.length ? rand(matches) : rand(FOREIGN_BANKS);
-}
-
-function pickRiskFactors(category: string, pathHasSanctioned: boolean, hasCrypto: boolean): string[] {
+function pickRiskFactors(category: string): string[] {
   const factors = new Set<string>();
   factors.add(rand(RISK_FACTORS_POOL));
   if (category === 'mule_transfer') { factors.add('mule_account_pattern'); factors.add('rapid_multiple_hops'); }
@@ -120,22 +82,19 @@ function pickRiskFactors(category: string, pathHasSanctioned: boolean, hasCrypto
   if (category === 'card_fraud') { factors.add('high_value_transaction'); factors.add('velocity_spike'); }
   if (category === 'phishing') { factors.add('new_beneficiary'); factors.add('login_from_tor'); }
   if (category === 'velocity') { factors.add('velocity_spike'); factors.add('weekend_activity_spike'); }
-  if (pathHasSanctioned) factors.add('sanctioned_country');
-  if (hasCrypto) factors.add('crypto_exchange_link');
-  factors.add('cross_border_transfer');
+  if (category === 'insider') { factors.add('unusual_login_time'); factors.add('account_age_low'); }
+  if (category === 'identity_theft') { factors.add('geolocation_anomaly'); factors.add('device_fingerprint_mismatch'); }
   return Array.from(factors);
 }
 
-function computeRiskScore(category: string, factors: string[], pathHasSanctioned: boolean): number {
+function computeRiskScore(category: string, factors: string[]): number {
   const base: Record<string, number> = { account_takeover: 78, mule_transfer: 85, card_fraud: 72, phishing: 68, insider: 60, identity_theft: 75, velocity: 70 };
-  let score = (base[category] || 65) + factors.length * 3;
-  if (pathHasSanctioned) score += 10;
+  const score = (base[category] || 65) + factors.length * 3;
   return Math.min(99, Math.max(30, score + randInt(-8, 8)));
 }
 
 export function generateMockCase(index = 0): FraudCase {
   const now = new Date();
-  // Spread synthetic history across the last 10 years so all time-range filters have data
   const secondsAgo = randInt(0, 3600 * 24 * 365 * 10);
   const createdAt = new Date(now.getTime() - secondsAgo * 1000);
   const month = String(createdAt.getMonth() + 1).padStart(2, '0');
@@ -143,22 +102,21 @@ export function generateMockCase(index = 0): FraudCase {
 
   const category = rand(CATEGORIES);
   const originCity = rand(INDIAN_CITIES);
+  const intermediateCity = rand(INDIAN_CITIES);
+  const finalCity = rand(INDIAN_CITIES);
   const sourceBank = rand(INDIAN_BANKS);
+  const intermediateBank = rand(INDIAN_BANKS);
+  const finalBank = rand(INDIAN_BANKS);
   const holderName = generateName();
   const amountBase = randInt(50000, 2500000);
+  const isMule = category === 'mule_transfer';
 
-  const firstHop = rand(FIRST_HOP_DESTINATIONS);
-  const intermediate = rand(INTERMEDIATE_NODES);
-  const final = rand(FINAL_DESTINATIONS);
-  const hasCrypto = Math.random() < 0.15;
-  const pathHasSanctioned = intermediate.sanctioned || firstHop.sanctioned || final.country === 'Russia';
-
-  const riskFactors = pickRiskFactors(category, pathHasSanctioned, hasCrypto);
-  const riskScore = computeRiskScore(category, riskFactors, pathHasSanctioned);
+  const riskFactors = pickRiskFactors(category);
+  const riskScore = computeRiskScore(category, riskFactors);
 
   const hops: FraudHop[] = [
     {
-      id: 1, fraudCaseId: index, hopNumber: 1, hopType: 'origin', nodeName: `${originCity.city}, India`, country: 'India', city: originCity.city,
+      id: 1, fraudCaseId: index, hopNumber: 1, hopType: 'origin', nodeName: `${originCity.city}, ${originCity.state}`, country: 'India', city: originCity.city,
       lat: originCity.lat + (Math.random() - 0.5) * 0.05, lon: originCity.lon + (Math.random() - 0.5) * 0.05,
       entityType: 'bank_account', entityValue: maskAccount(randInt(100000000000, 999999999999)),
       institution: sourceBank.name, ifsc: generateIfsc(sourceBank.code),
@@ -172,59 +130,28 @@ export function generateMockCase(index = 0): FraudCase {
       }
     },
     {
-      id: 2, fraudCaseId: index, hopNumber: 2, hopType: 'intermediate', nodeName: `${firstHop.city}, ${firstHop.country}`,
-      country: firstHop.country, city: firstHop.city,
-      lat: firstHop.lat + (Math.random() - 0.5) * 0.05, lon: firstHop.lon + (Math.random() - 0.5) * 0.05,
-      entityType: 'bank_account', entityValue: maskAccount(randInt(1000000000, 9999999999)),
-      institution: bankForCountry(firstHop.country).name, swiftBic: bankForCountry(firstHop.country).swift,
-      amount: Math.round(amountBase * 0.98),
-      currency: firstHop.country === 'UAE' ? 'AED' : firstHop.country === 'UK' ? 'GBP' : firstHop.country === 'Singapore' ? 'SGD' : 'USD',
+      id: 2, fraudCaseId: index, hopNumber: 2, hopType: 'intermediate', nodeName: `${intermediateCity.city}, ${intermediateCity.state}`, country: 'India', city: intermediateCity.city,
+      lat: intermediateCity.lat + (Math.random() - 0.5) * 0.05, lon: intermediateCity.lon + (Math.random() - 0.5) * 0.05,
+      entityType: isMule ? 'mule_account' : 'bank_account', entityValue: maskAccount(randInt(1000000000, 9999999999)),
+      institution: intermediateBank.name, ifsc: generateIfsc(intermediateBank.code),
+      amount: Math.round(amountBase * 0.98), currency: 'INR',
       timestamp: new Date(createdAt.getTime() + randInt(60000, 3600000)).toISOString(),
-      confidence: randInt(70, 95), isSanctioned: firstHop.sanctioned,
-      evidenceJson: { swiftRef: `SWIFT${randInt(100000, 999999)}`, clearingTime: 'T+0' }
+      confidence: randInt(70, 95), isSanctioned: false,
+      evidenceJson: { clearingTime: 'T+0', impsRef: `IMPS${randInt(100000, 999999)}` }
     },
     {
-      id: 3, fraudCaseId: index, hopNumber: 3, hopType: 'intermediate', nodeName: `${intermediate.city}, ${intermediate.country}`,
-      country: intermediate.country, city: intermediate.city,
-      lat: intermediate.lat + (Math.random() - 0.5) * 0.05, lon: intermediate.lon + (Math.random() - 0.5) * 0.05,
-      entityType: intermediate.type === 'shell' ? 'shell_company' : 'bank_account',
-      entityValue: intermediate.type === 'shell' ? `SHELL-${randInt(1000, 9999)}` : maskAccount(randInt(1000000000, 9999999999)),
-      institution: intermediate.type === 'shell' ? 'Offshore Holdings Ltd' : bankForCountry(intermediate.country).name,
-      swiftBic: intermediate.type === 'shell' ? undefined : bankForCountry(intermediate.country).swift,
-      amount: Math.round(amountBase * 0.95), currency: 'USD',
+      id: 3, fraudCaseId: index, hopNumber: 3, hopType: 'destination', nodeName: `${finalCity.city}, ${finalCity.state}`, country: 'India', city: finalCity.city,
+      lat: finalCity.lat + (Math.random() - 0.5) * 0.05, lon: finalCity.lon + (Math.random() - 0.5) * 0.05,
+      entityType: 'bank_account', entityValue: maskAccount(randInt(1000000000, 9999999999)),
+      institution: finalBank.name, ifsc: generateIfsc(finalBank.code),
+      amount: Math.round(amountBase * 0.95), currency: 'INR',
       timestamp: new Date(createdAt.getTime() + randInt(7200000, 86400000)).toISOString(),
-      confidence: randInt(55, 88), isSanctioned: intermediate.sanctioned,
-      evidenceJson: { companyReg: `REG-${randInt(100000, 999999)}`, beneficialOwner: 'Undisclosed' }
+      confidence: randInt(60, 90), isSanctioned: false,
+      evidenceJson: { finalClearing: 'Completed', localReference: `REF-${randInt(100000, 999999)}` }
     }
   ];
 
-  if (hasCrypto) {
-    const exchange = rand(CRYPTO_EXCHANGES);
-    hops.push({
-      id: 4, fraudCaseId: index, hopNumber: 4, hopType: 'exchange', nodeName: `${exchange.name}, ${exchange.country}`,
-      country: exchange.country, city: exchange.country, lat: 0, lon: 0,
-      entityType: 'crypto_exchange', entityValue: `WALLET-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
-      institution: exchange.name, amount: Math.round(amountBase * 0.92), currency: 'USDT',
-      timestamp: new Date(createdAt.getTime() + randInt(90000000, 172800000)).toISOString(),
-      confidence: randInt(50, 80), isSanctioned: false,
-      evidenceJson: { chain: 'TRC-20', confirmations: randInt(6, 30) }
-    });
-  }
-
-  hops.push({
-    id: hops.length + 1, fraudCaseId: index, hopNumber: hops.length + 1, hopType: 'destination', nodeName: `${final.city}, ${final.country}`,
-    country: final.country, city: final.city,
-    lat: final.lat + (Math.random() - 0.5) * 0.05, lon: final.lon + (Math.random() - 0.5) * 0.05,
-    entityType: 'bank_account', entityValue: maskAccount(randInt(1000000000, 9999999999)),
-    institution: bankForCountry(final.country).name, swiftBic: bankForCountry(final.country).swift,
-    amount: Math.round(amountBase * (hasCrypto ? 0.88 : 0.92)),
-    currency: final.country === 'UK' ? 'GBP' : final.country === 'China' ? 'CNY' : 'USD',
-    timestamp: new Date(createdAt.getTime() + randInt(100000000, 259200000)).toISOString(),
-    confidence: randInt(60, 90), isSanctioned: final.country === 'Russia',
-    evidenceJson: { finalClearing: 'Completed', localReference: `REF-${randInt(100000, 999999)}` }
-  });
-
-  const summary = `${category.replace(/_/g, ' ')} case: INR ${amountBase.toLocaleString('en-IN')} moved from ${originCity.city} through ${firstHop.country}${intermediate.type === 'shell' ? ' via a shell entity in ' + intermediate.country : ''} to ${final.country}.`;
+  const summary = `${category.replace(/_/g, ' ')} case: INR ${amountBase.toLocaleString('en-IN')} moved from ${originCity.city} through ${intermediateCity.city} to ${finalCity.city} within India.`;
 
   return {
     id: index + 1,
@@ -238,7 +165,7 @@ export function generateMockCase(index = 0): FraudCase {
     sourceEntityType: 'transaction',
     sourceEntityId: randInt(10000, 99999),
     assignedAdminId: Math.random() < 0.7 ? `admin_${randInt(1, 5)}` : null,
-    countryRiskTags: [firstHop.country, intermediate.country, final.country].filter((v, i, a) => a.indexOf(v) === i),
+    countryRiskTags: [],
     createdAt: createdAt.toISOString(),
     updatedAt: createdAt.toISOString(),
     hops,
@@ -251,17 +178,17 @@ export function generateMockCase(index = 0): FraudCase {
       },
       {
         id: 2, fraudCaseId: index + 1, accountType: 'mule', holderName: generateName(),
-        bankName: bankForCountry(firstHop.country).name, branch: `${firstHop.city} Branch`,
+        bankName: intermediateBank.name, branch: `${intermediateCity.city} Branch`,
         maskedAccount: maskAccount(randInt(1000000000, 9999999999)),
-        swiftBic: bankForCountry(firstHop.country).swift, country: firstHop.country,
+        ifsc: generateIfsc(intermediateBank.code), country: 'India',
         riskFlags: ['recently_opened', 'rapid_turnover']
       },
       {
         id: 3, fraudCaseId: index + 1, accountType: 'beneficiary', holderName: generateName(),
-        bankName: bankForCountry(final.country).name, branch: `${final.city} Branch`,
+        bankName: finalBank.name, branch: `${finalCity.city} Branch`,
         maskedAccount: maskAccount(randInt(1000000000, 9999999999)),
-        swiftBic: bankForCountry(final.country).swift, country: final.country,
-        riskFlags: pathHasSanctioned ? ['sanctioned_jurisdiction', 'beneficial_owner_hidden'] : ['beneficial_owner_hidden']
+        ifsc: generateIfsc(finalBank.code), country: 'India',
+        riskFlags: ['beneficial_owner_hidden']
       }
     ],
     notes: []

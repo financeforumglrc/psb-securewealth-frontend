@@ -595,6 +595,45 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     ],
   },
 
+  // Director account — used for biometric fingerprint demo login
+  {
+    id: 'deepanshu-sharma-director',
+    email: 'deepanshu.sharma@psbsecurewealth.com',
+    password: 'Deepanshu@123',
+    tagline: 'Director · Portfolio: ₹50.8 Cr',
+    netWorth: 508000000,
+    avatar: 'DS',
+    profile: {
+      name: 'Deepanshu Sharma',
+      riskProfile: 'Moderate',
+      taxBracket: 30,
+      monthlyIncome: 2800000,
+      monthlyExpenses: 950000,
+      monthlySavings: 1850000,
+    },
+    assets: [
+      { id: 'ds-1', name: 'Current Account — PSB SecureWealth', type: 'bank', value: 8500000, liquidity: 'high' },
+      { id: 'ds-2', name: 'Fixed Deposit Ladder', type: 'bank', value: 12000000, liquidity: 'medium' },
+      { id: 'ds-3', name: 'Bluechip Equity Portfolio', type: 'stock', value: 28500000, liquidity: 'high', returns: 16.8 },
+      { id: 'ds-4', name: 'Commercial Office — Connaught Place', type: 'property', value: 42000000, liquidity: 'low' },
+      { id: 'ds-5', name: 'Sovereign Gold Bonds', type: 'gold', value: 6500000, liquidity: 'medium' },
+      { id: 'ds-6', name: 'Private Equity Fund', type: 'mutualFund', value: 9500000, liquidity: 'low', returns: 22.4 },
+      { id: 'ds-7', name: 'BMW 7 Series', type: 'vehicle', value: 2800000, liquidity: 'low' },
+    ],
+    goals: [
+      { id: 'ds-g1', name: 'Diversified Retirement Corpus', type: 'retirement', targetAmount: 50000000, currentAmount: 22000000, deadline: '2040-03-31' },
+      { id: 'ds-g2', name: 'Global Diversification Fund', type: 'other', targetAmount: 15000000, currentAmount: 6500000, deadline: '2029-12-31' },
+      { id: 'ds-g3', name: 'Daughter Ivy League Education', type: 'education', targetAmount: 25000000, currentAmount: 12000000, deadline: '2032-06-30' },
+    ],
+    transactions: [
+      { id: 'ds-tx1', date: '2026-06-01', description: 'Director Remuneration — PSB SecureWealth', category: 'Income', amount: 2800000, type: 'credit', status: 'ALLOWED', riskLevel: 'LOW' },
+      { id: 'ds-tx2', date: '2026-06-02', description: 'SIP — Equity & Debt Funds', category: 'Investment', amount: 850000, type: 'debit', status: 'ALLOWED', riskLevel: 'LOW' },
+      { id: 'ds-tx3', date: '2026-06-03', description: 'Office Lease Rental Income', category: 'Income', amount: 450000, type: 'credit', status: 'ALLOWED', riskLevel: 'LOW' },
+      { id: 'ds-tx4', date: '2026-06-04', description: 'Luxury Home EMI', category: 'Housing', amount: 650000, type: 'debit', status: 'ALLOWED', riskLevel: 'LOW' },
+      { id: 'ds-tx5', date: '2026-06-05', description: 'International Business Travel', category: 'Travel', amount: 320000, type: 'debit', status: 'ALLOWED', riskLevel: 'LOW' },
+    ],
+  },
+
   buildDemoAccount({
     id: 'neha-gupta',
     name: 'Dr. Neha Gupta',

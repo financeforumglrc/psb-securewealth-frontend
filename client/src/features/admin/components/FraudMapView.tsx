@@ -105,6 +105,16 @@ export default function FraudMapView({
   const [showNodes, setShowNodes] = useState(true);
   const [focusMode, setFocusMode] = useState(false);
   const isMobile = useIsMobile();
+  const [heldCity, setHeldCity] = useState<string | null>(null);
+
+  const hotspotCities = useMemo(() => {
+    const counts = new Map<string, number>();
+    cases.forEach((c) => {
+      const origin = c.hops?.find((h) => h.hopType === 'origin');
+      if (origin?.city) counts.set(origin.city, (counts.get(origin.city) || 0) + 1);
+    });
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [cases]);
 
   const tileUrls: Record<MapStyle, string> = {
     roads: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
@@ -133,7 +143,8 @@ export default function FraudMapView({
     let introTimer: number | null = null;
     loadLeaflet().then((L) => {
       if (!mounted || !containerRef.current) return;
-      const map = L.map(containerRef.current, { zoomControl: false }).setView([20, 0], 2);
+      const INDIA_BOUNDS = L.latLngBounds([[6.5, 68.0], [37.5, 97.5]]);
+      const map = L.map(containerRef.current, { zoomControl: false, maxBounds: INDIA_BOUNDS, minZoom: 4 }).setView([22.5, 80.5], 5);
       mapRef.current = map;
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       L.control.scale({ position: 'bottomright', imperial: false }).addTo(map);
@@ -435,16 +446,19 @@ export default function FraudMapView({
             <Globe className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg tracking-tight">{t('fraudIntelMapTitle')}</h3>
+            <h3 className="font-bold text-lg tracking-tight">India-only Fraud Intelligence</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
                 <Radio className="w-3 h-3 animate-pulse" /> Live Tracing Active
               </span>
               <span>•</span>
-              <span>{focusMode && selectedCase ? '1 trail focused' : `${stats.plotted} of ${stats.total} trails plotted`}</span>
+              <span>{focusMode && selectedCase ? '1 trail focused' : `${stats.plotted} of ${stats.total} India trails plotted`}</span>
               <span>•</span>
               <span>Zoom {zoom >= 6 ? 'full detail' : 'summary view'}</span>
             </p>
+            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800">
+              <i className="fas fa-map-pin" /> India-only
+            </span>
           </div>
         </div>
 
@@ -496,8 +510,8 @@ export default function FraudMapView({
             >
               <div className="flex flex-col items-center px-6 py-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-2xl">
                 <Globe className="w-10 h-10 text-indigo-600 animate-spin mb-3" />
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Scanning global network...</p>
-                <p className="text-[10px] text-slate-400 mt-1">Focusing on India</p>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Scanning Indian network...</p>
+                <p className="text-[10px] text-slate-400 mt-1">India-only fraud tracing</p>
               </div>
             </motion.div>
           )}
@@ -564,6 +578,45 @@ export default function FraudMapView({
             <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-emerald-100 mb-0.5 md:mb-1"><TrendingUp className="w-3 h-3 md:w-3.5 md:h-3.5" /> INR Traced</div>
             <div className="text-lg md:text-2xl font-bold">{formatAmount(stats.totalInr)}</div>
           </motion.div>
+        </div>
+
+        {/* Hotspot Review Queue */}
+        <div className="absolute top-[11.5rem] md:top-[10.5rem] left-2 right-2 md:left-3 md:right-auto z-[20] flex md:flex-col gap-2 overflow-x-auto no-scrollbar">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-lg min-w-[240px] md:w-64">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 mb-2">
+              <i className="fas fa-user-shield text-rose-500" /> Hotspot Review Queue
+            </div>
+            {hotspotCities.length === 0 ? (
+              <p className="text-[10px] text-slate-500">No origin hotspots detected.</p>
+            ) : (
+              <div className="space-y-2">
+                {hotspotCities.slice(0, 3).map(([city, count]) => (
+                  <div key={city} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                    <div>
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{city}</p>
+                      <p className="text-[10px] text-slate-500">{count} case{count > 1 ? 's' : ''} originated</p>
+                    </div>
+                    <button
+                      onClick={() => setHeldCity(heldCity === city ? null : city)}
+                      className={`text-[10px] px-2 py-1 rounded-lg font-bold border transition-colors ${
+                        heldCity === city
+                          ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300'
+                          : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {heldCity === city ? 'Held' : 'Hold'}
+                    </button>
+                  </div>
+                ))}
+                {heldCity && (
+                  <p className="text-[10px] text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-2">
+                    <i className="fas fa-triangle-exclamation mr-1" />
+                    Transactions from <strong>{heldCity}</strong> will be held for manual approval.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Selected case indicator & focus toggle */}

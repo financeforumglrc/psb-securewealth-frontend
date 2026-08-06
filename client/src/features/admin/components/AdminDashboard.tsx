@@ -78,11 +78,11 @@ const FRAUD_TREND_DATA = [
 ];
 
 const TOP_ORIGINS_DATA = [
-  { country: 'Nigeria', count: 48 },
-  { country: 'Bangladesh', count: 34 },
-  { country: 'Pakistan', count: 29 },
-  { country: 'Russia', count: 22 },
-  { country: 'China', count: 18 },
+  { country: 'Mumbai', count: 48 },
+  { country: 'Delhi', count: 34 },
+  { country: 'Kolkata', count: 29 },
+  { country: 'Bangalore', count: 22 },
+  { country: 'Hyderabad', count: 18 },
 ];
 
 const chartTooltip = (dark = false) => ({
