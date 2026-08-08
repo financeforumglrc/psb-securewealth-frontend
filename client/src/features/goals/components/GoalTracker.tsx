@@ -555,16 +555,20 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
     };
   }), [goals, monthlySavings]);
 
-  const renderDonutLabel = ({ cx, cy }: { cx: number; cy: number }) => (
-    <g>
-      <text x={cx} y={cy - 6} textAnchor="middle" className="fill-slate-800 dark:fill-white" fontSize={16} fontWeight={800}>
-        {((totalSaved / Math.max(totalTarget, 1)) * 100).toFixed(0)}%
-      </text>
-      <text x={cx} y={cy + 12} textAnchor="middle" className="fill-slate-400" fontSize={9}>
-        funded
-      </text>
-    </g>
-  );
+  const renderDonutLabel = ({ cx, cy }: { cx: number | string; cy: number | string }) => {
+    const x = typeof cx === 'number' ? cx : parseFloat(cx) || 0;
+    const y = typeof cy === 'number' ? cy : parseFloat(cy) || 0;
+    return (
+      <g>
+        <text x={x} y={y - 6} textAnchor="middle" className="fill-slate-800 dark:fill-white" fontSize={16} fontWeight={800}>
+          {((totalSaved / Math.max(totalTarget, 1)) * 100).toFixed(0)}%
+        </text>
+        <text x={x} y={y + 12} textAnchor="middle" className="fill-slate-400" fontSize={9}>
+          funded
+        </text>
+      </g>
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
