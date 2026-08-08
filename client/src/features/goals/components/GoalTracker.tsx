@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend, BarChart, Bar } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend, BarChart, Bar } from 'recharts';
 import { useWealthStore } from '@/shared/store/wealthStore';
 import { formatCurrency } from '@/shared/utils/demoMode';
 import AddGoalModal from '@/features/goals/components/AddGoalModal';
@@ -189,7 +189,7 @@ export default function GoalTracker({ asWidget = false }: Props) {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto pr-6 lg:pr-36 pb-28">
       <RegulatoryDisclaimer compact />
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -419,7 +419,7 @@ function GenerationalWealthSlider({ currentNW, monthlySavings }: { currentNW: nu
   }, [futureValue, grandchildEducation, legacyCorpus, currentNW, years]);
 
   return (
-    <CosmosCard variant="default" header={{ icon: 'fa-people-roof', iconColor: '#7c3aed', title: 'Generational Time-Travel' }}>
+    <CosmosCard className="mb-28" variant="default" header={{ icon: 'fa-people-roof', iconColor: '#7c3aed', title: 'Generational Time-Travel' }}>
       <div className="space-y-4">
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Drag the slider to see how today&apos;s SIP becomes tomorrow&apos;s family legacy.
@@ -513,6 +513,32 @@ function GenerationalWealthSlider({ currentNW, monthlySavings }: { currentNW: nu
 /* ═══════════════════════════════════════════════════════════════
    GOALS ANALYTICS — Professional charts: allocation, timeline, funding gap
    ═══════════════════════════════════════════════════════════════ */
+function useChartSize<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [size, setSize] = useState({ width: 0, height: 240 });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      setSize({ width: Math.max(Math.round(rect.width), 280), height: 240 });
+    };
+    update();
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(update);
+      ro.observe(el);
+    } else {
+      window.addEventListener('resize', update);
+    }
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+  return { ref, size };
+}
+
 function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavings: number }) {
   // Donut: allocation of target amounts by goal
   const allocationData = useMemo(() => goals.map((g) => ({
@@ -570,18 +596,22 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
     );
   };
 
+  const alloc = useChartSize<HTMLDivElement>();
+  const proj = useChartSize<HTMLDivElement>();
+  const gap = useChartSize<HTMLDivElement>();
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0">
       {/* Allocation Donut */}
-      <CosmosCard variant="default" header={{ icon: 'fa-chart-pie', iconColor: '#1565C0', title: 'Goal Allocation', subtitle: `₹${totalTarget.toLocaleString()} total target` }}>
-        <div className="h-52 -mx-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+      <CosmosCard className="min-w-0" variant="default" header={{ icon: 'fa-chart-pie', iconColor: '#1565C0', title: 'Goal Allocation', subtitle: `₹${totalTarget.toLocaleString()} total target` }}>
+        <div ref={alloc.ref} className="h-64 w-full min-w-0">
+          {alloc.size.width > 0 && (
+            <PieChart width={alloc.size.width} height={alloc.size.height}>
               <Pie
                 data={allocationData}
                 dataKey="value"
-                innerRadius={58}
-                outerRadius={82}
+                innerRadius={Math.min(58, alloc.size.width / 6)}
+                outerRadius={Math.min(82, alloc.size.width / 4)}
                 paddingAngle={3}
                 strokeWidth={0}
                 labelLine={false}
@@ -594,7 +624,7 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
                 contentStyle={{ borderRadius: '0.75rem', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.12)', fontSize: 12 }}
               />
             </PieChart>
-          </ResponsiveContainer>
+          )}
         </div>
         <div className="space-y-1 mt-1">
           {allocationData.slice(0, 4).map((d) => (
@@ -608,10 +638,10 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
       </CosmosCard>
 
       {/* Growth Projection */}
-      <CosmosCard variant="default" header={{ icon: 'fa-chart-area', iconColor: '#0f766e', title: 'Corpus Projection', subtitle: '12% CAGR + SIP compounding' }}>
-        <div className="h-52 -mx-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={projectionData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+      <CosmosCard className="min-w-0" variant="default" header={{ icon: 'fa-chart-area', iconColor: '#0f766e', title: 'Corpus Projection', subtitle: '12% CAGR + SIP compounding' }}>
+        <div ref={proj.ref} className="h-64 w-full min-w-0">
+          {proj.size.width > 0 && (
+            <AreaChart data={projectionData} width={proj.size.width} height={proj.size.height} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="goalCorpus" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#1B5E20" stopOpacity={0.35} />
@@ -624,16 +654,16 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
               <Tooltip formatter={(v: any, name: any) => [`₹${Number(v).toLocaleString()}`, name === 'baseline' ? 'Corpus' : 'Goals Funded']} contentStyle={{ borderRadius: '0.75rem', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.12)', fontSize: 12 }} />
               <Area type="monotone" dataKey="baseline" stroke="#1B5E20" strokeWidth={2.5} fill="url(#goalCorpus)" />
             </AreaChart>
-          </ResponsiveContainer>
+          )}
         </div>
         <p className="text-[10px] text-slate-400 mt-1 text-center">10-year forward projection from current savings + SIP</p>
       </CosmosCard>
 
       {/* Funding Gap */}
-      <CosmosCard variant="default" header={{ icon: 'fa-chart-column', iconColor: '#E65100', title: 'Monthly Funding Gap', subtitle: 'Need vs allocation per goal' }}>
-        <div className="h-52 -mx-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={gapData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={2}>
+      <CosmosCard className="min-w-0" variant="default" header={{ icon: 'fa-chart-column', iconColor: '#E65100', title: 'Monthly Funding Gap', subtitle: 'Need vs allocation per goal' }}>
+        <div ref={gap.ref} className="h-64 w-full min-w-0">
+          {gap.size.width > 0 && (
+            <BarChart data={gapData} width={gap.size.width} height={gap.size.height} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={2}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} interval={0} angle={-18} textAnchor="end" height={40} />
               <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}K`} />
@@ -642,7 +672,7 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
               <Bar dataKey="need" name="Needed" fill="#ef4444" radius={[4, 4, 0, 0]} />
               <Bar dataKey="allocated" name="Allocated" fill="#1B5E20" radius={[4, 4, 0, 0]} />
             </BarChart>
-          </ResponsiveContainer>
+          )}
         </div>
         <p className="text-[10px] text-slate-400 mt-1 text-center">Red above green = shortfall (extend deadline or reduce target)</p>
       </CosmosCard>
