@@ -104,14 +104,8 @@ export default function GoalTracker({ asWidget = false }: Props) {
     const text = `I am saving ₹${goal.targetAmount.toLocaleString()} for ${goal.name} using SecureWealth Twin! ₹${remaining.toLocaleString()} to go.`;
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: 'My Financial Goal',
-          text,
-          url: 'https://psb-securewealth-2026.surge.sh'
-        });
-      } catch {
-        // User cancelled or share failed silently
-      }
+        await navigator.share({ title: 'My Financial Goal', text, url: 'https://psb-securewealth-2026.surge.sh' });
+      } catch { /* silent */ }
     } else if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(text);
@@ -191,13 +185,14 @@ export default function GoalTracker({ asWidget = false }: Props) {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pr-6 lg:pr-36 pb-28">
       <RegulatoryDisclaimer compact />
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-white">Financial Goals</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{goals.length} active • Need ₹{totalMonthlyNeed.toLocaleString()}/mo</p>
         </div>
-        <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+        <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
           <i className="fas fa-plus" /> Add New Goal
         </button>
       </div>
@@ -222,16 +217,10 @@ export default function GoalTracker({ asWidget = false }: Props) {
         ))}
       </div>
 
-      {/* Goals Analytics */}
-      {goals.length > 0 && <GoalsAnalytics goals={goals} monthlySavings={monthlySavings} />}
-
-      {/* Generational Wealth Time-Travel */}
-      <GenerationalWealthSlider currentNW={currentNW} monthlySavings={monthlySavings} />
-
-      {/* Health Ring */}
+      {/* Health Score */}
       {goals.length > 0 && (
         <CosmosCard variant="gradient">
-          <div className="flex items-center gap-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <div className="relative w-20 h-20 flex-shrink-0">
               <svg className="w-20 h-20 -rotate-90">
                 <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(148,163,184,0.1)" strokeWidth="6" />
@@ -240,7 +229,7 @@ export default function GoalTracker({ asWidget = false }: Props) {
               </svg>
               <span className={`absolute inset-0 flex items-center justify-center text-lg font-bold ${healthColor}`}>{healthScore}</span>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 w-full">
               <p className="text-sm font-bold text-slate-800 dark:text-white">Goal Health Score</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {healthScore >= 80 ? 'Your goals are well within reach' : healthScore >= 50 ? 'Some adjustments recommended' : 'Immediate action required'}
@@ -252,6 +241,9 @@ export default function GoalTracker({ asWidget = false }: Props) {
           </div>
         </CosmosCard>
       )}
+
+      {/* Analytics Charts */}
+      {goals.length > 0 && <GoalsAnalytics goals={goals} monthlySavings={monthlySavings} />}
 
       {/* Conflict & Warnings */}
       {isOverBudget && goals.length > 0 && (
@@ -269,8 +261,8 @@ export default function GoalTracker({ asWidget = false }: Props) {
         </CosmosCard>
       )}
 
-      {/* Goals Grid with Circular Progress */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Goals Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <AnimatePresence>
           {goals.map((goal) => {
             const pct = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
@@ -281,17 +273,8 @@ export default function GoalTracker({ asWidget = false }: Props) {
             const isComplete = pct >= 100;
 
             return (
-              <motion.div key={goal.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-                <CosmosCard variant={isComplete ? 'gradient' : 'default'} glow={isComplete} glowColor={color}>
-                  {/* Celebration overlay for complete goals */}
-                  {isComplete && (
-                    <div className="absolute top-2 right-2">
-                      <motion.div animate={{ rotate: [0, 20, -20, 0], scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
-                        <i className="fas fa-trophy text-amber-500 text-lg" />
-                      </motion.div>
-                    </div>
-                  )}
-
+              <motion.div key={goal.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="h-full">
+                <CosmosCard variant={isComplete ? 'gradient' : 'default'} glow={isComplete} glowColor={color} className="group h-full flex flex-col">
                   {!isEditing && (
                     <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => handleShareGoal(goal)} className="w-7 h-7 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors" title="Share Goal">
@@ -320,28 +303,21 @@ export default function GoalTracker({ asWidget = false }: Props) {
                       </div>
                     </div>
                   ) : (
-                    <>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="relative w-14 h-14 flex-shrink-0">
-                          <svg className="w-14 h-14 -rotate-90">
-                            <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(148,163,184,0.1)" strokeWidth="4" />
-                            <motion.circle cx="28" cy="28" r="24" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round"
-                              strokeDasharray={`${pct * 1.51} 151`} initial={{ strokeDasharray: '0 151' }} animate={{ strokeDasharray: `${pct * 1.51} 151` }} transition={{ duration: 1, delay: 0.2 }} />
-                          </svg>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <i className={`fas ${GOAL_ICONS[goal.type]} text-sm`} style={{ color }} />
-                          </div>
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15` }}>
+                          <i className={`fas ${GOAL_ICONS[goal.type]} text-base`} style={{ color }} />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-slate-800 dark:text-white pr-8">{goal.name}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex-1 min-w-0 pr-16">
+                          <p className="font-bold text-sm text-slate-800 dark:text-white truncate leading-tight">{goal.name}</p>
+                          <div className="flex items-center gap-2 mt-1">
                             <span className="text-[10px] text-slate-400 capitalize">{goal.type}</span>
                             {isComplete && <CosmosBadge color="success" size="xs"><i className="fas fa-check mr-1" />Done</CosmosBadge>}
                           </div>
                         </div>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="mt-auto space-y-2">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-slate-500 dark:text-slate-400">Progress</span>
                           <span className="font-bold" style={{ color }}>{pct.toFixed(0)}%</span>
@@ -353,12 +329,12 @@ export default function GoalTracker({ asWidget = false }: Props) {
                           <span className="text-slate-500 dark:text-slate-400">{formatCurrency(goal.currentAmount)}</span>
                           <span className="text-slate-400">of {formatCurrency(goal.targetAmount)}</span>
                         </div>
-                        <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center justify-between text-[11px] pt-2 border-t border-slate-100 dark:border-slate-700">
                           <span className="text-slate-500 dark:text-slate-400"><i className="far fa-clock mr-1" />{months} mo</span>
                           <span className="font-medium" style={{ color }}>₹{monthlyNeed.toLocaleString()}/mo</span>
                         </div>
                       </div>
-                    </>
+                    </div>
                   )}
                 </CosmosCard>
               </motion.div>
@@ -375,6 +351,9 @@ export default function GoalTracker({ asWidget = false }: Props) {
           action={<button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors"><i className="fas fa-plus mr-1" /> Add Goal</button>}
         />
       )}
+
+      {/* Generational Wealth */}
+      <GenerationalWealthSlider currentNW={currentNW} monthlySavings={monthlySavings} />
 
       {/* Share Feedback Toast */}
       {shareFeedback && (
@@ -431,23 +410,10 @@ function GenerationalWealthSlider({ currentNW, monthlySavings }: { currentNW: nu
             <span className="text-primary">{year}</span>
             <span>2080</span>
           </div>
-          <input
-            type="range"
-            min={currentYear}
-            max={2080}
-            step={1}
-            value={year}
-            onChange={(e) => setYear(parseInt(e.target.value))}
-            className="w-full accent-primary h-1.5"
-          />
+          <input type="range" min={currentYear} max={2080} step={1} value={year} onChange={(e) => setYear(parseInt(e.target.value))} className="w-full accent-primary h-1.5" />
         </div>
 
-        <motion.div
-          key={futureValue}
-          initial={{ scale: 0.98, opacity: 0.8 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="p-4 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-slate-800 dark:to-slate-800 border border-violet-200 dark:border-slate-700"
-        >
+        <motion.div key={futureValue} initial={{ scale: 0.98, opacity: 0.8 }} animate={{ scale: 1, opacity: 1 }} className="p-4 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-slate-800 dark:to-slate-800 border border-violet-200 dark:border-slate-700">
           <p className="text-[10px] text-slate-400 uppercase tracking-wide">Projected Family Corpus in {year}</p>
           <p className="text-3xl font-black text-violet-700 dark:text-violet-300">₹{(futureValue / 1e7).toFixed(2)} Cr</p>
           <p className="text-xs text-slate-500 mt-1">{years} years from now • 12% assumed CAGR</p>
@@ -476,11 +442,7 @@ function GenerationalWealthSlider({ currentNW, monthlySavings }: { currentNW: nu
             <div className="relative flex justify-between items-start">
               {tree.map((node) => (
                 <div key={node.id} className="flex flex-col items-center gap-1.5 w-16">
-                  <motion.div
-                    whileHover={{ scale: 1.08 }}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-sm ${node.funded ? 'bg-violet-100 border-violet-500 dark:bg-violet-900/30 dark:border-violet-400' : 'bg-slate-50 border-slate-300 dark:bg-slate-800 dark:border-slate-600'}`}
-                    title={node.funded ? 'Funding goal met' : 'Not yet funded'}
-                  >
+                  <motion.div whileHover={{ scale: 1.08 }} className={`w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-sm ${node.funded ? 'bg-violet-100 border-violet-500 dark:bg-violet-900/30 dark:border-violet-400' : 'bg-slate-50 border-slate-300 dark:bg-slate-800 dark:border-slate-600'}`} title={node.funded ? 'Funding goal met' : 'Not yet funded'}>
                     <i className={`fas ${node.icon} ${node.funded ? 'text-violet-600 dark:text-violet-300' : 'text-slate-400'}`} />
                   </motion.div>
                   <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">{node.label}</span>
@@ -489,11 +451,7 @@ function GenerationalWealthSlider({ currentNW, monthlySavings }: { currentNW: nu
               ))}
             </div>
           </div>
-          <button
-            onClick={() => setSavedPlan(true)}
-            disabled={savedPlan}
-            className="mt-3 w-full py-1.5 bg-violet-600 hover:bg-violet-700 disabled:bg-emerald-600 text-white rounded-lg text-[10px] font-bold transition-colors flex items-center justify-center gap-1"
-          >
+          <button onClick={() => setSavedPlan(true)} disabled={savedPlan} className="mt-3 w-full py-1.5 bg-violet-600 hover:bg-violet-700 disabled:bg-emerald-600 text-white rounded-lg text-[10px] font-bold transition-colors flex items-center justify-center gap-1">
             <i className={`fas ${savedPlan ? 'fa-check' : 'fa-floppy-disk'}`} />
             {savedPlan ? 'Dynasty plan saved' : 'Save this dynasty plan'}
           </button>
@@ -540,7 +498,6 @@ function useChartSize<T extends HTMLElement>() {
 }
 
 function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavings: number }) {
-  // Donut: allocation of target amounts by goal
   const allocationData = useMemo(() => goals.map((g) => ({
     name: g.name.length > 18 ? g.name.slice(0, 18) + '…' : g.name,
     value: g.targetAmount,
@@ -551,7 +508,6 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
   const totalTarget = allocationData.reduce((s, d) => s + d.value, 0);
   const totalSaved = goals.reduce((s, g) => s + g.currentAmount, 0);
 
-  // Projection area chart: cumulative portfolio growth over next 10 yrs
   const projectionData = useMemo(() => {
     const rate = 0.12;
     const years = 10;
@@ -568,7 +524,6 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
     return data;
   }, [totalSaved, monthlySavings, totalTarget]);
 
-  // Monthly funding gap bar chart per goal
   const gapData = useMemo(() => goals.map((g) => {
     const months = Math.max(1, Math.ceil((new Date(g.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30)));
     const monthlyNeed = Math.ceil((g.targetAmount - g.currentAmount) / months);
@@ -589,9 +544,7 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
         <text x={x} y={y - 6} textAnchor="middle" className="fill-slate-800 dark:fill-white" fontSize={16} fontWeight={800}>
           {((totalSaved / Math.max(totalTarget, 1)) * 100).toFixed(0)}%
         </text>
-        <text x={x} y={y + 12} textAnchor="middle" className="fill-slate-400" fontSize={9}>
-          funded
-        </text>
+        <text x={x} y={y + 12} textAnchor="middle" className="fill-slate-400" fontSize={9}>funded</text>
       </g>
     );
   };
@@ -607,22 +560,10 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
         <div ref={alloc.ref} className="h-64 w-full min-w-0">
           {alloc.size.width > 0 && (
             <PieChart width={alloc.size.width} height={alloc.size.height}>
-              <Pie
-                data={allocationData}
-                dataKey="value"
-                innerRadius={Math.min(58, alloc.size.width / 6)}
-                outerRadius={Math.min(82, alloc.size.width / 4)}
-                paddingAngle={3}
-                strokeWidth={0}
-                labelLine={false}
-                label={renderDonutLabel}
-              >
+              <Pie data={allocationData} dataKey="value" innerRadius={Math.min(58, alloc.size.width / 6)} outerRadius={Math.min(82, alloc.size.width / 4)} paddingAngle={3} strokeWidth={0} labelLine={false} label={renderDonutLabel}>
                 {allocationData.map((d) => <Cell key={d.name} fill={d.color} />)}
               </Pie>
-              <Tooltip
-                formatter={(v: any, name: any) => [`₹${Number(v).toLocaleString()}`, String(name)]}
-                contentStyle={{ borderRadius: '0.75rem', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.12)', fontSize: 12 }}
-              />
+              <Tooltip formatter={(v: any, name: any) => [`₹${Number(v).toLocaleString()}`, String(name)]} contentStyle={{ borderRadius: '0.75rem', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.12)', fontSize: 12 }} />
             </PieChart>
           )}
         </div>
