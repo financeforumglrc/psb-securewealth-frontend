@@ -555,7 +555,7 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
     };
   }), [goals, monthlySavings]);
 
-  const renderDonutLabel = ({ cx, cy }: any) => (
+  const renderDonutLabel = ({ cx, cy }: { cx: number; cy: number }) => (
     <g>
       <text x={cx} y={cy - 6} textAnchor="middle" className="fill-slate-800 dark:fill-white" fontSize={16} fontWeight={800}>
         {((totalSaved / Math.max(totalTarget, 1)) * 100).toFixed(0)}%
@@ -580,9 +580,10 @@ function GoalsAnalytics({ goals, monthlySavings }: { goals: Goal[]; monthlySavin
                 outerRadius={82}
                 paddingAngle={3}
                 strokeWidth={0}
+                labelLine={false}
+                label={renderDonutLabel}
               >
                 {allocationData.map((d) => <Cell key={d.name} fill={d.color} />)}
-                {renderDonutLabel({ cx: '50%', cy: '50%' })}
               </Pie>
               <Tooltip
                 formatter={(v: any, name: any) => [`₹${Number(v).toLocaleString()}`, String(name)]}

@@ -48,7 +48,6 @@ export default function DashboardView() {
   const setDashboardDensity = useWealthStore((s) => s.setDashboardDensity);
   const { t, language, setLanguage } = useTranslation();
   const streak = getStreak();
-  const kycVerified = useWealthStore((s) => s.kycVerified);
   const isLoading = useWealthStore((s) => s.isLoading);
 
   const greeting = useMemo(() => {
@@ -262,10 +261,6 @@ export default function DashboardView() {
               key="simple"
               statCards={simpleStatCards}
               ageGroup={ageGroup}
-              kycVerified={kycVerified}
-              onKyc={() => setView('profile')}
-              onPay={() => setView('payments')}
-              onGoal={() => setView('goals')}
               onPortfolio={() => setView('portfolio')}
               onWealthTwin={() => setView('wealth-twin')}
               onSecurity={() => setView('security-beast')}
@@ -277,7 +272,6 @@ export default function DashboardView() {
             <ComprehensiveDashboard
               key="comprehensive"
               statCards={statCards}
-              kycVerified={kycVerified}
               setView={setView}
               openPaymentHub={openPaymentHub}
               agenticActions={agenticActions}
@@ -326,10 +320,6 @@ function ModeToggle({ isSimple, onToggle }: { isSimple: boolean; onToggle: (mode
 function SimpleDashboard({
   statCards,
   ageGroup,
-  kycVerified,
-  onKyc,
-  onPay,
-  onGoal,
   onPortfolio,
   onWealthTwin,
   onSecurity,
@@ -339,10 +329,6 @@ function SimpleDashboard({
 }: {
   statCards: StatCardProps[];
   ageGroup: 'young' | 'middle' | 'senior';
-  kycVerified: boolean;
-  onKyc: () => void;
-  onPay: () => void;
-  onGoal: () => void;
   onPortfolio: () => void;
   onWealthTwin: () => void;
   onSecurity: () => void;
@@ -367,8 +353,7 @@ function SimpleDashboard({
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <QuickActionBar kycVerified={kycVerified} onKyc={onKyc} onPay={onPay} onGoal={onGoal} onPortfolio={onPortfolio} />
+      {/* Quick Actions removed per request */}
 
       {/* Main Focus Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -438,7 +423,6 @@ function SimpleDashboard({
 
 function ComprehensiveDashboard({
   statCards,
-  kycVerified,
   setView,
   openPaymentHub,
   agenticActions,
@@ -448,7 +432,6 @@ function ComprehensiveDashboard({
   activeGoals,
 }: {
   statCards: StatCardProps[];
-  kycVerified: boolean;
   setView: (v: any) => void;
   openPaymentHub: () => void;
   agenticActions: any[];
@@ -474,14 +457,7 @@ function ComprehensiveDashboard({
         ))}
       </div>
 
-      {/* Contextual Quick Actions */}
-      <QuickActionBar
-        kycVerified={kycVerified}
-        onKyc={() => setView('profile')}
-        onPay={() => setView('payments')}
-        onGoal={() => setView('goals')}
-        onPortfolio={() => setView('portfolio')}
-      />
+      {/* Contextual Quick Actions removed per request */}
 
       {/* Hero Intelligence */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
@@ -698,42 +674,3 @@ function SectionHeader({ icon, title, subtitle }: { icon: string; title: string;
   );
 }
 
-function QuickActionBar({
-  kycVerified,
-  onKyc,
-  onPay,
-  onGoal,
-  onPortfolio,
-}: {
-  kycVerified: boolean;
-  onKyc: () => void;
-  onPay: () => void;
-  onGoal: () => void;
-  onPortfolio: () => void;
-}) {
-  const { t } = useTranslation();
-  const actions = [
-    ...(!kycVerified ? [{ label: t('completeKyc'), icon: 'fa-id-card', onClick: onKyc, variant: 'amber' as const }] : []),
-    { label: t('sendMoney'), icon: 'fa-paper-plane', onClick: onPay, variant: 'primary' as const },
-    { label: t('addGoal'), icon: 'fa-bullseye', onClick: onGoal, variant: 'neutral' as const },
-    { label: t('viewPortfolio'), icon: 'fa-layer-group', onClick: onPortfolio, variant: 'neutral' as const },
-  ];
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {actions.map((a) => {
-        const base = 'flex items-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50';
-        const styles = {
-          primary: 'bg-primary text-white hover:bg-primary-dark shadow-sm shadow-primary/20',
-          amber: 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300',
-          neutral: 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700',
-        };
-        return (
-          <button key={a.label} onClick={a.onClick} className={`${base} ${styles[a.variant]}`}>
-            <i className={`fas ${a.icon}`} /> {a.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
